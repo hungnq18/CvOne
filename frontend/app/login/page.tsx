@@ -1,40 +1,178 @@
 "use client"
 
-import type React from "react"
-
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import React, { useState } from "react"
+import { FaEye, FaEyeSlash } from "react-icons/fa"
+import styled from "styled-components"
+import Link from "next/link"
+import Image from "next/image"
+import { useRouter } from "next/navigation"
 import { useToast } from "@/components/ui/use-toast"
 import { useAuth } from "@/hooks/use-auth"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { useState } from "react"
+import logoImg from "../../public/logo/logoCVOne.svg"
+
+const LoginWrapper = styled.div`
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f0f0f0;
+`
+
+const LoginContainer = styled.div`
+  display: flex;
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+  overflow: hidden;
+  max-width: 800px;
+  width: 100%;
+  min-height: 440px;
+`
+
+const LogoSide = styled.div`
+  background: linear-gradient(135deg,rgb(255, 255, 255) 0%,rgb(109, 193, 235) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 340px;
+  min-width: 220px; 
+  padding: 32px 16px;
+  @media (max-width: 700px) {
+    display: none;
+  }
+`
+
+const ImageWrapper = styled.div`
+  width: 300px;
+  height: 300px;
+  position: relative;
+`
+
+const FormSide = styled.div`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 40px 32px;
+  @media (max-width: 700px) {
+    width: 100%;
+    padding: 32px 12px;
+  }
+`
+
+const LoginForm = styled.form`
+  width: 100%;
+  max-width: 350px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+`
+
+const Title = styled.h2`
+  text-align: center;
+  margin-bottom: 8px;
+  color: #058ac3;
+  letter-spacing: 1px;
+`
+
+const Label = styled.label`
+  font-weight: 500;
+  color: #222;
+`
+
+const Input = styled.input`
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #d0d7de;
+  font-size: 16px;
+  outline: none;
+  transition: border 0.2s;
+  width: 100%;
+`
+
+const PasswordWrapper = styled.div`
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+`
+
+const EyeIcon = styled.span`
+  position: absolute;
+  right: 12px;
+  top: 36px;
+  cursor: pointer;
+  color: #888;
+`
+
+const SubmitButton = styled.button`
+  margin-top: 8px;
+  padding: 12px 0;
+  border-radius: 8px;
+  border: none;
+  background: linear-gradient(90deg,rgb(75, 195, 246) 0%,rgb(17, 135, 195) 100%);
+  color: #fff;
+  font-weight: 600;
+  font-size: 18px;
+  letter-spacing: 1px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(46,204,64,0.10);
+  transition: background 0.2s;
+`
+
+const Message = styled.div<{ success?: boolean }>`
+  color: ${({ success }) => (success ? '#0681be' : 'red')};
+  min-height: 24px;
+  text-align: center;
+  font-weight: 500;
+`
+
+const RegisterLink = styled.div`
+  text-align: center;
+  margin-top: 8px;
+  span {
+    color: #222;
+  }
+  a {
+    color: #058ac3;
+    font-weight: 500;
+    text-decoration: underline;
+    margin-left: 4px;
+  }
+`
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("")
+  const [loginInput, setLoginInput] = useState("")
   const [password, setPassword] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
+  const [message, setMessage] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const { login } = useAuth()
   const { toast } = useToast()
   const router = useRouter()
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setIsLoading(true)
+    setMessage("")
 
     try {
-      await login(email, password)
+      const isEmail = /@gmail\.com$/.test(loginInput)
+      const body = isEmail ? { email: loginInput, password } : { username: loginInput, password }
+      
+      await login(loginInput, password)
+      setMessage("Đăng nhập thành công!")
       toast({
         title: "Login successful",
         description: "You have been logged in successfully",
       })
-      router.push("/dashboard")
+      setTimeout(() => router.push("/dashboard"), 1000)
     } catch (error) {
+      setMessage("Đăng nhập thất bại")
       toast({
         title: "Login failed",
-        description: "Invalid email or password",
+        description: "Invalid credentials",
         variant: "destructive",
       })
     } finally {
@@ -43,54 +181,58 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle className="text-2xl">Login</CardTitle>
-          <CardDescription>Enter your credentials to access your account</CardDescription>
-        </CardHeader>
-        <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+    <LoginWrapper>
+      <LoginContainer>
+        <LogoSide>
+          <ImageWrapper>
+            <Image 
+              src={logoImg} 
+              alt="Logo" 
+              fill
+              style={{ objectFit: 'contain' }}
+              priority
+            />
+          </ImageWrapper>
+        </LogoSide>
+        <FormSide>
+          <LoginForm onSubmit={handleSubmit}>
+            <Title>Đăng nhập</Title>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <Label htmlFor="loginInput">Tên đăng nhập hoặc Email</Label>
               <Input
-                id="email"
-                type="email"
-                placeholder="name@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                id="loginInput"
+                type="text"
+                placeholder="Nhập tên đăng nhập hoặc email"
+                value={loginInput}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLoginInput(e.target.value)}
                 required
               />
             </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password">Password</Label>
-                <Link href="/forgot-password" className="text-sm text-primary hover:underline">
-                  Forgot password?
-                </Link>
-              </div>
+            <PasswordWrapper>
+              <Label htmlFor="password">Mật khẩu</Label>
               <Input
                 id="password"
-                type="password"
+                type={showPassword ? "text" : "password"}
+                placeholder="Nhập mật khẩu"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
                 required
               />
-            </div>
-          </CardContent>
-          <CardFooter className="flex flex-col space-y-4">
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Logging in..." : "Login"}
-            </Button>
-            <p className="text-center text-sm text-muted-foreground">
-              Don&apos;t have an account?{" "}
-              <Link href="/register" className="text-primary hover:underline">
-                Register
-              </Link>
-            </p>
-          </CardFooter>
-        </form>
-      </Card>
-    </div>
+              <EyeIcon onClick={() => setShowPassword(v => !v)}>
+                {!showPassword ? <FaEyeSlash /> : <FaEye />}
+              </EyeIcon>
+            </PasswordWrapper>
+            <SubmitButton type="submit" disabled={isLoading}>
+              {isLoading ? "Đang đăng nhập..." : "Đăng nhập"}
+            </SubmitButton>
+            <Message success={message === "Đăng nhập thành công!"}>{message}</Message>
+            <RegisterLink>
+              <span>Bạn chưa có tài khoản?</span>
+              <Link href="/register">Đăng ký ngay</Link>
+            </RegisterLink>
+          </LoginForm>
+        </FormSide>
+      </LoginContainer>
+    </LoginWrapper>
   )
 }
