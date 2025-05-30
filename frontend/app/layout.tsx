@@ -4,13 +4,13 @@ import { Inter } from "next/font/google"
 import "./globals.css"
 import { Header } from "@/components/ui/header"
 import { Footer } from "@/components/ui/footer"
+import { GlobalProvider } from "@/providers/global-provider"
 
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Next.js Front-end Base",
-  description: "A front-end base for Next.js with TypeScript",
-    generator: 'v0.dev'
+  title: "CvOne - Professional Resume Builder",
+  description: "Create professional resumes, CVs, and cover letters with CvOne",
 }
 
 export default function RootLayout({
@@ -21,11 +21,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <div className="flex min-h-screen flex-col">
-          <Header />
-          <main className="flex-1">{children}</main>
-          <Footer />
-        </div>
+        <GlobalProvider>
+          <div className="flex min-h-screen flex-col">
+            <Header />
+            <main className="flex-1">{children}</main>
+            <Footer />
+          </div>
+        </GlobalProvider>
       </body>
     </html>
   )
