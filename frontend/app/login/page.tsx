@@ -8,7 +8,35 @@ import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/components/ui/use-toast"
 import { useAuth } from "@/hooks/use-auth"
+import { useLanguage } from "@/providers/global-provider"
 import logoImg from "../../public/logo/logoCVOne.svg"
+
+const translations = {
+  en: {
+    title: "Login",
+    emailPlaceholder: "Email or username",
+    password: "Password",
+    passwordPlaceholder: "Enter your password",
+    loginButton: "Sign In",
+    noAccount: "Don't have an account?",
+    registerLink: "Register now",
+    loginSuccess: "Login successful!",
+    loginFailed: "Login failed",
+    invalidCredentials: "Invalid credentials",
+  },
+  vi: {
+    title: "Đăng nhập",
+    emailPlaceholder: "Email hoặc tên đăng nhập",
+    password: "Mật khẩu",
+    passwordPlaceholder: "Nhập mật khẩu của bạn",
+    loginButton: "Đăng nhập",
+    noAccount: "Chưa có tài khoản?",
+    registerLink: "Đăng ký ngay",
+    loginSuccess: "Đăng nhập thành công!",
+    loginFailed: "Đăng nhập thất bại",
+    invalidCredentials: "Thông tin đăng nhập không chính xác",
+  },
+};
 
 const LoginWrapper = styled.div`
   min-height: 100vh;
@@ -151,6 +179,8 @@ export default function LoginPage() {
   const { login } = useAuth()
   const { toast } = useToast()
   const router = useRouter()
+  const { language } = useLanguage()
+  const t = translations[language]
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -162,17 +192,17 @@ export default function LoginPage() {
       const body = isEmail ? { email: loginInput, password } : { username: loginInput, password }
       
       await login(loginInput, password)
-      setMessage("Đăng nhập thành công!")
+      setMessage(t.loginSuccess)
       toast({
-        title: "Login successful",
-        description: "You have been logged in successfully",
+        title: t.loginSuccess,
+        description: t.loginSuccess,
       })
       setTimeout(() => router.push("/dashboard"), 1000)
     } catch (error) {
-      setMessage("Đăng nhập thất bại")
+      setMessage(t.loginFailed)
       toast({
-        title: "Login failed",
-        description: "Invalid credentials",
+        title: t.loginFailed,
+        description: t.invalidCredentials,
         variant: "destructive",
       })
     } finally {
@@ -196,39 +226,43 @@ export default function LoginPage() {
         </LogoSide>
         <FormSide>
           <LoginForm onSubmit={handleSubmit}>
-            <Title>Đăng nhập</Title>
+            <Title>{t.title}</Title>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <Label htmlFor="loginInput">Tên đăng nhập hoặc Email</Label>
+              <Label>Email / Username</Label>
               <Input
-                id="loginInput"
                 type="text"
-                placeholder="Nhập tên đăng nhập hoặc email"
+                id="loginInput"
                 value={loginInput}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLoginInput(e.target.value)}
+                onChange={(e) => setLoginInput(e.target.value)}
+                placeholder={t.emailPlaceholder}
                 required
               />
             </div>
             <PasswordWrapper>
-              <Label htmlFor="password">Mật khẩu</Label>
+              <Label>{t.password}</Label>
               <Input
-                id="password"
                 type={showPassword ? "text" : "password"}
-                placeholder="Nhập mật khẩu"
+                id="password"
                 value={password}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder={t.passwordPlaceholder}
                 required
               />
-              <EyeIcon onClick={() => setShowPassword(v => !v)}>
-                {!showPassword ? <FaEyeSlash /> : <FaEye />}
+              <EyeIcon onClick={() => setShowPassword(!showPassword)} style={{marginTop: "2.5%"}}>
+                {showPassword ? <FaEyeSlash size={20} /> : <FaEye size={20} />}
               </EyeIcon>
             </PasswordWrapper>
+            <Message success={message === t.loginSuccess}>{message}</Message>
             <SubmitButton type="submit" disabled={isLoading}>
-              {isLoading ? "Đang đăng nhập..." : "Đăng nhập"}
+              {isLoading ? (
+                <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto" />
+              ) : (
+                t.loginButton
+              )}
             </SubmitButton>
-            <Message success={message === "Đăng nhập thành công!"}>{message}</Message>
             <RegisterLink>
-              <span>Bạn chưa có tài khoản?</span>
-              <Link href="/register">Đăng ký ngay</Link>
+              <span>{t.noAccount}</span>
+              <Link href="/register">{t.registerLink}</Link>
             </RegisterLink>
           </LoginForm>
         </FormSide>
