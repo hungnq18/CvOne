@@ -55,7 +55,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // const data = await response.json()
       // if (!response.ok) throw new Error(data.message)
 
-      // Mock successful response
+      // Mock successful response 
       const mockResponse = {
         token: "mock-jwt-token",
         user: {
