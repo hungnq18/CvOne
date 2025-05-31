@@ -58,7 +58,7 @@ export function HeroSection() {
             </motion.div>
             <Link
               href="/create-cv"
-              className="inline-block bg-green-500 text-white px-8 py-4 rounded-md text-xl font-semibold hover:bg-green-600 transition-colors duration-200"
+              className="inline-flex items-center justify-center bg-green-500 text-white w-[300px] h-[70px] rounded-md text-xl font-semibold hover:bg-green-600 transition-colors duration-200"
             >
               {slide.button}
             </Link>

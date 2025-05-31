@@ -26,7 +26,7 @@ const CVCard: React.FC<CVCardProps> = ({ imageUrl, title }) => {
         visible: { opacity: 1, scale: 1, transition: { duration: 0.3, ease: 'easeOut' } },
         hover: {
             scale: 1.05,
-            boxShadow: '0 0 15px rgba(34, 197, 94, 0.5)', // Ánh sáng xanh lá
+            boxShadow: '0 0 15px rgba(34, 197, 94, 0.5)',
             transition: { duration: 0.2 },
         },
     };
@@ -51,7 +51,7 @@ const CVCard: React.FC<CVCardProps> = ({ imageUrl, title }) => {
                 />
                 {isHovered && (
                     <motion.div
-                        className="absolute inset-0 flex items-end justify-center pb-6" // Không có nền mờ
+                        className="absolute inset-0 flex items-end justify-center pb-6"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ duration: 0.3 }}
@@ -85,6 +85,11 @@ const CVCard: React.FC<CVCardProps> = ({ imageUrl, title }) => {
                         </motion.button>
                     </motion.div>
                 )}
+            </div>
+            <div>
+                <h3 className="text-lg font-semibold text-gray-800 p-4">
+                    {title}
+                </h3>
             </div>
         </motion.div>
     );
