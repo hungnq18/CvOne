@@ -78,7 +78,7 @@ const navigationItems = {
     },
     {
       name: "CV",
-      href: "/CVtemplate",
+      href: "/cvTemplate",
       dropdownItems: [
         { name: "CV Templates", href: "/cv/templates" },
         { name: "CV Examples", href: "/cv/examples" },
@@ -89,7 +89,7 @@ const navigationItems = {
       name: "Cover Letter",
       href: "/cover-letter",
       dropdownItems: [
-        { name: "Cover Letter Templates", href: "/cover-letter/templates" },
+        { name: "Cover Letter Templates", href: "/clTemplate" },
         { name: "Cover Letter Examples", href: "/cover-letter/examples" },
         { name: "Cover Letter Tips", href: "/cover-letter/tips" },
       ],

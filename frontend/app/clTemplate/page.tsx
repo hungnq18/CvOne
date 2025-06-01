@@ -7,7 +7,7 @@ import { useLanguage } from '@/providers/global-provider';
 import { Button, Typography } from 'antd';
 
 // Định nghĩa type cho CV template
-type CVTemplate = {
+type CLTemplate = {
     id: number;
     imageUrl: string;
     title: string;
@@ -15,7 +15,7 @@ type CVTemplate = {
 };
 
 // Danh sách dữ liệu mẫu cho CV templates
-const cvTemplates: CVTemplate[] = [
+const cvTemplates: CLTemplate[] = [
     {
         id: 1,
         imageUrl: '/template-cv/0e5fda43-6a21-439c-9148-7780278cba2c.jpg',
@@ -51,7 +51,7 @@ const containerVariants = {
     },
 };
 
-const CVTemplatePage: React.FC = () => {
+const CLTemplatePage: React.FC = () => {
     const { language } = useLanguage();
     const [viewMode, setViewMode] = useState<'recommended' | 'all'>('recommended');
 
@@ -73,12 +73,12 @@ const CVTemplatePage: React.FC = () => {
                         level={2}
                         className="text-blue-900 font-semibold text-3xl sm:text-4xl mb-3"
                     >
-                        {language === 'vi' ? 'Chọn Mẫu CV Dành Cho Bạn' : 'Choose Your CV Template'}
+                        {language === 'vi' ? 'Chọn Mẫu CL Dành Cho Bạn' : 'Choose Your CL Template'}
                     </Typography.Title>
                     <Typography.Paragraph className="text-gray-600 text-base sm:text-lg max-w-3xl mx-auto">
                         {language === 'vi'
-                            ? 'Khám phá bộ sưu tập mẫu CV được thiết kế chuyên nghiệp để tạo ấn tượng mạnh mẽ với nhà tuyển dụng.'
-                            : 'Discover our collection of professionally designed CV templates to make a lasting impression on employers.'}
+                            ? 'Khám phá bộ sưu tập mẫu CL được thiết kế chuyên nghiệp để tạo ấn tượng mạnh mẽ với nhà tuyển dụng.'
+                            : 'Discover our collection of professionally designed CL templates to make a lasting impression on employers.'}
                     </Typography.Paragraph>
                 </motion.div>
 
@@ -132,4 +132,4 @@ const CVTemplatePage: React.FC = () => {
     );
 };
 
-export default CVTemplatePage;
+export default CLTemplatePage;

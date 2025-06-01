@@ -64,7 +64,7 @@ const CVCard: React.FC<CVCardProps> = ({ imageUrl, title }) => {
                             whileHover="hover"
                         >
                             <span className="text-lg font-semibold">
-                                {language === 'vi' ? 'Tạo CV' : 'Create CV'}
+                                {language === 'vi' ? 'Tạo' : 'Create'}
                             </span>
                             <motion.svg
                                 className="ml-2 w-5 h-5"
