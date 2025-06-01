@@ -1,14 +1,14 @@
 "use client"
 
-import React, { useState } from "react"
-import { FaEye, FaEyeSlash } from "react-icons/fa"
-import styled from "styled-components"
-import Link from "next/link"
-import Image from "next/image"
-import { useRouter } from "next/navigation"
 import { useToast } from "@/components/ui/use-toast"
 import { useAuth } from "@/hooks/use-auth"
 import { useLanguage } from "@/providers/global-provider"
+import Image from "next/image"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
+import React, { useState } from "react"
+import { FaEye, FaEyeSlash } from "react-icons/fa"
+import styled from "styled-components"
 import logoImg from "../../public/logo/logoCVOne.svg"
 
 const translations = {
