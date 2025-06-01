@@ -78,7 +78,7 @@ const navigationItems = {
     },
     {
       name: "CV",
-      href: "/cv",
+      href: "/cvTemplate",
       dropdownItems: [
         { name: "CV Templates", href: "/cv/templates" },
         { name: "CV Examples", href: "/cv/examples" },
@@ -89,7 +89,7 @@ const navigationItems = {
       name: "Cover Letter",
       href: "/cover-letter",
       dropdownItems: [
-        { name: "Cover Letter Templates", href: "/cover-letter/templates" },
+        { name: "Cover Letter Templates", href: "/clTemplate" },
         { name: "Cover Letter Examples", href: "/cover-letter/examples" },
         { name: "Cover Letter Tips", href: "/cover-letter/tips" },
       ],
@@ -164,7 +164,7 @@ export function Header() {
 
     window.addEventListener('scroll', handleScroll);
     document.addEventListener('click', handleClickOutside);
-    
+
     return () => {
       window.removeEventListener('scroll', handleScroll);
       document.removeEventListener('click', handleClickOutside);
@@ -179,7 +179,7 @@ export function Header() {
   const currentLanguage = languages.find(lang => lang.code === language);
 
   return (
-    <header 
+    <header
       className="fixed top-0 left-0 right-0 z-50 bg-white transition-all duration-300"
       style={{
         boxShadow: isScrolled ? "0 2px 10px rgba(0, 0, 0, 0.1)" : "none",
@@ -206,8 +206,8 @@ export function Header() {
                 <MenuLink
                   href={item.href}
                   className={`nav-link px-4 py-2 inline-flex items-center text-[15px] font-medium transition-all duration-200
-                    ${activeDropdown === item.name 
-                      ? 'text-blue-600' 
+                    ${activeDropdown === item.name
+                      ? 'text-blue-600'
                       : 'text-gray-700 hover:text-blue-600'}`}
                 >
                   {item.name}
@@ -216,8 +216,8 @@ export function Header() {
                 {/* Dropdown Menu */}
                 <div
                   className={`absolute left-0 mt-0 w-64 bg-white shadow-lg border border-gray-100 transition-all duration-200 origin-top-left
-                    ${activeDropdown === item.name 
-                      ? 'opacity-100 scale-100 translate-y-0' 
+                    ${activeDropdown === item.name
+                      ? 'opacity-100 scale-100 translate-y-0'
                       : 'opacity-0 scale-95 -translate-y-2 pointer-events-none'}`}
                 >
                   <div className="py-2">
@@ -245,7 +245,7 @@ export function Header() {
                 className="flex items-center justify-center gap-2 px-3 border-gray-200 hover:border-blue-600 transition-colors"
               >
                 <span>{currentLanguage?.flag}</span>
-                <ChevronDown 
+                <ChevronDown
                   className={`w-4 h-4 transition-transform duration-200 
                     ${showLanguageDropdown ? 'rotate-180' : ''}`}
                 />
@@ -275,8 +275,8 @@ export function Header() {
             </div>
 
             <Link href="/login" className="relative overflow-hidden">
-              <AnimatedButton 
-                variant="outline" 
+              <AnimatedButton
+                variant="outline"
                 size="sm"
                 className="font-medium border-2 border-blue-600 text-blue-600 bg-transparent hover:text-white transition-all duration-300"
               >
