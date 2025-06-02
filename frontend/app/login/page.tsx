@@ -44,6 +44,7 @@ const LoginWrapper = styled.div`
   align-items: center;
   justify-content: center;
   background: #f0f0f0;
+  padding: 20px;
 `
 
 const LoginContainer = styled.div`
@@ -54,26 +55,31 @@ const LoginContainer = styled.div`
   overflow: hidden;
   max-width: 800px;
   width: 100%;
-  min-height: 440px;
+  min-height: 500px;
+  margin: 0 auto;
 `
 
 const LogoSide = styled.div`
-  background: linear-gradient(135deg,rgb(255, 255, 255) 0%,rgb(109, 193, 235) 100%);
+  background: linear-gradient(135deg, rgb(255, 255, 255) 0%, rgb(109, 193, 235) 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 340px;
-  min-width: 220px; 
-  padding: 32px 16px;
-  @media (max-width: 700px) {
+  flex: 1;
+  max-width: 400px;
+  padding: 40px;
+  
+  @media (max-width: 768px) {
     display: none;
   }
 `
 
 const ImageWrapper = styled.div`
-  width: 300px;
-  height: 300px;
+  width: 100%;
+  height: 100%;
+  max-width: 300px;
+  max-height: 300px;
   position: relative;
+  margin: auto;
 `
 
 const FormSide = styled.div`
@@ -81,20 +87,22 @@ const FormSide = styled.div`
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: 40px 32px;
-  @media (max-width: 700px) {
+  padding: 40px;
+  min-width: 320px;
+  
+  @media (max-width: 768px) {
+    padding: 20px;
     width: 100%;
-    padding: 32px 12px;
   }
 `
 
 const LoginForm = styled.form`
   width: 100%;
-  max-width: 350px;
+  max-width: 400px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 20px;
 `
 
 const Title = styled.h2`
@@ -149,8 +157,8 @@ const SubmitButton = styled.button`
   transition: background 0.2s;
 `
 
-const Message = styled.div<{ success?: boolean }>`
-  color: ${({ success }) => (success ? '#0681be' : 'red')};
+const Message = styled.div<{ $success?: boolean }>`
+  color: ${({ $success }) => ($success ? '#0681be' : 'red')};
   min-height: 24px;
   text-align: center;
   font-weight: 500;
@@ -252,7 +260,7 @@ export default function LoginPage() {
                 {showPassword ? <FaEyeSlash size={20} /> : <FaEye size={20} />}
               </EyeIcon>
             </PasswordWrapper>
-            <Message success={message === t.loginSuccess}>{message}</Message>
+            <Message $success={message === t.loginSuccess}>{message}</Message>
             <SubmitButton type="submit" disabled={isLoading}>
               {isLoading ? (
                 <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto" />
