@@ -1,4 +1,5 @@
 "use client"
+
 import { useToast } from "@/components/ui/use-toast"
 import { useLanguage } from "@/providers/global-provider"
 import Image from "next/image"
@@ -69,6 +70,7 @@ const RegisterWrapper = styled.div`
   justify-content: center;
   background: #f0f0f0;
   margin-top: 90px;
+  padding: 50px 0;
 `
 
 const RegisterContainer = styled.div`
