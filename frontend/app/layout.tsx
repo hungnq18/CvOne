@@ -5,6 +5,8 @@ import "./globals.css"
 import { Header } from "@/components/ui/header"
 import { Footer } from "@/components/ui/footer"
 import { GlobalProvider } from "@/providers/global-provider"
+import { Toaster } from "@/components/ui/toaster"
+import StyledComponentsRegistry from '@/lib/registry'
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -21,13 +23,16 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <GlobalProvider>
-          <div className="flex min-h-screen flex-col">
-            <Header />
-            <main className="flex-1">{children}</main>
-            <Footer />
-          </div>
-        </GlobalProvider>
+        <StyledComponentsRegistry>
+          <GlobalProvider>
+            <div className="flex min-h-screen flex-col">
+              <Header />
+              <main className="flex-1">{children}</main>
+              <Footer />
+            </div>
+            <Toaster />
+          </GlobalProvider>
+        </StyledComponentsRegistry>
       </body>
     </html>
   )
