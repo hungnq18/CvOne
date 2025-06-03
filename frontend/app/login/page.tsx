@@ -26,6 +26,7 @@ const translations = {
     emailRequired: "Email is required",
     passwordRequired: "Password is required",
     loading: "Loading...",
+    networkError: "Network error. Please check your connection.",
   },
   vi: {
     title: "Đăng nhập",
@@ -41,6 +42,7 @@ const translations = {
     emailRequired: "Email là bắt buộc",
     passwordRequired: "Mật khẩu là bắt buộc",
     loading: "Đang tải...",
+    networkError: "Lỗi kết nối. Vui lòng kiểm tra kết nối của bạn.",
   },
 }
 
@@ -228,8 +230,25 @@ export default function LoginPage() {
     setIsMounted(true)
   }, [])
 
+  const validateForm = () => {
+    if (!loginInput.trim()) {
+      setMessage(t.emailRequired)
+      return false
+    }
+    if (!password.trim()) {
+      setMessage(t.passwordRequired)
+      return false
+    }
+    return true
+  }
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    
+    if (!validateForm()) {
+      return
+    }
+
     setIsLoading(true)
     setMessage("")
 
@@ -240,14 +259,27 @@ export default function LoginPage() {
         title: t.loginSuccess,
         description: t.loginSuccess,
       })
-      setTimeout(() => router.push("/dashboard"), 1000)
-    } catch (error) {
-      setMessage(t.loginFailed)
-      toast({
-        title: t.loginFailed,
-        description: t.invalidCredentials,
-        variant: "destructive",
-      })
+      // Redirect after successful login
+      router.push("/")
+    } catch (error: any) {
+      console.error('Login error:', error)
+      
+      // Handle different types of errors
+      if (error.message === 'Failed to fetch') {
+        setMessage(t.networkError)
+        toast({
+          title: t.loginFailed,
+          description: t.networkError,
+          variant: "destructive",
+        })
+      } else {
+        setMessage(error.message || t.invalidCredentials)
+        toast({
+          title: t.loginFailed,
+          description: error.message || t.invalidCredentials,
+          variant: "destructive",
+        })
+      }
     } finally {
       setIsLoading(false)
     }
@@ -284,6 +316,7 @@ export default function LoginPage() {
                 onChange={(e) => setLoginInput(e.target.value)}
                 placeholder={t.emailPlaceholder}
                 required
+                disabled={isLoading}
               />
             </div>
             <PasswordWrapper>
@@ -295,6 +328,7 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder={t.passwordPlaceholder}
                 required
+                disabled={isLoading}
               />
               <EyeIcon onClick={() => setShowPassword(!showPassword)} style={{ marginTop: "2.5%" }}>
                 {showPassword ? <FaEyeSlash size={20} /> : <FaEye size={20} />}

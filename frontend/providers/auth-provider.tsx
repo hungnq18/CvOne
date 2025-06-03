@@ -21,7 +21,8 @@ export const AuthContext = createContext<AuthContextType>({
   logout: () => {},
 })
 
-const API_URL = 'http://localhost:8000'
+// Update API URL to match your NestJS backend
+const API_URL = 'http://localhost:8000/api'
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
@@ -56,10 +57,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Access-Control-Allow-Origin': '*'
+          'Accept': 'application/json'
         },
-        mode: 'cors',
         credentials: 'include',
         body: JSON.stringify({ email, password })
       })
@@ -96,10 +95,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Access-Control-Allow-Origin': '*'
+          'Accept': 'application/json'
         },
-        mode: 'cors',
         credentials: 'include',
         body: JSON.stringify({ name, email, password })
       })
