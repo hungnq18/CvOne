@@ -92,7 +92,7 @@ const CLTemplatePage: React.FC = () => {
                     <button
                         onClick={() => setViewMode('recommended')}
                         className={`w-40 h-12 rounded-lg border font-medium transition-all duration-200 text-base shadow-sm
-      ${viewMode === 'recommended'
+                                ${viewMode === 'recommended'
                                 ? 'bg-blue-600 text-white border-blue-600 hover:bg-blue-700'
                                 : 'bg-blue-50 text-blue-600 border-blue-600 hover:bg-blue-100'}
     `}

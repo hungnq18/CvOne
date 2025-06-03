@@ -80,7 +80,7 @@ const navigationItems = {
       name: "CV",
     href: "/CVtemplate",
       dropdownItems: [
-        { name: "CV Templates", href: "/cv/templates" },
+        { name: "CV Templates", href: "/cvTemplate" },
         { name: "CV Examples", href: "/cv/examples" },
         { name: "CV Tips", href: "/cv/tips" },
       ],
@@ -92,6 +92,14 @@ const navigationItems = {
         { name: "Cover Letter Templates", href: "/clTemplate" },
         { name: "Cover Letter Examples", href: "/cover-letter/examples" },
         { name: "Cover Letter Tips", href: "/cover-letter/tips" },
+      ],
+    },
+    {
+      name: "Job",
+      href: "/jobPage",
+      dropdownItems: [
+        { name: "Job List", href: "/jobPage" },
+        { name: "Job Tips", href: "/jobPage/tips" },
       ],
     },
   ],
@@ -118,7 +126,7 @@ const navigationItems = {
       name: "CV",
       href: "/cvTemplate",
       dropdownItems: [
-        { name: "Mẫu CV", href: "/cv/templates" },
+        { name: "Mẫu CV", href: "/cvTemplate" },
         { name: "Ví dụ CV", href: "/cv/examples" },
         { name: "Mẹo về CV", href: "/cv/tips" },
       ],
@@ -127,9 +135,18 @@ const navigationItems = {
       name: "Thư ngỏ",
       href: "/cover-letter",
       dropdownItems: [
-        { name: "Mẫu Thư ngỏ", href: "/cover-letter/templates" },
+        { name: "Mẫu Thư ngỏ", href: "/clTemplate" },
         { name: "Ví dụ Thư ngỏ", href: "/cover-letter/examples" },
         { name: "Mẹo về Thư ngỏ", href: "/cover-letter/tips" },
+      ],
+    },
+    {
+      name: "Công việc",
+      href: "/listJob",
+      dropdownItems: [
+        { name: "Mẫu Công việc", href: "/listJob" },
+        { name: "Ví dụ Công việc", href: "/listJob/examples" },
+        { name: "Mẹo về Công việc", href: "/listJob/tips" },
       ],
     },
   ],
