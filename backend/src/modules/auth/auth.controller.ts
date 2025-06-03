@@ -1,4 +1,10 @@
-import { Body, Controller, Post, UnauthorizedException, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Post,
+  UnauthorizedException,
+  UseGuards,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { comparePassword } from '../../utils/bcrypt.utils';
@@ -15,13 +21,13 @@ export class AuthController {
     private readonly jwtService: JwtService,
   ) {}
 
-  @Post('register')//register 
+  @Post('register') //register
   async register(@Body() createAccountDto: CreateAccountDto) {
     const account = await this.accountsService.register(createAccountDto);
     return generateJwtToken(this.jwtService, account);
   }
 
-  @Post('login')//login
+  @Post('login') //login
   async login(@Body() loginDto: LoginDto) {
     const { email, password } = loginDto;
 
@@ -32,7 +38,7 @@ export class AuthController {
     }
 
     // Check if email is verified
-    if (!account.isEmailVerified) {
+    if (!account.isVerified) {
       throw new UnauthorizedException('Email not verified');
     }
 
