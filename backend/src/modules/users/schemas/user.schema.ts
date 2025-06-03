@@ -7,23 +7,24 @@ export type UserDocument = User & Document;
 export class User {
   _id: Types.ObjectId;
 
+  @Prop({ type: Types.ObjectId, required: true, ref: 'Account' })
+  account_id: Types.ObjectId;
+
   @Prop({ required: true })
-  name: string;
+  first_name: string;
 
-  @Prop({ required: true, unique: true })
-  email: string;
-
-  @Prop()
-  phone?: string;
+  @Prop({ required: true })
+  last_name: string;
 
   @Prop()
-  address?: string;
+  phone: string;
 
-  @Prop({ type: Types.ObjectId, ref: 'Account' })
-  accountId: Types.ObjectId;
+  @Prop()
+  city: string;
 
-  @Prop({ default: Date.now })
-  createdAt: Date;
+  @Prop()
+  country: string;
 }
 
-export const UserSchema = SchemaFactory.createForClass(User); 
+export const UserSchema = SchemaFactory.createForClass(User);
+
