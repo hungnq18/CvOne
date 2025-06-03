@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
-import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { ChevronDown } from "lucide-react";
-import logo from "../../public/logo/logoCVOne.svg";
-import styled from "styled-components";
 import { useLanguage } from "@/providers/global-provider";
+import { ChevronDown } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import styled from "styled-components";
+import logo from "../../public/logo/logoCVOne.svg";
 
 // Styled components for animations
 const MenuLink = styled(Link)`
@@ -78,7 +78,7 @@ const navigationItems = {
     },
     {
       name: "CV",
-      href: "/cvTemplate",
+    href: "/CVtemplate",
       dropdownItems: [
         { name: "CV Templates", href: "/cv/templates" },
         { name: "CV Examples", href: "/cv/examples" },
@@ -116,7 +116,7 @@ const navigationItems = {
     },
     {
       name: "CV",
-      href: "/cv",
+      href: "/CVTemplate",
       dropdownItems: [
         { name: "Mẫu CV", href: "/cv/templates" },
         { name: "Ví dụ CV", href: "/cv/examples" },
