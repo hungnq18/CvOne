@@ -5,6 +5,7 @@ import { User, UserDocument } from './schemas/user.schema';
 import { AccountsService } from '../accounts/accounts.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 
+
 @Injectable()
 export class UsersService {
   constructor(
@@ -68,3 +69,4 @@ export class UsersService {
     return updatedUser;
   }
 }
+
