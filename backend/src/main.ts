@@ -1,3 +1,11 @@
+/*
+author: HungNQ
+date: 2025-03-06
+  The main entry point for the NestJS application.
+  It initializes the application, sets up CORS, validation pipes, and starts the server.
+  This file is responsible for bootstrapping the application and configuring global settings.
+*/
+
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import * as dotenv from 'dotenv';
@@ -19,7 +27,10 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe({
     whitelist: true, // Strip properties that don't have decorators
     transform: true, // Transform payloads to DTO instances
-    forbidNonWhitelisted: true, // Throw errors if non-whitelisted properties are present
+    forbidNonWhitelisted: false, // Don't throw errors for non-whitelisted properties
+    transformOptions: {
+      enableImplicitConversion: true,
+    },
   }));
 
   // Global prefix for all routes
