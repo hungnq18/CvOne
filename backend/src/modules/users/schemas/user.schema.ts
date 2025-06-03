@@ -7,7 +7,7 @@ export type UserDocument = User & Document;
 export class User {
   _id: Types.ObjectId;
 
-  @Prop({ required: true })
+  @Prop({ type: Types.ObjectId, required: true, ref: 'Account' })
   account_id: Types.ObjectId;
 
   @Prop({ required: true })
@@ -24,9 +24,6 @@ export class User {
 
   @Prop()
   country: string;
-
-  @Prop({ default: Date.now })
-  createdAt: Date;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

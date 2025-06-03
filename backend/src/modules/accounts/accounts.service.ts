@@ -1,4 +1,8 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import * as crypto from 'crypto';
 import { Model } from 'mongoose';
@@ -82,4 +86,4 @@ export class AccountsService {
   async findByEmail(email: string): Promise<Account | null> {
     return this.accountModel.findOne({ email }).exec();
   }
-} 
+}
