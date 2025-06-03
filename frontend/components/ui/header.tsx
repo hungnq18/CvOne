@@ -116,7 +116,7 @@ const navigationItems = {
     },
     {
       name: "CV",
-      href: "/CVTemplate",
+      href: "/cvTemplate",
       dropdownItems: [
         { name: "Mẫu CV", href: "/cv/templates" },
         { name: "Ví dụ CV", href: "/cv/examples" },
