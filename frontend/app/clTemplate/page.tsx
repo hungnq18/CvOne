@@ -6,24 +6,24 @@ import HeaderSection from '@/components/sections/header-pageclTemplate-section';
 const cvTemplates = [
     {
         id: 1,
-        imageUrl: '/template-cv/0e5fda43-6a21-439c-9148-7780278cba2c.jpg',
+        imageUrl: 'https://th.bing.com/th/id/OIP.GdDZiF0OCgYG8FQ7_yoxUwHaKi?rs=1&pid=ImgDetMain',
         title: 'Modern CV Template',
         isRecommended: true,
     },
     {
         id: 2,
-        imageUrl: '/template-cv/0e5fda43-6a21-439c-9148-7780278cba2c.jpg',
+        imageUrl: 'https://cdn1.vieclam24h.vn/images/assets/img/cv6-246b81.png',
         title: 'Professional CV Template',
         isRecommended: true,
     },
     {
         id: 3,
-        imageUrl: '/template-cv/0e5fda43-6a21-439c-9148-7780278cba2c.jpg',
+        imageUrl: 'https://th.bing.com/th/id/OIP.GdDZiF0OCgYG8FQ7_yoxUwHaKi?rs=1&pid=ImgDetMain',
         title: 'Creative CV Template',
     },
     {
         id: 4,
-        imageUrl: '/template-cv/0e5fda43-6a21-439c-9148-7780278cba2c.jpg',
+        imageUrl: 'https://cdn1.vieclam24h.vn/images/assets/img/cv6-246b81.png',
         title: 'Minimalist CV Template',
     },
 ];

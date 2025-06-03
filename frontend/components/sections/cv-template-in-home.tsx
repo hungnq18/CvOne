@@ -16,22 +16,22 @@ type CVTemplate = {
 const cvTemplates: CVTemplate[] = [
     {
         id: 1,
-        imageUrl: '/template-cv/0e5fda43-6a21-439c-9148-7780278cba2c.jpg',
+        imageUrl: 'https://th.bing.com/th/id/OIP.GdDZiF0OCgYG8FQ7_yoxUwHaKi?rs=1&pid=ImgDetMain',
         title: { en: 'Professional CV', vi: 'CV Chuyên nghiệp' },
     },
     {
         id: 2,
-        imageUrl: '/template-cv/5a1f59f9-039f-4014-b152-e7c339653484.jpg',
+        imageUrl: 'https://cdn1.vieclam24h.vn/images/assets/img/cv6-246b81.png',
         title: { en: 'Modern CV', vi: 'CV Hiện đại' },
     },
     {
         id: 3,
-        imageUrl: '/template-cv/6fc2f7d0-d7a5-4242-9ab4-067f70bb6e18.jpg',
+        imageUrl: 'https://th.bing.com/th/id/OIP.GdDZiF0OCgYG8FQ7_yoxUwHaKi?rs=1&pid=ImgDetMain',
         title: { en: 'Creative CV', vi: 'CV Sáng tạo' },
     },
     {
         id: 4,
-        imageUrl: '/template-cv/8cd58203-d63c-49b5-b226-87cc6cdadc3a.jpg',
+        imageUrl: 'https://cdn1.vieclam24h.vn/images/assets/img/cv6-246b81.png',
         title: { en: 'Minimalist CV', vi: 'CV Tối giản' },
     },
 ];

@@ -37,7 +37,7 @@ export function HeroSection() {
   };
 
   return (
-    <section className="bg-gradient-to-r from-blue-100 to-white py-32 mt-20 min-h-[80vh]">
+    <section className="bg-gradient-to-r from-blue-100 to-white py-32 min-h-[80vh]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col md:flex-row items-center justify-between gap-12">
           <div className="md:w-1/2 text-left">
@@ -71,7 +71,7 @@ export function HeroSection() {
           >
             <div className="relative rounded-lg shadow-xl overflow-hidden">
               <Image
-                src="/homeIMG.png"
+                src="https://cv.timviec.com.vn/images/cv/ccv-online-41.jpg"
                 alt="Home Image"
                 width={1000}
                 height={500}
