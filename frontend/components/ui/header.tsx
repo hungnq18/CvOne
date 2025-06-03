@@ -1,13 +1,13 @@
 "use client";
-
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { useLanguage } from "@/providers/global-provider";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import styled from "styled-components";
-
+import logo from "../../public/logo/logoCVOne.svg";
 // Styled components for animations
 const MenuLink = styled(Link)`
   position: relative;
@@ -194,8 +194,8 @@ export function Header() {
     <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b">
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
-          <Link href="/" className="flex items-center">
-            <span className="text-xl font-bold text-[#058ac3]">CV One</span>
+          <Link href="/" className="flex items-center mr-8">
+            <Image src={logo} alt="CV One Logo" width={100} height={35} className="h-auto" />
           </Link>
 
           <nav className="hidden md:flex items-center space-x-4">

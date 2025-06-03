@@ -1,6 +1,5 @@
 import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { AccountsService } from './accounts.service';
-import { CreateAccountDto } from './dto/create-account.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 
 @Controller('accounts')
@@ -15,10 +14,5 @@ export class AccountsController {
   @Get('verify-email/:token')
   async verifyEmail(@Param('token') token: string) {
     return this.accountsService.verifyEmail(token);
-  }
-
-  @Post('register')
-  async register(@Body() createAccountDto: CreateAccountDto) {
-    return this.accountsService.register(createAccountDto);
   }
 } 
