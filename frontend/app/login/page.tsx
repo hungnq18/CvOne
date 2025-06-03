@@ -6,7 +6,7 @@ import { useLanguage } from "@/providers/global-provider"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import React, { useState } from "react"
+import React, { useEffect, useState } from "react"
 import { FaEye, FaEyeSlash } from "react-icons/fa"
 import styled from "styled-components"
 import logoImg from "../../public/logo/logoCVOne.svg"
@@ -23,6 +23,9 @@ const translations = {
     loginSuccess: "Login successful!",
     loginFailed: "Login failed",
     invalidCredentials: "Invalid credentials",
+    emailRequired: "Email is required",
+    passwordRequired: "Password is required",
+    loading: "Loading...",
   },
   vi: {
     title: "Đăng nhập",
@@ -35,8 +38,11 @@ const translations = {
     loginSuccess: "Đăng nhập thành công!",
     loginFailed: "Đăng nhập thất bại",
     invalidCredentials: "Thông tin đăng nhập không chính xác",
+    emailRequired: "Email là bắt buộc",
+    passwordRequired: "Mật khẩu là bắt buộc",
+    loading: "Đang tải...",
   },
-};
+}
 
 const LoginWrapper = styled.div`
   min-height: 100vh;
@@ -125,6 +131,15 @@ const Input = styled.input`
   outline: none;
   transition: border 0.2s;
   width: 100%;
+
+  &:focus {
+    border-color: #058ac3;
+  }
+
+  &:disabled {
+    background-color: #f5f5f5;
+    cursor: not-allowed;
+  }
 `
 
 const PasswordWrapper = styled.div`
@@ -154,14 +169,25 @@ const SubmitButton = styled.button`
   letter-spacing: 1px;
   cursor: pointer;
   box-shadow: 0 2px 8px rgba(46,204,64,0.10);
-  transition: background 0.2s;
+  transition: all 0.2s;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(46,204,64,0.15);
+  }
+
+  &:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
 `
 
-const Message = styled.div<{ $success?: boolean }>`
-  color: ${({ $success }) => ($success ? '#0681be' : 'red')};
-  min-height: 24px;
-  text-align: center;
-  font-weight: 500;
+const ErrorMessage = styled.div`
+  color: #dc2626;
+  font-size: 14px;
+  margin-top: 4px;
 `
 
 const RegisterLink = styled.div`
@@ -178,17 +204,29 @@ const RegisterLink = styled.div`
   }
 `
 
+const Message = styled.div<{ $success?: boolean }>`
+  color: ${({ $success }) => ($success ? '#15803d' : '#dc2626')};
+  font-size: 14px;
+  margin-top: 4px;
+  text-align: center;
+`
+
 export default function LoginPage() {
   const [loginInput, setLoginInput] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [message, setMessage] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [isMounted, setIsMounted] = useState(false)
   const { login } = useAuth()
   const { toast } = useToast()
   const router = useRouter()
   const { language } = useLanguage()
   const t = translations[language]
+
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -196,9 +234,6 @@ export default function LoginPage() {
     setMessage("")
 
     try {
-      const isEmail = /@gmail\.com$/.test(loginInput)
-      const body = isEmail ? { email: loginInput, password } : { username: loginInput, password }
-      
       await login(loginInput, password)
       setMessage(t.loginSuccess)
       toast({
@@ -216,6 +251,11 @@ export default function LoginPage() {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  // Prevent hydration mismatch by not rendering until mounted
+  if (!isMounted) {
+    return null
   }
 
   return (
@@ -256,7 +296,7 @@ export default function LoginPage() {
                 placeholder={t.passwordPlaceholder}
                 required
               />
-              <EyeIcon onClick={() => setShowPassword(!showPassword)} style={{marginTop: "2.5%"}}>
+              <EyeIcon onClick={() => setShowPassword(!showPassword)} style={{ marginTop: "2.5%" }}>
                 {showPassword ? <FaEyeSlash size={20} /> : <FaEye size={20} />}
               </EyeIcon>
             </PasswordWrapper>

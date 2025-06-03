@@ -1,12 +1,13 @@
-import type React from "react"
-import type { Metadata } from "next"
-import { Inter } from "next/font/google"
-import "./globals.css"
-import { Header } from "@/components/ui/header"
 import { Footer } from "@/components/ui/footer"
-import { GlobalProvider } from "@/providers/global-provider"
+import { Header } from "@/components/ui/header"
 import { Toaster } from "@/components/ui/toaster"
 import StyledComponentsRegistry from '@/lib/registry'
+import { AuthProvider } from "@/providers/auth-provider"
+import { GlobalProvider } from "@/providers/global-provider"
+import type { Metadata } from "next"
+import { Inter } from "next/font/google"
+import type React from "react"
+import "./globals.css"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -25,12 +26,14 @@ export default function RootLayout({
       <body className={inter.className}>
         <StyledComponentsRegistry>
           <GlobalProvider>
-            <div className="flex min-h-screen flex-col">
-              <Header />
-              <main className="flex-1">{children}</main>
-              <Footer />
-            </div>
-            <Toaster />
+            <AuthProvider>
+              <div className="flex min-h-screen flex-col">
+                <Header />
+                <main className="flex-1">{children}</main>
+                <Footer />
+              </div>
+              <Toaster />
+            </AuthProvider>
           </GlobalProvider>
         </StyledComponentsRegistry>
       </body>
