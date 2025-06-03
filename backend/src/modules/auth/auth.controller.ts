@@ -32,7 +32,7 @@ export class AuthController {
     }
 
     // Check if email is verified
-    if (!account.isEmailVerified) {
+    if (!account.isVerified) {
       throw new UnauthorizedException('Email not verified');
     }
 

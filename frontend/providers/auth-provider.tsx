@@ -21,11 +21,15 @@ export const AuthContext = createContext<AuthContextType>({
   logout: () => {},
 })
 
+const API_URL = 'http://localhost:8000'
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [isMounted, setIsMounted] = useState(false)
 
   useEffect(() => {
+    setIsMounted(true)
     // Check if user is logged in on initial load
     const token = localStorage.getItem("token")
     const userData = localStorage.getItem("user")
@@ -44,32 +48,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const login = async (email: string, password: string) => {
-    // This is a mock implementation. Replace with your actual API call
     try {
-      // Example API call:
-      // const response = await fetch('/api/auth/login', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ email, password }),
-      // })
-      // const data = await response.json()
-      // if (!response.ok) throw new Error(data.message)
+      console.log('Attempting login with:', { email, password })
+      console.log('API URL:', `${API_URL}/auth/login`)
 
-      // Mock successful response 
-      const mockResponse = {
-        token: "mock-jwt-token",
-        user: {
-          id: "1",
-          name: "Test User",
-          email,
+      const response = await fetch(`${API_URL}/auth/login`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Access-Control-Allow-Origin': '*'
         },
+        mode: 'cors',
+        credentials: 'include',
+        body: JSON.stringify({ email, password })
+      })
+      
+      console.log('Response status:', response.status)
+      console.log('Response headers:', Object.fromEntries(response.headers.entries()))
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Login failed' }))
+        console.error('Login error:', errorData)
+        throw new Error(errorData.message || 'Login failed')
       }
 
+      const data = await response.json()
+      console.log('Login successful:', data)
+      
       // Save token and user data
-      localStorage.setItem("token", mockResponse.token)
-      localStorage.setItem("user", JSON.stringify(mockResponse.user))
+      localStorage.setItem("token", data.token)
+      localStorage.setItem("user", JSON.stringify(data.user))
 
-      setUser(mockResponse.user)
+      setUser(data.user)
     } catch (error) {
       console.error("Login failed", error)
       throw error
@@ -77,32 +88,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const register = async (name: string, email: string, password: string) => {
-    // This is a mock implementation. Replace with your actual API call
     try {
-      // Example API call:
-      // const response = await fetch('/api/auth/register', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ name, email, password }),
-      // })
-      // const data = await response.json()
-      // if (!response.ok) throw new Error(data.message)
+      console.log('Attempting registration with:', { name, email, password })
+      console.log('API URL:', `${API_URL}/auth/register`)
 
-      // Mock successful response
-      const mockResponse = {
-        token: "mock-jwt-token",
-        user: {
-          id: "1",
-          name,
-          email,
+      const response = await fetch(`${API_URL}/auth/register`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Access-Control-Allow-Origin': '*'
         },
+        mode: 'cors',
+        credentials: 'include',
+        body: JSON.stringify({ name, email, password })
+      })
+      
+      console.log('Response status:', response.status)
+      console.log('Response headers:', Object.fromEntries(response.headers.entries()))
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Registration failed' }))
+        console.error('Registration error:', errorData)
+        throw new Error(errorData.message || 'Registration failed')
       }
 
+      const data = await response.json()
+      console.log('Registration successful:', data)
+      
       // Save token and user data
-      localStorage.setItem("token", mockResponse.token)
-      localStorage.setItem("user", JSON.stringify(mockResponse.user))
+      localStorage.setItem("token", data.token)
+      localStorage.setItem("user", JSON.stringify(data.user))
 
-      setUser(mockResponse.user)
+      setUser(data.user)
     } catch (error) {
       console.error("Registration failed", error)
       throw error
@@ -115,5 +133,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null)
   }
 
-  return <AuthContext.Provider value={{ user, isLoading, login, register, logout }}>{children}</AuthContext.Provider>
+  // Prevent hydration mismatch by not rendering until mounted
+  if (!isMounted) {
+    return null
+  }
+
+  return (
+    <AuthContext.Provider value={{ user, isLoading, login, register, logout }}>
+      {children}
+    </AuthContext.Provider>
+  )
 }

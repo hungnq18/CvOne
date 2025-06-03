@@ -1,14 +1,13 @@
 "use client";
-
-import { useState, useEffect } from "react";
-import Link from "next/link";
-import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { ChevronDown } from "lucide-react";
-import logo from "../../public/logo/logoCVOne.svg";
-import styled from "styled-components";
+import { useAuth } from "@/hooks/use-auth";
 import { useLanguage } from "@/providers/global-provider";
-
+import Image from "next/image";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
+import styled from "styled-components";
+import logo from "../../public/logo/logoCVOne.svg";
 // Styled components for animations
 const MenuLink = styled(Link)`
   position: relative;
@@ -78,7 +77,7 @@ const navigationItems = {
     },
     {
       name: "CV",
-      href: "/cvTemplate",
+    href: "/cvTemplate",
       dropdownItems: [
         { name: "CV Templates", href: "/cvTemplate" },
         { name: "CV Examples", href: "/cv/examples" },
@@ -124,7 +123,7 @@ const navigationItems = {
     },
     {
       name: "CV",
-      href: "/cv",
+      href: "/cvTemplate",
       dropdownItems: [
         { name: "Mẫu CV", href: "/cvTemplate" },
         { name: "Ví dụ CV", href: "/cv/examples" },
@@ -154,170 +153,92 @@ const navigationItems = {
 
 const languages = [
   { code: 'en', name: 'English', flag: '🇺🇸' },
-  { code: 'vi', name: 'Tiếng Việt', flag: '🇻🇳' }
+  { code: 'vi', name: 'Tiếng Việt', flag: '��🇳' }
 ] as const;
 
+const StyledLink = styled(Link)`
+  &.nav-link {
+    color: #333;
+    text-decoration: none;
+    transition: color 0.2s;
+    
+    &:hover {
+      color: #058ac3;
+    }
+  }
+`
+
+const navItems = [
+  { href: "/tools", label: "Tools" },
+  { href: "/resume", label: "Resume" },
+  { href: "/cvTemplate", label: "CV" },
+  { href: "/clTemplate", label: "Cover Letter" },
+  { href: "/jobPage", label: "Job" },
+]
+
 export function Header() {
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
-  const [showLanguageDropdown, setShowLanguageDropdown] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+  const pathname = usePathname();
+  const { user, logout } = useAuth();
   const { language, setLanguage } = useLanguage();
 
   useEffect(() => {
-    const handleScroll = () => {
-      if (window.scrollY > 0) {
-        setIsScrolled(true);
-      } else {
-        setIsScrolled(false);
-      }
-    };
-
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as HTMLElement;
-      if (!target.closest('.language-switcher')) {
-        setShowLanguageDropdown(false);
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    document.addEventListener('click', handleClickOutside);
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      document.removeEventListener('click', handleClickOutside);
-    };
+    setIsMounted(true);
   }, []);
 
-  const handleLanguageSelect = (langCode: 'en' | 'vi') => {
-    setLanguage(langCode);
-    setShowLanguageDropdown(false);
-  };
-
-  const currentLanguage = languages.find(lang => lang.code === language);
+  if (!isMounted) {
+    return null;
+  }
 
   return (
-    <header
-      className="fixed top-0 left-0 right-0 z-50 bg-white transition-all duration-300"
-      style={{
-        boxShadow: isScrolled ? "0 2px 10px rgba(0, 0, 0, 0.1)" : "none",
-        lineHeight: "40px",
-        padding: "20px 100px 10px 100px",
-      }}
-    >
+    <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b">
       <div className="container mx-auto px-4">
-        <div className="flex h-16 items-center">
-          {/* Logo */}
+        <div className="flex h-16 items-center justify-between">
           <Link href="/" className="flex items-center mr-8">
             <Image src={logo} alt="CV One Logo" width={100} height={35} className="h-auto" />
           </Link>
 
-          {/* Navigation */}
-          <nav className="hidden md:flex items-center flex-1">
-            {navigationItems[language].map((item) => (
-              <div
-                key={item.name}
-                className="relative group"
-                onMouseEnter={() => setActiveDropdown(item.name)}
-                onMouseLeave={() => setActiveDropdown(null)}
+          <nav className="hidden md:flex items-center space-x-4">
+            {navItems.map((item) => (
+              <StyledLink
+                key={item.href}
+                href={item.href}
+                className={`nav-link px-4 py-2 inline-flex items-center text-[15px] ${
+                  pathname === item.href ? "text-[#058ac3]" : ""
+                }`}
               >
-                <MenuLink
-                  href={item.href}
-                  className={`nav-link px-4 py-2 inline-flex items-center text-[15px] font-medium transition-all duration-200
-                    ${activeDropdown === item.name
-                      ? 'text-blue-600'
-                      : 'text-gray-700 hover:text-blue-600'}`}
-                >
-                  {item.name}
-                </MenuLink>
-
-                {/* Dropdown Menu */}
-                <div
-                  className={`absolute left-0 mt-0 w-64 bg-white shadow-lg border border-gray-100 transition-all duration-200 origin-top-left
-                    ${activeDropdown === item.name
-                      ? 'opacity-100 scale-100 translate-y-0'
-                      : 'opacity-0 scale-95 -translate-y-2 pointer-events-none'}`}
-                >
-                  <div className="py-2">
-                    {item.dropdownItems?.map((dropdownItem) => (
-                      <Link
-                        key={dropdownItem.name}
-                        href={dropdownItem.href}
-                        className="block px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 transition-colors duration-150"
-                      >
-                        {dropdownItem.name}
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              </div>
+                {item.label}
+              </StyledLink>
             ))}
           </nav>
 
-          {/* Auth and Language Buttons */}
-          <div className="flex items-center ml-auto gap-4">
-            {/* Language Switcher */}
-            <div className="relative language-switcher">
-              <button
-                onClick={() => setShowLanguageDropdown(!showLanguageDropdown)}
-                className="flex items-center justify-center gap-2 px-3 border-gray-200 hover:border-blue-600 transition-colors"
-              >
-                <span>{currentLanguage?.flag}</span>
-                <ChevronDown
-                  className={`w-4 h-4 transition-transform duration-200 
-                    ${showLanguageDropdown ? 'rotate-180' : ''}`}
-                />
-              </button>
-
-              {/* Language Dropdown */}
-              <div
-                className={`absolute right-0 mt-2 w-40 bg-white shadow-lg border border-gray-100 rounded-md transition-all duration-200 origin-top-right
-                  ${showLanguageDropdown
-                    ? 'opacity-100 scale-100 translate-y-0'
-                    : 'opacity-0 scale-95 -translate-y-2 pointer-events-none'}`}
-              >
-                <div className="py-2">
-                  {languages.map((lang) => (
-                    <button
-                      key={lang.code}
-                      onClick={() => handleLanguageSelect(lang.code)}
-                      className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors duration-150 flex items-center gap-2
-                        ${language === lang.code ? 'text-blue-600 bg-blue-50' : 'text-gray-700'}`}
-                    >
-                      <span>{lang.flag}</span>
-                      <span>{lang.name}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
+          <div className="flex items-center space-x-4">
+            <div>
+              {user ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="font-medium"
+                  onClick={logout}
+                >
+                  Logout
+                </Button>
+              ) : (
+                <Link href="/login">
+                  <Button variant="outline" size="sm" className="font-medium">
+                    Login
+                  </Button>
+                </Link>
+              )}
             </div>
-
-            <Link href="/login" className="relative overflow-hidden">
-              <AnimatedButton
-                variant="outline"
-                size="sm"
-                className="font-medium border-2 border-blue-600 text-blue-600 bg-transparent hover:text-white transition-all duration-300"
-              >
-                {language === 'en' ? 'Login' : 'Đăng nhập'}
-              </AnimatedButton>
-            </Link>
-          </div>
-
-          {/* Mobile Menu Button */}
-          <button className="md:hidden p-2 ml-4 hover:bg-gray-100 rounded-lg transition-colors duration-200">
-            <svg
-              className="h-6 w-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setLanguage(language === "en" ? "vi" : "en")}
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 6h16M4 12h16M4 18h16"
-              />
-            </svg>
-          </button>
+              {language === "en" ? "VI" : "EN"}
+            </Button>
+          </div>
         </div>
       </div>
     </header>
