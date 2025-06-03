@@ -87,7 +87,7 @@ const navigationItems = {
     },
     {
       name: "Cover Letter",
-      href: "/cover-letter",
+      href: "/clTemplate",
       dropdownItems: [
         { name: "Cover Letter Templates", href: "/clTemplate" },
         { name: "Cover Letter Examples", href: "/cover-letter/examples" },

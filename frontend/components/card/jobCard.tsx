@@ -48,7 +48,7 @@ const JobCard: React.FC<JobCardProps> = ({ job }) => {
                         <span className={`text-white text-xs px-2 py-1 rounded ${getAccentColor(job.company)}`}>
                             Xem chi tiết
                         </span>
-                        <span className="text-green-500">❤️</span>
+                        {/* <span className="text-green-500">❤️</span> */}
                     </div>
                 </div>
             </div>
