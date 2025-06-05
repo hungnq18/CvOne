@@ -1,3 +1,11 @@
+/* 
+author: HungNQ
+date: 2025-03-06
+  The MailService is responsible for sending verification emails to users.
+  It uses nodemailer to create a transporter and send emails with a verification link.
+  The service retrieves configuration values from the ConfigService for email settings.
+  MAIL_HOST, MAIL_PORT, MAIL_USER, MAIL_PASS, and MAIL_FROM are expected to be set in the environment variables.
+*/
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';

@@ -14,6 +14,7 @@ import { CreateAccountDto } from '../accounts/dto/create-account.dto';
 import { LoginDto } from '../accounts/dto/login.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RolesGuard } from './guards/roles.guard';
+
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -24,10 +25,14 @@ export class AuthController {
   @Post('register') //register
   async register(@Body() createAccountDto: CreateAccountDto) {
     const account = await this.accountsService.register(createAccountDto);
-    return generateJwtToken(this.jwtService, account);
+    return {
+      message: 'Registration successful. Please verify your email to complete the registration.',
+      email: account.email
+    };
   }
 
   @Post('login') //login
+
   async login(@Body() loginDto: LoginDto) {
     const { email, password } = loginDto;
 
@@ -38,8 +43,8 @@ export class AuthController {
     }
 
     // Check if email is verified
-    if (!account.isVerified) {
-      throw new UnauthorizedException('Email not verified');
+    if (!account.isEmailVerified) {
+      throw new UnauthorizedException('Please verify your email before logging in');
     }
 
     // Verify password
