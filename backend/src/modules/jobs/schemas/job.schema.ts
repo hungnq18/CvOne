@@ -5,8 +5,6 @@ export type JobDocument = Job & Document;
 
 @Schema({ timestamps: true })
 export class Job {
-  _id: Types.ObjectId;
-
   @Prop({ required: true })
   title: string;
 
@@ -29,7 +27,7 @@ export class Job {
   @Prop({ required: true })
   location: string;
 
-  @Prop({ type: [String] })
+  @Prop({ type: [String], default: [] })
   benefits: string[];
 
   @Prop({ type: Types.ObjectId, required: true, ref: 'Company' })
@@ -37,12 +35,6 @@ export class Job {
 
   @Prop({ type: Types.ObjectId, required: true, ref: 'Category' })
   category_id: Types.ObjectId;
-
-  @Prop({ default: Date.now })
-  createdAt: Date;
-
-  @Prop({ default: Date.now })
-  updatedAt: Date;
 }
 
 export const JobSchema = SchemaFactory.createForClass(Job);
