@@ -6,7 +6,7 @@ export type AccountDocument = Account & Document;
 @Schema({ timestamps: true })
 export class Account {
   _id: Types.ObjectId;
-  
+
   @Prop({ required: true, unique: true })
   email: string;
 
@@ -24,9 +24,6 @@ export class Account {
 
   @Prop({ type: Date, nullable: true })
   emailVerificationTokenExpires: Date | null;
-
-  @Prop({ default: false })
-  isVerified: boolean;
 
   @Prop()
   refreshToken?: string;
