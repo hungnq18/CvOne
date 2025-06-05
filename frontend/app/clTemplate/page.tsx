@@ -1,6 +1,6 @@
 import { Typography } from 'antd';
-import TemplateSection from '@/components/sections/pageCLTemplate-section';
-import HeaderSection from '@/components/sections/header-pageclTemplate-section';
+import TemplateCLSection from '@/components/sections/pageCLTemplate-section';
+import HeaderCLSection from '@/components/sections/header-pageclTemplate-section';
 
 // Dữ liệu mẫu nhúng trực tiếp
 const cvTemplates = [
@@ -32,8 +32,8 @@ export default function CLTemplatePage() {
     return (
         <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white py-12 sm:py-16">
             <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
-                <HeaderSection />
-                <TemplateSection cvTemplates={cvTemplates} />
+                <HeaderCLSection />
+                <TemplateCLSection cvTemplates={cvTemplates} />
             </div>
         </div>
     );

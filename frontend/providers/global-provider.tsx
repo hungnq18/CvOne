@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 type Language = 'en' | 'vi';
 
@@ -44,4 +44,6 @@ export function useGlobal() {
 export function useLanguage() {
   const { language, setLanguage } = useGlobal();
   return { language, setLanguage };
-} 
+}
+
+
