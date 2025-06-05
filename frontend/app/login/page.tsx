@@ -1,50 +1,13 @@
 "use client"
 
-import { useToast } from "@/components/ui/use-toast"
-import { useAuth } from "@/hooks/use-auth"
-import { useLanguage } from "@/providers/global-provider"
 import Image from "next/image"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
-import React, { useEffect, useState } from "react"
+import React from "react"
 import { FaEye, FaEyeSlash } from "react-icons/fa"
+import { FcGoogle } from "react-icons/fc"
 import styled from "styled-components"
 import logoImg from "../../public/logo/logoCVOne.svg"
-
-const translations = {
-  en: {
-    title: "Login",
-    emailPlaceholder: "Email or username",
-    password: "Password",
-    passwordPlaceholder: "Enter your password",
-    loginButton: "Sign In",
-    noAccount: "Don't have an account?",
-    registerLink: "Register now",
-    loginSuccess: "Login successful!",
-    loginFailed: "Login failed",
-    invalidCredentials: "Invalid credentials",
-    emailRequired: "Email is required",
-    passwordRequired: "Password is required",
-    loading: "Loading...",
-    networkError: "Network error. Please check your connection.",
-  },
-  vi: {
-    title: "Đăng nhập",
-    emailPlaceholder: "Email hoặc tên đăng nhập",
-    password: "Mật khẩu",
-    passwordPlaceholder: "Nhập mật khẩu của bạn",
-    loginButton: "Đăng nhập",
-    noAccount: "Chưa có tài khoản?",
-    registerLink: "Đăng ký ngay",
-    loginSuccess: "Đăng nhập thành công!",
-    loginFailed: "Đăng nhập thất bại",
-    invalidCredentials: "Thông tin đăng nhập không chính xác",
-    emailRequired: "Email là bắt buộc",
-    passwordRequired: "Mật khẩu là bắt buộc",
-    loading: "Đang tải...",
-    networkError: "Lỗi kết nối. Vui lòng kiểm tra kết nối của bạn.",
-  },
-}
+import { useLoginForm } from "@/components/sections/use-login-form"
 
 const LoginWrapper = styled.div`
   min-height: 100vh;
@@ -206,89 +169,66 @@ const RegisterLink = styled.div`
   }
 `
 
-const Message = styled.div<{ $success?: boolean }>`
-  color: ${({ $success }) => ($success ? '#15803d' : '#dc2626')};
-  font-size: 14px;
-  margin-top: 4px;
+const GoogleButton = styled.button`
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #d0d7de;
+  background: white;
+  color: #24292f;
+  font-weight: 500;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    background: #f6f8fa;
+    border-color: #babfc4;
+  }
+
+  &:disabled {
+    background: #f5f5f5;
+    cursor: not-allowed;
+  }
+`
+
+const Divider = styled.div`
+  display: flex;
+  align-items: center;
   text-align: center;
+  margin: 20px 0;
+  
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid #d0d7de;
+  }
+
+  span {
+    margin: 0 10px;
+    color: #57606a;
+    font-size: 14px;
+    font-weight: 500;
+  }
 `
 
 export default function LoginPage() {
-  const [loginInput, setLoginInput] = useState("")
-  const [password, setPassword] = useState("")
-  const [showPassword, setShowPassword] = useState(false)
-  const [message, setMessage] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-  const [isMounted, setIsMounted] = useState(false)
-  const { login } = useAuth()
-  const { toast } = useToast()
-  const router = useRouter()
-  const { language } = useLanguage()
-  const t = translations[language]
-
-  useEffect(() => {
-    setIsMounted(true)
-  }, [])
-
-  const validateForm = () => {
-    if (!loginInput.trim()) {
-      setMessage(t.emailRequired)
-      return false
-    }
-    if (!password.trim()) {
-      setMessage(t.passwordRequired)
-      return false
-    }
-    return true
-  }
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    
-    if (!validateForm()) {
-      return
-    }
-
-    setIsLoading(true)
-    setMessage("")
-
-    try {
-      await login(loginInput, password)
-      setMessage(t.loginSuccess)
-      toast({
-        title: t.loginSuccess,
-        description: t.loginSuccess,
-      })
-      // Redirect after successful login
-      router.push("/")
-    } catch (error: any) {
-      console.error('Login error:', error)
-      
-      // Handle different types of errors
-      if (error.message === 'Failed to fetch') {
-        setMessage(t.networkError)
-        toast({
-          title: t.loginFailed,
-          description: t.networkError,
-          variant: "destructive",
-        })
-      } else {
-        setMessage(error.message || t.invalidCredentials)
-        toast({
-          title: t.loginFailed,
-          description: error.message || t.invalidCredentials,
-          variant: "destructive",
-        })
-      }
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  // Prevent hydration mismatch by not rendering until mounted
-  if (!isMounted) {
-    return null
-  }
+  const {
+    formData,
+    showPassword,
+    error,
+    isLoading,
+    t,
+    handleInputChange,
+    handleSubmit,
+    handleGoogleLogin,
+    setShowPassword
+  } = useLoginForm()
 
   return (
     <LoginWrapper>
@@ -299,7 +239,7 @@ export default function LoginPage() {
               src={logoImg} 
               alt="Logo" 
               fill
-              style={{ objectFit: 'contain' }}
+              style={{ objectFit: "contain" }}
               priority
             />
           </ImageWrapper>
@@ -307,45 +247,59 @@ export default function LoginPage() {
         <FormSide>
           <LoginForm onSubmit={handleSubmit}>
             <Title>{t.title}</Title>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <Label>Email / Username</Label>
+
+            <div>
+              <Label>{t.email}</Label>
               <Input
                 type="text"
-                id="loginInput"
-                value={loginInput}
-                onChange={(e) => setLoginInput(e.target.value)}
+                id="email"
                 placeholder={t.emailPlaceholder}
-                required
+                value={formData.email}
+                onChange={handleInputChange}
                 disabled={isLoading}
               />
             </div>
+
             <PasswordWrapper>
               <Label>{t.password}</Label>
               <Input
                 type={showPassword ? "text" : "password"}
                 id="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
                 placeholder={t.passwordPlaceholder}
-                required
+                value={formData.password}
+                onChange={handleInputChange}
                 disabled={isLoading}
               />
-              <EyeIcon onClick={() => setShowPassword(!showPassword)} style={{ marginTop: "2.5%" }}>
-                {showPassword ? <FaEyeSlash size={20} /> : <FaEye size={20} />}
+              <EyeIcon onClick={() => setShowPassword(!showPassword)} style={{ marginTop: "3%" }}>
+                {showPassword ? <FaEyeSlash /> : <FaEye />}
               </EyeIcon>
             </PasswordWrapper>
-            <Message $success={message === t.loginSuccess}>{message}</Message>
+
+            {error && <ErrorMessage>{error}</ErrorMessage>}
+
             <SubmitButton type="submit" disabled={isLoading}>
-              {isLoading ? (
-                <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto" />
-              ) : (
-                t.loginButton
-              )}
+              {isLoading ? t.loading : t.loginButton}
             </SubmitButton>
+
             <RegisterLink>
               <span>{t.noAccount}</span>
               <Link href="/register">{t.registerLink}</Link>
             </RegisterLink>
+
+            <Divider>
+              <span>{t.or}</span>
+            </Divider>
+            
+            <GoogleButton
+              type="button"
+              onClick={handleGoogleLogin}
+              disabled={isLoading}
+              style={{ marginTop: -20 }}
+            >
+              <FcGoogle size={20} />
+              {t.googleButton}
+            </GoogleButton>
+
           </LoginForm>
         </FormSide>
       </LoginContainer>

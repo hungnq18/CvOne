@@ -1,24 +1,30 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Inject,
+  Injectable,
+  NotFoundException,
+  forwardRef
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import * as crypto from 'crypto';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { hashPassword } from '../../utils/bcrypt.utils';
 import { MailService } from '../mail/mail.service';
 import { UsersService } from '../users/users.service';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 import { Account, AccountDocument } from './schemas/account.schema';
-
+// ...existing code...
 @Injectable()
 export class AccountsService {
   constructor(
-    @InjectModel(Account.name) private accountModel: Model<AccountDocument>,
-    private mailService: MailService,
-    private usersService: UsersService,
-  ) {}
+  @InjectModel(Account.name) private accountModel: Model<AccountDocument>,
+  private mailService: MailService,
+  @Inject(forwardRef(() => UsersService)) private usersService: UsersService, // Sửa ở đây
+) {}
 
   async register(createAccountDto: CreateAccountDto): Promise<Account> {
-    const { email, password, name, phone, address } = createAccountDto;
+    const { first_name, last_name, email, password, city, phone, country } = createAccountDto;
 
     // Check if account already exists
     const existingAccount = await this.accountModel.findOne({ email });
@@ -39,14 +45,14 @@ export class AccountsService {
     await newAccount.save();
 
     // Create user profile
-    await this.usersService.create({
-      name,
-      email,
-      phone,
-      address,
-      accountId: newAccount._id,
-    });
-
+await this.usersService.createUser({
+  first_name,
+  last_name,
+  phone: phone ?? 0,
+  city: city ?? '',
+  country: country ?? '',
+  account_id: newAccount._id as Types.ObjectId, // Đúng tên trường và đúng kiểu
+});
     return newAccount;
   }
 
@@ -100,4 +106,4 @@ export class AccountsService {
   async findByEmail(email: string): Promise<Account | null> {
     return this.accountModel.findOne({ email }).exec();
   }
-} 
+}

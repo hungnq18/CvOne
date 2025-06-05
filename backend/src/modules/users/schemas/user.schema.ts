@@ -5,25 +5,24 @@ export type UserDocument = User & Document;
 
 @Schema({ timestamps: true })
 export class User {
-  _id: Types.ObjectId;
+
+  @Prop({ type: Types.ObjectId, required: true, ref: 'Account' })
+  account_id: Types.ObjectId;
 
   @Prop({ required: true })
-  name: string;
+  first_name: string; // Sửa String -> string
 
-  @Prop({ required: true, unique: true })
-  email: string;
+  @Prop({ required: true })
+  last_name: string; // Sửa String -> string
+
+  @Prop({ required: true })
+  phone: number; // Thêm required nếu muốn bắt buộc
 
   @Prop()
-  phone?: string;
+  city: string; // Sửa String -> string
 
   @Prop()
-  address?: string;
-
-  @Prop({ type: Types.ObjectId, ref: 'Account' })
-  accountId: Types.ObjectId;
-
-  @Prop({ default: Date.now })
-  createdAt: Date;
+  country: string; // Sửa String -> string
 }
 
-export const UserSchema = SchemaFactory.createForClass(User); 
+export const UserSchema = SchemaFactory.createForClass(User);
