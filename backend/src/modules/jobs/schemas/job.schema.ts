@@ -11,30 +11,43 @@ export class Job {
   @Prop({ required: true })
   description: string;
 
-  @Prop({
-    required: true,
-    enum: ['draft', 'published', 'closed'],
-    default: 'draft',
-  })
-  status: string;
+  @Prop({ required: true })
+  role: string;
 
   @Prop({ required: true })
-  requirement: string;
+  workType: string;
+  @Prop({ required: true })
+  postingDate: Date;
 
   @Prop({ required: true })
-  income: string;
+  experience: string;
+
+  @Prop({ required: true })
+  qualifications: string;
+
+  @Prop({ required: true })
+  salaryRange: string;
 
   @Prop({ required: true })
   location: string;
 
-  @Prop({ type: [String], default: [] })
-  benefits: string[];
+  @Prop({ required: true })
+  country: string;
 
-  @Prop({ type: Types.ObjectId, required: true, ref: 'Company' })
+  @Prop({ required: true })
+  benefits: Array<string>;
+
+  @Prop({ required: true })
+  skills: string;
+
+  @Prop({ required: true })
+  responsibilities: string;
+
+  @Prop({ required: true })
   company_id: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, required: true, ref: 'Category' })
-  category_id: Types.ObjectId;
+  @Prop({ required: true })
+  account_id: Types.ObjectId;
 }
 
 export const JobSchema = SchemaFactory.createForClass(Job);
