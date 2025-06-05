@@ -9,7 +9,6 @@ date: 2025-03-06
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
-
 @Injectable()
 export class MailService {
   private transporter: nodemailer.Transporter;

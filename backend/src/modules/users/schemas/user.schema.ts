@@ -9,20 +9,19 @@ export class User {
   account_id: Types.ObjectId;
 
   @Prop({ required: true })
-  first_name: string;
+  first_name: string; // Sửa String -> string
 
   @Prop({ required: true })
-  last_name: string;
+  last_name: string; // Sửa String -> string
+
+  @Prop({ required: true })
+  phone: number; // Thêm required nếu muốn bắt buộc
 
   @Prop()
-  phone: string;
+  city: string; // Sửa String -> string
 
   @Prop()
-  city: string;
-
-  @Prop()
-  country: string;
+  country: string; // Sửa String -> string
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
-

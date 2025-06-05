@@ -86,9 +86,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const register = async (name: string, email: string, password: string) => {
+  const register = async (name: string, email: string, password: string, phone?: string, address?: string) => {
     try {
-      console.log('Attempting registration with:', { name, email, password })
+      console.log('Attempting registration with:', { name, email, password, phone, address })
       console.log('API URL:', `${API_URL}/auth/register`)
 
       const response = await fetch(`${API_URL}/auth/register`, {

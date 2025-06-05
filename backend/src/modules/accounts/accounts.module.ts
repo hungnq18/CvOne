@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { MailModule } from '../mail/mail.module';
 import { UsersModule } from '../users/users.module';
@@ -9,8 +9,9 @@ import { Account, AccountSchema } from './schemas/account.schema';
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: Account.name, schema: AccountSchema }]),
-    MailModule,
-    UsersModule,
+    
+     forwardRef(() => UsersModule),
+     forwardRef(() => MailModule), // Sửa ở đây
   ],
   controllers: [AccountsController],
   providers: [AccountsService],

@@ -10,23 +10,33 @@ export class CreateAccountDto {
   @IsString()
   @IsNotEmpty()
   @ApiProperty()
-  name: string;
-
+  first_name: string;
+ 
+  @IsString()
+  @IsNotEmpty()
+  @ApiProperty()
+  last_name: string;
+  
   @IsString()
   @IsNotEmpty()
   @MinLength(6)
   @ApiProperty()
   password: string;
 
-  @IsString()
   @IsOptional()
   @Transform(({ value }) => value || undefined)
   @ApiProperty()
-  phone?: string;
+  phone?: number;
 
   @IsString()
   @IsOptional()
   @Transform(({ value }) => value || undefined)
   @ApiProperty()
-  address?: string;
+  country?: string;
+
+   @IsString()
+  @IsOptional()
+  @Transform(({ value }) => value || undefined)
+  @ApiProperty()
+  city?: string;
 } 

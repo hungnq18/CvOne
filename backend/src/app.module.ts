@@ -3,9 +3,11 @@ import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AccountsModule } from './modules/accounts/accounts.module';
 import { AuthModule } from './modules/auth/auth.module';
-import { UsersModule } from './modules/users/users.module';
+import { CvTemplateModule } from './modules/cv-template/cv-template.module';
 import { JobsModule } from './modules/jobs/jobs.module';
 import { MailModule } from './modules/mail/mail.module';
+import { UsersModule } from './modules/users/users.module';
+
 
 @Module({
   imports: [
@@ -18,8 +20,8 @@ import { MailModule } from './modules/mail/mail.module';
     AuthModule,
     MailModule,
     UsersModule,
+    CvTemplateModule,
     JobsModule,
-
   ],
 })
 export class AppModule {}
