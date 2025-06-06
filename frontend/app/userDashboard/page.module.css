@@ -1,0 +1,78 @@
+@import url('https://fonts.googleapis.com/css2?family=Geist&display=swap');
+
+.animated-button {
+  -webkit-tap-highlight-color: transparent;
+  appearance: none;
+  outline: none;
+  border: none;
+  cursor: pointer;
+  background-image: linear-gradient(to bottom right, #6BBFFB, #8591FF, #D293F2);
+  font-family: 'Geist', sans-serif;
+  font-size: 16px;
+  line-height: 24px;
+  color: white;
+  position: relative;
+  border-radius: 10px;
+  box-shadow: 0px 0px 0.5px 0.5px rgba(0, 0, 0, 0.3) inset,
+              0px 4px 12px -3px rgba(147, 146, 253, 0.95),
+              0px 8px 20px 0 rgba(147, 146, 253, 0.2);
+  --alternative-gradient-opacity: 0;
+  overflow: hidden;
+}
+
+.animated-button:before {
+  content: '';
+  position: absolute;
+  inset: 1px;
+  box-shadow: 0 0 0 0.5px rgba(255, 255, 255, .7) inset;
+  mix-blend-mode: overlay;
+  filter: blur(0.25px);
+  border-radius: 9px;
+  z-index: 1;
+}
+
+.animated-button:after {
+  content: '';
+  border-radius: inherit;
+  position: absolute;
+  inset: 0;
+  opacity: var(--alternative-gradient-opacity);
+  background-image: linear-gradient(96deg, #F2CBFE, #57C3F9);
+  box-shadow: 0px 0px 0.5px 0.5px rgba(0, 0, 0, 0.3) inset;
+}
+
+.animated-button > span {
+  display: block;
+  padding: 10px 24px;
+  position: relative;
+  z-index: 1;
+  --button-glow-1-scale: .8;
+  --button-glow-1-opacity: 0;
+  --button-glow-1-blur: 0px;
+  --button-glow-2-scale: .8;
+  --button-glow-2-opacity: 0;
+  --button-glow-2-blur: 0px;
+}
+
+.animated-button span:before,
+.animated-button span:after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 10px;
+  z-index: -1;
+}
+
+.animated-button span:before {
+  box-shadow: 0 0 0 3px #bc96ee;
+  transform: scale(var(--button-glow-1-scale)) translateZ(0);
+  opacity: var(--button-glow-1-opacity);
+  filter: blur(var(--button-glow-1-blur));
+}
+
+.animated-button span:after {
+  box-shadow: 0 0 0 3px #80b9f5;
+  transform: scale(var(--button-glow-2-scale)) translateZ(0);
+  opacity: var(--button-glow-2-opacity);
+  filter: blur(var(--button-glow-2-blur));
+}

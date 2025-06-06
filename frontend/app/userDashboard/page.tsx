@@ -3,6 +3,8 @@ import AppliedJobs from '@/components/ui/applyJob';
 import SuggestedJobs from '@/components/ui/SuggestedJobs';
 import FavoriteJobs from '@/components/ui/FavoriteJobs';
 import CVList from '@/components/ui/cvList';
+import styles from './page.module.css';
+
 
 export interface Job {
   id: number;
@@ -92,7 +94,7 @@ export default function Home() {
   ];
 
   return (
-    <div className="min-h-screen bg-white py-12 px-4 sm:px-6 lg:px-8 mt-16">
+    <div className="min-h-screen bg-white py-12 px-4 sm:px-6 lg:px-8 mt-10">
       <div className="max-w-7xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Cột bên trái: ProfileProgress và ảnh CV */}

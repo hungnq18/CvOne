@@ -4,26 +4,41 @@ import React, { useRef, useState, useEffect } from 'react';
 import { Card } from 'antd';
 import { FaHeart, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import { Job } from '@/app/userDashboard/page';
+import { useLanguage } from '@/providers/global-provider';
+
+const translations = {
+    vi: {
+        favoriteJobs: "Các công việc ưa thích",
+        company: "Công ty",
+        description: "Mô tả",
+    },
+    en: {
+        favoriteJobs: "Favorite Jobs",
+        company: "Company",
+        description: "Description",
+    }
+};
 
 interface FavoriteJobsProps {
     jobs: Job[];
 }
 
 const FavoriteJobs: React.FC<FavoriteJobsProps> = ({ jobs }) => {
+    const { language } = useLanguage();
+    const t = translations[language];
+
     const scrollRef = useRef<HTMLDivElement>(null);
     const [showLeft, setShowLeft] = useState(false);
     const [showRight, setShowRight] = useState(false);
 
-    // Hàm kiểm tra vị trí cuộn
     const checkScrollPosition = () => {
         if (scrollRef.current) {
             const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
-            setShowLeft(scrollLeft > 0); // Hiển thị nút "Trái" nếu đã cuộn sang phải
-            setShowRight(scrollLeft < scrollWidth - clientWidth - 1); // Hiển thị nút "Phải" nếu còn nội dung để cuộn
+            setShowLeft(scrollLeft > 0);
+            setShowRight(scrollLeft < scrollWidth - clientWidth - 1);
         }
     };
 
-    // Theo dõi vị trí cuộn
     useEffect(() => {
         checkScrollPosition();
         if (scrollRef.current) {
@@ -36,7 +51,6 @@ const FavoriteJobs: React.FC<FavoriteJobsProps> = ({ jobs }) => {
         };
     }, [jobs]);
 
-    // Hàm cuộn nội dung
     const scroll = (direction: 'left' | 'right') => {
         if (scrollRef.current) {
             const scrollAmount = direction === 'left' ? -300 : 300;
@@ -45,10 +59,10 @@ const FavoriteJobs: React.FC<FavoriteJobsProps> = ({ jobs }) => {
     };
 
     return (
-        <div className="bg-gradient-to-r from-blue-50 to-green-50 p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 relative">
+        <div className="bg-gradient-to-r from-blue-100 to-white p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 relative">
             <div className="flex items-center mb-4">
                 <FaHeart className="text-blue-600 mr-2" />
-                <h2 className="text-xl font-semibold text-blue-600">Các công việc ưa thích</h2>
+                <h2 className="text-xl font-semibold text-blue-600">{t.favoriteJobs}</h2>
             </div>
             <div className="flex space-x-4 overflow-x-auto scroll-smooth" ref={scrollRef}>
                 {jobs.map((job) => (
@@ -57,8 +71,8 @@ const FavoriteJobs: React.FC<FavoriteJobsProps> = ({ jobs }) => {
                         className="bg-white rounded-lg shadow-sm hover:bg-blue-50 transition-colors duration-200 min-w-[250px]"
                     >
                         <h3 className="text-md font-medium text-gray-900">{job.title}</h3>
-                        <p className="text-sm text-gray-700">{job.company}</p>
-                        <p className="text-xs text-gray-600 mt-1">{job.description}</p>
+                        <p className="text-sm text-gray-700">{t.company}: {job.company}</p>
+                        <p className="text-xs text-gray-600 mt-1">{t.description}: {job.description}</p>
                     </Card>
                 ))}
             </div>

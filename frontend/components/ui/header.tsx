@@ -77,7 +77,7 @@ const navigationItems = {
     },
     {
       name: "CV",
-    href: "/cvTemplate",
+      href: "/cvTemplate",
       dropdownItems: [
         { name: "CV Templates", href: "/cvTemplate" },
         { name: "CV Examples", href: "/cv/examples" },
@@ -199,15 +199,14 @@ export function Header() {
           </Link>
 
           <nav className="hidden md:flex items-center space-x-4">
-            {navItems.map((item) => (
+            {navigationItems[language].map((item) => (
               <StyledLink
                 key={item.href}
                 href={item.href}
-                className={`nav-link px-4 py-2 inline-flex items-center text-[15px] ${
-                  pathname === item.href ? "text-[#058ac3]" : ""
-                }`}
+                className={`nav-link px-4 py-2 inline-flex items-center text-[15px] ${pathname === item.href ? "text-[#058ac3]" : ""
+                  }`}
               >
-                {item.label}
+                {item.name}
               </StyledLink>
             ))}
           </nav>
