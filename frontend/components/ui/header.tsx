@@ -1,4 +1,5 @@
 "use client";
+
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { useLanguage } from "@/providers/global-provider";
@@ -163,30 +164,21 @@ const navigationItems = {
         href: "/userDashboard",
       },
       {
-        name: "My Resume",
-        href: "/resume",
+        name: "My Documents",
+        href: "/myDocuments",
         dropdownItems: [
-          { name: "My Resume", href: "/myResume" },
-          { name: "Resume Templates", href: "/resume" },
-          { name: "Resume Tips", href: "/resume/tips" },
+          { name: "My Resume Templates", href: "/myDocuments" },
+          { name: "My CV Templates", href: "/myDocuments" },
+          { name: "My Cover Letter Templates", href: "/myDocuments" },
         ],
       },
       {
-        name: "CV",
-        href: "/cvTemplate",
+        name: "Templates",
+        href: "/templates",
         dropdownItems: [
-          { name: "My CV", href: "/myCV" },
+          { name: "Resume Templates", href: "/cvTemplate" },
           { name: "CV Templates", href: "/cvTemplate" },
-          { name: "CV Tips", href: "/cv/tips" },
-        ],
-      },
-      {
-        name: "CL",
-        href: "/clTemplate",
-        dropdownItems: [
-          { name: "My CL", href: "/myCL" },
-          { name: "CL Templates", href: "/clTemplate" },
-          { name: "CL Tips", href: "/cl/tips" },
+          { name: "Cover Letter Templates", href: "/clTemplate" },
         ],
       },
       {
@@ -267,34 +259,29 @@ const navigationItems = {
       },
       {
         name: "Hồ sơ của tôi",
-        href: "/resume",
+        href: "/myDocuments",
         dropdownItems: [
-          { name: "Hồ sơ của tôi", href: "/myResume" },
-          { name: "Mẫu Hồ sơ", href: "/resume" },
-          { name: "Mẹo về Hồ sơ", href: "/resume/tips" },
+          { name: "Hồ sơ của tôi", href: "/myDocuments" },
+          { name: "CV của tôi", href: "/myDocuments" },
+          { name: "Thư ngỏ của tôi", href: "/myDocuments" },
         ],
       },
       {
-        name: "CV",
-        href: "/cvTemplate",
+        name: "Mẫu",
+        href: "/templates",
         dropdownItems: [
-          { name: "CV của tôi", href: "/myCV" },
+          { name: "Mẫu Hồ sơ", href: "/cvTemplate" },
           { name: "Mẫu CV", href: "/cvTemplate" },
-          { name: "Mẹo về CV", href: "/cv/tips" },
-        ],
-      },
-      {
-        name: "Thư ngỏ",
-        href: "/clTemplate",
-        dropdownItems: [
-          { name: "Thư ngỏ của tôi", href: "/myCL" },
           { name: "Mẫu Thư ngỏ", href: "/clTemplate" },
-          { name: "Mẹo về Thư ngỏ", href: "/cl/tips" },
         ],
       },
       {
         name: "Công việc của tôi",
         href: "/user/jobs",
+      },
+      {
+        name: "Hồ sơ của tôi",
+        href: "/user/profile",
       },
       {
         name: "Hồ sơ của tôi",
