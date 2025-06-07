@@ -4,11 +4,20 @@ import { useToast } from "@/components/ui/use-toast"
 import { useLanguage } from "@/providers/global-provider"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
+import axios from "axios";
+import { jwtDecode } from "jwt-decode";
+import { DecodedToken } from "@/middleware";
 
 interface LoginFormData {
   email: string;
   password: string;
 }
+
+interface LoginResponse {
+  access_token: string;
+}
+
+const API_URL = "http://localhost:8000/api/auth";
 
 const translations = {
   en: {
@@ -59,7 +68,7 @@ export function useLoginForm() {
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
-  
+
   const { toast } = useToast()
   const router = useRouter()
   const { language } = useLanguage()
@@ -87,12 +96,44 @@ export function useLoginForm() {
   }
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    if (!validateForm()) return
+    e.preventDefault();
+    if (!validateForm()) return;
 
-    // Placeholder for login logic
-    console.log("Login with:", formData)
-  }
+    setIsLoading(true);
+    try {
+      const response = await axios.post<LoginResponse>(`${API_URL}/login`, formData, {
+        headers: { "Content-Type": "application/json" },
+      });
+
+      const { access_token } = response.data;
+
+      // Lưu token vào cookie
+      document.cookie = `token=${access_token}; path=/; max-age=3600`; // 1 giờ
+
+      // Decode token để lấy role
+      const decoded: DecodedToken = jwtDecode(access_token);
+
+      toast({
+        title: t.loginSuccess,
+        description: `Welcome back, ${formData.email}!`,
+      });
+
+      if (decoded.role === "admin") {
+        router.push("/admin");
+      } else if (decoded.role === "user") {
+        router.push("/userDashboard");
+      } else if (decoded.role === "hr") {
+        router.push("/hr");
+      } else {
+        router.push("/error");
+      }
+
+    } catch (err: any) {
+
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleGoogleLogin = () => {
     // Placeholder for Google login logic

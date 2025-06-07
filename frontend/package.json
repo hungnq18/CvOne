@@ -41,6 +41,7 @@
     "@types/styled-components": "^5.1.34",
     "antd": "^5.25.4",
     "autoprefixer": "^10.4.20",
+    "axios": "^1.9.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "1.0.4",
@@ -50,6 +51,7 @@
     "framer-motion": "^12.15.0",
     "gsap": "^3.13.0",
     "input-otp": "1.4.1",
+    "jwt-decode": "^4.0.0",
     "lucide-react": "^0.454.0",
     "next": "15.2.4",
     "next-auth": "^4.24.7",
@@ -69,6 +71,8 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
+    "@types/axios": "^0.9.36",
+    "@types/jwt-decode": "^2.2.1",
     "@types/next": "^8.0.7",
     "@types/node": "^22",
     "@types/react": "^19.1.6",

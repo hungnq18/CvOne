@@ -1,37 +1,51 @@
-import { type NextRequest, NextResponse } from "next/server"
+import { type NextRequest, NextResponse } from "next/server";
+import { jwtDecode } from "jwt-decode";
 
-// Add paths that should be protected here
-const protectedPaths = ["/dashboard"]
+const protectedPaths = ["/dashboard", "/admin"];
+
+export interface DecodedToken {
+  exp: number;
+  role: string;
+}
 
 export function middleware(request: NextRequest) {
-  const token = request.cookies.get("token")?.value
-  const path = request.nextUrl.pathname
+  const token = request.cookies.get("token")?.value;
+  const path = request.nextUrl.pathname;
 
-  // Check if the path is protected and there's no token
   const isProtectedPath = protectedPaths.some(
-    (protectedPath) => path === protectedPath || path.startsWith(`${protectedPath}/`),
-  )
+    (protectedPath) => path === protectedPath || path.startsWith(`${protectedPath}/`)
+  );
 
   if (isProtectedPath && !token) {
-    // Redirect to login page if trying to access protected route without token
-    const url = new URL("/login", request.url)
-    url.searchParams.set("callbackUrl", encodeURI(request.url))
-    return NextResponse.redirect(url)
+    const url = new URL("/login", request.url);
+    url.searchParams.set("callbackUrl", encodeURI(request.url));
+    return NextResponse.redirect(url);
   }
 
-  return NextResponse.next()
+  // Kiểm tra token hết hạn
+  if (token) {
+    try {
+      const decoded: DecodedToken = jwtDecode(token);
+      const currentTime = Math.floor(Date.now() / 1000);
+      if (decoded.exp < currentTime) {
+        // Token hết hạn, xóa cookie và redirect
+        const response = NextResponse.redirect(new URL("/login", request.url));
+        response.cookies.delete("token");
+        return response;
+      }
+    } catch (err) {
+      // Token không hợp lệ
+      const response = NextResponse.redirect(new URL("/login", request.url));
+      response.cookies.delete("token");
+      return response;
+    }
+  }
+
+  return NextResponse.next();
 }
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public folder
-     * - public files
-     */
     "/((?!_next/static|_next/image|favicon.ico|.*\\.png$).*)",
   ],
-}
+};
