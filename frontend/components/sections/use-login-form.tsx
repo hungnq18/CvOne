@@ -108,7 +108,7 @@ export function useLoginForm() {
       const { access_token } = response.data;
 
       // Lưu token vào cookie
-      document.cookie = `token=${access_token}; path=/; max-age=3600`; // 1 giờ
+      document.cookie = `token=${access_token}; path=/; max-age=3600; SameSite=Lax; Secure`;
 
       // Decode token để lấy role
       const decoded: DecodedToken = jwtDecode(access_token);
@@ -129,7 +129,10 @@ export function useLoginForm() {
       }
 
     } catch (err: any) {
-
+      const msg =
+        err?.response?.status === 401 ? t.invalidCredentials : t.networkError;
+      setError(msg);
+      toast({ title: t.loginFailed, description: msg, variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
