@@ -3,56 +3,110 @@ import { Table, Card, Row, Col, Dropdown, Menu, Button } from 'antd';
 import { FaFileAlt, FaPlus } from 'react-icons/fa';
 import { CV } from '@/app/myDocuments/page';
 import { DownOutlined } from '@ant-design/icons';
+import { useLanguage } from '@/providers/global-provider';
 
 interface CVListProps {
     cvList: CV[];
     viewMode: 'grid' | 'list';
 }
 
+const translations = {
+    en: {
+        title: 'CV List',
+        new: 'New CV',
+        status: {
+            final: 'Final',
+            draft: 'Draft'
+        },
+        actions: {
+            edit: 'Edit',
+            duplicate: 'Duplicate',
+            tailor: 'Tailor for a job',
+            download: 'Download',
+            delete: 'Delete'
+        },
+        fields: {
+            title: 'Title',
+            creation: 'Creation',
+            status: 'Status',
+            edited: 'Edited {hours} hours ago'
+        },
+        tip: 'TIP: Did you know that if you tailor your CV to the job description, you double your chances to get an interview?'
+    },
+    vi: {
+        title: 'Danh sách CV',
+        new: 'CV mới',
+        status: {
+            final: 'Hoàn thành',
+            draft: 'Bản nháp'
+        },
+        actions: {
+            edit: 'Chỉnh sửa',
+            duplicate: 'Nhân bản',
+            tailor: 'Điều chỉnh cho công việc',
+            download: 'Tải xuống',
+            delete: 'Xóa'
+        },
+        fields: {
+            title: 'Tiêu đề',
+            creation: 'Ngày tạo',
+            status: 'Trạng thái',
+            edited: 'Chỉnh sửa {hours} giờ trước'
+        },
+        tip: 'MẸO: Bạn có biết rằng nếu bạn điều chỉnh CV của mình theo mô tả công việc, bạn sẽ tăng gấp đôi cơ hội được phỏng vấn?'
+    }
+};
+
 const CVList: React.FC<CVListProps> = ({ cvList, viewMode }) => {
+    const { language } = useLanguage();
+    const t = translations[language];
+
     const columns = [
         {
-            title: 'Image',
-            dataIndex: 'image',
-            key: 'image',
-            render: (text: string) => <img src={text} alt="CV preview" className="w-12 h-auto rounded" />,
-        },
-        {
-            title: 'Name',
+            title: t.fields.title,
             dataIndex: 'title',
             key: 'title',
             render: (text: string) => text || 'Untitled',
         },
         {
-            title: 'Creation',
+            title: t.fields.creation,
             dataIndex: 'create_at',
             key: 'create_at',
             render: (date: Date) => date.toLocaleDateString(),
         },
         {
-            title: 'Status',
+            title: t.fields.status,
             dataIndex: 'finalize',
             key: 'finalize',
-            render: (finalize: boolean) => (finalize ? 'Final' : 'Draft'),
+            render: (finalize: boolean) => t.status[finalize ? 'final' : 'draft'],
         },
     ];
 
     const menu = (cv: CV) => (
         <Menu>
-            <Menu.Item key="edit">Edit</Menu.Item>
-            <Menu.Item key="duplicate">Duplicate</Menu.Item>
-            <Menu.Item key="tailor">Tailor for a job</Menu.Item>
-            <Menu.Item key="download">Download</Menu.Item>
-            <Menu.Item key="delete">Delete</Menu.Item>
+            <Menu.Item key="edit">{t.actions.edit}</Menu.Item>
+            <Menu.Item key="duplicate">{t.actions.duplicate}</Menu.Item>
+            <Menu.Item key="tailor">{t.actions.tailor}</Menu.Item>
+            <Menu.Item key="download">{t.actions.download}</Menu.Item>
+            <Menu.Item key="delete">{t.actions.delete}</Menu.Item>
         </Menu>
     );
 
     if (viewMode === 'grid') {
         return (
             <div className="bg-white p-6 shadow-md hover:shadow-lg transition-shadow duration-300">
-                <div className="flex items-center mb-4">
-                    <FaFileAlt className="text-blue-600 mr-2" />
-                    <h2 className="text-xl font-semibold text-blue-600">Danh sách CV</h2>
+                <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center">
+                        <FaFileAlt className="text-blue-600 mr-2" />
+                        <h2 className="text-xl font-semibold text-blue-600">{t.title}</h2>
+                    </div>
+                    <Button
+                        type="primary"
+                        icon={<FaPlus />}
+                        className="bg-green-500 hover:bg-green-600 border-0 shadow-md hover:shadow-lg transition-all duration-300 flex items-center gap-2 px-4 py-2 rounded-lg"
+                    >
+                        {t.new}
+                    </Button>
                 </div>
                 <Row gutter={[16, 16]}>
                     {/* New Resume Card */}
@@ -67,11 +121,11 @@ const CVList: React.FC<CVListProps> = ({ cvList, viewMode }) => {
                                 shape="circle"
                                 icon={<FaPlus />}
                                 size="large"
-                                className="mb-4 bg-green-500 hover:bg-green-600"
+                                className="mb-4 bg-green-500 hover:bg-green-600 border-0 shadow-md hover:shadow-lg transition-all duration-300"
                             />
-                            <h3 className="text-lg font-semibold">New CV</h3>
+                            <h3 className="text-lg font-semibold">{t.new}</h3>
                             <p className="text-gray-600 text-sm">
-                                TIP: Did you know that if you tailor your CV to the job description, you double your chances to get an interview?
+                                {t.tip}
                             </p>
                         </Card>
                     </Col>
@@ -88,10 +142,10 @@ const CVList: React.FC<CVListProps> = ({ cvList, viewMode }) => {
                                         </Dropdown>
                                     </div>
                                 }
-                                extra={<span className="text-gray-500">Edited {Math.floor(Math.random() * 24)} hours ago</span>}
+                                extra={<span className="text-gray-500">{t.fields.edited.replace('{hours}', Math.floor(Math.random() * 24).toString())}</span>}
                             >
-                                <p>Created: {cv.create_at.toLocaleDateString()}</p>
-                                <p>Status: {cv.finalize ? 'Final' : 'Draft'}</p>
+                                <p>{t.fields.creation}: {cv.create_at.toLocaleDateString()}</p>
+                                <p>{t.fields.status}: {t.status[cv.finalize ? 'final' : 'draft']}</p>
                             </Card>
                         </Col>
                     ))}
@@ -101,10 +155,19 @@ const CVList: React.FC<CVListProps> = ({ cvList, viewMode }) => {
     }
 
     return (
-        <div className="bg-white p-6 shadow-md hover:shadow-lg transition-shadow duration-300">
-            <div className="flex items-center mb-4">
-                <FaFileAlt className="text-blue-600 mr-2" />
-                <h2 className="text-xl font-semibold text-blue-600">Danh sách CV</h2>
+        <div className="bg-white p-6 shadow-md">
+            <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center">
+                    <FaFileAlt className="text-blue-600 mr-2" />
+                    <h2 className="text-xl font-semibold text-blue-600">{t.title}</h2>
+                </div>
+                <Button
+                    type="primary"
+                    icon={<FaPlus />}
+                    className="bg-green-500 hover:bg-green-600 border-0 shadow-md hover:shadow-lg transition-all duration-300 flex items-center gap-2 px-4 py-2 rounded-lg"
+                >
+                    {t.new}
+                </Button>
             </div>
             <Table
                 dataSource={cvList}

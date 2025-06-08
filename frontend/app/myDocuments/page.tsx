@@ -4,6 +4,7 @@ import { Tabs } from 'antd';
 import CVList from '@/components/sections/listMyCV';
 import CoverLetterList from '@/components/sections/listMyCL';
 import '@/styles/myDocuments.css';
+import { useLanguage } from '@/providers/global-provider';
 
 export interface CV {
     _id: string;
@@ -45,10 +46,41 @@ export interface CoverLetter {
     updated_at?: Date;
 }
 
+const translations = {
+    en: {
+        tabs: {
+            cv: 'CV',
+            coverLetter: 'Cover Letters'
+        },
+        search: {
+            placeholder: 'Search'
+        },
+        viewMode: {
+            grid: 'Grid',
+            list: 'List'
+        }
+    },
+    vi: {
+        tabs: {
+            cv: 'CV',
+            coverLetter: 'Thư xin việc'
+        },
+        search: {
+            placeholder: 'Tìm kiếm'
+        },
+        viewMode: {
+            grid: 'Lưới',
+            list: 'Danh sách'
+        }
+    }
+};
+
 export default function Page() {
     const [activeTab, setActiveTab] = useState('1');
     const [searchValue, setSearchValue] = useState('');
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+    const { language } = useLanguage();
+    const t = translations[language];
 
     const cvList: CV[] = [
         {
@@ -103,13 +135,8 @@ export default function Page() {
         },
     ];
 
-    const onTabChange = (key: string) => {
-        setActiveTab(key);
-    };
-
-    const onSearch = (value: string) => {
-        setSearchValue(value);
-    };
+    const onTabChange = (key: string) => setActiveTab(key);
+    const onSearch = (value: string) => setSearchValue(value);
 
     const filteredCVList = cvList.filter(cv =>
         cv.title?.toLowerCase().includes(searchValue.toLowerCase()) ||
@@ -124,27 +151,21 @@ export default function Page() {
     const items = [
         {
             key: '1',
-            label: `CV (${filteredCVList.length})`,
+            label: `${t.tabs.cv} (${filteredCVList.length})`,
             children: null,
         },
         {
             key: '2',
-            label: `Cover Letters (${filteredCoverLetterList.length})`,
+            label: `${t.tabs.coverLetter} (${filteredCoverLetterList.length})`,
             children: null,
         },
     ];
 
     return (
-        <div
-            className="min-h-screen bg-gray-100 py-6 px-4 sm:px-6 lg:px-8 mt-16"
-            style={{
-                backgroundSize: 'cover',
-                backgroundPosition: 'bottom',
-            }}
-        >
+        <div className="min-h-screen py-6 px-4 sm:px-6 lg:px-8 mt-16">
             <div className="max-w-7xl mx-auto">
-                <div className="bg-white p-4 shadow-md mb-6">
-                    <div className="flex items-center justify-between gap-4">
+                <div className="p-2 mb-6">
+                    <div className="flex items-center justify-between gap-4 flex-wrap">
                         <Tabs
                             activeKey={activeTab}
                             onChange={onTabChange}
@@ -155,7 +176,7 @@ export default function Page() {
                             <div className="custom-search">
                                 <input
                                     type="text"
-                                    placeholder="Search"
+                                    placeholder={t.search.placeholder}
                                     value={searchValue}
                                     onChange={(e) => setSearchValue(e.target.value)}
                                 />
@@ -167,15 +188,16 @@ export default function Page() {
                             <select
                                 value={viewMode}
                                 onChange={(e) => setViewMode(e.target.value as 'grid' | 'list')}
-                                style={{ width: 100, height: 40, padding: '0 10px', border: '1px solid #d9d9d9', borderRadius: '4px' }}
+                                className="h-10 px-3 border border-gray-300 rounded"
                             >
-                                <option value="grid">Grid</option>
-                                <option value="list">List</option>
+                                <option value="grid">{t.viewMode.grid}</option>
+                                <option value="list">{t.viewMode.list}</option>
                             </select>
                         </div>
                     </div>
                 </div>
-                <div className="mt-4">
+
+                <div>
                     {activeTab === '1' && <CVList cvList={filteredCVList} viewMode={viewMode} />}
                     {activeTab === '2' && <CoverLetterList coverLetters={filteredCoverLetterList} viewMode={viewMode} />}
                 </div>
