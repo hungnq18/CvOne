@@ -17,12 +17,12 @@ const HeaderCLSection: React.FC = () => {
                 level={2}
                 className="text-blue-900 font-semibold text-3xl sm:text-4xl mb-3"
             >
-                {language === 'vi' ? 'Chọn Mẫu thư ngỏ Dành Cho Bạn' : 'Choose Your Cover Letter Template'}
+                {language === 'vi' ? 'Chọn Mẫu CV Dành Cho Bạn' : 'Choose Your CV Template'}
             </Typography.Title>
             <Typography.Paragraph className="text-gray-600 text-base sm:text-lg max-w-3xl mx-auto">
                 {language === 'vi'
-                    ? 'Khám phá bộ sưu tập mẫu thư ngỏ được thiết kế chuyên nghiệp để tạo ấn tượng mạnh mẽ với nhà tuyển dụng.'
-                    : 'Discover our collection of professionally designed Cover Letter templates to make a lasting impression on employers.'}
+                    ? 'Khám phá bộ sưu tập mẫu CV được thiết kế chuyên nghiệp để tạo ấn tượng mạnh mẽ với nhà tuyển dụng.'
+                    : 'Discover our collection of professionally designed CV templates to make a lasting impression on employers.'}
             </Typography.Paragraph>
         </motion.div>
     );
