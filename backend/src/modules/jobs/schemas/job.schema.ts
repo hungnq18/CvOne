@@ -1,5 +1,5 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
+import { Document, Types } from "mongoose";
 
 export type JobDocument = Job & Document;
 
@@ -43,11 +43,11 @@ export class Job {
   @Prop({ required: true })
   responsibilities: string;
 
-  @Prop({ required: true })
+  @Prop({})
   company_id: Types.ObjectId;
 
   @Prop({ required: true })
-  account_id: Types.ObjectId;
+  user_id: Types.ObjectId;
 }
 
 export const JobSchema = SchemaFactory.createForClass(Job);
