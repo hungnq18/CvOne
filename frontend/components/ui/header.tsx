@@ -183,7 +183,7 @@ const navigationItems = {
       },
       {
         name: "My Jobs",
-        href: "/user/jobs",
+        href: "/myJobs",
       },
       {
         name: "My Profile",

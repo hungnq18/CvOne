@@ -85,7 +85,6 @@ const CVList: React.FC<CVListProps> = ({ cvList, viewMode }) => {
     const menu = (cv: CV) => (
         <Menu>
             <Menu.Item key="edit">{t.actions.edit}</Menu.Item>
-            <Menu.Item key="duplicate">{t.actions.duplicate}</Menu.Item>
             <Menu.Item key="tailor">{t.actions.tailor}</Menu.Item>
             <Menu.Item key="download">{t.actions.download}</Menu.Item>
             <Menu.Item key="delete">{t.actions.delete}</Menu.Item>
@@ -110,10 +109,10 @@ const CVList: React.FC<CVListProps> = ({ cvList, viewMode }) => {
                 </div>
                 <Row gutter={[16, 16]}>
                     {/* New Resume Card */}
-                    <Col xs={24} sm={12} md={8} lg={6}>
+                    <Col xs={24} sm={12} md={8} lg={8}>
                         <Card
                             hoverable
-                            className="min-h-[300px] flex items-center justify-center bg-green-50 border border-green-200"
+                            className="min-h-[315px] flex items-center justify-center bg-green-50 border border-green-200"
                             bodyStyle={{ padding: '20px', textAlign: 'center' }}
                         >
                             <Button
@@ -130,22 +129,39 @@ const CVList: React.FC<CVListProps> = ({ cvList, viewMode }) => {
                         </Card>
                     </Col>
                     {cvList.map((cv) => (
-                        <Col key={cv._id} xs={24} sm={12} md={8} lg={6}>
-                            <Card
-                                hoverable
-                                cover={cv.image && <img alt="CV preview" src={cv.image} />}
-                                title={
-                                    <div className="flex justify-between items-center">
-                                        <span>{cv.title || 'Untitled'}</span>
-                                        <Dropdown overlay={menu(cv)} trigger={['click']}>
-                                            <Button type="link" icon={<DownOutlined />} />
-                                        </Dropdown>
+                        <Col key={cv._id} xs={24} sm={12} md={8} lg={8}>
+                            <Card hoverable>
+                                <div className="flex">
+                                    {/* Hình ảnh bên trái */}
+                                    {cv.image && (
+                                        <img
+                                            alt="CV preview"
+                                            src={cv.image}
+                                            className="w-29 h-29 object-cover rounded mr-4"
+                                        />
+                                    )}
+
+                                    {/* Nội dung bên phải */}
+                                    <div className="flex-1">
+                                        {/* Tiêu đề và dropdown */}
+                                        <div className="flex justify-between items-center mb-2">
+                                            <span className="font-semibold text-lg">{cv.title || 'Untitled'}</span>
+                                            <Dropdown overlay={menu(cv)} trigger={['click']}>
+                                                <Button type="link" icon={<DownOutlined />} />
+                                            </Dropdown>
+                                        </div>
+
+                                        {/* Thời gian chỉnh sửa */}
+                                        <div className="text-sm text-gray-500 mb-2">
+                                            {t.fields.edited.replace('{hours}', Math.floor(Math.random() * 24).toString())}
+                                        </div>
+
+                                        {/* Ngày tạo và trạng thái */}
+                                        <p className="text-sm">{t.fields.creation}: {cv.create_at.toLocaleDateString()}</p>
+                                        <p className="text-sm">{t.fields.status}: {t.status[cv.finalize ? 'final' : 'draft']}</p>
+                                        <p className="text-sm">{t.fields.status}</p>
                                     </div>
-                                }
-                                extra={<span className="text-gray-500">{t.fields.edited.replace('{hours}', Math.floor(Math.random() * 24).toString())}</span>}
-                            >
-                                <p>{t.fields.creation}: {cv.create_at.toLocaleDateString()}</p>
-                                <p>{t.fields.status}: {t.status[cv.finalize ? 'final' : 'draft']}</p>
+                                </div>
                             </Card>
                         </Col>
                     ))}
