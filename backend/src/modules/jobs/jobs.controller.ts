@@ -1,4 +1,35 @@
-import { Controller } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Put,
+  Param,
+  Delete,
+  Get,
+} from "@nestjs/common";
+import { JobsService } from "./jobs.service";
+import { CreateJobDto } from "./dto/create-job.dto";
+import { UpdateJobDto } from "./dto/update-job.dto";
+@Controller("jobs")
+export class JobsController {
+  constructor(private readonly jobsService: JobsService) {}
 
-@Controller('jobs')
-export class JobsController {}
+  @Get()
+  async findAll() {
+    return this.jobsService.findAll();
+  }
+
+  @Post()
+  create(@Body() createJobDto: CreateJobDto) {
+    return this.jobsService.create(createJobDto);
+  }
+  @Put(":id")
+  update(@Param("id") id: string, @Body() updateJobDto: UpdateJobDto) {
+    return this.jobsService.update(id, updateJobDto);
+  }
+
+  @Delete(":id")
+  delete(@Param("id") id: string) {
+    return this.jobsService.delete(id);
+  }
+}

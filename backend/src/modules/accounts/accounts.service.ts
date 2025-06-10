@@ -3,7 +3,7 @@ import {
   Inject,
   Injectable,
   NotFoundException,
-  forwardRef
+  forwardRef,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import * as crypto from 'crypto';
@@ -18,13 +18,14 @@ import { Account, AccountDocument } from './schemas/account.schema';
 @Injectable()
 export class AccountsService {
   constructor(
-  @InjectModel(Account.name) private accountModel: Model<AccountDocument>,
-  private mailService: MailService,
-  @Inject(forwardRef(() => UsersService)) private usersService: UsersService, // Sửa ở đây
-) {}
+    @InjectModel(Account.name) private accountModel: Model<AccountDocument>,
+    private mailService: MailService,
+    @Inject(forwardRef(() => UsersService)) private usersService: UsersService, // Sửa ở đây
+  ) {}
 
   async register(createAccountDto: CreateAccountDto): Promise<Account> {
-    const { first_name, last_name, email, password, city, phone, country } = createAccountDto;
+    const { first_name, last_name, email, password, city, phone, country } =
+      createAccountDto;
 
     // Check if account already exists
     const existingAccount = await this.accountModel.findOne({ email });
@@ -45,14 +46,14 @@ export class AccountsService {
     await newAccount.save();
 
     // Create user profile
-await this.usersService.createUser({
-  first_name,
-  last_name,
-  phone: phone ?? 0,
-  city: city ?? '',
-  country: country ?? '',
-  account_id: newAccount._id as Types.ObjectId, // Đúng tên trường và đúng kiểu
-});
+    await this.usersService.createUser({
+      first_name,
+      last_name,
+      phone: phone ?? 0,
+      city: city ?? '',
+      country: country ?? '',
+      account_id: newAccount._id as Types.ObjectId,
+    });
     return newAccount;
   }
 

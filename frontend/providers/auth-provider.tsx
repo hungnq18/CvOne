@@ -9,7 +9,7 @@ interface AuthContextType {
   user: User | null
   isLoading: boolean
   login: (email: string, password: string) => Promise<void>
-  register: (name: string, email: string, password: string) => Promise<void>
+  register: (first_name: string, email: string, password: string, last_name: string) => Promise<void>
   logout: () => void
 }
 
@@ -86,9 +86,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const register = async (name: string, email: string, password: string, phone?: string, address?: string) => {
+  const register = async (first_name: string, email: string, password: string, last_name: string) => {
     try {
-      console.log('Attempting registration with:', { name, email, password, phone, address })
+      console.log('Attempting registration with:', { first_name, email, password, last_name })
       console.log('API URL:', `${API_URL}/auth/register`)
 
       const response = await fetch(`${API_URL}/auth/register`, {
@@ -97,8 +97,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
         },
-        credentials: 'include',
-        body: JSON.stringify({ name, email, password })
+        body: JSON.stringify({ first_name, email, password, last_name })
       })
       
       console.log('Response status:', response.status)
@@ -113,11 +112,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const data = await response.json()
       console.log('Registration successful:', data)
       
-      // Save token and user data
-      localStorage.setItem("token", data.token)
-      localStorage.setItem("user", JSON.stringify(data.user))
+      // Save user data
+      localStorage.setItem("user", JSON.stringify(data))
 
-      setUser(data.user)
+      setUser(data)
     } catch (error) {
       console.error("Registration failed", error)
       throw error

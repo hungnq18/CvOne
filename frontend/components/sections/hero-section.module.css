@@ -1,0 +1,55 @@
+/* From Uiverse.io by adamgiebl */
+.button {
+  background: #1e40af;
+  color: white;
+  font-family: inherit;
+  padding: 0.35em;
+  padding-left: 1.2em;
+  font-size: 20px;
+  font-weight: 500;
+  border-radius: 0.9em;
+  border: none;
+  letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+  box-shadow: inset 0 0 1.6em -0.6em #1e3a8a;
+  overflow: hidden;
+  position: relative;
+  height: 3.2em;
+  width: 320px;
+  padding-right: 3.3em;
+  cursor: pointer;
+}
+
+.button .icon {
+  background: white;
+  margin-left: 1em;
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 2.6em;
+  width: 2.6em;
+  border-radius: 0.7em;
+  box-shadow: 0.1em 0.1em 0.6em 0.2em #1e3a8a;
+  right: 0.3em;
+  transition: all 0.3s;
+}
+
+.button:hover .icon {
+  width: calc(100% - 0.6em);
+}
+
+.button .icon svg {
+  width: 1.3em;
+  transition: transform 0.3s;
+  color: #1e40af;
+}
+
+.button:hover .icon svg {
+  transform: translateX(0.1em);
+}
+
+.button:active .icon {
+  transform: scale(0.95);
+} 

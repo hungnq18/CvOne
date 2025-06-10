@@ -183,7 +183,7 @@ const navigationItems = {
       },
       {
         name: "My Jobs",
-        href: "/user/jobs",
+        href: "/myJobs",
       },
       {
         name: "My Profile",
@@ -278,10 +278,6 @@ const navigationItems = {
       {
         name: "Công việc của tôi",
         href: "/user/jobs",
-      },
-      {
-        name: "Hồ sơ của tôi",
-        href: "/user/profile",
       },
       {
         name: "Hồ sơ của tôi",

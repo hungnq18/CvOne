@@ -86,7 +86,7 @@ export default function Page() {
         {
             _id: 'cv1',
             title: 'CV - Web Developer',
-            image: 'https://via.placeholder.com/150x200',
+            image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSK9IuLwwy9bH-Z1XmWCajjG1ccF2zmrCv7xQ&s',
             user_id: 'user1',
             description: 'CV for web developer role',
             languages: ['English', 'Vietnamese'],
@@ -103,7 +103,7 @@ export default function Page() {
         {
             _id: 'cv2',
             title: 'CV - Designer',
-            image: 'https://via.placeholder.com/150x200',
+            image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSK9IuLwwy9bH-Z1XmWCajjG1ccF2zmrCv7xQ&s',
             user_id: 'user2',
             description: 'CV for UI/UX designer role',
             languages: ['English'],

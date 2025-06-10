@@ -25,7 +25,8 @@ const translations = {
             title: 'Title',
             company: 'Company',
             createdAt: 'Created At',
-            edited: 'Edited {hours} hours ago'
+            edited: 'Edited {hours} hours ago',
+            introduction: 'Introduction'
         },
         tip: 'TIP: Did you know that if you tailor your cover letter to the job description, you double your chances to get an interview?'
     },
@@ -43,7 +44,8 @@ const translations = {
             title: 'Tiêu đề',
             company: 'Công ty',
             createdAt: 'Ngày tạo',
-            edited: 'Chỉnh sửa {hours} giờ trước'
+            edited: 'Chỉnh sửa {hours} giờ trước',
+            introduction: 'Giới thiệu'
         },
         tip: 'MẸO: Bạn có biết rằng nếu bạn điều chỉnh thư xin việc của mình theo mô tả công việc, bạn sẽ tăng gấp đôi cơ hội được phỏng vấn?'
     }
@@ -75,7 +77,6 @@ const CoverLetterList: React.FC<CoverLetterListProps> = ({ coverLetters, viewMod
     const menu = (cl: CoverLetter) => (
         <Menu>
             <Menu.Item key="edit">{t.actions.edit}</Menu.Item>
-            <Menu.Item key="duplicate">{t.actions.duplicate}</Menu.Item>
             <Menu.Item key="tailor">{t.actions.tailor}</Menu.Item>
             <Menu.Item key="download">{t.actions.download}</Menu.Item>
             <Menu.Item key="delete">{t.actions.delete}</Menu.Item>
@@ -100,10 +101,10 @@ const CoverLetterList: React.FC<CoverLetterListProps> = ({ coverLetters, viewMod
                 </div>
                 <Row gutter={[16, 16]}>
                     {/* New Cover Letter Card */}
-                    <Col xs={24} sm={12} md={8} lg={6}>
+                    <Col xs={24} sm={12} md={8} lg={8}>
                         <Card
                             hoverable
-                            className="min-h-[300px] flex items-center justify-center bg-green-50 border border-green-200"
+                            className="min-h-[250px] flex items-center justify-center bg-green-50 border border-green-200"
                             bodyStyle={{ padding: '20px', textAlign: 'center' }}
                         >
                             <Button
@@ -120,21 +121,26 @@ const CoverLetterList: React.FC<CoverLetterListProps> = ({ coverLetters, viewMod
                         </Card>
                     </Col>
                     {coverLetters.map((cl) => (
-                        <Col key={cl._id} xs={24} sm={12} md={8} lg={6}>
+                        <Col key={cl._id} xs={24} sm={12} md={8} lg={8}>
                             <Card
                                 hoverable
+                                className="min-h-[250px] bg-white border border-gray-200"
+                                bodyStyle={{ padding: '16px' }}
                                 title={
                                     <div className="flex justify-between items-center">
-                                        <span>{cl.title}</span>
+                                        <span className="font-semibold text-lg">{cl.title}</span>
                                         <Dropdown overlay={menu(cl)} trigger={['click']}>
                                             <Button type="link" icon={<DownOutlined />} />
                                         </Dropdown>
                                     </div>
                                 }
-                                extra={<span className="text-gray-500">{t.fields.edited.replace('{hours}', Math.floor(Math.random() * 24).toString())}</span>}
+                                extra={<span className="text-gray-500 text-sm">{t.fields.edited.replace('{hours}', Math.floor(Math.random() * 24).toString())}</span>}
                             >
-                                <p>{t.fields.company}: {cl.company_address}</p>
-                                <p>{t.fields.createdAt}: {cl.created_at.toLocaleDateString()}</p>
+                                <div className="space-y-2">
+                                    <p className="text-sm">{t.fields.company}: {cl.company_address}</p>
+                                    <p className="text-sm">{t.fields.createdAt}: {cl.created_at.toLocaleDateString()}</p>
+                                    <p className="text-sm">{t.fields.introduction}: {cl.introduction?.substring(0, 100)}...</p>
+                                </div>
                             </Card>
                         </Col>
                     ))}

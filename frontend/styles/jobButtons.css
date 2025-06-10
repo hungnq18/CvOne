@@ -1,0 +1,98 @@
+.job-button {
+    width: 120px;
+    height: 40px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    background: #ff0000;
+    border: none;
+    border-radius: 5px;
+    box-shadow: 1px 1px 3px rgba(0,0,0,0.15);
+    position: relative;
+}
+
+.job-button, .job-button span {
+    transition: 200ms;
+}
+
+.job-button .text {
+    transform: translateX(25px);
+    color: white;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.job-button .icon {
+    position: absolute;
+    transform: translateX(85px);
+    height: 30px;
+    width: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.job-button svg {
+    width: 12px;
+    fill: #eee;
+}
+
+.job-button:hover {
+    background: #ff3636;
+}
+
+.job-button:hover .text {
+    color: transparent;
+}
+
+.job-button:hover .icon {
+    width: 120px;
+    transform: translateX(0);
+}
+
+.job-button:focus {
+    outline: none;
+}
+
+.job-button:active .icon svg {
+    transform: scale(0.8);
+}
+
+/* View button styles */
+.view-button {
+    background: #1890ff;
+}
+
+.view-button .icon {
+    border-left: 1px solid #096dd9;
+}
+
+.view-button:hover {
+    background: #40a9ff;
+}
+
+/* Archive button styles */
+.archive-button {
+    background: #52c41a;
+}
+
+.archive-button .icon {
+    border-left: 1px solid #389e0d;
+}
+
+.archive-button:hover {
+    background: #73d13d;
+}
+
+/* Delete button styles */
+.delete-button {
+    background: #e62222;
+}
+
+.delete-button .icon {
+    border-left: 1px solid #c41b1b;
+}
+
+.delete-button:hover {
+    background: #ff3636;
+} 
