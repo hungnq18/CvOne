@@ -15,7 +15,7 @@ import { LoginDto } from '../accounts/dto/login.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RolesGuard } from './guards/roles.guard';
 import { AuthService } from './auth.service';
-import { RegisterDto, VerifyEmailDto, ResendVerificationDto } from './dto/verify-email.dto';
+import { RegisterDto, VerifyEmailDto, ResendVerificationDto } from './dto';
 
 @Controller('auth')
 export class AuthController {
