@@ -57,14 +57,14 @@ const CVCard: React.FC<CVCardProps> = ({ imageUrl, title }) => {
                         transition={{ duration: 0.3 }}
                     >
                         <motion.button
-                            className="flex items-center bg-green-500 text-white px-5 py-3 rounded-lg hover:bg-green-600" // Xanh lá
+                            className="flex items-center bg-blue-800 text-white px-5 py-3 rounded-lg hover:bg-blue-600"
                             variants={buttonVariants}
                             initial="hidden"
                             animate="visible"
                             whileHover="hover"
                         >
                             <span className="text-lg font-semibold">
-                                {language === 'vi' ? 'Tạo' : 'Create'}
+                                {language === 'vi' ? 'Sử dụng mẫu này' : 'Use This Template'}
                             </span>
                             <motion.svg
                                 className="ml-2 w-5 h-5"
