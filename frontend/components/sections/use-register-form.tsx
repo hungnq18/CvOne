@@ -1,25 +1,26 @@
 "use client"
 
-import { useToast } from "@/components/ui/use-toast"
+import { useToast } from "@/hooks/use-toast"
 import { useLanguage } from "@/providers/global-provider"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 
 interface RegisterFormData {
   email: string;
-  fullName: string;
+  first_name: string;
+  last_name: string;
   password: string;
   confirmPassword: string;
-  phone?: string;
-  address?: string;
 }
 
 const translations = {
   en: {
     title: "Create Account",
     subtitle: "Sign up to get started",
-    fullName: "Full Name",
-    fullNamePlaceholder: "Enter your full name",
+    firstName: "First Name",
+    firstNamePlaceholder: "Enter your first name",
+    lastName: "Last Name",
+    lastNamePlaceholder: "Enter your last name",
     email: "Email",
     emailPlaceholder: "Enter your email",
     password: "Password",
@@ -39,12 +40,19 @@ const translations = {
     passwordMismatch: "Passwords do not match!",
     registerSuccess: "Registration successful!",
     registerFailed: "Registration failed",
+    checkEmail: "Please check your email for verification",
+    emailSent: "Verification email sent!",
+    emailSentDesc: "We've sent a verification link to your email. Please check your inbox and spam folder.",
+    emailError: "Failed to send verification email",
+    emailErrorDesc: "There was a problem sending the verification email. Please try again.",
   },
   vi: {
     title: "Tạo tài khoản",
     subtitle: "Đăng ký để bắt đầu",
-    fullName: "Họ và tên",
-    fullNamePlaceholder: "Nhập họ và tên của bạn",
+    firstName: "Tên",
+    firstNamePlaceholder: "Nhập tên của bạn",
+    lastName: "Họ",
+    lastNamePlaceholder: "Nhập họ của bạn",
     email: "Email",
     emailPlaceholder: "Nhập email của bạn",
     password: "Mật khẩu",
@@ -64,22 +72,27 @@ const translations = {
     passwordMismatch: "Mật khẩu xác nhận không khớp!",
     registerSuccess: "Đăng ký thành công!",
     registerFailed: "Đăng ký thất bại",
+    checkEmail: "Vui lòng kiểm tra email của bạn để xác nhận",
+    emailSent: "Đã gửi email xác thực!",
+    emailSentDesc: "Chúng tôi đã gửi link xác thực đến email của bạn. Vui lòng kiểm tra hộp thư đến và thư rác.",
+    emailError: "Không thể gửi email xác thực",
+    emailErrorDesc: "Có lỗi khi gửi email xác thực. Vui lòng thử lại.",
   },
 };
 
 export function useRegisterForm() {
   const [formData, setFormData] = useState<RegisterFormData>({
     email: "",
-    fullName: "",
+    first_name: "",
+    last_name: "",
     password: "",
     confirmPassword: "",
-    phone: "",
-    address: "",
   })
   const [showPassword, setShowPassword] = useState<boolean>(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState<boolean>(false)
   const [message, setMessage] = useState<string>("")
   const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [isSuccess, setIsSuccess] = useState<boolean>(false)
   const { toast } = useToast()
   const router = useRouter()
   const { language } = useLanguage()
@@ -97,10 +110,11 @@ export function useRegisterForm() {
     e.preventDefault()
     setIsLoading(true)
     setMessage("")
+    setIsSuccess(false)
 
-    const { email, fullName, password, confirmPassword, phone, address } = formData
+    const { email, first_name, last_name, password, confirmPassword } = formData
 
-    if (!email || !fullName || !password || !confirmPassword) {
+    if (!email || !first_name || !last_name || !password || !confirmPassword) {
       setMessage(t.requiredFields)
       setIsLoading(false)
       return
@@ -112,12 +126,6 @@ export function useRegisterForm() {
       return
     }
 
-    if (phone && !/^0\d{9}$/.test(phone)) {
-      setMessage(t.invalidPhone)
-      setIsLoading(false)
-      return
-    }
-
     if (password !== confirmPassword) {
       setMessage(t.passwordMismatch)
       setIsLoading(false)
@@ -125,40 +133,50 @@ export function useRegisterForm() {
     }
 
     try {
-      const res = await fetch("/api/register", {
+      const res = await fetch("http://localhost:8000/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email,
-          fullName,
+          first_name,
+          last_name,
           password,
-          phone,
-          address,
         }),
       })
 
       const data = await res.json()
 
       if (res.ok) {
-        setMessage(t.registerSuccess)
+        setIsSuccess(true)
+        setMessage(t.checkEmail)
+        
+        // Show success toast with email sent confirmation
+        toast({
+          title: t.emailSent,
+          description: t.emailSentDesc,
+          variant: "default",
+          duration: 6000, // Show for 6 seconds
+        })
+
+        // Show registration success toast
         toast({
           title: t.registerSuccess,
-          description: t.registerSuccess,
+          description: t.checkEmail,
+          variant: "default",
         })
-        setTimeout(() => router.push("/login"), 1000)
       } else {
         setMessage(data.message || t.registerFailed)
         toast({
-          title: t.registerFailed,
-          description: data.message || t.registerFailed,
+          title: t.emailError,
+          description: t.emailErrorDesc,
           variant: "destructive",
         })
       }
     } catch (error) {
       setMessage("Lỗi kết nối server")
       toast({
-        title: "Lỗi",
-        description: "Không thể kết nối đến server",
+        title: t.emailError,
+        description: t.emailErrorDesc,
         variant: "destructive",
       })
     } finally {
@@ -172,6 +190,7 @@ export function useRegisterForm() {
     showConfirmPassword,
     message,
     isLoading,
+    isSuccess,
     t,
     handleInputChange,
     handleRegister,

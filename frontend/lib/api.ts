@@ -41,3 +41,4 @@ export async function register(name: string, email: string, password: string): P
 export async function getProfile() {
   return fetchWithAuth("/auth/profile")
 }
+
