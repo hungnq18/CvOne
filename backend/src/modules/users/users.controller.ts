@@ -32,6 +32,11 @@ export class UsersController {
   async getAllUsers() {
     return this.usersService.getAllUsers();
   }
+  @UseGuards(JwtAuthGuard)
+  @Get('account/:accountId')
+  async getUserByAccountId(@Param('accountId') accountId: string) {
+    return this.usersService.getUserByAccountId(accountId);
+  }
 
   @UseGuards(JwtAuthGuard)
   @Get(':id')
@@ -40,17 +45,11 @@ export class UsersController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Put('profile')
+  @Put(':id')
   async updateProfile(
     @Param('id') userId: string,
     @Body() updateUserDto: UpdateUserDto,
   ) {
     return this.usersService.updateProfile(userId, updateUserDto);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Get('account/:accountId')
-  async getUserByAccountId(@Param('accountId') accountId: string) {
-    return this.usersService.getUserByAccountId(accountId);
   }
 }

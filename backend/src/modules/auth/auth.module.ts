@@ -1,23 +1,21 @@
-import { Module, forwardRef } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
-import { PassportModule } from '@nestjs/passport';
-import { getJwtConfig } from 'src/config/jwt.config';
-import { AccountsModule } from '../accounts/accounts.module';
 import { AuthController } from './auth.controller';
-import { JwtStrategy } from './strategies/jwt.strategy';
+import { AuthService } from './auth.service';
+import { PrismaModule } from '../prisma/prisma.module';
+import { MailModule } from '../mail/mail.module';
 
 @Module({
-  
   imports: [
-    forwardRef (() => AccountsModule), // Use forwardRef to avoid circular dependency issues
-    PassportModule,
-    JwtModule.registerAsync({
-      inject: [ConfigService],
-      useFactory: getJwtConfig,
+    PrismaModule,
+    MailModule,
+    JwtModule.register({
+      secret: process.env.JWT_SECRET || 'your-secret-key',
+      signOptions: { expiresIn: '1d' },
     }),
   ],
   controllers: [AuthController],
-  providers: [JwtStrategy],
+  providers: [AuthService],
+  exports: [AuthService],
 })
-export class AuthModule {} 
+export class AuthModule {}

@@ -1,48 +1,53 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
+import { Document, Types } from "mongoose";
 
 export type JobDocument = Job & Document;
 
 @Schema({ timestamps: true })
 export class Job {
-  _id: Types.ObjectId;
-
   @Prop({ required: true })
   title: string;
 
   @Prop({ required: true })
   description: string;
 
-  @Prop({
-    required: true,
-    enum: ['draft', 'published', 'closed'],
-    default: 'draft',
-  })
-  status: string;
+  @Prop({ required: true })
+  role: string;
 
   @Prop({ required: true })
-  requirement: string;
+  workType: string;
+  @Prop({ required: true })
+  postingDate: Date;
 
   @Prop({ required: true })
-  income: string;
+  experience: string;
+
+  @Prop({ required: true })
+  qualifications: string;
+
+  @Prop({ required: true })
+  salaryRange: string;
 
   @Prop({ required: true })
   location: string;
 
-  @Prop({ type: [String] })
-  benefits: string[];
+  @Prop({ required: true })
+  country: string;
 
-  @Prop({ type: Types.ObjectId, required: true, ref: 'Company' })
+  @Prop({ required: true })
+  benefits: Array<string>;
+
+  @Prop({ required: true })
+  skills: string;
+
+  @Prop({ required: true })
+  responsibilities: string;
+
+  @Prop({})
   company_id: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, required: true, ref: 'Category' })
-  category_id: Types.ObjectId;
-
-  @Prop({ default: Date.now })
-  createdAt: Date;
-
-  @Prop({ default: Date.now })
-  updatedAt: Date;
+  @Prop({ required: true })
+  user_id: Types.ObjectId;
 }
 
 export const JobSchema = SchemaFactory.createForClass(Job);
