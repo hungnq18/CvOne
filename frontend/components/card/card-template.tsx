@@ -1,18 +1,25 @@
+// components/card/card-template.tsx (Cập nhật)
+
 "use client";
 
 import Image from "next/image";
 import { useState } from "react";
 import { useLanguage } from "@/providers/global-provider";
 import { motion } from "framer-motion";
+import { useRouter } from "next/navigation"; // Đã có
 
+// THÊM id vào props
 type CVCardProps = {
+  id: string; // THÊM DÒNG NÀY: ID của template
   imageUrl: string;
   title: string;
+  isRecommended?: boolean;
 };
 
-const CVCard: React.FC<CVCardProps> = ({ imageUrl, title }) => {
+const CVCard: React.FC<CVCardProps> = ({ id, imageUrl, title }) => {
   const [isHovered, setIsHovered] = useState(false);
   const { language } = useLanguage();
+  const router = useRouter();
 
   // Hiệu ứng cho card
   const cardVariants = {
@@ -39,6 +46,16 @@ const CVCard: React.FC<CVCardProps> = ({ imageUrl, title }) => {
     },
   };
 
+  // const handleCreateClick = () => {
+  //   // CHỈNH SỬA DÒNG NÀY: Dùng id để điều hướng đến trang chi tiết template
+  //   router.push(`/clTemplate/${id}`);
+  // };
+
+  const handleCreateClick = () => {
+    // CHỈNH SỬA DÒNG NÀY: Dùng id để điều hướng đến trang chi tiết template
+    router.push(`/chooseCLTemplate`);
+  };
+
   return (
     <motion.div
       className="bg-white rounded-lg shadow-lg overflow-hidden transform"
@@ -59,17 +76,18 @@ const CVCard: React.FC<CVCardProps> = ({ imageUrl, title }) => {
         />
         {isHovered && (
           <motion.div
-            className="absolute inset-0 flex items-end justify-center pb-6"
+            className="absolute inset-0 flex items-end justify-center pb-6 bg-black bg-opacity-40" // Thêm overlay nhẹ để nút dễ nhìn hơn
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.3 }}
           >
             <motion.button
-              className="flex items-center bg-green-500 text-white px-5 py-3 rounded-lg hover:bg-green-600" // Xanh lá
+              className="flex items-center bg-blue-500 text-white px-5 py-3 rounded-lg hover:bg-blue-600"
               variants={buttonVariants}
               initial="hidden"
               animate="visible"
               whileHover="hover"
+              onClick={handleCreateClick} // SỬ DỤNG HÀM MỚI
             >
               <span className="text-lg font-semibold">
                 {language === "vi" ? "Tạo" : "Create"}
