@@ -74,6 +74,7 @@ const TemplateSection: React.FC<TemplateSectionProps> = ({ cvTemplates }) => {
                 {displayedTemplates.map((template) => (
                     <CVCard
                         key={template.id}
+                        id={template.id}
                         imageUrl={template.imageUrl}
                         title={template.title}
                     />
