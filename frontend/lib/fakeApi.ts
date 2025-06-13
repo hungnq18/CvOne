@@ -1,7 +1,7 @@
 // src/lib/fakeApi.ts
 
 export type CVTemplate = {
-  id: number;
+  id: string;
   imageUrl: string;
   title: string;
   isRecommended?: boolean;
@@ -62,32 +62,66 @@ const demoCvData = {
   },
 };
 
-const cvTemplates: CVTemplate[] = [
+const cvTemplates = [
+  // --- Mẫu Modern (Hiện Đại) ---
   {
-    id: 1,
+    id: "modern-1",
     imageUrl: 'https://th.bing.com/th/id/OIP.GdDZiF0OCgYG8FQ7_yoxUwHaKi?rs=1&pid=ImgDetMain',
-    title: 'Modern CV Template',
+    title: 'The Signature',
     isRecommended: true,
-    demoCvData,
+    demoCvData: demoCvData,
   },
   {
-    id: 2,
-    imageUrl: 'https://cdn1.vieclam24h.vn/images/assets/img/cv6-246b81.png',
-    title: 'Professional CV Template',
-    isRecommended: true,
-    demoCvData,
-  },
-  {
-    id: 3,
+    id: "modern-2",
     imageUrl: 'https://th.bing.com/th/id/OIP.GdDZiF0OCgYG8FQ7_yoxUwHaKi?rs=1&pid=ImgDetMain',
-    title: 'Creative CV Template',
-    demoCvData,
+    title: 'The Vanguard',
+    demoCvData: demoCvData,
   },
   {
-    id: 4,
-    imageUrl: 'https://cdn1.vieclam24h.vn/images/assets/img/cv6-246b81.png',
-    title: 'Minimalist CV Template',
-    demoCvData,
+    id: "modern-3",
+    imageUrl: 'https://th.bing.com/th/id/OIP.GdDZiF0OCgYG8FQ7_yoxUwHaKi?rs=1&pid=ImgDetMain',
+    title: 'The Vibrant',
+    demoCvData: demoCvData,
+  },
+
+  // --- Mẫu Professional (Chuyên Nghiệp) ---
+  {
+    id: "professional-1",
+    imageUrl: 'https://th.bing.com/th/id/OIP.GdDZiF0OCgYG8FQ7_yoxUwHaKi?rs=1&pid=ImgDetMain',
+    title: 'The Executive',
+    demoCvData: demoCvData,
+  },
+  {
+    id: "professional-2",
+    imageUrl: 'https://th.bing.com/th/id/OIP.GdDZiF0OCgYG8FQ7_yoxUwHaKi?rs=1&pid=ImgDetMain',
+    title: 'The Classic',
+    demoCvData: demoCvData,
+  },
+  {
+    id: "professional-3",
+    imageUrl: 'https://th.bing.com/th/id/OIP.GdDZiF0OCgYG8FQ7_yoxUwHaKi?rs=1&pid=ImgDetMain',
+    title: 'The Standard',
+    demoCvData: demoCvData,
+  },
+
+  // --- Mẫu Minimalist (Tối Giản) ---
+  {
+    id: "minimalist-1",
+    imageUrl: 'https://th.bing.com/th/id/OIP.GdDZiF0OCgYG8FQ7_yoxUwHaKi?rs=1&pid=ImgDetMain',
+    title: 'The Elegant',
+    demoCvData: demoCvData,
+  },
+  {
+    id: "minimalist-2",
+    imageUrl: 'https://th.bing.com/th/id/OIP.GdDZiF0OCgYG8FQ7_yoxUwHaKi?rs=1&pid=ImgDetMain',
+    title: 'The Streamlined',
+    demoCvData: demoCvData,
+  },
+  {
+    id: "minimalist-3",
+    imageUrl: 'https://th.bing.com/th/id/OIP.GdDZiF0OCgYG8FQ7_yoxUwHaKi?rs=1&pid=ImgDetMain',
+    title: 'The Focus',
+    demoCvData: demoCvData,
   },
 ];
 
@@ -98,7 +132,7 @@ export const getCVTemplates = async (): Promise<CVTemplate[]> => {
 };
 
 // Gọi 1 template theo ID
-export const getCVTemplateById = async (id: number): Promise<CVTemplate | undefined> => {
+export const getCVTemplateById = async (id: string): Promise<CVTemplate | undefined> => {
   await new Promise((resolve) => setTimeout(resolve, 200));
   return cvTemplates.find((t) => t.id === id);
 };

@@ -10,7 +10,7 @@ const cvTemplates = [
         title: 'Modern CV Template',
         type: 'modern',
         isRecommended: true,
-    },
+    },        
     {
         id: "2",
         imageUrl: 'https://cdn1.vieclam24h.vn/images/assets/img/cv6-246b81.png',

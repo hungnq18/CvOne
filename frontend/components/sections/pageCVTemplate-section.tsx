@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import CVCard from '@/components/card/card-template';
+import CardCVTemplate from '@/components/card/card-CVtemplate';
 import { useLanguage } from '@/providers/global-provider';
 import { getCVTemplates, CVTemplate } from '@/lib/fakeApi'; // 💡 import từ fake API
 
@@ -73,7 +73,7 @@ const cvTemplates: React.FC = () => {
         key={viewMode}
       >
         {displayedTemplates.map((template) => (
-          <CVCard
+          <CardCVTemplate
             key={template.id}
             id={template.id}
             imageUrl={template.imageUrl}
