@@ -7,7 +7,7 @@ import { templateComponentMap } from "@/components/cvTemplate/index";
 
 const PageCreateCVSection = () => {
   const searchParams = useSearchParams();
-  const id = Number(searchParams.get("id"));
+  const id = searchParams.get("id");
   const [template, setTemplate] = useState<CVTemplate | null>(null);
 
   useEffect(() => {

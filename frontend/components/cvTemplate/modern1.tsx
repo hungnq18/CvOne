@@ -7,7 +7,6 @@ const renderDescription = (desc: string) => {
     .split(".")
     .map((line) => line.trim())
     .filter((line) => line.length > 0);
-  // Thay đổi cỡ chữ và khoảng cách dòng ở đây
   return (
     <ul className="list-disc pl-6 space-y-2 text-lg leading-relaxed">
       {lines.map((line, idx) => (
@@ -24,7 +23,6 @@ const ModernCV1 = ({ data }: { data: any }) => {
   return (
     <div className="bg-white font-sans text-gray-800 flex flex-col lg:flex-row aspect-[5/6]">
       {/* CỘT TRÁI (MÀU XANH) */}
-      {/* Tăng padding tổng thể của cột trái */}
       <div className="w-full lg:w-[38%] bg-[#004d40] text-white p-8 lg:p-12 flex flex-col">
         <div className="flex justify-center mb-10 lg:mb-12">
           <div className="w-40 h-40 lg:w-48 lg:h-48 rounded-full overflow-hidden border-4 border-white/80">
@@ -40,15 +38,26 @@ const ModernCV1 = ({ data }: { data: any }) => {
 
         {/* THÔNG TIN CÁ NHÂN */}
         <div className="mb-10 lg:mb-12">
-          {/* Tăng cỡ chữ tiêu đề */}
-          <h2 className="text-1xl lg:text-2xl font-bold mb-6 pb-3 border-b border-white/50">
+          {/* [SỬA] Đổi text-1xl thành text-xl */}
+          <h2 className="text-xl lg:text-2xl font-bold mb-6 pb-3 border-b border-white/50">
             THÔNG TIN CÁ NHÂN
           </h2>
-          {/* Tăng cỡ chữ và khoảng cách dòng */}
           <div className="space-y-4 text-lg lg:text-xl">
-            <div className="flex"><strong className="w-32 shrink-0">Điện thoại:</strong> <span>{userData.phone}</span></div>
-            <div className="flex"><strong className="w-32 shrink-0">Email:</strong> <span className="break-all">{userData.email}</span></div>
-            <div className="flex"><strong className="w-32 shrink-0">Địa chỉ:</strong> <span>{userData.city}, {userData.country}</span></div>
+             {/* [SỬA] Dùng truncate để không xuống dòng */}
+            <div className="flex items-center">
+              <strong className="w-32 shrink-0">Điện thoại:</strong>
+              <span className="truncate">{userData.phone}</span>
+            </div>
+            <div className="flex items-center">
+              <strong className="w-32 shrink-0">Email:</strong>
+              <span className="truncate">{userData.email}</span>
+            </div>
+            <div className="flex items-center">
+              <strong className="w-32 shrink-0">Địa chỉ:</strong>
+              <span className="truncate">
+                {userData.city}, {userData.country}
+              </span>
+            </div>
           </div>
         </div>
 
@@ -79,7 +88,6 @@ const ModernCV1 = ({ data }: { data: any }) => {
 
       {/* CỘT PHẢI (MÀU TRẮNG) */}
       <div className="w-full lg:w-[62%]">
-        {/* Tăng padding */}
         <div className="p-8 lg:p-12 lg:pt-14">
           <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-gray-800 uppercase">
             {userData.firstName} {userData.lastName}
@@ -96,13 +104,11 @@ const ModernCV1 = ({ data }: { data: any }) => {
             {(userData.workHistory || []).map((job: any, i: number) => (
               <div key={i} className="mb-8">
                 <div className="flex justify-between items-baseline mb-2">
-
                   <h3 className="font-bold text-xl">{job.title}</h3>
                   <span className="text-base italic text-gray-600 shrink-0 ml-4">
                     {job.startDate?.slice(5, 7)}/{job.startDate?.slice(0, 4)} - {job.endDate === "Present" ? "Hiện tại" : `${job.endDate?.slice(5, 7)}/${job.endDate?.slice(0, 4)}`}
                   </span>
                 </div>
-
                 <h4 className="font-bold text-lg text-gray-700 mb-3">{job.company}</h4>
                 {renderDescription(job.description)}
               </div>
@@ -129,11 +135,10 @@ const ModernCV1 = ({ data }: { data: any }) => {
   );
 };
 
-// Component Section cũng được cập nhật
+// Component Section được cập nhật
 function Section({ title, children }: { title: string; children: React.ReactNode; }) {
   return (
     <div className="mb-10">
-      {/* Tăng cỡ chữ tiêu đề */}
       <h2 className="text-gray-800 text-xl lg:text-2xl font-bold tracking-wider mb-1">
          {title}
       </h2>
