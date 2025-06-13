@@ -12,8 +12,8 @@ import "./globals.css"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "CvOne - Professional Resume Builder",
-  description: "Create professional resumes, CVs, and cover letters with CvOne",
+  title: "CVOne - Professional CV & Resume Builder",
+  description: "Create professional CVs and resumes with CVOne's easy-to-use builder",
 }
 
 export default function RootLayout({
@@ -23,13 +23,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body className={`${inter.className} min-h-screen flex flex-col`}>
         <StyledComponentsRegistry>
           <GlobalProvider>
             <AuthProvider>
-              <div className="flex min-h-screen flex-col">
+              <div className="flex flex-col min-h-screen">
                 <Header />
-                <main className="flex-1">{children}</main>
+                <main className="flex-grow">{children}</main>
                 <Footer />
               </div>
               <Toaster />

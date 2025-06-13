@@ -4,13 +4,15 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import CVCard from '@/components/card/card-template';
 import { useLanguage } from '@/providers/global-provider';
-import { Button } from 'antd';
 
+// Cập nhật kiểu CLTemplate: id là string
 type CLTemplate = {
-    id: number;
+    id: string; // Đã đổi từ number sang string
     imageUrl: string;
     title: string;
     isRecommended?: boolean;
+    // Có thể thêm một trường 'type' nếu bạn muốn phân biệt CV và Cover Letter trong CVCard
+    type: string;
 };
 
 const containerVariants = {
@@ -24,7 +26,7 @@ const containerVariants = {
 };
 
 interface TemplateSectionProps {
-    cvTemplates: CLTemplate[];
+    cvTemplates: CLTemplate[]; // Đổi tên prop này nếu bạn muốn nó bao gồm cả CV và CL
 }
 
 const TemplateSection: React.FC<TemplateSectionProps> = ({ cvTemplates }) => {
@@ -72,11 +74,13 @@ const TemplateSection: React.FC<TemplateSectionProps> = ({ cvTemplates }) => {
                 key={viewMode}
             >
                 {displayedTemplates.map((template) => (
+                    // Truyền thêm template.id vào CVCard
                     <CVCard
                         key={template.id}
-                        id={template.id}
+                        id={template.id} 
                         imageUrl={template.imageUrl}
                         title={template.title}
+                        isRecommended={template.isRecommended} // THÊM NẾU CVCard có props này
                     />
                 ))}
             </motion.div>
