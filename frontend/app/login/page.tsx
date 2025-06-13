@@ -7,7 +7,7 @@ import { FaEye, FaEyeSlash } from "react-icons/fa"
 import { FcGoogle } from "react-icons/fc"
 import styled from "styled-components"
 import logoImg from "../../public/logo/logoCVOne.svg"
-import { useLoginForm } from "@/components/sections/use-login-form"
+import { useLoginForm } from "@/components/forms/use-login-form"
 
 const LoginWrapper = styled.div`
   min-height: 100vh;

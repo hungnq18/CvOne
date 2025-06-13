@@ -77,7 +77,7 @@ const TemplateSection: React.FC<TemplateSectionProps> = ({ cvTemplates }) => {
                     // Truyền thêm template.id vào CVCard
                     <CVCard
                         key={template.id}
-                        id={template.id} // THÊM DÒNG NÀY
+                        id={template.id} 
                         imageUrl={template.imageUrl}
                         title={template.title}
                         isRecommended={template.isRecommended} // THÊM NẾU CVCard có props này

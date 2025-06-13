@@ -10,7 +10,7 @@ import { useRouter } from "next/navigation"; // Đã có
 
 // THÊM id vào props
 type CVCardProps = {
-  id: string; // THÊM DÒNG NÀY: ID của template
+  id: string; 
   imageUrl: string;
   title: string;
   isRecommended?: boolean;
@@ -101,14 +101,27 @@ const CVCard: React.FC<CVCardProps> = ({ id, imageUrl, title }) => {
                 animate={{ x: isHovered ? 5 : 0 }}
                 transition={{ duration: 0.3 }}
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 5l7 7-7 7"
-                />
-              </motion.svg>
-            </motion.button>
+                <span className="text-lg font-semibold">
+                  {language === "vi" ? "Tạo" : "Create"}
+                </span>
+                <motion.svg
+                  className="ml-2 w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                  animate={{ x: isHovered ? 5 : 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 5l7 7-7 7"
+                  />
+                </motion.svg>
+              </motion.button>
+            </Link>
           </motion.div>
         )}
       </div>
