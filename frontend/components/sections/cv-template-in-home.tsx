@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import CVCard from '../card/card-template';
 import { useLanguage } from '@/providers/global-provider';
 import { motion } from 'framer-motion';
-import { getCVTemplates, CVTemplate } from '@/lib/fakeApi'; // 💡 gọi từ fakeApi
+import { getCVTemplates, CVTemplate } from '@/lib/cvapi'; // 💡 gọi từ fakeApi
 
 const CVSection: React.FC = () => {
   const { language } = useLanguage();

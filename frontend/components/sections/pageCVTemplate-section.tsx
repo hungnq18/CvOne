@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import CardCVTemplate from '@/components/card/card-CVtemplate';
 import { useLanguage } from '@/providers/global-provider';
-import { getCVTemplates, CVTemplate } from '@/lib/fakeApi'; // 💡 import từ fake API
+import { getCVTemplates, CVTemplate } from '@/lib/cvapi'; // 💡 import từ fake API
 
 const containerVariants = {
   hidden: { opacity: 0 },
