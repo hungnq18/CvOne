@@ -1,11 +1,11 @@
-// src/lib/fakeApi.ts
+// src/lib/cvapi.ts
 
 export type CVTemplate = {
   id: string;
   imageUrl: string;
   title: string;
   isRecommended?: boolean;
-  demoCvData?: any;
+  data?: any;
 };
 
 const demoCvData = {
@@ -69,19 +69,19 @@ const cvTemplates = [
     imageUrl: 'https://th.bing.com/th/id/OIP.GdDZiF0OCgYG8FQ7_yoxUwHaKi?rs=1&pid=ImgDetMain',
     title: 'The Signature',
     isRecommended: true,
-    demoCvData: demoCvData,
+    data: demoCvData,
   },
   {
     id: "modern-2",
     imageUrl: 'https://th.bing.com/th/id/OIP.GdDZiF0OCgYG8FQ7_yoxUwHaKi?rs=1&pid=ImgDetMain',
     title: 'The Vanguard',
-    demoCvData: demoCvData,
+    data: demoCvData,
   },
   {
     id: "modern-3",
     imageUrl: 'https://th.bing.com/th/id/OIP.GdDZiF0OCgYG8FQ7_yoxUwHaKi?rs=1&pid=ImgDetMain',
     title: 'The Vibrant',
-    demoCvData: demoCvData,
+    data: demoCvData,
   },
 
   // --- Mẫu Professional (Chuyên Nghiệp) ---
@@ -89,19 +89,19 @@ const cvTemplates = [
     id: "professional-1",
     imageUrl: 'https://th.bing.com/th/id/OIP.GdDZiF0OCgYG8FQ7_yoxUwHaKi?rs=1&pid=ImgDetMain',
     title: 'The Executive',
-    demoCvData: demoCvData,
+    data: demoCvData,
   },
   {
     id: "professional-2",
     imageUrl: 'https://th.bing.com/th/id/OIP.GdDZiF0OCgYG8FQ7_yoxUwHaKi?rs=1&pid=ImgDetMain',
     title: 'The Classic',
-    demoCvData: demoCvData,
+    data: demoCvData,
   },
   {
     id: "professional-3",
     imageUrl: 'https://th.bing.com/th/id/OIP.GdDZiF0OCgYG8FQ7_yoxUwHaKi?rs=1&pid=ImgDetMain',
     title: 'The Standard',
-    demoCvData: demoCvData,
+    data: demoCvData,
   },
 
   // --- Mẫu Minimalist (Tối Giản) ---
@@ -109,19 +109,19 @@ const cvTemplates = [
     id: "minimalist-1",
     imageUrl: 'https://th.bing.com/th/id/OIP.GdDZiF0OCgYG8FQ7_yoxUwHaKi?rs=1&pid=ImgDetMain',
     title: 'The Elegant',
-    demoCvData: demoCvData,
+    data: demoCvData,
   },
   {
     id: "minimalist-2",
     imageUrl: 'https://th.bing.com/th/id/OIP.GdDZiF0OCgYG8FQ7_yoxUwHaKi?rs=1&pid=ImgDetMain',
     title: 'The Streamlined',
-    demoCvData: demoCvData,
+    data: demoCvData,
   },
   {
     id: "minimalist-3",
     imageUrl: 'https://th.bing.com/th/id/OIP.GdDZiF0OCgYG8FQ7_yoxUwHaKi?rs=1&pid=ImgDetMain',
     title: 'The Focus',
-    demoCvData: demoCvData,
+    data: demoCvData,
   },
 ];
 

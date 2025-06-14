@@ -2,7 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { getCVTemplateById, CVTemplate } from "@/lib/fakeApi";
+import { getCVTemplateById, CVTemplate } from "@/lib/cvapi";
 import { templateComponentMap } from "@/components/cvTemplate/index";
 
 const PageCreateCVSection = () => {
@@ -28,7 +28,7 @@ const PageCreateCVSection = () => {
   return (
     <div>
       <div className="cv-a4">
-        <TemplateComponent data={template.demoCvData} />
+        <TemplateComponent data={template.data} />
       </div>
       <style jsx>{`
         .cv-a4 {
