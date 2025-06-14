@@ -1,6 +1,6 @@
-import dynamic from 'next/dynamic';
+import { getCVTemplates } from '@/api/cvapi';
 import HeaderCVSection from '@/components/sections/header-pagecvTemplate-section';
-import { getCVTemplates } from '@/lib/cvapi';
+import dynamic from 'next/dynamic';
 
 const TemplateCVSection = dynamic(
   () => import('@/components/sections/pageCVTemplate-section'),

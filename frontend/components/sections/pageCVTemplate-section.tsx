@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { CVTemplate, getCVTemplates } from '@/api/cvapi'; // 💡 import từ fake API
 import CardCVTemplate from '@/components/card/card-CVtemplate';
 import { useLanguage } from '@/providers/global-provider';
-import { getCVTemplates, CVTemplate } from '@/lib/cvapi'; // 💡 import từ fake API
+import { motion } from 'framer-motion';
+import { useEffect, useState } from 'react';
 
 const containerVariants = {
   hidden: { opacity: 0 },

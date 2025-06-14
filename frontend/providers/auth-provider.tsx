@@ -2,8 +2,11 @@
 
 import type React from "react"
 
+import { API_ENDPOINTS } from "@/api/apiConfig"
+import { login as apiLogin, register as apiRegister } from "@/api/authApi"
 import type { User } from "@/types/auth"
-import { createContext, useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
+import { createContext, useContext, useEffect, useState } from "react"
 
 interface AuthContextType {
   user: User | null
@@ -21,13 +24,19 @@ export const AuthContext = createContext<AuthContextType>({
   logout: () => {},
 })
 
-// Update API URL to match your NestJS backend
-const API_URL = 'http://localhost:8000/api'
+export function useAuth() {
+  const context = useContext(AuthContext)
+  if (!context) {
+    throw new Error("useAuth must be used within an AuthProvider")
+  }
+  return context
+}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isMounted, setIsMounted] = useState(false)
+  const router = useRouter()
 
   useEffect(() => {
     setIsMounted(true)
@@ -51,28 +60,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (email: string, password: string) => {
     try {
       console.log('Attempting login with:', { email, password })
-      console.log('API URL:', `${API_URL}/auth/login`)
-
-      const response = await fetch(`${API_URL}/auth/login`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify({ email, password })
-      })
+      console.log('API endpoint:', API_ENDPOINTS.AUTH.LOGIN)
       
-      console.log('Response status:', response.status)
-      console.log('Response headers:', Object.fromEntries(response.headers.entries()))
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: 'Login failed' }))
-        console.error('Login error:', errorData)
-        throw new Error(errorData.message || 'Login failed')
-      }
-
-      const data = await response.json()
+      const data = await apiLogin(email, password)
       console.log('Login successful:', data)
       
       // Save token and user data
@@ -88,36 +78,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const register = async (first_name: string, email: string, password: string, last_name: string) => {
     try {
-      console.log('Attempting registration with:', { first_name, email, password, last_name })
-      console.log('API URL:', `${API_URL}/auth/register`)
+      console.log('Attempting registration with:', { first_name, email, last_name })
+      console.log('API endpoint:', API_ENDPOINTS.AUTH.REGISTER)
 
-      const response = await fetch(`${API_URL}/auth/register`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify({ first_name, email, password, last_name })
-      })
-      
-      console.log('Response status:', response.status)
-      console.log('Response headers:', Object.fromEntries(response.headers.entries()))
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: 'Registration failed' }))
-        console.error('Registration error:', errorData)
-        throw new Error(errorData.message || 'Registration failed')
-      }
-
-      const data = await response.json()
+      // Step 1: Register user
+      const data = await apiRegister(first_name, email, password, last_name)
       console.log('Registration successful:', data)
       
-      // Save user data
-      localStorage.setItem("user", JSON.stringify(data))
+      // Save user data and token
+      localStorage.setItem("token", data.token)
+      localStorage.setItem("user", JSON.stringify(data.user))
+      setUser(data.user)
 
-      setUser(data)
+      // Step 2: Redirect to confirm email page
+      router.push('/verify-email/confirm')
     } catch (error) {
-      console.error("Registration failed", error)
+      console.error("Registration failed:", error)
       throw error
     }
   }

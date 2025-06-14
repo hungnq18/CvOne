@@ -1,9 +1,9 @@
 "use client";
 
+import { CVTemplate, getCVTemplateById } from "@/api/cvapi";
+import { templateComponentMap } from "@/components/cvTemplate/index";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { getCVTemplateById, CVTemplate } from "@/lib/cvapi";
-import { templateComponentMap } from "@/components/cvTemplate/index";
 
 const PageCreateCVSection = () => {
   const searchParams = useSearchParams();

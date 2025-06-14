@@ -1,0 +1,101 @@
+{
+  "cvTemplates": [
+    {
+      "id": "modern-1",
+      "imageUrl": "https://th.bing.com/th/id/OIP.GdDZiF0OCgYG8FQ7_yoxUwHaKi?rs=1&pid=ImgDetMain",
+      "title": "The Signature",
+      "isRecommended": true,
+      "data": {
+        "userData": {
+          "firstName": "Nguyen",
+          "lastName": "Van A",
+          "professional": "Software Developer",
+          "city": "Hanoi",
+          "country": "Vietnam",
+          "province": "Hanoi",
+          "phone": "+84 912 345 678",
+          "email": "vana@example.com",
+          "avatar": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTc38v-qLznWkdUNPXjE858zI06Og_JgVQvpg&s",
+          "summary": "A passionate developer with 5 years of experience in full-stack development.",
+          "skills": [
+            { "name": "JavaScript", "rating": 5 },
+            { "name": "React", "rating": 4 },
+            { "name": "Node.js", "rating": 4 }
+          ],
+          "workHistory": [
+            {
+              "title": "Frontend Developer",
+              "company": "ABC Corp",
+              "startDate": "2020-01-01",
+              "endDate": "2022-06-01",
+              "description": "Worked on UI/UX and SPA using React."
+            }
+          ],
+          "education": [
+            {
+              "startDate": "2016-09-01",
+              "endDate": "2020-06-30",
+              "major": "Computer Science",
+              "degree": "Bachelor",
+              "institution": "FPT University"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "modern-2",
+      "imageUrl": "https://th.bing.com/th/id/OIP.GdDZiF0OCgYG8FQ7_yoxUwHaKi?rs=1&pid=ImgDetMain",
+      "title": "The Vanguard",
+      "isRecommended": false,
+      "data": {
+        "userData": {
+          "firstName": "Tran",
+          "lastName": "Thi B",
+          "professional": "UI/UX Designer",
+          "city": "Ho Chi Minh",
+          "country": "Vietnam",
+          "province": "Ho Chi Minh",
+          "phone": "+84 987 654 321",
+          "email": "thib@example.com",
+          "avatar": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTc38v-qLznWkdUNPXjE858zI06Og_JgVQvpg&s",
+          "summary": "Creative UI/UX designer with 3 years of experience in web and mobile design.",
+          "skills": [
+            { "name": "Figma", "rating": 5 },
+            { "name": "Adobe XD", "rating": 4 },
+            { "name": "Photoshop", "rating": 4 }
+          ],
+          "workHistory": [
+            {
+              "title": "UI Designer",
+              "company": "Design Studio",
+              "startDate": "2021-01-01",
+              "endDate": "2023-01-01",
+              "description": "Created user interfaces for web and mobile applications."
+            }
+          ],
+          "education": [
+            {
+              "startDate": "2017-09-01",
+              "endDate": "2021-06-30",
+              "major": "Graphic Design",
+              "degree": "Bachelor",
+              "institution": "HCM University of Fine Arts"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "cvs": [
+    {
+      "id": "cv_001",
+      "userId": "user_123456",
+      "title": "Software Developer CV",
+      "content": "{\"userData\":{\"firstName\":\"Nguyen\",\"lastName\":\"Van A\",\"professional\":\"Software Developer\",\"city\":\"Hanoi\",\"country\":\"Vietnam\",\"province\":\"Hanoi\",\"phone\":\"+84 912 345 678\",\"email\":\"vana@example.com\",\"avatar\":\"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTc38v-qLznWkdUNPXjE858zI06Og_JgVQvpg&s\",\"summary\":\"A passionate developer with 5 years of experience in full-stack development.\",\"skills\":[{\"name\":\"JavaScript\",\"rating\":5},{\"name\":\"React\",\"rating\":4},{\"name\":\"Node.js\",\"rating\":4}],\"workHistory\":[{\"title\":\"Frontend Developer\",\"company\":\"ABC Corp\",\"startDate\":\"2020-01-01\",\"endDate\":\"2022-06-01\",\"description\":\"Worked on UI/UX and SPA using React.\"}],\"education\":[{\"startDate\":\"2016-09-01\",\"endDate\":\"2020-06-30\",\"major\":\"Computer Science\",\"degree\":\"Bachelor\",\"institution\":\"FPT University\"}]}}",
+      "isPublic": true,
+      "createdAt": "2025-06-06T10:00:00Z",
+      "updatedAt": "2025-06-06T10:30:00Z"
+    }
+  ]
+} 
