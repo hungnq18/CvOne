@@ -216,7 +216,7 @@ export default function CoverLetterTemplate() {
         <div className="text-center mb-8">
           <h1 className="text-3xl font-semibold text-gray-900 mb-2">
             Choose from our <span className="font-bold">best templates</span> for people with{' '}
-            <span className="text-orange-500 font-bold">little experience</span>
+            <span className="text-blue-500 font-bold">little experience</span>
           </h1>
           <p className="text-gray-600">
             Add and preview your name on your cover letter. You can always edit your template later.
@@ -235,9 +235,15 @@ export default function CoverLetterTemplate() {
                 className="w-48 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
               <div className="absolute right-3 top-2.5">
-                <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                </svg>
+                {firstName ? (
+                  <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                ) : (
+                  <svg className="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                )}
               </div>
             </div>
           </div>
@@ -251,9 +257,15 @@ export default function CoverLetterTemplate() {
                 className="w-48 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
               <div className="absolute right-3 top-2.5">
-                <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                </svg>
+                {lastName ? (
+                  <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                ) : (
+                  <svg className="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                )}
               </div>
             </div>
           </div>
@@ -358,7 +370,10 @@ export default function CoverLetterTemplate() {
           </button>
 
           <div className="flex space-x-4">
-            <button className="px-6 py-3 text-blue-600 hover:text-blue-700 font-medium transition-all duration-300 hover:scale-105 hover:bg-blue-50 rounded-lg">
+            <button
+              className="px-6 py-3 text-blue-600 hover:text-blue-700 font-medium transition-all duration-300 hover:scale-105 hover:bg-blue-50 rounded-lg"
+              onClick={() => setSelectedTemplate(null)}
+            >
               Choose Later
             </button>
             <button
