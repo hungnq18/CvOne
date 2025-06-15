@@ -63,6 +63,7 @@
     "react-icons": "^5.5.0",
     "react-resizable-panels": "^2.1.7",
     "recharts": "2.15.0",
+    "socket.io-client": "^4.8.1",
     "sonner": "^1.7.1",
     "styled-components": "^6.1.18",
     "tailwind-merge": "^2.5.5",

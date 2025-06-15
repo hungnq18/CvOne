@@ -1,20 +1,21 @@
-import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
-import { MongooseModule } from '@nestjs/mongoose';
-import { AccountsModule } from './modules/accounts/accounts.module';
-import { AuthModule } from './modules/auth/auth.module';
-import { CvTemplateModule } from './modules/cv-template/cv-template.module';
-import { CvModule } from './modules/cv/cv.module';
-import { JobsModule } from './modules/jobs/jobs.module';
-import { MailModule } from './modules/mail/mail.module';
-import { UsersModule } from './modules/users/users.module';
-
+import { Module } from "@nestjs/common";
+import { ConfigModule } from "@nestjs/config";
+import { MongooseModule } from "@nestjs/mongoose";
+import { AccountsModule } from "./modules/accounts/accounts.module";
+import { AuthModule } from "./modules/auth/auth.module";
+import { CvTemplateModule } from "./modules/cv-template/cv-template.module";
+import { CvModule } from "./modules/cv/cv.module";
+import { JobsModule } from "./modules/jobs/jobs.module";
+import { MailModule } from "./modules/mail/mail.module";
+import { UsersModule } from "./modules/users/users.module";
+import { ChatModule } from "./modules/chat/chat.module";
+import { ConversationModule } from "./modules/conversation/conversation.module";
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '.env',
+      envFilePath: ".env",
     }),
     MongooseModule.forRoot(process.env.MONGODB_URI as string),
     AccountsModule,
@@ -24,6 +25,8 @@ import { UsersModule } from './modules/users/users.module';
     CvTemplateModule,
     CvModule,
     JobsModule,
+    ChatModule,
+    ConversationModule,
   ],
 })
 export class AppModule {}
