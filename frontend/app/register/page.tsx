@@ -6,7 +6,7 @@ import React from "react"
 import { FaEye, FaEyeSlash } from "react-icons/fa"
 import styled from "styled-components"
 import logoImg from "../../public/logo/logoCVOne.svg"
-import { useRegisterForm } from "@/components/sections/use-register-form"
+import { useRegisterForm } from "@/components/forms/use-register-form"
 
 const RegisterWrapper = styled.div`
   min-height: 100vh;

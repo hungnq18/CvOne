@@ -1,6 +1,7 @@
 "use client"
 
 import { useToast } from "@/hooks/use-toast"
+import { useAuth } from "@/providers/auth-provider"
 import { useLanguage } from "@/providers/global-provider"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
@@ -96,6 +97,7 @@ export function useRegisterForm() {
   const { toast } = useToast()
   const router = useRouter()
   const { language } = useLanguage()
+  const { register } = useAuth()
   const t = translations[language]
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -133,47 +135,28 @@ export function useRegisterForm() {
     }
 
     try {
-      const res = await fetch("http://localhost:8000/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email,
-          first_name,
-          last_name,
-          password,
-        }),
+      await register(first_name, email, password, last_name)
+      
+      setIsSuccess(true)
+      setMessage(t.checkEmail)
+      
+      // Show success toast with email sent confirmation
+      toast({
+        title: t.emailSent,
+        description: t.emailSentDesc,
+        variant: "default",
+        duration: 6000, // Show for 6 seconds
       })
 
-      const data = await res.json()
-
-      if (res.ok) {
-        setIsSuccess(true)
-        setMessage(t.checkEmail)
-        
-        // Show success toast with email sent confirmation
-        toast({
-          title: t.emailSent,
-          description: t.emailSentDesc,
-          variant: "default",
-          duration: 6000, // Show for 6 seconds
-        })
-
-        // Show registration success toast
-        toast({
-          title: t.registerSuccess,
-          description: t.checkEmail,
-          variant: "default",
-        })
-      } else {
-        setMessage(data.message || t.registerFailed)
-        toast({
-          title: t.emailError,
-          description: t.emailErrorDesc,
-          variant: "destructive",
-        })
-      }
+      // Show registration success toast
+      toast({
+        title: t.registerSuccess,
+        description: t.checkEmail,
+        variant: "default",
+      })
     } catch (error) {
-      setMessage("Lỗi kết nối server")
+      console.error("Registration error:", error)
+      setMessage(error instanceof Error ? error.message : t.registerFailed)
       toast({
         title: t.emailError,
         description: t.emailErrorDesc,

@@ -7,8 +7,8 @@ export class AccountsController {
   constructor(private readonly accountsService: AccountsService) {}
 
   @Post('verify-email')
-  async requestEmailVerification(@Body() verifyEmailDto: VerifyEmailDto) {
-    return this.accountsService.requestEmailVerification(verifyEmailDto);
+  async requestEmailVerification(@Body() dto: VerifyEmailDto) {
+    return this.accountsService.requestEmailVerification(dto);
   }
 
   @Get('verify-email/:token')
