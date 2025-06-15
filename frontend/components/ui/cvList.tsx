@@ -3,7 +3,7 @@
 import React from 'react';
 import { Table } from 'antd';
 import { FaFileAlt } from 'react-icons/fa';
-import { CV } from '@/app/userDashboard/page';
+import { CV } from '@/api/cvapi';
 import { useLanguage } from '@/providers/global-provider';
 
 const translations = {

@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, ReactNode } from 'react';
-import { jobData, Job } from '../jobs';
+import { Job } from '@/api/jobApi';
 
 interface GlobalContextType {
     jobs: Job[];

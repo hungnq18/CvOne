@@ -22,14 +22,3 @@ export interface Feature {
   description: string
   icon: React.ReactNode
 }
-
-export type Job = {
-  id: string;
-  title: string;
-  company: string;
-  location: string;
-  category: string;
-  description: string;
-  imageUrl: string;
-  salary: string;
-}
