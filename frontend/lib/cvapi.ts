@@ -6,6 +6,7 @@ export type CVTemplate = {
   title: string;
   isRecommended?: boolean;
   data?: any;
+  color?: string;
 };
 
 const demoCvData = {
