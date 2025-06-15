@@ -6,7 +6,7 @@ import React from "react"
 import { FaEye, FaEyeSlash } from "react-icons/fa"
 import styled from "styled-components"
 import logoImg from "../../public/logo/logoCVOne.svg"
-import { useRegisterForm } from "@/components/sections/use-register-form"
+import { useRegisterForm } from "@/components/forms/use-register-form"
 
 const RegisterWrapper = styled.div`
   min-height: 100vh;
@@ -128,6 +128,25 @@ const Message = styled.div<{ $success?: boolean }>`
   min-height: 24px;
   text-align: center;
   font-weight: 500;
+  padding: 8px;
+  border-radius: 6px;
+  background-color: ${({ $success }) => ($success ? 'rgba(6, 129, 190, 0.1)' : 'rgba(255, 0, 0, 0.1)')};
+  margin: 8px 0;
+`
+
+const LoadingSpinner = styled.div`
+  width: 24px;
+  height: 24px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #058ac3;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto;
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
 `
 
 const LoginPrompt = styled.div`
@@ -151,6 +170,7 @@ export default function RegisterPage() {
     showConfirmPassword,
     message,
     isLoading,
+    isSuccess,
     t,
     handleInputChange,
     handleRegister,
@@ -175,89 +195,92 @@ export default function RegisterPage() {
         <FormSide>
           <RegisterForm onSubmit={handleRegister}>
             <Title>{t.title}</Title>
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              <Label>{t.fullName}</Label>
-              <Input
-                id="fullName"
-                type="text"
-                placeholder={t.fullNamePlaceholder}
-                value={formData.fullName}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              <Label>{t.email}</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder={t.emailPlaceholder}
-                value={formData.email}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-            <PasswordWrapper>
-              <Label>{t.password}</Label>
-              <Input
-                id="password"
-                type={showPassword ? "text" : "password"}
-                placeholder={t.passwordPlaceholder}
-                value={formData.password}
-                onChange={handleInputChange}
-                required
-              />
-              <EyeIcon onClick={() => setShowPassword(v => !v)} style={{marginTop: "4%"}}>
-                {showPassword ? <FaEyeSlash size={20} /> : <FaEye size={20} />}
-              </EyeIcon>
-            </PasswordWrapper>
-            <PasswordWrapper>
-              <Label>{t.confirmPassword}</Label>
-              <Input
-                id="confirmPassword"
-                type={showConfirmPassword ? "text" : "password"}
-                placeholder={t.confirmPasswordPlaceholder}
-                value={formData.confirmPassword}
-                onChange={handleInputChange}
-                required
-              />
-              <EyeIcon onClick={() => setShowConfirmPassword(v => !v)} style={{marginTop: "4%"}}>
-                {showConfirmPassword ? <FaEyeSlash size={20} /> : <FaEye size={20} />}
-              </EyeIcon>
-            </PasswordWrapper>
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              <Label>{t.phone}</Label>
-              <Input
-                id="phone"
-                type="tel"
-                placeholder={t.phonePlaceholder}
-                value={formData.phone}
-                onChange={handleInputChange}
-              />
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              <Label>{t.address}</Label>
-              <Input
-                id="address"
-                type="text"
-                placeholder={t.addressPlaceholder}
-                value={formData.address}
-                onChange={handleInputChange}
-              />
-            </div>
-            <Message $success={message === t.registerSuccess}>{message}</Message>
-            <SubmitButton type="submit" disabled={isLoading}>
-              {isLoading ? (
-                <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto" />
-              ) : (
-                t.registerButton
-              )}
-            </SubmitButton>
+            {!isSuccess && (
+              <>
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  <Label>{t.firstName}</Label>
+                  <Input
+                    id="first_name"
+                    type="text"
+                    placeholder={t.firstNamePlaceholder}
+                    value={formData.first_name}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  <Label>{t.lastName}</Label>
+                  <Input
+                    id="last_name"
+                    type="text"
+                    placeholder={t.lastNamePlaceholder}
+                    value={formData.last_name}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  <Label>{t.email}</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder={t.emailPlaceholder}
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
+                <PasswordWrapper>
+                  <Label>{t.password}</Label>
+                  <div style={{ position: "relative" }}>
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder={t.passwordPlaceholder}
+                      value={formData.password}
+                      onChange={handleInputChange}
+                      required
+                    />
+                    <EyeIcon onClick={() => setShowPassword(!showPassword)}>
+                      {showPassword ? <FaEyeSlash /> : <FaEye />}
+                    </EyeIcon>
+                  </div>
+                </PasswordWrapper>
+                <PasswordWrapper>
+                  <Label>{t.confirmPassword}</Label>
+                  <div style={{ position: "relative" }}>
+                    <Input
+                      id="confirmPassword"
+                      type={showConfirmPassword ? "text" : "password"}
+                      placeholder={t.confirmPasswordPlaceholder}
+                      value={formData.confirmPassword}
+                      onChange={handleInputChange}
+                      required
+                    />
+                    <EyeIcon onClick={() => setShowConfirmPassword(!showConfirmPassword)}>
+                      {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+                    </EyeIcon>
+                  </div>
+                </PasswordWrapper>
+                <SubmitButton type="submit" disabled={isLoading}>
+                  {isLoading ? (
+                    <LoadingSpinner />
+                  ) : (
+                    t.registerButton
+                  )}
+                </SubmitButton>
+              </>
+            )}
+            {message && (
+              <Message $success={isSuccess}>{message}</Message>
+            )}
+          </RegisterForm>
+          {!isSuccess && (
             <LoginPrompt>
               <span>{t.haveAccount}</span>
               <Link href="/login">{t.loginLink}</Link>
             </LoginPrompt>
-          </RegisterForm>
+          )}
         </FormSide>
       </RegisterContainer>
     </RegisterWrapper>

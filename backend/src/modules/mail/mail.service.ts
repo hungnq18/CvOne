@@ -26,7 +26,7 @@ export class MailService {
   }
 
   async sendVerificationEmail(email: string, token: string) {
-    const verificationLink = `${this.configService.get('FRONTEND_URL')}/verify-email?token=${token}`;
+    const verificationLink = `${this.configService.get('FRONTEND_URL')}/verify-email/check?token=${token}`;
     
     await this.transporter.sendMail({
       from: this.configService.get('MAIL_FROM'),

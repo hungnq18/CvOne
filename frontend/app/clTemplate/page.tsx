@@ -5,26 +5,30 @@ import HeaderCLSection from '@/components/sections/header-pageclTemplate-section
 // Dữ liệu mẫu nhúng trực tiếp
 const cvTemplates = [
     {
-        id: 1,
+        id: "1",
         imageUrl: 'https://th.bing.com/th/id/OIP.GdDZiF0OCgYG8FQ7_yoxUwHaKi?rs=1&pid=ImgDetMain',
         title: 'Modern CV Template',
+        type: 'modern',
         isRecommended: true,
-    },
+    },        
     {
-        id: 2,
+        id: "2",
         imageUrl: 'https://cdn1.vieclam24h.vn/images/assets/img/cv6-246b81.png',
         title: 'Professional CV Template',
+        type: 'classic',
         isRecommended: true,
     },
     {
-        id: 3,
+        id: "3",
         imageUrl: 'https://th.bing.com/th/id/OIP.GdDZiF0OCgYG8FQ7_yoxUwHaKi?rs=1&pid=ImgDetMain',
         title: 'Creative CV Template',
+        type: 'modern'
     },
     {
-        id: 4,
+        id: "4",
         imageUrl: 'https://cdn1.vieclam24h.vn/images/assets/img/cv6-246b81.png',
         title: 'Minimalist CV Template',
+        type: 'classic'
     },
 ];
 

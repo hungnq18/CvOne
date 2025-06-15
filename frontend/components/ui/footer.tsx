@@ -6,7 +6,7 @@ import logoImg from "../../public/logo/logoCVOne.svg"
 
 export function Footer() {
   return (
-    <footer className="bg-[#0B1B35] text-white py-8">
+    <footer className="bg-[#0B1B35] text-white py-8 mt-auto">
       <div className="container mx-auto px-4 max-w-6xl">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-x-4 gap-y-8">
           {/* Logo and Description */}

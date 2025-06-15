@@ -1,8 +1,9 @@
+import StyledComponentsRegistry from '@/api/registry'
 import { Footer } from "@/components/ui/footer"
 import { Header } from "@/components/ui/header"
 import { Toaster } from "@/components/ui/toaster"
-import StyledComponentsRegistry from '@/lib/registry'
 import { AuthProvider } from "@/providers/auth-provider"
+import { EmailVerificationProvider } from "@/providers/email-verification-provider"
 import { GlobalProvider } from "@/providers/global-provider"
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
@@ -12,8 +13,8 @@ import "./globals.css"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "CvOne - Professional Resume Builder",
-  description: "Create professional resumes, CVs, and cover letters with CvOne",
+  title: "CVOne - Professional CV & Resume Builder",
+  description: "Create professional CVs and resumes with CVOne's easy-to-use builder",
 }
 
 export default function RootLayout({
@@ -23,16 +24,18 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body className={`${inter.className} min-h-screen flex flex-col`}>
         <StyledComponentsRegistry>
           <GlobalProvider>
             <AuthProvider>
-              <div className="flex min-h-screen flex-col">
-                <Header />
-                <main className="flex-1">{children}</main>
-                <Footer />
-              </div>
-              <Toaster />
+              <EmailVerificationProvider>
+                <div className="flex flex-col min-h-screen">
+                  <Header />
+                  <main className="flex-grow">{children}</main>
+                  <Footer />
+                </div>
+                <Toaster />
+              </EmailVerificationProvider>
             </AuthProvider>
           </GlobalProvider>
         </StyledComponentsRegistry>

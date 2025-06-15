@@ -2,15 +2,15 @@
 
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
+import { DecodedToken } from "@/middleware";
 import { useLanguage } from "@/providers/global-provider";
+import { jwtDecode } from "jwt-decode";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation"; // Thêm useRouter
 import { useEffect, useState } from "react";
 import styled from "styled-components";
 import logo from "../../public/logo/logoCVOne.svg";
-import { jwtDecode } from "jwt-decode";
-import { DecodedToken } from "@/middleware";
 
 // Styled components for animations
 const MenuLink = styled(Link)`
@@ -119,9 +119,9 @@ const navigationItems = {
       },
       {
         name: "CV",
-        href: "/cvTemplate",
+        href: "/cvTemplates",
         dropdownItems: [
-          { name: "CV Templates", href: "/cvTemplate" },
+          { name: "CV Templates", href: "/cvTemplates" },
           { name: "CV Examples", href: "/cv/examples" },
           { name: "CV Tips", href: "/cv/tips" },
         ],
@@ -213,9 +213,9 @@ const navigationItems = {
       },
       {
         name: "CV",
-        href: "/cvTemplate",
+        href: "/cvTemplates",
         dropdownItems: [
-          { name: "Mẫu CV", href: "/cvTemplate" },
+          { name: "Mẫu CV", href: "/cvTemplates" },
           { name: "Ví dụ CV", href: "/cv/examples" },
           { name: "Mẹo về CV", href: "/cv/tips" },
         ],
@@ -279,7 +279,6 @@ const navigationItems = {
         name: "Công việc của tôi",
         href: "/user/jobs",
       },
-
       {
         name: "Hồ sơ của tôi",
         href: "/user/profile",
