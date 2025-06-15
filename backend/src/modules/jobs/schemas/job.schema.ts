@@ -43,10 +43,10 @@ export class Job {
   @Prop({ required: true })
   responsibilities: string;
 
-  @Prop({})
+  @Prop()
   company_id: Types.ObjectId;
 
-  @Prop({ required: true })
+  @Prop()
   user_id: Types.ObjectId;
 }
 

@@ -1,8 +1,8 @@
 "use client"
 
+import { cn } from "@/api/utils"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { cn } from "@/lib/utils"
 
 const links = [
   { href: "/", label: "Home" },

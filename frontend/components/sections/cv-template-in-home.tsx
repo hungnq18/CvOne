@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import CVCard from '../card/card-template';
+import { CVTemplate, getCVTemplates } from '@/api/cvapi'; // 💡 gọi từ fakeApi
 import { useLanguage } from '@/providers/global-provider';
 import { motion } from 'framer-motion';
-import { getCVTemplates, CVTemplate } from '@/lib/cvapi'; // 💡 gọi từ fakeApi
+import { useEffect, useState } from 'react';
+import CVCard from '../card/card-template';
 
 const CVSection: React.FC = () => {
   const { language } = useLanguage();

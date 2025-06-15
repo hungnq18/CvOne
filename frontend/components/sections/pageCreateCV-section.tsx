@@ -2,7 +2,7 @@
 
 import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState, useRef, FC, ReactNode, ChangeEvent } from "react";
-import { getCVTemplateById, CVTemplate, getCVTemplates } from "@/lib/cvapi";
+import { getCVTemplateById, CVTemplate, getCVTemplates } from "@/api/cvapi";
 import { templateComponentMap } from "@/components/cvTemplate/index";
 import {
   FileDown,
