@@ -31,5 +31,9 @@ export const API_ENDPOINTS = {
     DELETE: (id: string) => `/cvs/${id}`,
     SHARE: (id: string) => `/cvs/${id}/share`,
     TEMPLATES: "/cvTemplates"
+  },
+  CL: {
+    TEMPLATES: "/clTemplates",
+    GET_BY_ID: (id: string) => `/clTemplates/${id}`
   }
-} as const 
+} as const

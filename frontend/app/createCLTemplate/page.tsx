@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { Edit3, Download, Printer, Mail, Settings, X } from "lucide-react";
+import React, { useState, useEffect, Suspense } from "react";
+import { X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { templates, TemplateType } from './templates';
+import { getProvinces, Province, getDistrictsByProvinceCode, District } from "@/api/locationApi";
 
 interface LetterData {
     firstName: string;
@@ -11,40 +12,60 @@ interface LetterData {
     profession: string;
     city: string;
     state: string;
-    zip: string;
     phone: string;
     email: string;
     date: string;
-    recipientName: string;
+    recipientFirstName: string;
+    recipientLastName: string;
     companyName: string;
-    companyAddress: string;
+    recipientCity: string;
+    recipientState: string;
+    recipientPhone: string;
+    recipientEmail: string;
     subject: string;
     greeting: string;
     opening: string;
     body: string;
+    callToAction: string;
     closing: string;
     signature: string;
 }
 
-const CoverLetterBuilder = () => {
+const CoverLetterBuilderContent = () => {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const selectedTemplate = (searchParams.get('template') || 'template1') as TemplateType;
+    const selectedTemplate = (searchParams.get('template') || 'cascade') as TemplateType;
+    const initialFirstName = searchParams.get('firstName') || "First Name";
+    const initialLastName = searchParams.get('lastName') || "Last Name";
     const TemplateComponent = templates[selectedTemplate];
+    const [provinces, setProvinces] = useState<Province[]>([]);
+    const [districts, setDistricts] = useState<District[]>([]);
+
+    useEffect(() => {
+        const fetchProvinces = async () => {
+            const provinceData = await getProvinces();
+            provinceData.sort((a, b) => a.name.localeCompare(b.name));
+            setProvinces(provinceData);
+        };
+        fetchProvinces();
+    }, []);
 
     const [letterData, setLetterData] = useState<LetterData>({
-        firstName: "First Name",
-        lastName: "Last Name",
-        profession: "",
+        firstName: initialFirstName,
+        lastName: initialLastName,
+        profession: "Software Engineer",
         city: "Hanoi",
         state: "HN",
-        zip: "100000",
         phone: "+415-555-5555",
         email: "duongduy203.st@gmail.com",
         date: "June 11, 2025",
-        recipientName: "Recipient First Name Last Name",
-        companyName: "Company Name",
-        companyAddress: "City, State/Province Zip",
+        recipientFirstName: "Katherine",
+        recipientLastName: "Bloomstein",
+        companyName: "XYZ Company",
+        recipientCity: "Flowerville",
+        recipientState: "Ohio",
+        recipientPhone: "123-456-7890",
+        recipientEmail: "recipient@example.com",
         subject: "RE: [Job Title], [Ref#], [Source]",
         greeting: "Dear [Mr. or Ms. Last Name],",
         opening:
@@ -54,14 +75,35 @@ const CoverLetterBuilder = () => {
 I pride myself on being a practical thinker, which has enabled me to consistently make informed decisions that drive project success. My experiences have equipped me with the ability to analyze intricate systems and collaborate with peers, leading to the successful implementation of software that meets stringent performance criteria and user expectations.
 
 I am particularly drawn to your organization because of its commitment to innovation and excellence. I am eager to bring my skills in collaboration and critical analysis to your team and contribute to projects that make a meaningful impact.`,
-        closing:
+        callToAction:
             "Thank you for considering my application. I look forward to the possibility of discussing how I can support your organization's goals and contribute to exciting new initiatives.",
-        signature: "Sincerely,\nDuong Viet Duy",
+        closing: "Sincerely,",
+        signature: `${initialFirstName} ${initialLastName}`,
     });
 
     const [activeSection, setActiveSection] = useState<string | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [tempData, setTempData] = useState<Partial<LetterData>>({});
+
+    const handleCityChange = async (cityValue: string, cityField: keyof LetterData, districtField: keyof LetterData) => {
+        setTempData(prev => ({
+            ...prev,
+            [cityField]: cityValue,
+            [districtField]: ''
+        }));
+
+        if (cityValue) {
+            const selectedProvince = provinces.find(p => p.name === cityValue);
+            if (selectedProvince) {
+                const districtData = await getDistrictsByProvinceCode(selectedProvince.code);
+                setDistricts(districtData);
+            } else {
+                setDistricts([]);
+            }
+        } else {
+            setDistricts([]);
+        }
+    };
 
     const handleInputChange = (field: keyof LetterData, value: string) => {
         setTempData((prev) => ({
@@ -70,10 +112,30 @@ I am particularly drawn to your organization because of its commitment to innova
         }));
     };
 
-    const openModal = (section: string) => {
+    const openModal = async (section: string) => {
         setActiveSection(section);
-        setTempData({ ...letterData });
+        const newTempData = { ...letterData };
+        setTempData(newTempData);
         setIsModalOpen(true);
+
+        let cityToFetch: string | undefined;
+        if (section === 'name') {
+            cityToFetch = newTempData.city;
+        } else if (section === 'recipient') {
+            cityToFetch = newTempData.recipientCity;
+        }
+
+        if (cityToFetch) {
+            const selectedProvince = provinces.find(p => p.name === cityToFetch);
+            if (selectedProvince) {
+                const districtData = await getDistrictsByProvinceCode(selectedProvince.code);
+                setDistricts(districtData);
+            } else {
+                setDistricts([]);
+            }
+        } else {
+            setDistricts([]);
+        }
     };
 
     const closeModal = () => {
@@ -98,9 +160,8 @@ I am particularly drawn to your organization because of its commitment to innova
         { id: "greeting", label: "Greeting", icon: "" },
         { id: "opening", label: "Opening", icon: "" },
         { id: "body", label: "Letter Body", icon: "" },
-        { id: "action", label: "Call to Action", icon: "" },
+        { id: "callToAction", label: "Call to Action", icon: "" },
         { id: "closing", label: "Closing", icon: "" },
-        { id: "signature", label: "Signature", icon: "" },
     ];
 
     const renderModalContent = () => {
@@ -156,13 +217,14 @@ I am particularly drawn to your organization because of its commitment to innova
                                 City
                             </label>
                             <select
-                                value={tempData.city || "Hanoi"}
-                                onChange={(e) => handleInputChange("city", e.target.value)}
+                                value={tempData.city || ""}
+                                onChange={(e) => handleCityChange(e.target.value, "city", "state")}
                                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
                             >
-                                <option value="Hanoi">Hanoi</option>
-                                <option value="Ho Chi Minh City">Ho Chi Minh City</option>
-                                <option value="Da Nang">Da Nang</option>
+                                <option value="">Select a City/Province</option>
+                                {provinces.map((p) => (
+                                    <option key={p.code} value={p.name}>{p.name}</option>
+                                ))}
                             </select>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
@@ -171,27 +233,15 @@ I am particularly drawn to your organization because of its commitment to innova
                                     State/Province
                                 </label>
                                 <select
-                                    value={tempData.state || "HN"}
+                                    value={tempData.state || ""}
                                     onChange={(e) => handleInputChange("state", e.target.value)}
                                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                                    disabled={!tempData.city}
                                 >
-                                    <option value="HN">HN</option>
-                                    <option value="HCM">HCM</option>
-                                    <option value="DN">DN</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1 uppercase">
-                                    Zip
-                                </label>
-                                <select
-                                    value={tempData.zip || "100000"}
-                                    onChange={(e) => handleInputChange("zip", e.target.value)}
-                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
-                                >
-                                    <option value="100000">100000</option>
-                                    <option value="700000">700000</option>
-                                    <option value="550000">550000</option>
+                                    <option value="">Select a District</option>
+                                    {districts.map(d => (
+                                        <option key={d.code} value={d.name}>{d.name}</option>
+                                    ))}
                                 </select>
                             </div>
                         </div>
@@ -239,44 +289,58 @@ I am particularly drawn to your organization because of its commitment to innova
             case "recipient":
                 return (
                     <div className="space-y-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1 uppercase">
-                                Recipient Name
-                            </label>
-                            <input
-                                type="text"
-                                value={tempData.recipientName || ""}
-                                onChange={(e) =>
-                                    handleInputChange("recipientName", e.target.value)
-                                }
-                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            />
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1 uppercase">First Name</label>
+                                <input type="text" value={tempData.recipientFirstName || ""} onChange={(e) => handleInputChange("recipientFirstName", e.target.value)} placeholder="e.g. John" className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1 uppercase">Last Name</label>
+                                <input type="text" value={tempData.recipientLastName || ""} onChange={(e) => handleInputChange("recipientLastName", e.target.value)} placeholder="e.g. Smith" className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                            </div>
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1 uppercase">
-                                Company Name
-                            </label>
-                            <input
-                                type="text"
-                                value={tempData.companyName || ""}
-                                onChange={(e) =>
-                                    handleInputChange("companyName", e.target.value)
-                                }
-                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            />
+                            <label className="block text-sm font-medium text-gray-700 mb-1 uppercase">Company Name</label>
+                            <input type="text" value={tempData.companyName || ""} onChange={(e) => handleInputChange("companyName", e.target.value)} placeholder="e.g. ACME Technologies" className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1 uppercase">
-                                Company Address
-                            </label>
-                            <input
-                                type="text"
-                                value={tempData.companyAddress || ""}
-                                onChange={(e) =>
-                                    handleInputChange("companyAddress", e.target.value)
-                                }
-                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            />
+                            <label className="block text-sm font-medium text-gray-700 mb-1 uppercase">City</label>
+                            <select
+                                value={tempData.recipientCity || ""}
+                                onChange={(e) => handleCityChange(e.target.value, "recipientCity", "recipientState")}
+                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                            >
+                                <option value="">Select a City/Province</option>
+                                {provinces.map((p) => (
+                                    <option key={p.code} value={p.name}>{p.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1 uppercase">State/Province</label>
+                                <select
+                                    value={tempData.recipientState || ""}
+                                    onChange={(e) => handleInputChange("recipientState", e.target.value)}
+                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                                    disabled={!tempData.recipientCity}
+                                >
+                                    <option value="">Select a District</option>
+                                    {districts.map(d => (
+                                        <option key={d.code} value={d.name}>{d.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+                         <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1 uppercase">Phone Number</label>
+                                <input type="text" value={tempData.recipientPhone || ""} onChange={(e) => handleInputChange("recipientPhone", e.target.value)} placeholder="e.g. +415-555-5555" className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1 uppercase">Email</label>
+                                <input type="email" value={tempData.recipientEmail || ""} onChange={(e) => handleInputChange("recipientEmail", e.target.value)} placeholder="e.g. johnsmith@gmail.com" className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                            </div>
                         </div>
                     </div>
                 );
@@ -336,32 +400,49 @@ I am particularly drawn to your organization because of its commitment to innova
                         />
                     </div>
                 );
-            case "closing":
+            case "callToAction":
                 return (
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1 uppercase">
-                            Closing Statement
+                            Call to Action
                         </label>
                         <textarea
-                            value={tempData.closing || ""}
-                            onChange={(e) => handleInputChange("closing", e.target.value)}
+                            value={tempData.callToAction || ""}
+                            onChange={(e) => handleInputChange("callToAction", e.target.value)}
                             rows={3}
                             className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         />
                     </div>
                 );
-            case "signature":
+            case "closing":
                 return (
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1 uppercase">
-                            Signature
-                        </label>
-                        <textarea
-                            value={tempData.signature || ""}
-                            onChange={(e) => handleInputChange("signature", e.target.value)}
-                            rows={3}
-                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        />
+                    <div className="space-y-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1 uppercase">
+                                Closing
+                            </label>
+                            <input
+                                type="text"
+                                value={tempData.closing || ""}
+                                onChange={(e) => handleInputChange("closing", e.target.value)}
+                                placeholder="e.g. Sincerely,"
+                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1 uppercase">
+                                Signature
+                            </label>
+                            <input
+                                type="text"
+                                value={tempData.signature || ""}
+                                onChange={(e) =>
+                                    handleInputChange("signature", e.target.value)
+                                }
+                                placeholder="e.g. Duong Viet Duy"
+                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
+                        </div>
                     </div>
                 );
             default:
@@ -370,15 +451,10 @@ I am particularly drawn to your organization because of its commitment to innova
     };
 
     return (
-        <div className="min-h-screen mt-16">
-            <div className="flex">
+        <div className="bg-gray-100 min-h-screen mt-16">
+            <div className="max-w-7xl mx-auto flex">
                 {/* Left Sidebar */}
-                <div className="w-80 bg-white border-r border-gray-200 p-6">
-                    <div className="flex items-center space-x-2 mb-6">
-                        <Edit3 className="w-5 h-5 text-blue-600" />
-                        <span className="font-semibold text-gray-800">Edit my answers</span>
-                    </div>
-
+                <div className="w-80 bg-white p-6 shadow-sm">
                     <div className="mb-6">
                         <h3 className="font-semibold text-gray-800 mb-4">
                             Letter sections
@@ -403,31 +479,28 @@ I am particularly drawn to your organization because of its commitment to innova
                     </div>
                 </div>
 
-                {/* Main Content */}
-                <div className="flex-1 flex">
-                    {/* Letter Preview */}
-                    <div className="flex-1 p-8">
-                        <div className="max-w-2xl mx-auto bg-white shadow-lg">
-                            {TemplateComponent && <TemplateComponent letterData={letterData} />}
-                        </div>
+                {/* Main Content (Letter Preview) */}
+                <div className="flex-1 py-8 px-4">
+                    <div className="max-w-2xl mx-auto bg-white shadow-lg">
+                        {TemplateComponent && <TemplateComponent letterData={letterData} onSectionClick={openModal} />}
                     </div>
+                </div>
 
-                    {/* Right Actions Panel */}
-                    <div className="w-64 bg-white border-l border-gray-200 p-6">
-                        <div className="space-y-4">
-                            <button
-                                className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg font-medium transition-colors mt-8"
-                                onClick={() => router.push("/chooseCLTemplate")}
-                            >
-                                Go Back
-                            </button>
-                            <button
-                                className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg font-medium transition-colors mt-8"
-                                onClick={() => router.push("/dashboard")}
-                            >
-                                Finish Letter
-                            </button>
-                        </div>
+                {/* Right Actions Panel */}
+                <div className="w-64 bg-white p-6 shadow-sm">
+                    <div className="space-y-4">
+                        <button
+                            className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg font-medium transition-colors"
+                            onClick={() => router.push("/clTemplate")}
+                        >
+                            Go Back
+                        </button>
+                        <button
+                            className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg font-medium transition-colors"
+                            onClick={() => router.push("/dashboard")}
+                        >
+                            Finish Letter
+                        </button>
                     </div>
                 </div>
             </div>
@@ -466,6 +539,14 @@ I am particularly drawn to your organization because of its commitment to innova
                 </div>
             )}
         </div>
+    );
+};
+
+const CoverLetterBuilder = () => {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <CoverLetterBuilderContent />
+        </Suspense>
     );
 };
 

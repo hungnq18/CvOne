@@ -1,7 +1,7 @@
 /**
  * CV API Module
  * author: HungNQ
- * 
+ *
  * This module provides functions for managing CV data:
  * - Getting CV templates
  * - Getting CV by ID

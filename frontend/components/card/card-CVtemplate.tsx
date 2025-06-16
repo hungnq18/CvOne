@@ -9,7 +9,7 @@ import { motion } from "framer-motion";
 import Link from "next/link"; // Import Link
 
 type CardCVTemplateProps = {
-  id: string; 
+  id: string;
   imageUrl: string;
   title: string;
   isRecommended?: boolean;
@@ -57,7 +57,7 @@ const CardCVTemplate: React.FC<CardCVTemplateProps> = ({ id, imageUrl, title }) 
                 whileHover="hover"
               >
                 <span className="text-lg font-semibold">
-                  {language === "vi" ? "Tạo" : "Create"}
+                  {language === "vi" ? "Sử dụng mẫu này" : "Use this template"}
                 </span>
                 <motion.svg
                   className="ml-2 w-5 h-5"

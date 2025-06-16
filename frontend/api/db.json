@@ -97,5 +97,120 @@
       "createdAt": "2025-06-06T10:00:00Z",
       "updatedAt": "2025-06-06T10:30:00Z"
     }
+  ],
+  "clTemplates": [
+    {
+      "id": "concept-cl",
+      "templateName": "concept",
+      "imageUrl": "https://cdn-images.zety.com/templates/zety/cascade-24-duo-silver-dark-1414@1x.png",
+      "title": "Concept",
+      "isRecommended": true,
+      "data": {
+        "firstName": "John",
+        "lastName": "Smith",
+        "profession": "Software Engineer",
+        "city": "Hanoi",
+        "state": "Cau Giay",
+        "phone": "+84 123 456 789",
+        "email": "duongduy@example.com",
+        "date": "June 12, 2025",
+        "recipientFirstName": "Katherine",
+        "recipientLastName": "Bloomstein",
+        "companyName": "XYZ Company",
+        "recipientCity": "Flowerville",
+        "recipientState": "Ohio",
+        "recipientPhone": "123-456-7890",
+        "recipientEmail": "recipient@example.com",
+        "subject": "RE: Software Engineer Position",
+        "greeting": "Dear Ms. Bloomstein,",
+        "opening": "I am writing to express my interest in the Software Engineer position at your esteemed company. With a strong background in collaborative problem-solving, critical thinking, and decision-making, I am excited about the opportunity to contribute my practical skills and innovative solutions to your team.",
+        "body": "Throughout my career as a Software Engineer, I have developed a keen ability to work effectively within teams, leveraging collective expertise to tackle complex technical challenges. My approach is grounded in a realistic understanding of project requirements, allowing me to devise solutions that are not only functional but also aligned with end-user needs.\\n\\nI pride myself on being a practical thinker, which has enabled me to consistently make informed decisions that drive project success. My experiences have equipped me with the ability to analyze intricate systems and collaborate with peers, leading to the successful implementation of software that meets stringent performance criteria and user expectations.\\n\\nI am particularly drawn to your organization because of its commitment to innovation and excellence. I am eager to bring my skills in collaboration and critical analysis to your team and contribute to projects that make a meaningful impact.",
+        "callToAction": "Thank you for considering my application. I look forward to the possibility of discussing how I can support your organization's goals and contribute to exciting new initiatives.",
+        "closing": "Sincerely,",
+        "signature": "Duong Viet Duy"
+      }
+    },
+    {
+      "id": "cascade-cl",
+      "templateName": "cascade",
+      "imageUrl": "https://cdn-images.zety.com/templates/zety/concept-31-classic-silver-dark-1886@1x.png",
+      "title": "Cascade",
+      "isRecommended": false,
+      "data": {
+        "firstName": "Jane",
+        "lastName": "Doe",
+        "profession": "Product Manager",
+        "city": "Da Nang",
+        "state": "Hai Chau",
+        "phone": "+84 987 654 321",
+        "email": "jane.doe@example.com",
+        "date": "June 15, 2025",
+        "recipientFirstName": "Alan",
+        "recipientLastName": "Turing",
+        "companyName": "Innovate Inc.",
+        "recipientCity": "San Francisco",
+        "recipientState": "California",
+        "recipientPhone": "415-111-2222",
+        "recipientEmail": "hiring@innovate.com",
+        "subject": "Regarding the Product Manager Role",
+        "greeting": "Dear Mr. Turing,",
+        "opening": "It is with great enthusiasm that I submit my application for the Product Manager position at Innovate Inc., which I located on LinkedIn. Having followed your company's success in launching groundbreaking products, I am confident that my experience in product lifecycle management aligns with your team's goals.",
+        "body": "In my previous role at TechFlow, I was instrumental in increasing user engagement by 30% through data-driven feature prioritization and a user-centric design approach. I am adept at collaborating with cross-functional teams, including engineering, marketing, and sales, to ensure a cohesive product strategy and successful market launch.\\n\\nMy ability to translate complex technical concepts into clear, actionable plans has been a cornerstone of my career. I am passionate about creating products that not only meet market demands but also provide an exceptional user experience.",
+        "callToAction": "I am eager to discuss how my background in product development and strategic planning can benefit Innovate Inc. Thank you for your time and consideration.",
+        "closing": "Best regards,",
+        "signature": "Jane Doe"
+      }
+    },
+    {
+      "id": "crisp-cl",
+      "templateName": "crisp",
+      "imageUrl": "https://cdn-images.zety.com/templates/zety/crisp-36-classic-silver-dark-2099@1x.png",
+      "title": "Crisp",
+      "isRecommended": false,
+      "data": {
+        "firstName": "Peter",
+        "lastName": "Jones",
+        "profession": "Marketing Specialist",
+        "city": "Ho Chi Minh City",
+        "state": "District 1",
+        "phone": "+84 555 888 999",
+        "email": "peter.jones@example.com",
+        "date": "June 18, 2025",
+        "recipientFirstName": "Ada",
+        "recipientLastName": "Lovelace",
+        "companyName": "Tech Solutions",
+        "recipientCity": "Austin",
+        "recipientState": "Texas",
+        "recipientPhone": "512-333-4444",
+        "recipientEmail": "careers@techsolutions.com",
+        "subject": "Application for Marketing Specialist",
+        "greeting": "Dear Ms. Lovelace,",
+        "opening": "I am writing to apply for the Marketing Specialist position at Tech Solutions, as advertised on your company website. With over five years of experience in digital marketing and campaign management, I have developed a strong skill set that I am confident will be a valuable asset to your team.",
+        "body": "My background includes developing and executing successful marketing campaigns across various channels, including social media, email, and content marketing. I excel at analyzing market trends and customer insights to create strategies that drive brand awareness and generate leads. At my previous company, I led a campaign that resulted in a 40% increase in qualified leads in just six months.\\n\\nI am highly proficient in SEO, SEM, and marketing automation tools, and I am always eager to learn and adapt to new technologies. I am particularly impressed with Tech Solutions' innovative approach to marketing and would be thrilled to contribute to your continued success.",
+        "callToAction": "I have attached my resume for your review and welcome the opportunity to discuss my qualifications further. Thank you for your consideration.",
+        "closing": "Respectfully,",
+        "signature": "Peter Jones"
+      }
+    }
+  ],
+  "cls": [
+    {
+      "id": "cl_001",
+      "clTemplateId": "concept-cl",
+      "userId": "user_123456",
+      "title": "Software Engineer CL",
+      "content": "{\"userData\":{\"firstName\":\"Nguyen\",\"lastName\":\"Van A\",\"professional\":\"Software Developer\",\"city\":\"Hanoi\",\"country\":\"Vietnam\",\"province\":\"Hanoi\",\"phone\":\"+84 912 345 678\",\"email\":\"vana@example.com\",\"avatar\":\"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTc38v-qLznWkdUNPXjE858zI06Og_JgVQvpg&s\",\"summary\":\"A passionate developer with 5 years of experience in full-stack development.\",\"skills\":[{\"name\":\"JavaScript\",\"rating\":5},{\"name\":\"React\",\"rating\":4},{\"name\":\"Node.js\",\"rating\":4}],\"workHistory\":[{\"title\":\"Frontend Developer\",\"company\":\"ABC Corp\",\"startDate\":\"2020-01-01\",\"endDate\":\"2022-06-01\",\"description\":\"Worked on UI/UX and SPA using React.\"}],\"education\":[{\"startDate\":\"2016-09-01\",\"endDate\":\"2020-06-30\",\"major\":\"Computer Science\",\"degree\":\"Bachelor\",\"institution\":\"FPT University\"}]}}",
+      "createdAt": "2025-06-06T10:00:00Z",
+      "updatedAt": "2025-06-06T10:30:00Z"
+    },
+    {
+      "id": "cl_002",
+      "clTemplateId": "cascade-cl",
+      "userId": "user_123456",
+      "title": "Product Manager CL",
+      "content": "{\"userData\":{\"firstName\":\"Tran\",\"lastName\":\"Thi B\",\"professional\":\"UI/UX Designer\",\"city\":\"Ho Chi Minh\",\"country\":\"Vietnam\",\"province\":\"Ho Chi Minh\",\"phone\":\"+84 987 654 321\",\"email\":\"thib@example.com\",\"avatar\":\"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTc38v-qLznWkdUNPXjE858zI06Og_JgVQvpg&s\",\"summary\":\"Creative UI/UX designer with 3 years of experience in web and mobile design.\",\"skills\":[{\"name\":\"Figma\",\"rating\":5},{\"name\":\"Adobe XD\",\"rating\":4},{\"name\":\"Photoshop\",\"rating\":4}],\"workHistory\":[{\"title\":\"UI Designer\",\"company\":\"Design Studio\",\"startDate\":\"2021-01-01\",\"endDate\":\"2023-01-01\",\"description\":\"Created user interfaces for web and mobile applications.\"}],\"education\":[{\"startDate\":\"2017-09-01\",\"endDate\":\"2021-06-30\",\"major\":\"Graphic Design\",\"degree\":\"Bachelor\",\"institution\":\"HCM University of Fine Arts\"}]}}",
+      "createdAt": "2025-06-06T10:00:00Z",
+      "updatedAt": "2025-06-06T10:30:00Z"
+    }
   ]
-} 
+}
