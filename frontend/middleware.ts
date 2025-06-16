@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { jwtDecode } from "jwt-decode";
 
-const protectedPaths = ["/dashboard", "/admin"];
+const protectedPaths = ["/dashboard", "/admin", "/user/profile"];
 
 export interface DecodedToken {
   exp: number;

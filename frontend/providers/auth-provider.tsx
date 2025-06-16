@@ -19,9 +19,9 @@ interface AuthContextType {
 export const AuthContext = createContext<AuthContextType>({
   user: null,
   isLoading: true,
-  login: async () => {},
-  register: async () => {},
-  logout: () => {},
+  login: async () => { },
+  register: async () => { },
+  logout: () => { },
 })
 
 export function useAuth() {
@@ -61,10 +61,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       console.log('Attempting login with:', { email, password })
       console.log('API endpoint:', API_ENDPOINTS.AUTH.LOGIN)
-      
+
       const data = await apiLogin(email, password)
       console.log('Login successful:', data)
-      
+
       // Save token and user data
       localStorage.setItem("token", data.token)
       localStorage.setItem("user", JSON.stringify(data.user))
@@ -84,7 +84,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Step 1: Register user
       const data = await apiRegister(first_name, email, password, last_name)
       console.log('Registration successful:', data)
-      
+
       // Save user data and token
       localStorage.setItem("token", data.token)
       localStorage.setItem("user", JSON.stringify(data.user))
