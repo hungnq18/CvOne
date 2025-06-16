@@ -2,7 +2,6 @@
 
 import ModernCV1 from './modern1';
 import ProfessionalCV1 from './professional1';
-import CreativeCV1 from './creative1';
 import MinimalistCV1 from './minimalist1';
 
 export const templateComponentMap: Record<string, React.ComponentType<{ data: any }>> = {

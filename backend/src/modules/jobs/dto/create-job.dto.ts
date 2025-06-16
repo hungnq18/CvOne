@@ -1,15 +1,4 @@
-import { ApiProperty } from "@nestjs/swagger";
-import { Transform } from "class-transformer";
-import {
-  IsArray,
-  IsDateString,
-  IsNotEmpty,
-  IsOptional,
-  IsString,
-  MinLength,
-  ArrayNotEmpty,
-} from "class-validator";
-import { Types } from "mongoose";
+import { IsString, IsNotEmpty, IsDateString, IsArray } from "class-validator";
 
 export class CreateJobDto {
   @IsString()
@@ -30,12 +19,14 @@ export class CreateJobDto {
 
   @IsDateString()
   @IsNotEmpty()
-  postingDate: Date;
+  postingDate: string;
 
   @IsString()
+  @IsNotEmpty()
   experience: string;
 
   @IsString()
+  @IsNotEmpty()
   qualifications: string;
 
   @IsString()
@@ -51,24 +42,15 @@ export class CreateJobDto {
   country: string;
 
   @IsArray()
-  @ArrayNotEmpty()
   @IsString({ each: true })
+  @IsNotEmpty()
   benefits: string[];
 
   @IsString()
+  @IsNotEmpty()
   skills: string;
 
   @IsString()
-  responsibilities: string;
-
-  //   @IsString()
-  //   @Transform(({ value }) => (value ? new Types.ObjectId(value) : undefined))
-  //   @IsNotEmpty()
-  //   @ApiProperty({ description: "Company ID", example: "507f1f77bcf86cd799439011" })
-  //   company_id: Types.ObjectId;
-
-  @IsString()
-  @Transform(({ value }) => (value ? new Types.ObjectId(value) : undefined))
   @IsNotEmpty()
-  user_id: Types.ObjectId;
+  responsibilities: string;
 }
