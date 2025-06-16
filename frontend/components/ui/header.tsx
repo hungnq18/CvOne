@@ -173,13 +173,12 @@ const navigationItems = {
         ],
       },
       {
-        name: "Templates",
+        name: "CV",
         href: "/cvTemplates",
-        dropdownItems: [
-          { name: "Resume Templates", href: "/cvTemplate" },
-          { name: "CV Templates", href: "/cvTemplate" },
-          { name: "Cover Letter Templates", href: "/clTemplate" },
-        ],
+      },
+      {
+        name: "Cover Letter",
+        href: "/chooseCLTemplate",
       },
       {
         name: "My Jobs",
@@ -258,22 +257,17 @@ const navigationItems = {
         href: "/userDashboard",
       },
       {
-        name: "Hồ sơ của tôi",
+        name: "Tài liệu của tôi",
         href: "/myDocuments",
-        dropdownItems: [
-          { name: "Hồ sơ của tôi", href: "/myDocuments" },
-          { name: "CV của tôi", href: "/myDocuments" },
-          { name: "Thư ngỏ của tôi", href: "/myDocuments" },
-        ],
       },
       {
-        name: "Mẫu",
-        href: "/templates",
-        dropdownItems: [
-          { name: "Mẫu Hồ sơ", href: "/cvTemplate" },
-          { name: "Mẫu CV", href: "/cvTemplate" },
-          { name: "Mẫu Thư ngỏ", href: "/clTemplate" },
-        ],
+        name: "CV",
+        href: "/cvTemplates",
+      },
+      
+      {
+        name: "Thư Ngỏ",
+        href: "/chooseCLTemplate",
       },
       {
         name: "Công việc của tôi",
