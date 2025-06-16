@@ -1,27 +1,40 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 
-export type CvTemplateDocument = CvTemplate & Document;
-
+/**
+ * Schema definition for CV Template
+ * Represents the structure of a CV template in the database
+ */
 @Schema({ timestamps: true })
-export class CvTemplate {
-    @Prop({ required: true })
-    title: string;
+export class CvTemplate extends Document {
+  /**
+   * Title of the CV template
+   * @example "Professional CV Template"
+   */
+  @Prop({ required: true })
+  title: string;
 
-    @Prop({ required: true })
-    imageUrl: string;
+  /**
+   * URL to the preview image of the template
+   * @example "https://example.com/template1.jpg"
+   */
+  @Prop({ required: true })
+  imageUrl: string;
 
-    @Prop({ default: false })
-    isRecommended?: boolean;
+  /**
+   * Flag indicating if this template is recommended
+   * Used to highlight featured templates
+   */
+  @Prop({ default: false })
+  isRecommended: boolean;
 
-    @Prop({ type: Object })
-    data?: Record<string, any>;
-
-    @Prop()
-    createdAt: Date;
-
-    @Prop()
-    updatedAt: Date;
+  /**
+   * Template data structure
+   * Contains the actual template configuration and layout
+   * @example { sections: [...], layout: {...} }
+   */
+  @Prop({ type: Object, required: true })
+  data: Record<string, any>;
 }
 
 export const CvTemplateSchema = SchemaFactory.createForClass(CvTemplate); 
