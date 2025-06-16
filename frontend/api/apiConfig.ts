@@ -17,6 +17,8 @@ export const API_ENDPOINTS = {
     GET_BY_ID: (id: string) => `/users/${id}`,
     UPDATE: (id: string) => `/users/${id}`,
     DELETE: (id: string) => `/users/${id}`,
+    GET_PROFILE: "/user/profile",
+    UPDATE_PROFILE: "/user/profile",
   },
   PROFILE: {
     GET: "/profile",
@@ -34,5 +36,12 @@ export const API_ENDPOINTS = {
   },
   CHAT: {
     GET_CONVERSATION: (convId: string) => `/chat/messages/${convId}`,
+  },
+  JOB: {
+    GET_ALL: "/jobs",
+    GET_BY_ID: (id: string) => `/jobs/${id}`,
+    CREATE: "/jobs",
+    UPDATE: (id: string) => `/jobs/${id}`,
+    DELETE: (id: string) => `/jobs/${id}`,
   },
 } as const;

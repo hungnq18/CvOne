@@ -23,12 +23,21 @@ export type CVTemplate = {
 };
 
 export interface CV {
-  id: string;
-  title: string;
-  content: string;
-  isPublic: boolean;
-  createdAt: string;
-  updatedAt: string;
+  _id: string;
+  title?: string;
+  image?: string;
+  user_id: string;
+  description?: string;
+  languages?: string[];
+  create_at: string;
+  is_public: boolean;
+  templateCV_id: string;
+  heading?: string;
+  education?: string[];
+  work_history?: string[];
+  skill?: string[];
+  summary?: string;
+  finalize: boolean;
 }
 
 /**
@@ -70,7 +79,7 @@ export async function getCVById(id: string) {
  * @param data - CV data to create
  * @returns Promise with created CV
  */
-export async function createCV(data: Omit<CV, "id" | "createdAt" | "updatedAt">) {
+export async function createCV(data: Omit<CV, "_id" | "create_at">) {
   return fetchWithAuth(API_ENDPOINTS.CV.CREATE, {
     method: "POST",
     body: JSON.stringify(data)

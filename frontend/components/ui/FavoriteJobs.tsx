@@ -3,7 +3,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { Card } from 'antd';
 import { FaHeart, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
-import { Job } from '@/app/userDashboard/page';
+import { Job } from '@/api/jobApi';
 import { useLanguage } from '@/providers/global-provider';
 
 const translations = {
@@ -67,12 +67,11 @@ const FavoriteJobs: React.FC<FavoriteJobsProps> = ({ jobs }) => {
             <div className="flex space-x-4 overflow-x-auto scroll-smooth" ref={scrollRef}>
                 {jobs.map((job) => (
                     <Card
-                        key={job.id}
+                        key={job._id}
                         className="bg-white rounded-lg shadow-sm hover:bg-blue-50 transition-colors duration-200 min-w-[250px]"
                     >
                         <h3 className="text-md font-medium text-gray-900">{job.title}</h3>
-                        <p className="text-sm text-gray-700">{t.company}: {job.company}</p>
-                        <p className="text-xs text-gray-600 mt-1">{t.description}: {job.description}</p>
+                        <p className="text-xs text-gray-600 mt-1">{job.description}</p>
                     </Card>
                 ))}
             </div>
