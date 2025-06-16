@@ -1,15 +1,19 @@
-import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
-import { InjectModel } from '@nestjs/mongoose';
-import * as bcrypt from 'bcrypt';
-import { Model } from 'mongoose';
-import { generateJwtToken } from '../../utils/jwt.utils';
-import { LoginDto } from '../accounts/dto/login.dto';
-import { Account } from '../accounts/schemas/account.schema';
-import { MailService } from '../mail/mail.service';
-import { User } from '../users/schemas/user.schema';
-import { ChangePasswordDto } from './dto/change-password.dto';
-import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from "@nestjs/common";
+import { JwtService } from "@nestjs/jwt";
+import { InjectModel } from "@nestjs/mongoose";
+import * as bcrypt from "bcrypt";
+import { Model } from "mongoose";
+import { generateJwtToken } from "../../utils/jwt.utils";
+import { LoginDto } from "../accounts/dto/login.dto";
+import { Account } from "../accounts/schemas/account.schema";
+import { MailService } from "../mail/mail.service";
+import { User } from "../users/schemas/user.schema";
+import { ChangePasswordDto } from "./dto/change-password.dto";
+import { ForgotPasswordDto } from "./dto/forgot-password.dto";
 
 @Injectable()
 export class AuthService {
@@ -17,7 +21,7 @@ export class AuthService {
     @InjectModel(Account.name) private accountModel: Model<Account>,
     @InjectModel(User.name) private userModel: Model<User>,
     private jwtService: JwtService,
-    private mailService: MailService,
+    private mailService: MailService
   ) {}
 
   /**
@@ -27,16 +31,20 @@ export class AuthService {
   async login(loginDto: LoginDto) {
     const account = await this.accountModel.findOne({ email: loginDto.email });
     if (!account) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException("Invalid credentials");
     }
 
-    const isPasswordValid = await bcrypt.compare(loginDto.password, account.password);
+    const isPasswordValid = await bcrypt.compare(
+      loginDto.password,
+      account.password
+    );
     if (!isPasswordValid) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException("Invalid credentials");
     }
 
     const user = await this.userModel.findOne({ account_id: account._id });
-    return generateJwtToken(this.jwtService, account, user || undefined);
+
+    return generateJwtToken(this.jwtService, account, user);
   }
 
   /**
@@ -44,24 +52,26 @@ export class AuthService {
    * @param forgotPasswordDto - Contains user's email
    */
   async forgotPassword(forgotPasswordDto: ForgotPasswordDto) {
-    const account = await this.accountModel.findOne({ email: forgotPasswordDto.email });
+    const account = await this.accountModel.findOne({
+      email: forgotPasswordDto.email,
+    });
     if (!account) {
-      throw new BadRequestException('Email not found');
+      throw new BadRequestException("Email not found");
     }
 
     // Generate reset token with userId
     const resetToken = this.jwtService.sign(
-      { 
+      {
         sub: account._id,
-        email: account.email 
+        email: account.email,
       },
-      { expiresIn: '1h' }
+      { expiresIn: "1h" }
     );
 
     // Send reset email using existing mail service
     await this.mailService.sendPasswordResetEmail(account.email, resetToken);
 
-    return { message: 'Password reset email sent' };
+    return { message: "Password reset email sent" };
   }
 
   /**
@@ -72,16 +82,16 @@ export class AuthService {
   async changePassword(userId: string, changePasswordDto: ChangePasswordDto) {
     const account = await this.accountModel.findById(userId);
     if (!account) {
-      throw new BadRequestException('User not found');
+      throw new BadRequestException("User not found");
     }
 
     // Verify current password
     const isPasswordValid = await bcrypt.compare(
       changePasswordDto.currentPassword,
-      account.password,
+      account.password
     );
     if (!isPasswordValid) {
-      throw new UnauthorizedException('Current password is incorrect');
+      throw new UnauthorizedException("Current password is incorrect");
     }
 
     // Hash and update new password
@@ -89,6 +99,6 @@ export class AuthService {
     account.password = hashedPassword;
     await account.save();
 
-    return { message: 'Password changed successfully' };
+    return { message: "Password changed successfully" };
   }
-} 
+}

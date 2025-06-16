@@ -40,28 +40,7 @@ export class AuthController {
 
   @Post("login") //login
   async login(@Body() loginDto: LoginDto) {
-    const { email, password } = loginDto;
-
-    // Find account
-    const account = await this.accountsService.findByEmail(email);
-    if (!account) {
-      throw new UnauthorizedException("Invalid credentials");
-    }
-
-    // Check if email is verified
-    if (!account.isEmailVerified) {
-      throw new UnauthorizedException(
-        "Please verify your email before logging in"
-      );
-    }
-
-    // Verify password
-    const isPasswordValid = await comparePassword(password, account.password);
-    if (!isPasswordValid) {
-      throw new UnauthorizedException("Invalid credentials");
-    }
-
-    return generateJwtToken(this.jwtService, account);
+    return this.authService.login(loginDto);
   }
 
   // Example of a protected route with role-based access
