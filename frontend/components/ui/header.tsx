@@ -173,13 +173,12 @@ const navigationItems = {
         ],
       },
       {
-        name: "Templates",
+        name: "CV",
         href: "/cvTemplates",
-        dropdownItems: [
-          { name: "Resume Templates", href: "/cvTemplate" },
-          { name: "CV Templates", href: "/cvTemplate" },
-          { name: "Cover Letter Templates", href: "/clTemplate" },
-        ],
+      },
+      {
+        name: "Cover Letter",
+        href: "/chooseCLTemplate",
       },
       {
         name: "My Jobs",
