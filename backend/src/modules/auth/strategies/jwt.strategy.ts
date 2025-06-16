@@ -1,11 +1,19 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { InjectModel } from '@nestjs/mongoose';
 import { PassportStrategy } from '@nestjs/passport';
+import { Model } from 'mongoose';
 import { ExtractJwt, Strategy } from 'passport-jwt';
+import { Account } from '../../accounts/schemas/account.schema';
+import { User } from '../../users/schemas/user.schema';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor(private configService: ConfigService) {
+  constructor(
+    private configService: ConfigService,
+    @InjectModel(Account.name) private accountModel: Model<Account>,
+    @InjectModel(User.name) private userModel: Model<User>,
+  ) {
     const secret = configService.get<string>('JWT_SECRET');
     if (!secret) {
       throw new Error('JWT_SECRET is not defined');
@@ -19,10 +27,34 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: any) {
-    return {
-      id: payload.sub,
-      email: payload.email,
-      role: payload.role,
-    };
+    try {
+      console.log('JWT Payload:', payload); // Debug log
+
+      const account = await this.accountModel.findById(payload.sub);
+      if (!account) {
+        throw new UnauthorizedException('Account not found');
+      }
+      console.log('Found account:', account); // Debug log
+
+      const user = await this.userModel.findOne({ account_id: account._id });
+      console.log('User query:', { account_id: account._id }); // Debug log
+      console.log('Found user:', user); // Debug log
+
+      return {
+        account: {
+          _id: account._id,
+          email: account.email,
+          role: account.role,
+        },
+        user: user ? {
+          _id: user._id,
+          first_name: user.first_name,
+          last_name: user.last_name,
+        } : null,
+      };
+    } catch (error) {
+      console.error('JWT validation error:', error); // Debug log
+      throw new UnauthorizedException('Invalid token');
+    }
   }
-} 
+}

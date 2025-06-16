@@ -6,6 +6,9 @@ export class Cv extends Document {
   @Prop({ required: true, type: Types.ObjectId, ref: 'User' })
   userId: Types.ObjectId;
 
+  @Prop({ required: true, type: Types.ObjectId, ref: 'CvTemplate' })
+  cvTemplateId: Types.ObjectId;
+
   @Prop({ required: true })
   title: string;
 
@@ -14,6 +17,9 @@ export class Cv extends Document {
 
   @Prop({ default: false })
   isPublic: boolean;
+
+  @Prop({ default: false })
+  isSaved: boolean;
 
   @Prop()
   createdAt: Date;
