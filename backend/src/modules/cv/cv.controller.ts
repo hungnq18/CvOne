@@ -1,8 +1,8 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Request, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { CvTemplate } from '../cv/schemas/cv-template.schema';
+import { CvTemplate } from '../cv-template/schemas/cv-template.schema';
 import { CvService } from './cv.service';
-import { Cv } from './schemas/cv.schema';
+import { CreateCvDto } from './dto/create-cv.dto';
 
 /**
  * Controller for handling CV (Curriculum Vitae) related requests
@@ -39,16 +39,14 @@ export class CvController {
   }
 
   /**
-   * Create a new CV for the authenticated user
-   * @param data - CV data to create
+   * Create a new CV
+   * @param createCvDto - The CV data
    * @param req - Request object containing user information
-   * @returns Created CV object
-   * @requires Authentication
    */
   @UseGuards(JwtAuthGuard)
   @Post()
-  create(@Body() data, @Request() req) {
-    return this.cvService.createCV(req.user.id, data);
+  async createCV(@Body() createCvDto: CreateCvDto, @Request() req) {
+    return this.cvService.createCV(createCvDto, req.user.id);
   }
 
   /**
@@ -79,16 +77,57 @@ export class CvController {
   }
 
   /**
-   * Share a CV (make it public)
+   * Save a CV
+   * @param id - The ID of the CV to save
+   * @param req - Request object containing user information
+   */
+  @UseGuards(JwtAuthGuard)
+  @Post(':id/save')
+  async saveCV(@Param('id') id: string, @Request() req) {
+    return this.cvService.saveCV(id, req.user.id);
+  }
+
+  /**
+   * Unsave a CV
+   * @param id - The ID of the CV to unsave
+   * @param req - Request object containing user information
+   */
+  @UseGuards(JwtAuthGuard)
+  @Post(':id/unsave')
+  async unsaveCV(@Param('id') id: string, @Request() req) {
+    return this.cvService.unsaveCV(id, req.user.id);
+  }
+
+  /**
+   * Share a CV
    * @param id - The ID of the CV to share
    * @param req - Request object containing user information
-   * @returns Updated CV object with sharing status
-   * @requires Authentication
    */
   @UseGuards(JwtAuthGuard)
   @Post(':id/share')
-  async shareCV(@Param('id') id: string, @Request() req): Promise<Cv> {
+  async shareCV(@Param('id') id: string, @Request() req) {
     return this.cvService.shareCV(id, req.user.id);
+  }
+
+  /**
+   * Unshare a CV
+   * @param id - The ID of the CV to unshare
+   * @param req - Request object containing user information
+   */
+  @UseGuards(JwtAuthGuard)
+  @Post(':id/unshare')
+  async unshareCV(@Param('id') id: string, @Request() req) {
+    return this.cvService.unshareCV(id, req.user.id);
+  }
+
+  /**
+   * Get all saved CVs for the current user
+   * @param req - Request object containing user information
+   */
+  @UseGuards(JwtAuthGuard)
+  @Get('saved')
+  async getSavedCVs(@Request() req) {
+    return this.cvService.getSavedCVs(req.user.id);
   }
 
   /**

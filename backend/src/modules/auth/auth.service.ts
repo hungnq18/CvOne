@@ -3,9 +3,11 @@ import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/mongoose';
 import * as bcrypt from 'bcrypt';
 import { Model } from 'mongoose';
+import { generateJwtToken } from '../../utils/jwt.utils';
 import { LoginDto } from '../accounts/dto/login.dto';
 import { Account } from '../accounts/schemas/account.schema';
 import { MailService } from '../mail/mail.service';
+import { User } from '../users/schemas/user.schema';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 
@@ -13,6 +15,7 @@ import { ForgotPasswordDto } from './dto/forgot-password.dto';
 export class AuthService {
   constructor(
     @InjectModel(Account.name) private accountModel: Model<Account>,
+    @InjectModel(User.name) private userModel: Model<User>,
     private jwtService: JwtService,
     private mailService: MailService,
   ) {}
@@ -22,35 +25,18 @@ export class AuthService {
    * @param loginDto - Contains email and password
    */
   async login(loginDto: LoginDto) {
-    const { email, password } = loginDto;
-    const account = await this.accountModel.findOne({ email });
-
+    const account = await this.accountModel.findOne({ email: loginDto.email });
     if (!account) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const isPasswordValid = await bcrypt.compare(password, account.password);
+    const isPasswordValid = await bcrypt.compare(loginDto.password, account.password);
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    // Generate JWT token with userId
-    const payload = { 
-      sub: account._id,
-      email: account.email,
-      role: account.role 
-    };
-
-    const token = this.jwtService.sign(payload);
-
-    return {
-      token,
-      user: {
-        id: account._id,
-        email: account.email,
-        role: account.role
-      }
-    };
+    const user = await this.userModel.findOne({ account_id: account._id });
+    return generateJwtToken(this.jwtService, account, user || undefined);
   }
 
   /**
