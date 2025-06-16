@@ -1,6 +1,6 @@
 import Image from "next/image";
 
-// Helper không thay đổi
+
 const renderDescription = (desc: string) => {
   if (!desc) return null;
   const lines = desc
@@ -21,7 +21,7 @@ const ModernCV1 = ({ data }: { data: any }) => {
   const professionalTitle = userData.professional || "Chuyên gia";
 
   return (
-    <div className="bg-white font-sans text-gray-800 flex flex-col lg:flex-row aspect-[5/6]">
+    <div className="bg-white font-sans text-gray-800 flex flex-col lg:flex-row min-h-screen">
       {/* CỘT TRÁI (MÀU XANH) */}
       <div className="w-full lg:w-[38%] bg-[#004d40] text-white p-8 lg:p-12 flex flex-col">
         <div className="flex justify-center mb-10 lg:mb-12">
@@ -38,23 +38,21 @@ const ModernCV1 = ({ data }: { data: any }) => {
 
         {/* THÔNG TIN CÁ NHÂN */}
         <div className="mb-10 lg:mb-12">
-          {/* [SỬA] Đổi text-1xl thành text-xl */}
           <h2 className="text-xl lg:text-2xl font-bold mb-6 pb-3 border-b border-white/50">
             THÔNG TIN CÁ NHÂN
           </h2>
           <div className="space-y-4 text-lg lg:text-xl">
-             {/* [SỬA] Dùng truncate để không xuống dòng */}
-            <div className="flex items-center">
-              <strong className="w-32 shrink-0">Điện thoại:</strong>
-              <span className="truncate">{userData.phone}</span>
+            <div>
+              <strong className="w-32 shrink-0 block text-base font-bold text-white/70">Điện thoại:</strong>
+              <span className="text-lg break-words">{userData.phone}</span>
             </div>
-            <div className="flex items-center">
-              <strong className="w-32 shrink-0">Email:</strong>
-              <span className="truncate">{userData.email}</span>
+            <div >
+              <strong className="w-32 shrink-0 block text-base font-bold text-white/70">Email:</strong>
+              <span className="text-lg break-words">{userData.email}</span>
             </div>
-            <div className="flex items-center">
-              <strong className="w-32 shrink-0">Địa chỉ:</strong>
-              <span className="truncate">
+            <div >
+              <strong className="w-32 shrink-0 block text-base font-bold text-white/70">Địa chỉ:</strong>
+              <span className="text-lg break-words">
                 {userData.city}, {userData.country}
               </span>
             </div>
@@ -135,7 +133,6 @@ const ModernCV1 = ({ data }: { data: any }) => {
   );
 };
 
-// Component Section được cập nhật
 function Section({ title, children }: { title: string; children: React.ReactNode; }) {
   return (
     <div className="mb-10">

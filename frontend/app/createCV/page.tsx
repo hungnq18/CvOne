@@ -9,7 +9,7 @@ const PageCreateCVSection = dynamic(() => import('@/components/sections/pageCrea
 
 export default function CreateCVPage() {
   return (
-    <main className="min-h-screen bg-blue-50 py-10 px-6">
+    <main className="min-h-screen bg-blue-50 pt-10 overflow-x-hidden">
       <PageCreateCVSection />
     </main>
   );
