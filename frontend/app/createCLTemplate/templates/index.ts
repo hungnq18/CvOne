@@ -1,4 +1,4 @@
-import Template1 from './template1';
+import Cascade from './cascade';
 import Crisp from './crisp';
 import Concept from './concept';
 // Import other templates as they are created
@@ -7,7 +7,7 @@ import Concept from './concept';
 // import Creative from './creative';
 
 const templates = {
-  template1: Template1,
+  cascade: Cascade,
   crisp: Crisp,
   concept: Concept,
   // Add other templates as they are created
