@@ -64,7 +64,6 @@ export class AccountsService {
 
       try {
         // Create user profile
-        this.logger.debug('Creating user profile...');
         const userProfile = await this.usersService.createUser({
           first_name,
           last_name,

@@ -53,4 +53,11 @@ export class JobsService {
     }
     return deletedJob;
   }
+  async getJobById(id: string): Promise<JobDocument> {
+    const job = await this.jobModel.findById(id).exec();
+    if (!job) {
+      throw new NotFoundException(`Job with ID ${id} not found`);
+    }
+    return job;
+  }
 }

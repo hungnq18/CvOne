@@ -174,7 +174,7 @@ const navigationItems = {
       },
       {
         name: "Templates",
-        href: "/templates",
+        href: "/cvTemplates",
         dropdownItems: [
           { name: "Resume Templates", href: "/cvTemplate" },
           { name: "CV Templates", href: "/cvTemplate" },
