@@ -49,4 +49,10 @@ export class JobsController {
   delete(@Param("id") id: string) {
     return this.jobsService.delete(id);
   }
+
+  @UseGuards(JwtAuthGuard)
+  @Get(":id")
+  getJobById(@Param("id") id: string) {
+    return this.jobsService.getJobById(id);
+  }
 }

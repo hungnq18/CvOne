@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
-import { Model, Types } from "mongoose";
+import { Model, ObjectId, Types } from "mongoose";
 import { AccountsService } from "../accounts/accounts.service";
 import { UpdateUserDto } from "./dto/update-user.dto";
 import { User, UserDocument } from "./schemas/user.schema";
@@ -108,9 +108,11 @@ export class UsersService {
     return user;
   }
 
-  async getUserByAccountId(accountId: string): Promise<UserDocument> {
+  async getUserByAccountId(
+    accountId: string | Types.ObjectId
+  ): Promise<UserDocument> {
     const user = await this.userModel
-      .findOne({ account_id: new Types.ObjectId(accountId) })
+      .findOne({ account_id: accountId })
       .populate({
         path: "account_id",
         select:

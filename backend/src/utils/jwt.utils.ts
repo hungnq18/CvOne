@@ -1,5 +1,5 @@
-import { JwtService } from '@nestjs/jwt';
-import { Account } from '../modules/accounts/schemas/account.schema';
+import { JwtService } from "@nestjs/jwt";
+import { Account } from "../modules/accounts/schemas/account.schema";
 
 export const generateJwtToken = (jwtService: JwtService, account: Account) => {
   const payload = {
@@ -13,4 +13,4 @@ export const generateJwtToken = (jwtService: JwtService, account: Account) => {
     email: account.email,
     role: account.role,
   };
-}; 
+};
