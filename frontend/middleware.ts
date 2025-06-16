@@ -6,6 +6,7 @@ const protectedPaths = ["/dashboard", "/admin"];
 export interface DecodedToken {
   exp: number;
   role: string;
+  user: string;
 }
 
 export function middleware(request: NextRequest) {
@@ -13,7 +14,8 @@ export function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
 
   const isProtectedPath = protectedPaths.some(
-    (protectedPath) => path === protectedPath || path.startsWith(`${protectedPath}/`)
+    (protectedPath) =>
+      path === protectedPath || path.startsWith(`${protectedPath}/`)
   );
 
   if (isProtectedPath && !token) {
@@ -45,7 +47,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.png$).*)",
-  ],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.png$).*)"],
 };
