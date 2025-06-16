@@ -1,4 +1,4 @@
-// components/card/card-template.tsx
+// components/card/card-template.tsx (Cập nhật)
 
 "use client";
 
@@ -6,31 +6,54 @@ import Image from "next/image";
 import { useState } from "react";
 import { useLanguage } from "@/providers/global-provider";
 import { motion } from "framer-motion";
-import { useRouter } from "next/navigation"; // Import useRouter
+import { useRouter } from "next/navigation"; // Đã có
 
-type CardTemplateProps = {
-  id: string; // id là kiểu string
+// THÊM id vào props
+type CVCardProps = {
+  id: string; // THÊM DÒNG NÀY: ID của template
   imageUrl: string;
   title: string;
   isRecommended?: boolean;
+  onPreviewClick: () => void;
 };
 
-const CardTemplate: React.FC<CardTemplateProps> = ({ id, imageUrl, title }) => {
+const CVCard: React.FC<CVCardProps> = ({ id, imageUrl, title, onPreviewClick }) => {
   const [isHovered, setIsHovered] = useState(false);
   const { language } = useLanguage();
   const router = useRouter();
 
-  const cardVariants = { /* ...hiệu ứng không đổi... */ };
-  const buttonVariants = { /* ...hiệu ứng không đổi... */ };
+  // Hiệu ứng cho card
+  const cardVariants = {
+    hidden: { opacity: 0, y: 50 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.6, ease: "easeOut" },
+    },
+  };
 
-  const handleCreateClick = () => {
-    // Điều hướng đến một trang chung, ví dụ /choose-template
-    router.push(`/chooseCLTemplate`);
+  // Hiệu ứng cho nút
+  const buttonVariants = {
+    hidden: { opacity: 0, scale: 0.8 },
+    visible: {
+      opacity: 1,
+      scale: 1,
+      transition: { duration: 0.3, ease: "easeOut" },
+    },
+    hover: {
+      scale: 1.05,
+      boxShadow: "0 0 15px rgba(34, 197, 94, 0.5)",
+      transition: { duration: 0.2 },
+    },
+  };
+
+  const handleUseTemplateClick = () => {
+    router.push(`/createCLTemplate?template=${id}`);
   };
 
   return (
     <motion.div
-      className="bg-white rounded-lg shadow-lg overflow-hidden transform"
+      className="bg-white shadow-lg overflow-hidden transform"
       variants={cardVariants}
       initial="hidden"
       animate="visible"
@@ -43,27 +66,34 @@ const CardTemplate: React.FC<CardTemplateProps> = ({ id, imageUrl, title }) => {
           src={imageUrl}
           alt={title}
           layout="fill"
-          objectFit="cover"
-          className="rounded-t-lg"
+          objectFit="contain"
         />
         {isHovered && (
           <motion.div
-            className="absolute inset-0 flex items-end justify-center pb-6 bg-black bg-opacity-40"
+            className="absolute inset-0 flex flex-col items-center justify-center p-4 bg-black bg-opacity-50"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.3 }}
           >
             <motion.button
-              className="flex items-center bg-blue-500 text-white px-5 py-3 rounded-lg hover:bg-blue-600" // Màu xanh dương
+              className="bg-white text-gray-800 px-5 py-3 rounded-lg font-semibold text-lg hover:bg-gray-200 transition-colors w-full max-w-xs mb-4"
               variants={buttonVariants}
               initial="hidden"
               animate="visible"
               whileHover="hover"
-              onClick={handleCreateClick} // Dùng onClick
+              onClick={onPreviewClick}
             >
-              <span className="text-lg font-semibold">
-                {language === "vi" ? "Tạo" : "Create"}
-              </span>
+              {language === "vi" ? "Xem trước" : "Preview"}
+            </motion.button>
+            <motion.button
+              className="flex items-center justify-center bg-blue-500 text-white px-5 py-3 rounded-lg font-semibold text-lg hover:bg-blue-600 transition-colors w-full max-w-xs"
+              variants={buttonVariants}
+              initial="hidden"
+              animate="visible"
+              whileHover="hover"
+              onClick={handleUseTemplateClick}
+            >
+              {language === "vi" ? "Sử dụng mẫu này" : "Use this template"}
               <motion.svg
                 className="ml-2 w-5 h-5"
                 fill="none"
@@ -91,4 +121,4 @@ const CardTemplate: React.FC<CardTemplateProps> = ({ id, imageUrl, title }) => {
   );
 };
 
-export default CardTemplate;
+export default CVCard;

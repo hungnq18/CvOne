@@ -32,7 +32,11 @@ export const API_ENDPOINTS = {
     UPDATE: (id: string) => `/cvs/${id}`,
     DELETE: (id: string) => `/cvs/${id}`,
     SHARE: (id: string) => `/cvs/${id}/share`,
-    TEMPLATES: "/cvTemplates",
+    TEMPLATES: "/cvTemplates"
+  },
+  CL: {
+    TEMPLATES: "/clTemplates",
+    GET_BY_ID: (id: string) => `/clTemplates/${id}`
   },
   CHAT: {
     GET_CONVERSATION: (convId: string) => `/chat/messages/${convId}`,
