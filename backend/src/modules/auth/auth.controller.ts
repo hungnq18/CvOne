@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Post,
+  Request,
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
@@ -12,6 +13,10 @@ import { generateJwtToken } from '../../utils/jwt.utils';
 import { AccountsService } from '../accounts/accounts.service';
 import { CreateAccountDto } from '../accounts/dto/create-account.dto';
 import { LoginDto } from '../accounts/dto/login.dto';
+import { AuthService } from './auth.service';
+import { Public } from './decorators/public.decorator';
+import { ChangePasswordDto } from './dto/change-password.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RolesGuard } from './guards/roles.guard';
 
@@ -20,6 +25,7 @@ export class AuthController {
   constructor(
     private readonly accountsService: AccountsService,
     private readonly jwtService: JwtService,
+    private readonly authService: AuthService,
   ) {}
 
   @Post('register') //register
@@ -32,7 +38,6 @@ export class AuthController {
   }
 
   @Post('login') //login
-
   async login(@Body() loginDto: LoginDto) {
     const { email, password } = loginDto;
 
@@ -62,5 +67,33 @@ export class AuthController {
   @Post('admin-only')
   async adminRoute() {
     return { message: 'This is an admin only route' };
+  }
+
+  /**
+   * Request password reset
+   * @param forgotPasswordDto - Contains user's email
+   * @returns Success message
+   * @public - No authentication required
+   */
+  @Public()
+  @Post('forgot-password')
+  async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
+    return this.authService.forgotPassword(forgotPasswordDto);
+  }
+
+  /**
+   * Change user's password
+   * @param req - Request object containing user information
+   * @param changePasswordDto - Contains current and new password
+   * @returns Success message
+   * @requires Authentication
+   */
+  @UseGuards(JwtAuthGuard)
+  @Post('change-password')
+  async changePassword(
+    @Request() req,
+    @Body() changePasswordDto: ChangePasswordDto,
+  ) {
+    return this.authService.changePassword(req.user.id, changePasswordDto);
   }
 }

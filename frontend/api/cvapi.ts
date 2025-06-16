@@ -11,7 +11,7 @@
  * - Sharing CV
  */
 
-import { fetchWithAuth } from "./apiClient";
+import { fetchWithAuth, fetchWithoutAuth } from "./apiClient";
 import { API_ENDPOINTS } from "./apiConfig";
 
 export type CVTemplate = {
@@ -36,7 +36,7 @@ export interface CV {
  * @returns Promise with array of CV templates
  */
 export const getCVTemplates = async (): Promise<CVTemplate[]> => {
-  return fetchWithAuth(API_ENDPOINTS.CV.TEMPLATES);
+  return fetchWithoutAuth(API_ENDPOINTS.CV.TEMPLATES);
 };
 
 /**
@@ -45,7 +45,7 @@ export const getCVTemplates = async (): Promise<CVTemplate[]> => {
  * @returns Promise with CV template data
  */
 export const getCVTemplateById = async (id: string): Promise<CVTemplate | undefined> => {
-  return fetchWithAuth(`${API_ENDPOINTS.CV.TEMPLATES}/${id}`);
+  return fetchWithoutAuth(`${API_ENDPOINTS.CV.TEMPLATES}/${id}`);
 };
 
 /**
