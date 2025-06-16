@@ -1,24 +1,22 @@
-import { JwtService } from '@nestjs/jwt';
-import { Document } from 'mongoose';
-import { Account } from '../modules/accounts/schemas/account.schema';
-import { User } from '../modules/users/schemas/user.schema';
+import { JwtService } from "@nestjs/jwt";
+import { Account } from "../modules/accounts/schemas/account.schema";
+import { User } from "src/modules/users/schemas/user.schema";
 
-export const generateJwtToken = (jwtService: JwtService, account: Account, user?: Document & User) => {
+export const generateJwtToken = (
+  jwtService: JwtService,
+  account: Account,
+  user?: User | null
+) => {
   const payload = {
     sub: account._id,
     email: account.email,
     role: account.role,
-    user: user?._id
+    user: user?._id || null,
   };
 
   return {
     access_token: jwtService.sign(payload),
     email: account.email,
     role: account.role,
-    user: user ? {
-      _id: user._id,
-      first_name: user.first_name,
-      last_name: user.last_name,
-    } : null,
   };
 };

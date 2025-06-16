@@ -1,4 +1,4 @@
-export const API_URL = "http://localhost:3001";
+export const API_URL = "http://localhost:8000/api";
 
 export const API_ENDPOINTS = {
   AUTH: {
@@ -31,5 +31,8 @@ export const API_ENDPOINTS = {
     DELETE: (id: string) => `/cvs/${id}`,
     SHARE: (id: string) => `/cvs/${id}/share`,
     TEMPLATES: "/cvTemplates",
+  },
+  CHAT: {
+    GET_CONVERSATION: (convId: string) => `/chat/messages/${convId}`,
   },
 } as const;

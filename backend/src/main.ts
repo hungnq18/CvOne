@@ -10,6 +10,7 @@ import { ValidationPipe } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
 import * as dotenv from "dotenv";
 import { AppModule } from "./app.module";
+import { IoAdapter } from "@nestjs/platform-socket.io";
 
 dotenv.config();
 
@@ -37,6 +38,7 @@ async function bootstrap() {
 
   // Global prefix for all routes
   app.setGlobalPrefix("api");
+  app.useWebSocketAdapter(new IoAdapter(app));
 
   const port = process.env.PORT || 8000;
   await app.listen(port);
