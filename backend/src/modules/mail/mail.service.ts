@@ -9,6 +9,7 @@ date: 2025-03-06
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
+
 @Injectable()
 export class MailService {
   private transporter: nodemailer.Transporter;
@@ -36,6 +37,23 @@ export class MailService {
         <h1>Email Verification</h1>
         <p>Please click the link below to verify your email:</p>
         <a href="${verificationLink}">${verificationLink}</a>
+      `,
+    });
+  }
+
+  async sendPasswordResetEmail(email: string, token: string) {
+    const resetLink = `${this.configService.get('FRONTEND_URL')}/reset-password?token=${token}`;
+    
+    await this.transporter.sendMail({
+      from: this.configService.get('MAIL_FROM'),
+      to: email,
+      subject: 'Reset Your Password',
+      html: `
+        <h1>Password Reset</h1>
+        <p>Please click the link below to reset your password:</p>
+        <a href="${resetLink}">${resetLink}</a>
+        <p>This link will expire in 1 hour.</p>
+        <p>If you did not request a password reset, please ignore this email.</p>
       `,
     });
   }

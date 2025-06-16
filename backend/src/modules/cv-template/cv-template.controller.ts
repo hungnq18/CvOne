@@ -1,13 +1,35 @@
-import { Controller, Get } from '@nestjs/common';
-import { CvTemplateService } from './cv-template.service'; // Adjust the import path as necessary
-import { CvTemplate } from './schemas/cv-template.schema'; // Adjust the import path as necessary
-@Controller('cv-template')
-export class CvTemplateController {
-constructor(private readonly CvTemplateService: CvTemplateService) {}
-/* THIS FUNCTION IS GET LISTTING TEMPLATE OF CV */
-@Get()// cv-template
-async getAllCvTemplates(): Promise<CvTemplate[]> {
-    return this.CvTemplateService.findAllCvTemplates();
-}
+import { Controller, Get, Param } from '@nestjs/common';
+import { Public } from '../auth/decorators/public.decorator';
+import { CvTemplateService } from './cv-template.service';
 
+/**
+ * Controller for handling CV template related requests
+ * All endpoints in this controller are public (no authentication required)
+ */
+@Controller('cv-templates')
+export class CvTemplateController {
+  constructor(private readonly cvTemplateService: CvTemplateService) {}
+
+  /**
+   * Get all CV templates
+   * @returns Array of CV templates
+   * @public - No authentication required
+   */
+  @Public()
+  @Get()
+  async findAll() {
+    return this.cvTemplateService.findAll();
+  }
+
+  /**
+   * Get a specific CV template by ID
+   * @param id - The ID of the CV template to retrieve
+   * @returns CV template object
+   * @public - No authentication required
+   */
+  @Public()
+  @Get(':id')
+  async findOne(@Param('id') id: string) {
+    return this.cvTemplateService.findOne(id);
+  }
 }
