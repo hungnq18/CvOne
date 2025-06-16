@@ -32,4 +32,7 @@ export const API_ENDPOINTS = {
     SHARE: (id: string) => `/cvs/${id}/share`,
     TEMPLATES: "/cvTemplates",
   },
+  CHAT: {
+    GET_CONVERSATION: (convId: string) => `/chat/messages/${convId}`,
+  },
 } as const;

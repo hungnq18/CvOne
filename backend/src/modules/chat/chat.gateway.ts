@@ -17,8 +17,6 @@ export class ChatGateway {
 
   @SubscribeMessage("sendMessage")
   async handleSendMessage(@MessageBody() dto: SendMessageDto) {
-    console.log("📨 Server nhận message:", dto); // LOG NÀY QUAN TRỌNG
-
     const message = await this.chatService.saveMessage(dto);
     this.server.to(dto.conversationId).emit("newMessage", message);
   }

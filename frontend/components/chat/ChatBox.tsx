@@ -1,7 +1,11 @@
 "use client";
-
 import { useEffect, useState } from "react";
 import socket from "@/utils/socket/client";
+import { API_ENDPOINTS, API_URL } from "@/api/apiConfig";
+import { fetchWithAuth } from "@/api/apiClient";
+import axios from "axios";
+import { DecodedToken } from "@/middleware";
+import { jwtDecode } from "jwt-decode";
 
 interface Message {
   _id: string;
@@ -20,11 +24,46 @@ export default function ChatBox({ conversationId, userId }: ChatBoxProps) {
   const [content, setContent] = useState("");
 
   useEffect(() => {
-    socket.emit("joinRoom", conversationId);
-    console.log("Join room", conversationId);
+    // Fetch old messages
+    const fetchMessages = async () => {
+      try {
+        // const res = await fetchWithAuth(
+        //   API_ENDPOINTS.CHAT.GET_CONVERSATION(conversationId)
+        // );
 
+        const getToken = () => {
+          const token = document.cookie
+            .split("; ")
+            .find((row) => row.startsWith("token="))
+            ?.split("=")[1];
+          if (!token) return null;
+          return token;
+        };
+
+        const token = getToken();
+
+        const res = await axios.get<Message[]>(
+          `http://localhost:8000/api/chat/messages/${conversationId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        setMessages(res.data);
+      } catch (err) {
+        console.error("Failed to load messages", err);
+      }
+    };
+
+    fetchMessages();
+
+    // Join room socket
+    socket.emit("joinRoom", conversationId);
+
+    // Listen for real-time message
     socket.on("newMessage", (msg: Message) => {
-      console.log("New message from socket", msg);
       setMessages((prev) => [...prev, msg]);
     });
 
@@ -36,22 +75,44 @@ export default function ChatBox({ conversationId, userId }: ChatBoxProps) {
 
   const handleSend = () => {
     if (!content.trim()) return;
+
     socket.emit("sendMessage", {
       senderId: userId,
       conversationId,
       content,
     });
-    setContent("");
+
+    setContent(""); // clear input
   };
+
+  const getSenderId = (sender: any): string => {
+    if (!sender) return "";
+
+    // Trường hợp sender là string sẵn
+    if (typeof sender === "string") return sender;
+
+    // Trường hợp sender là object có _id
+    if (typeof sender === "object" && "_id" in sender) {
+      return String(sender._id);
+    }
+
+    return "";
+  };
+
+  console.log(messages);
 
   return (
     <div className="p-4 border rounded shadow-md w-full max-w-md">
       <div className="h-64 overflow-y-auto border-b mb-2">
         {messages.map((msg) => (
-          <div key={msg._id} className="text-sm py-1">
-            <strong>{msg.senderId === userId ? "Bạn" : "Người kia"}:</strong>{" "}
-            {msg.content}
-          </div>
+          <>
+            <div key={msg._id} className="text-sm py-1">
+              <strong>
+                {getSenderId(msg.senderId) === userId ? "Bạn" : "Người kia"}:
+              </strong>{" "}
+              {msg.content}
+            </div>
+          </>
         ))}
       </div>
       <div className="flex gap-2">
