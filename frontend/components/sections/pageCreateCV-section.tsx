@@ -17,6 +17,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import Image from "next/image";
+import { CVProvider, useCV } from "@/providers/cv-provider";
 import { useOnClickOutside } from "@/hooks/useOnClickOutside";
 
 // --- CÁC COMPONENT POPUP ---
@@ -418,7 +419,7 @@ const ExperiencePopup: FC<{
               onClick={handleFormSubmit}
               className="bg-blue-500 text-white px-4 py-2 rounded-md text-sm"
             >
-              Lưu mục này
+              Thêm
             </button>
           </div>
         </div>
@@ -611,7 +612,7 @@ const EducationPopup: FC<{
               onClick={handleFormSubmit}
               className="bg-blue-500 text-white px-4 py-2 rounded-md text-sm"
             >
-              Lưu mục này
+              Thêm
             </button>
           </div>
         </div>
@@ -724,7 +725,7 @@ const DropdownArrow = () => (
   <span className="absolute -top-[8px] left-1/2 -translate-x-1/2 w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-b-[8px] border-b-white" />
 );
 
-// Dữ liệu cho Sidebar - ĐÃ XÓA ICON
+// Dữ liệu cho Sidebar
 const sidebarSections = [
   { id: "info", title: "Thông tin cá nhân" },
   { id: "contact", title: "Liên hệ" },
@@ -734,12 +735,18 @@ const sidebarSections = [
   { id: "skills", title: "Kỹ năng" },
 ];
 
-const PageCreateCVSection = () => {
+const PageCreateCVSection = () => (
+  <CVProvider>
+    <PageCreateCVContent />
+  </CVProvider>
+);
+
+const PageCreateCVContent = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
   const id = searchParams.get("id");
 
-  const [template, setTemplate] = useState<CVTemplate | null>(null);
+  const { currentTemplate, userData, loadTemplate, updateUserData } = useCV();
   const [loading, setLoading] = useState(true);
   const [activeSection, setActiveSection] = useState("info");
   const [activePopup, setActivePopup] = useState<string | null>(null);
@@ -758,13 +765,13 @@ const PageCreateCVSection = () => {
     if (id) {
       setLoading(true);
       getCVTemplateById(id).then((data) => {
-        if (data) setTemplate(data);
+        if (data) loadTemplate(data);
         setLoading(false);
       });
     } else {
       setLoading(false);
     }
-  }, [id]);
+  }, [id, loadTemplate]);
 
   const handleTemplateSelect = (selectedTemplate: CVTemplate) => {
     router.push(
@@ -775,55 +782,44 @@ const PageCreateCVSection = () => {
     setShowTemplatePopup(false);
   };
 
-  const handleDataUpdate = (sectionId: string, updatedData: any) => {
-    if (!template) return;
-
-    console.log("Updating data for section:", sectionId, updatedData);
-
-    if (sectionId === "info") {
-      const newTemplateData = {
-        ...template,
-        data: {
-          ...template.data,
-          userData: {
-            ...template.data.userData,
-            ...updatedData,
-          },
-        },
-      };
-      setTemplate(newTemplateData);
-    }
-    // Bạn có thể thêm logic cho các section khác ở đây
+  const handleDataUpdate = (updatedData: any) => {
+    updateUserData(updatedData);
   };
 
   const renderCVPreview = () => {
-    if (loading) return <p className="text-center">Đang tải Mẫu...</p>;
-    if (!template)
-      return <p className="text-center text-red-500">Không tìm thấy Mẫu.</p>;
-    const TemplateComponent = templateComponentMap?.[template.title];
-    if (!TemplateComponent)
-      return (
-        <div>Không tìm thấy component phù hợp cho "{template.title}".</div>
-      );
+    if (loading || !currentTemplate || !userData) {
+      return <p className="text-center">Đang tải Mẫu...</p>;
+    }
+
+    const TemplateComponent = templateComponentMap?.[currentTemplate.title];
+    if (!TemplateComponent) {
+      return <div>Không tìm thấy component cho "{currentTemplate.title}".</div>;
+    }
+
+    const componentData = {
+      ...currentTemplate.data,
+      userData: userData, 
+    };
+
     return (
       <div className="w-full max-w-[1050px] shadow-2xl origin-top scale-[0.6] md:scale-[0.7] lg:scale-[0.8]">
-        <TemplateComponent data={template.data} />
+        <TemplateComponent data={componentData} />
       </div>
     );
   };
 
   return (
-    <div className="h-screen w-screen bg-slate-50 flex flex-col">
+    <div className="h-screen w-full bg-slate-50 flex flex-col overflow-x-hidden">
       <header
         className="bg-slate-900 text-white pt-20 pb-6 px-8 flex justify-between items-center z-20"
         style={{ backgroundColor: "#0b1b34" }}
       >
         <div className="flex items-center gap-6">
           <h1 className="text-2xl font-bold">
-            {template ? template.title : "Chỉnh Sửa CV"}
+            {currentTemplate ? currentTemplate.title : "Chỉnh Sửa CV"}
           </h1>
           <div className="flex items-center gap-4">
-          <div className="relative" ref={colorDropdownRef}>
+            <div className="relative" ref={colorDropdownRef}>
               <button
                 onClick={() => setShowColorPopup(!showColorPopup)}
                 className="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-md text-sm font-semibold"
@@ -852,7 +848,10 @@ const PageCreateCVSection = () => {
                 MẪU CV
               </button>
               {showTemplatePopup && (
-                <div className="absolute top-full mt-3 bg-white rounded-md shadow-lg z-20 p-4 w-[450px]" style={{ left: "-200%" }}>
+                <div
+                  className="absolute top-full mt-3 bg-white rounded-md shadow-lg z-20 p-4 w-[450px]"
+                  style={{ left: "-200%" }}
+                >
                   <DropdownArrow />
                   <div className="grid grid-cols-3 gap-4">
                     {allTemplates.map((item) => (
@@ -875,7 +874,7 @@ const PageCreateCVSection = () => {
                         <p className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs text-center py-1">
                           {item.title}
                         </p>
-                        {template?.id === item.id && (
+                        {currentTemplate?.id === item.id && (
                           <div className="absolute inset-0 bg-blue-500 bg-opacity-60 flex items-center justify-center">
                             <CheckCircle2 size={32} className="text-white" />
                           </div>
@@ -890,7 +889,7 @@ const PageCreateCVSection = () => {
         </div>
         <div className="flex items-center gap-4">
           <button
-            onClick={() => router.back()}
+            onClick={() => router.push(`/cvTemplates`)}
             className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg flex items-center gap-2"
           >
             <ArrowLeft size={18} /> Quay Lại
@@ -946,46 +945,46 @@ const PageCreateCVSection = () => {
         </aside>
       </main>
 
-      {activePopup === "info" && template?.data?.userData && (
+      {activePopup === "info" && userData && (
         <InfoPopup
           onClose={() => setActivePopup(null)}
-          initialData={template.data.userData}
-          onSave={(updatedData) => handleDataUpdate("info", updatedData)}
+          initialData={userData}
+          onSave={(updatedData) => handleDataUpdate(updatedData)}
         />
       )}
       {activePopup === "contact" && (
         <ContactPopup
           onClose={() => setActivePopup(null)}
-          initialData={template?.data?.userData}
-          onSave={(updatedData) => handleDataUpdate("contact", updatedData)}
+          initialData={userData}
+          onSave={(updatedData) => handleDataUpdate(updatedData)}
         />
       )}
       {activePopup === "summary" && (
         <TargetPopup
           onClose={() => setActivePopup(null)}
-          initialData={template?.data?.userData}
-          onSave={(updatedData) => handleDataUpdate("summary", updatedData)}
+          initialData={userData}
+          onSave={(updatedData) => handleDataUpdate(updatedData)}
         />
       )}
       {activePopup === "experience" && (
         <ExperiencePopup
           onClose={() => setActivePopup(null)}
-          initialData={template?.data?.userData}
-          onSave={(updatedData) => handleDataUpdate("experience", updatedData)}
+          initialData={userData}
+          onSave={(updatedData) => handleDataUpdate(updatedData)}
         />
       )}
       {activePopup === "education" && (
         <EducationPopup
           onClose={() => setActivePopup(null)}
-          initialData={template?.data?.userData}
-          onSave={(updatedData) => handleDataUpdate("education", updatedData)}
+          initialData={userData}
+          onSave={(updatedData) => handleDataUpdate(updatedData)}
         />
       )}
       {activePopup === "skills" && (
         <SkillsPopup
           onClose={() => setActivePopup(null)}
-          initialData={template?.data?.userData}
-          onSave={(updatedData) => handleDataUpdate("skills", updatedData)}
+          initialData={userData}
+          onSave={(updatedData) => handleDataUpdate(updatedData)}
         />
       )}
     </div>
