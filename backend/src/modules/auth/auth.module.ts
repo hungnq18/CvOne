@@ -1,23 +1,32 @@
 import { Module, forwardRef } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
-import { PassportModule } from '@nestjs/passport';
-import { getJwtConfig } from 'src/config/jwt.config';
+import { MongooseModule } from '@nestjs/mongoose';
 import { AccountsModule } from '../accounts/accounts.module';
+import { Account, AccountSchema } from '../accounts/schemas/account.schema';
+import { MailModule } from '../mail/mail.module';
 import { AuthController } from './auth.controller';
+import { AuthService } from './auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 
 @Module({
-  
   imports: [
-    forwardRef (() => AccountsModule), // Use forwardRef to avoid circular dependency issues
-    PassportModule,
+    forwardRef(() => AccountsModule),
+    MongooseModule.forFeature([{ name: Account.name, schema: AccountSchema }]),
     JwtModule.registerAsync({
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => ({
+        secret: configService.get('JWT_SECRET'),
+        signOptions: {
+          expiresIn: configService.get('JWT_EXPIRES_IN'),
+        },
+      }),
       inject: [ConfigService],
-      useFactory: getJwtConfig,
     }),
+    MailModule,
   ],
   controllers: [AuthController],
-  providers: [JwtStrategy],
+  providers: [AuthService, JwtStrategy],
+  exports: [AuthService],
 })
 export class AuthModule {} 
