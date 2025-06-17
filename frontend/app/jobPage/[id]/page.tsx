@@ -94,7 +94,8 @@ export default function JobDetailPage({ params }: JobDetailPageProps) {
                                 </div>
                             </Card>
                             <Card>
-                                <Button type="primary" size="large" block>Apply Now</Button>
+                                <Button type="primary" size="large" block className="mb-4">Apply Now</Button>
+                                <Button type="primary" size="large" block>Save job </Button>
                             </Card>
                             <Card title="Benefits">
                                 <ul className="list-disc list-inside space-y-1 text-gray-700">
