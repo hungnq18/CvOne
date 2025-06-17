@@ -4,7 +4,7 @@ import { CVTemplate, getCVTemplates } from '@/api/cvapi'; // 💡 gọi từ fak
 import { useLanguage } from '@/providers/global-provider';
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
-import CVCard from '../card/card-template';
+import CardCVTemplate from '../card/card-CVtemplate';
 
 const CVSection: React.FC = () => {
   const { language } = useLanguage();
@@ -50,7 +50,7 @@ const CVSection: React.FC = () => {
           animate="visible"
         >
           {cvTemplates.map((template) => (
-            <CVCard
+            <CardCVTemplate
               key={template.id}
               id={template.id}
               imageUrl={template.imageUrl}
