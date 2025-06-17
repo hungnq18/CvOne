@@ -74,6 +74,7 @@
   },
   "devDependencies": {
     "@types/axios": "^0.9.36",
+    "@types/js-cookie": "^3.0.6",
     "@types/jwt-decode": "^2.2.1",
     "@types/next": "^9.0.0",
     "@types/node": "^22",

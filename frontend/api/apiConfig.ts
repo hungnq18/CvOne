@@ -36,7 +36,8 @@ export const API_ENDPOINTS = {
   },
   CL: {
     TEMPLATES: "/clTemplates",
-    GET_BY_ID: (id: string) => `/clTemplates/${id}`
+    GET_BY_ID: (id: string) => `/clTemplates/${id}`,
+    GET_ALL: "/cls"
   },
   CHAT: {
     GET_CONVERSATION: (convId: string) => `/chat/messages/${convId}`,
