@@ -38,8 +38,10 @@ export class NotificationsController {
 
   // Lấy danh sách thông báo của 1 người dùng
   @UseGuards(JwtAuthGuard)
-  @Get(":userId")
-  async getUserNotifications(@Param("userId") userId: string) {
+  @Get()
+  async getUserNotifications(@Request() req) {
+    const userId = req.user.user._id;
+
     return this.notificationsService.getNotificationsByUser(userId);
   }
 
@@ -52,8 +54,10 @@ export class NotificationsController {
 
   // Đánh dấu tất cả là đã đọc
   @UseGuards(JwtAuthGuard)
-  @Patch("read-all/:userId")
-  async markAllAsRead(@Param("userId") userId: string) {
+  @Patch("read-all")
+  async markAllAsRead(@Request() req) {
+    const userId = req.user.user._id;
+
     return this.notificationsService.markAllAsRead(userId);
   }
 
