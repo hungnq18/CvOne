@@ -13,7 +13,7 @@ export class ChatService {
   constructor(
     @InjectModel(Message.name) private messageModel: Model<Message>,
     @InjectModel(Conversation.name) private convModel: Model<Conversation>,
-    private userService: UsersService
+    private userService: UsersService,
   ) {}
 
   async saveMessage(dto: SendMessageDto) {

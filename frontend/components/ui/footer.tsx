@@ -4,7 +4,13 @@ import { FaFacebook, FaTwitter, FaLinkedin, FaGamepad, FaRobot } from "react-ico
 import { BsMessenger } from "react-icons/bs"
 import logoImg from "../../public/logo/logoCVOne.svg"
 
-export function Footer() {
+interface FooterProps {
+  show?: boolean;
+}
+
+export function Footer({ show = true }: FooterProps) {
+  if (!show) return null;
+
   return (
     <footer className="bg-[#0B1B35] text-white py-8 mt-auto">
       <div className="container mx-auto px-4 max-w-6xl">
