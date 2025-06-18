@@ -1,12 +1,12 @@
 import React from 'react';
 import { Table, Card, Row, Col, Dropdown, Menu, Button } from 'antd';
 import { FaEnvelope, FaPlus } from 'react-icons/fa';
-import { CoverLetter } from '@/app/myDocuments/page';
+import { CL } from '@/api/clApi';
 import { DownOutlined } from '@ant-design/icons';
 import { useLanguage } from '@/providers/global-provider';
 
 interface CoverLetterListProps {
-    coverLetters: CoverLetter[];
+        coverLetters: CL[];
     viewMode: 'grid' | 'list';
 }
 
@@ -74,7 +74,7 @@ const CoverLetterList: React.FC<CoverLetterListProps> = ({ coverLetters, viewMod
         },
     ];
 
-    const menu = (cl: CoverLetter) => (
+    const menu = (cl: CL) => (
         <Menu>
             <Menu.Item key="edit">{t.actions.edit}</Menu.Item>
             <Menu.Item key="tailor">{t.actions.tailor}</Menu.Item>
@@ -121,7 +121,7 @@ const CoverLetterList: React.FC<CoverLetterListProps> = ({ coverLetters, viewMod
                         </Card>
                     </Col>
                     {coverLetters.map((cl) => (
-                        <Col key={cl._id} xs={24} sm={12} md={8} lg={8}>
+                        <Col key={cl.id} xs={24} sm={12} md={8} lg={8}>
                             <Card
                                 hoverable
                                 className="min-h-[250px] bg-white border border-gray-200"
@@ -137,9 +137,7 @@ const CoverLetterList: React.FC<CoverLetterListProps> = ({ coverLetters, viewMod
                                 extra={<span className="text-gray-500 text-sm">{t.fields.edited.replace('{hours}', Math.floor(Math.random() * 24).toString())}</span>}
                             >
                                 <div className="space-y-2">
-                                    <p className="text-sm">{t.fields.company}: {cl.company_address}</p>
-                                    <p className="text-sm">{t.fields.createdAt}: {cl.created_at.toLocaleDateString()}</p>
-                                    <p className="text-sm">{t.fields.introduction}: {cl.introduction?.substring(0, 100)}...</p>
+                                    <p className="text-sm">{t.fields.createdAt}: {new Date(cl.createdAt).toLocaleDateString()}</p>
                                 </div>
                             </Card>
                         </Col>
@@ -167,7 +165,7 @@ const CoverLetterList: React.FC<CoverLetterListProps> = ({ coverLetters, viewMod
             <Table
                 dataSource={coverLetters}
                 columns={columns}
-                rowKey="_id"
+                rowKey="id"
                 pagination={false}
                 className="bg-white"
                 rowClassName="hover:bg-blue-50 transition-colors duration-300"

@@ -48,5 +48,5 @@ export async function fetchWithoutAuth(url: string, options: RequestInit = {}) {
     throw new Error(data.message || "Something went wrong");
   }
 
-  return data;
-}
+  return data
+

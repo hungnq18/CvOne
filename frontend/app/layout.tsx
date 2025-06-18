@@ -1,15 +1,13 @@
 import StyledComponentsRegistry from '@/api/registry'
-import { Footer } from "@/components/ui/footer"
-import { Header } from "@/components/ui/header"
 import { Toaster } from "@/components/ui/toaster"
 import { AuthProvider } from "@/providers/auth-provider"
 import { EmailVerificationProvider } from "@/providers/email-verification-provider"
 import { GlobalProvider } from "@/providers/global-provider"
-import { CVProvider } from "@/providers/cv-provider"
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import type React from "react"
 import "./globals.css"
+import { Header } from '@/components/ui/header'
 import { ThemeProvider } from "@/providers/theme-provider"
 import IconChatAndNotification from "@/components/chatAndNotification/iconChatAndNotification"
 import FooterWrapper from "@/components/ui/footer-wrapper"
