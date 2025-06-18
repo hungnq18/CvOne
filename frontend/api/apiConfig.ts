@@ -1,4 +1,5 @@
-export const API_URL = "http://localhost:8000/api";
+// export const API_URL = "http://localhost:8000/api";
+export const API_URL = "http://localhost:3001";
 
 // API Endpoints
 export const API_ENDPOINTS = {
@@ -21,7 +22,7 @@ export const API_ENDPOINTS = {
         DELETE: (id: string) => `/users/${id}`,
         GET_PROFILE: "/user/profile",
         UPDATE_PROFILE: "/user/profile",
-        
+
     },
     PROFILE: {
         GET: "/profile",
@@ -39,7 +40,8 @@ export const API_ENDPOINTS = {
     },
     CL: {
         TEMPLATES: "/clTemplates",
-        GET_BY_ID: (id: string) => `/clTemplates/${id}`
+        GET_BY_ID: (id: string) => `/clTemplates/${id}`,
+        GET_ALL: "/cls"
     },
     CHAT: {
         GET_MESSAGES: (convId: string) => `/chat/messages/${convId}`,
@@ -54,5 +56,5 @@ export const API_ENDPOINTS = {
         CREATE: "/jobs",
         UPDATE: (id: string) => `/jobs/${id}`,
         DELETE: (id: string) => `/jobs/${id}`,
-    },
+    }
 } as const;

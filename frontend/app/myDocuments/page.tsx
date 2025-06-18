@@ -1,10 +1,11 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Tabs } from 'antd';
 import CVList from '@/components/sections/listMyCV';
 import CoverLetterList from '@/components/sections/listMyCL';
 import '@/styles/myDocuments.css';
 import { useLanguage } from '@/providers/global-provider';
+import { getCLs, CL } from '@/api/clApi';
 
 export interface CV {
     _id: string;
@@ -22,28 +23,6 @@ export interface CV {
     skill?: string[];
     summary?: string;
     finalize: boolean;
-}
-
-export interface Resume {
-    _id: string;
-    title: string;
-    createdAt: Date;
-    status: string;
-    image?: string;
-}
-
-export interface CoverLetter {
-    _id: string;
-    user_id: string;
-    cl_template_id: string;
-    title: string;
-    company_address: string;
-    introduction: string;
-    body?: string;
-    closing?: string;
-    signature?: string;
-    created_at: Date;
-    updated_at?: Date;
 }
 
 const translations = {
@@ -82,6 +61,27 @@ export default function Page() {
     const { language } = useLanguage();
     const t = translations[language];
 
+    const [coverLetterList, setCoverLetterList] = useState<CL[]>([]);
+    const [loadingCL, setLoadingCL] = useState(true);
+
+    useEffect(() => {
+        const fetchCLs = async () => {
+            setLoadingCL(true);
+            try {
+                const clData = await getCLs();
+                setCoverLetterList(clData || []);
+            } catch (error) {
+                console.error("Failed to fetch cover letters:", error);
+            } finally {
+                setLoadingCL(false);
+            }
+        };
+
+        if (activeTab === '2') {
+            fetchCLs();
+        }
+    }, [activeTab]);
+
     const cvList: CV[] = [
         {
             _id: 'cv1',
@@ -119,22 +119,6 @@ export default function Page() {
         },
     ];
 
-    const coverLetterList: CoverLetter[] = [
-        {
-            _id: 'cl1',
-            user_id: 'user1',
-            cl_template_id: 'template_cl1',
-            title: 'Cover Letter - Web Dev',
-            company_address: '123 Tech Street, Silicon Valley',
-            introduction: 'I am excited to apply for the React Developer position.',
-            body: 'With 3 years of experience in web development...',
-            closing: 'I look forward to discussing my application.',
-            signature: 'Mart Pedunn',
-            created_at: new Date('2025-06-07'),
-            updated_at: new Date('2025-06-07'),
-        },
-    ];
-
     const onTabChange = (key: string) => setActiveTab(key);
     const onSearch = (value: string) => setSearchValue(value);
 
@@ -144,8 +128,7 @@ export default function Page() {
     );
 
     const filteredCoverLetterList = coverLetterList.filter(cl =>
-        cl.title.toLowerCase().includes(searchValue.toLowerCase()) ||
-        cl.company_address.toLowerCase().includes(searchValue.toLowerCase())
+        cl.title.toLowerCase().includes(searchValue.toLowerCase())
     );
 
     const items = [
@@ -199,7 +182,9 @@ export default function Page() {
 
                 <div>
                     {activeTab === '1' && <CVList cvList={filteredCVList} viewMode={viewMode} />}
-                    {activeTab === '2' && <CoverLetterList coverLetters={filteredCoverLetterList} viewMode={viewMode} />}
+                    {activeTab === '2' && (
+                        loadingCL ? <p>Loading Cover Letters...</p> : <CoverLetterList coverLetters={filteredCoverLetterList} viewMode={viewMode} />
+                    )}
                 </div>
             </div>
         </div>

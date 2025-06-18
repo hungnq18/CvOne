@@ -94,7 +94,7 @@ const Concept: React.FC<ConceptProps> = ({ letterData, onSectionClick, isPreview
 
         {/* Right Main Content */}
         {/* This column defines the overall height */}
-        <div className="flex-1 p-8 bg-white min-h-[800px] font-sans">
+        <div className="flex-1 p-8 bg-white min-h-[800px] font-sans min-w-0">
           {/* Date */}
           <HoverableSection
             sectionId="date"

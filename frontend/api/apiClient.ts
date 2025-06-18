@@ -53,4 +53,4 @@ export async function fetchWithoutAuth(url: string, options: RequestInit = {}) {
   }
 
   return data
-} 
+}

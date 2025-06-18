@@ -19,31 +19,15 @@ export interface CL {
     content: string;
     createdAt: string;
     updatedAt: string;
-    data: {
-        firstName: string;
-        lastName: string;
-        profession: string;
-        city: string;
-        state: string;
-        phone: string;
-        email: string;
-        date: string;
-        recipientFirstName: string;
-        recipientLastName: string;
-        companyName: string;
-        recipientCity: string;
-        recipientState: string;
-        recipientPhone: string;
-        recipientEmail: string;
-        subject: string;
-        greeting: string;
-        opening: string;
-        body: string;
-        callToAction: string;
-        closing: string;
-        signature: string;
-    };
 }
+
+/**
+ * Get all Cover Letters
+ * @returns Promise with array of CLs
+ */
+export const getCLs = async (): Promise<CL[]> => {
+    return fetchWithAuth(API_ENDPOINTS.CL.GET_ALL);
+};
 
 /**
  * Get all Cover Letter templates
