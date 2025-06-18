@@ -7,12 +7,14 @@ import {
 } from "./schemas/notification.schema";
 import { Model, Types } from "mongoose";
 import { CreateNotificationDto } from "./dto/create-notification.dto";
+import { NotificationsGateway } from "./notifications.gateway";
 
 @Injectable()
 export class NotificationsService {
   constructor(
     @InjectModel(Notification.name)
-    private notificationModel: Model<NotificationDocument>
+    private notificationModel: Model<NotificationDocument>,
+    private readonly notificationsGateway: NotificationsGateway // ✅ Inject Gateway
   ) {}
 
   async createNotification(
@@ -24,7 +26,12 @@ export class NotificationsService {
       recipient: new Types.ObjectId(userId),
       isRead: false,
     });
-    return created.save();
+
+    const saved = await created.save();
+
+    this.notificationsGateway.sendNotificationToUser(userId, saved);
+
+    return saved;
   }
 
   async getNotificationsByUser(
