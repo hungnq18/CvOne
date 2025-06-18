@@ -7,6 +7,99 @@
       "isRecommended": true,
       "data": {
         "userData": {
+          "firstName": "Hoàng Văn",
+          "lastName": "Bách",
+          "professional": "Kỹ sư phần mềm",
+          "city": "Hà Nội",
+          "country": "Việt Nam",
+          "province": "Hà Nội",
+          "phone": "+84 912 345 678",
+          "email": "email@example.com",
+          "avatar": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQUbcmERWWtK-cjIiojfIK-Ee857Ld-GshI2g&s",
+          "summary": "Là một kỹ sư phần mềm năng động với hơn 5 năm kinh nghiệm trong việc phát triển các ứng dụng web phức tạp. ",
+          "skills": [
+            {
+              "name": "Frontend: React, Next.js, TypeScript, Tailwind CSS"
+            },
+            {
+              "name": "Công cụ: Git, Docker, Jira"
+            }
+          ],
+          "workHistory": [
+            {
+              "title": "Kỹ sư phần mềm cấp cao",
+              "company": "Công ty QuickTech",
+              "startDate": "2022-01",
+              "endDate": "Hiện tại",
+              "description": "Dẫn dắt phát triển các module backend sử dụng Node.js và MongoDB, cải thiện hiệu suất API 30%. Triển khai giao diện người dùng bằng React và Redux, tăng trải nghiệm người dùng. Hướng dẫn nhóm 3 lập trình viên cấp dưới trong các dự án quan trọng."
+            }
+          ],
+          "education": [
+            {
+              "startDate": "2018-09",
+              "endDate": "2022-06",
+              "major": "Kỹ thuật phần mềm",
+              "degree": "Bằng Giỏi",
+              "institution": "Trường Đại Học Quốc Gia"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "modern-2",
+      "imageUrl": "https://th.bing.com/th/id/OIP.GdDZiF0OCgYG8FQ7_yoxUwHaKi?rs=1&pid=ImgDetMain",
+      "title": "The Vanguard",
+      "isRecommended": false,
+      "data": {
+        "userData": {
+          "firstName": "Hoàng Văn",
+          "lastName": "Bách",
+          "professional": "Kỹ sư phần mềm",
+          "city": "Hà Nội",
+          "country": "Việt Nam",
+          "province": "Hà Nội",
+          "phone": "+84 912 345 678",
+          "email": "email@example.com",
+          "avatar": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQUbcmERWWtK-cjIiojfIK-Ee857Ld-GshI2g&s",
+          "summary": "Là một kỹ sư phần mềm năng động với hơn 5 năm kinh nghiệm trong việc phát triển các ứng dụng web phức tạp. ",
+          "skills": [
+            {
+              "name": "Frontend: React, Next.js, TypeScript, Tailwind CSS"
+            },
+            {
+              "name": "Công cụ: Git, Docker, Jira"
+            }
+          ],
+          "workHistory": [
+            {
+              "title": "Kỹ sư phần mềm cấp cao",
+              "company": "Công ty QuickTech",
+              "startDate": "2022-01",
+              "endDate": "Hiện tại",
+              "description": "Dẫn dắt phát triển các module backend sử dụng Node.js và MongoDB, cải thiện hiệu suất API 30%. Triển khai giao diện người dùng bằng React và Redux, tăng trải nghiệm người dùng. Hướng dẫn nhóm 3 lập trình viên cấp dưới trong các dự án quan trọng."
+            }
+          ],
+          "education": [
+            {
+              "startDate": "2018-09",
+              "endDate": "2022-06",
+              "major": "Kỹ thuật phần mềm",
+              "degree": "Bằng Giỏi",
+              "institution": "Trường Đại Học Quốc Gia"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "cvs": [
+    {
+      "id": "cv_001",
+      "userId": "1",
+      "title": "Software Developer CV",
+      "content": {
+        "userData": {
           "firstName": "Nguyen",
           "lastName": "Van A",
           "professional": "Software Developer",
@@ -15,12 +108,21 @@
           "province": "Hanoi",
           "phone": "+84 912 345 678",
           "email": "vana@example.com",
-          "avatar": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTc38v-qLznWkdUNPXjE858zI06Og_JgVQvpg&s",
+          "avatar": "https://studiochupanhdep.com/Upload/Images/Album/anh-cv-02.jpg",
           "summary": "A passionate developer with 5 years of experience in full-stack development.",
           "skills": [
-            { "name": "JavaScript", "rating": 5 },
-            { "name": "React", "rating": 4 },
-            { "name": "Node.js", "rating": 4 }
+            {
+              "name": "JavaScript",
+              "rating": 5
+            },
+            {
+              "name": "React",
+              "rating": 4
+            },
+            {
+              "name": "Node.js",
+              "rating": 4
+            }
           ],
           "workHistory": [
             {
@@ -41,14 +143,19 @@
             }
           ]
         }
-      }
+      },
+      "isPublic": true,
+      "createdAt": "2025-06-06T10:00:00Z",
+      "updatedAt": "2025-06-06T10:30:00Z",
+      "templateId": "modern-1",
+      "isSaved": true,
+      "isFinalized": true
     },
     {
-      "id": "modern-2",
-      "imageUrl": "https://th.bing.com/th/id/OIP.GdDZiF0OCgYG8FQ7_yoxUwHaKi?rs=1&pid=ImgDetMain",
-      "title": "The Vanguard",
-      "isRecommended": false,
-      "data": {
+      "id": "cv_002",
+      "userId": "1",
+      "title": "Designer CV",
+      "content": {
         "userData": {
           "firstName": "Tran",
           "lastName": "Thi B",
@@ -58,44 +165,48 @@
           "province": "Ho Chi Minh",
           "phone": "+84 987 654 321",
           "email": "thib@example.com",
-          "avatar": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTc38v-qLznWkdUNPXjE858zI06Og_JgVQvpg&s",
-          "summary": "Creative UI/UX designer with 3 years of experience in web and mobile design.",
+          "avatar": "https://topstudio.com.vn/wp-content/uploads/2023/02/chup-hinh-chan-dung-cv-chuyen-nghiep-hcm-4.jpg",
+          "summary": "A passionate developer with 5 years of experience in full-stack development.",
           "skills": [
-            { "name": "Figma", "rating": 5 },
-            { "name": "Adobe XD", "rating": 4 },
-            { "name": "Photoshop", "rating": 4 }
+            {
+              "name": "JavaScript",
+              "rating": 5
+            },
+            {
+              "name": "React",
+              "rating": 4
+            },
+            {
+              "name": "Node.js",
+              "rating": 4
+            }
           ],
           "workHistory": [
             {
-              "title": "UI Designer",
-              "company": "Design Studio",
-              "startDate": "2021-01-01",
-              "endDate": "2023-01-01",
-              "description": "Created user interfaces for web and mobile applications."
+              "title": "Frontend Developer",
+              "company": "ABC Corp",
+              "startDate": "2020-01-01",
+              "endDate": "2022-06-01",
+              "description": "Worked on UI/UX and SPA using React."
             }
           ],
           "education": [
             {
-              "startDate": "2017-09-01",
-              "endDate": "2021-06-30",
-              "major": "Graphic Design",
+              "startDate": "2016-09-01",
+              "endDate": "2020-06-30",
+              "major": "Computer Science",
               "degree": "Bachelor",
-              "institution": "HCM University of Fine Arts"
+              "institution": "FPT University"
             }
           ]
         }
-      }
-    }
-  ],
-  "cvs": [
-    {
-      "id": "cv_001",
-      "userId": "user_123456",
-      "title": "Software Developer CV",
-      "content": "{\"userData\":{\"firstName\":\"Nguyen\",\"lastName\":\"Van A\",\"professional\":\"Software Developer\",\"city\":\"Hanoi\",\"country\":\"Vietnam\",\"province\":\"Hanoi\",\"phone\":\"+84 912 345 678\",\"email\":\"vana@example.com\",\"avatar\":\"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTc38v-qLznWkdUNPXjE858zI06Og_JgVQvpg&s\",\"summary\":\"A passionate developer with 5 years of experience in full-stack development.\",\"skills\":[{\"name\":\"JavaScript\",\"rating\":5},{\"name\":\"React\",\"rating\":4},{\"name\":\"Node.js\",\"rating\":4}],\"workHistory\":[{\"title\":\"Frontend Developer\",\"company\":\"ABC Corp\",\"startDate\":\"2020-01-01\",\"endDate\":\"2022-06-01\",\"description\":\"Worked on UI/UX and SPA using React.\"}],\"education\":[{\"startDate\":\"2016-09-01\",\"endDate\":\"2020-06-30\",\"major\":\"Computer Science\",\"degree\":\"Bachelor\",\"institution\":\"FPT University\"}]}}",
+      },
       "isPublic": true,
       "createdAt": "2025-06-06T10:00:00Z",
-      "updatedAt": "2025-06-06T10:30:00Z"
+      "updatedAt": "2025-06-06T10:30:00Z",
+      "templateId": "modern-2",
+      "isSaved": true,
+      "isFinalized": true
     }
   ],
   "clTemplates": [
@@ -259,8 +370,24 @@
     }
   ],
   "appliedJobs": [
-    { "id": "apply1", "job_id": "job1", "user_id": "user1", "cv_id": "cv1", "coverletter_id": "cover1", "status": "Applied", "submit_at": "2025-06-04" },
-    { "id": "apply2", "job_id": "job2", "user_id": "user2", "cv_id": "cv2", "coverletter_id": "cover2", "status": "Interview Scheduled", "submit_at": "2025-06-03" }
+    {
+      "id": "apply1",
+      "job_id": "job1",
+      "user_id": "user1",
+      "cv_id": "cv1",
+      "coverletter_id": "cover1",
+      "status": "Applied",
+      "submit_at": "2025-06-04"
+    },
+    {
+      "id": "apply2",
+      "job_id": "job2",
+      "user_id": "user2",
+      "cv_id": "cv2",
+      "coverletter_id": "cover2",
+      "status": "Interview Scheduled",
+      "submit_at": "2025-06-03"
+    }
   ],
   "userCVs": [
     {
@@ -269,14 +396,25 @@
       "image": "https://i-vn2.joboko.com/blogs/img/va/2021/11/16/anh-cv-nen-de-anh-gi-1.jpg",
       "user_id": "user1",
       "description": "CV for web developer role",
-      "languages": ["English", "Vietnamese"],
+      "languages": [
+        "English",
+        "Vietnamese"
+      ],
       "create_at": "2025-06-01",
       "is_public": true,
       "templateCV_id": "template1",
       "heading": "Web Developer Resume",
-      "education": ["BSc Computer Science - XYZ University"],
-      "work_history": ["Web Developer at Tech Corp (2023-2025)"],
-      "skill": ["React", "Node.js", "TypeScript"],
+      "education": [
+        "BSc Computer Science - XYZ University"
+      ],
+      "work_history": [
+        "Web Developer at Tech Corp (2023-2025)"
+      ],
+      "skill": [
+        "React",
+        "Node.js",
+        "TypeScript"
+      ],
       "summary": "Experienced web developer with 3+ years in React and Node.js",
       "finalize": true
     },
@@ -286,14 +424,23 @@
       "image": "https://i-vn2.joboko.com/blogs/img/va/2021/11/16/anh-cv-nen-de-anh-gi-1.jpg",
       "user_id": "user2",
       "description": "CV for UI/UX designer role",
-      "languages": ["English"],
+      "languages": [
+        "English"
+      ],
       "create_at": "2025-05-30",
       "is_public": false,
       "templateCV_id": "template2",
       "heading": "UI/UX Designer Resume",
-      "education": ["BA Design - ABC University"],
-      "work_history": ["Designer at Design Studio (2022-2025)"],
-      "skill": ["Figma", "Adobe XD"],
+      "education": [
+        "BA Design - ABC University"
+      ],
+      "work_history": [
+        "Designer at Design Studio (2022-2025)"
+      ],
+      "skill": [
+        "Figma",
+        "Adobe XD"
+      ],
       "summary": "Creative designer with expertise in UI/UX",
       "finalize": false
     }
