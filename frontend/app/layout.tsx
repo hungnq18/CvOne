@@ -1,6 +1,4 @@
 import StyledComponentsRegistry from '@/api/registry'
-import { Footer } from "@/components/ui/footer"
-import { Header } from "@/components/ui/header"
 import { Toaster } from "@/components/ui/toaster"
 import { AuthProvider } from "@/providers/auth-provider"
 import { EmailVerificationProvider } from "@/providers/email-verification-provider"
@@ -10,6 +8,8 @@ import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import type React from "react"
 import "./globals.css"
+import { Header } from '@/components/ui/header'
+import { Footer } from '@/components/ui/footer'
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -30,12 +30,14 @@ export default function RootLayout({
           <GlobalProvider>
             <AuthProvider>
               <EmailVerificationProvider>
-                <div className="flex flex-col min-h-screen">
-                  <Header />
-                  <main className="flex-grow">{children}</main>
-                  <Footer />
-                </div>
-                <Toaster />
+                <CVProvider>
+                  <div className="flex flex-col min-h-screen">
+                    <Header />
+                    <main className="flex-grow">{children}</main>
+                    <Footer />
+                  </div>
+                  <Toaster />
+                </CVProvider>
               </EmailVerificationProvider>
             </AuthProvider>
           </GlobalProvider>

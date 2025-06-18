@@ -178,7 +178,7 @@ const navigationItems = {
       },
       {
         name: "Cover Letter",
-        href: "/chooseCLTemplate",
+        href: "/clTemplate",
       },
       {
         name: "My Jobs",
@@ -264,7 +264,7 @@ const navigationItems = {
         name: "CV",
         href: "/cvTemplates",
       },
-      
+
       {
         name: "Thư Ngỏ",
         href: "/chooseCLTemplate",
