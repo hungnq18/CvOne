@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, NotFoundException } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model, ObjectId, Types } from "mongoose";
 import { Conversation } from "../chat/schemas/conversation.schema";
@@ -37,5 +37,47 @@ export class ConversationService {
         path: "lastMessage",
         select: "content senderId createdAt",
       });
+  }
+
+  async getConversationDetail(conversationId: string, userId: string) {
+    const userObjectId = new Types.ObjectId(userId);
+
+    const conversation = await this.convModel
+      .findById(conversationId)
+      .populate([
+        {
+          path: "participants",
+
+          select: "first_name last_name",
+        },
+        {
+          path: "lastMessage",
+          select: "content senderId createdAt",
+        },
+      ])
+      .lean();
+
+    if (!conversation) {
+      throw new NotFoundException("Conversation not found");
+    }
+
+    // 🟡 Cập nhật unreadCount = 0 chỉ cho user hiện tại
+    await this.convModel.updateOne(
+      {
+        _id: conversationId,
+        "unreadCount.userId": userObjectId,
+      },
+      {
+        $set: {
+          "unreadCount.$.count": 0,
+        },
+      }
+    );
+
+    return {
+      _id: conversation._id,
+      participants: conversation.participants,
+      lastMessage: conversation.lastMessage || null,
+    };
   }
 }

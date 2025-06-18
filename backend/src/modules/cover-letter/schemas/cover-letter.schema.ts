@@ -3,20 +3,20 @@ import { Document, Types } from "mongoose";
 
 @Schema({ timestamps: true })
 export class CoverLetter extends Document {
-  @Prop({ type: Types.ObjectId, ref: "User" })
+  @Prop({ type: Types.ObjectId, ref: "User", required: true })
   userId: string;
 
-  @Prop({ type: Types.ObjectId, ref: "ClTemplate" })
+  @Prop({ type: Types.ObjectId, ref: "ClTemplate", required: true })
   templateId: string;
-
-  @Prop({ required: true })
-  templateName: string;
 
   @Prop({ required: true })
   title: string;
 
   @Prop({ required: true, type: Object })
   data: Record<string, any>;
+
+  @Prop({ required: true })
+  isSaved: boolean;
 }
 
 export const CoverLetterSchema = SchemaFactory.createForClass(CoverLetter);
