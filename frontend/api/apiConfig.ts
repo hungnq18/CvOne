@@ -1,10 +1,12 @@
 export const API_URL = "http://localhost:8000/api";
 
+// API Endpoints
 export const API_ENDPOINTS = {
   AUTH: {
     LOGIN: "/auth/login",
     REGISTER: "/auth/register",
     PROFILE: "/auth/profile",
+    CHANGE_PASSWORD: "/auth/change-password",
   },
   ACCOUNTS: {
     VERIFY_EMAIL: "/accounts/verify-email",
@@ -32,14 +34,19 @@ export const API_ENDPOINTS = {
     UPDATE: (id: string) => `/cvs/${id}`,
     DELETE: (id: string) => `/cvs/${id}`,
     SHARE: (id: string) => `/cvs/${id}/share`,
-    TEMPLATES: "/cvTemplates"
+    TEMPLATES: "/cvTemplates",
   },
   CL: {
     TEMPLATES: "/clTemplates",
-    GET_BY_ID: (id: string) => `/clTemplates/${id}`
+    GET_BY_ID: (id: string) => `/clTemplates/${id}`,
   },
   CHAT: {
-    GET_CONVERSATION: (convId: string) => `/chat/messages/${convId}`,
+    GET_MESSAGES: (convId: string) => `/chat/messages/${convId}`,
+    GET_CONVERSATION_DETAIL: (convId: string) =>
+      `/chat/conversation-detail/${convId}`,
+    GET_CONVERSATIONS: "/conversations",
+    CREATE_CONVERSATION: "/conversations",
+    SEND_MESSAGE: "/chat/messages",
   },
   JOB: {
     GET_ALL: "/jobs",
@@ -47,5 +54,8 @@ export const API_ENDPOINTS = {
     CREATE: "/jobs",
     UPDATE: (id: string) => `/jobs/${id}`,
     DELETE: (id: string) => `/jobs/${id}`,
+  },
+  NOTIFICATION: {
+    GET_NOTIFICATIONS: "/notifications",
   },
 } as const;

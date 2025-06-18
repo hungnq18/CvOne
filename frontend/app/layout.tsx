@@ -10,6 +10,10 @@ import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import type React from "react"
 import "./globals.css"
+import { ThemeProvider } from "@/providers/theme-provider"
+import IconChatAndNotification from "@/components/chatAndNotification/iconChatAndNotification"
+import FooterWrapper from "@/components/ui/footer-wrapper"
+import { ChatProvider } from '@/providers/ChatProvider'
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -30,12 +34,22 @@ export default function RootLayout({
           <GlobalProvider>
             <AuthProvider>
               <EmailVerificationProvider>
-                <div className="flex flex-col min-h-screen">
-                  <Header />
-                  <main className="flex-grow">{children}</main>
-                  <Footer />
-                </div>
-                <Toaster />
+                <ThemeProvider
+                  attribute="class"
+                  defaultTheme="system"
+                  enableSystem
+                  disableTransitionOnChange
+                >
+                  <ChatProvider>
+                    <div className="flex flex-col min-h-screen">
+                      <Header />
+                      <main className="flex-grow">{children}</main>
+                      <FooterWrapper />
+                    </div>
+                    <IconChatAndNotification />
+                    <Toaster />
+                  </ChatProvider>
+                </ThemeProvider>
               </EmailVerificationProvider>
             </AuthProvider>
           </GlobalProvider>

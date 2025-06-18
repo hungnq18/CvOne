@@ -3,7 +3,7 @@ export interface User {
   account_id: string;
   first_name: string;
   last_name: string;
-  phone?: number;
+  phone?: string;
   city?: string;
   country?: string;
 }

@@ -19,12 +19,17 @@ export class ChatService {
   async saveMessage(dto: SendMessageDto) {
     const conversationId = new Types.ObjectId(dto.conversationId);
     const senderId = new Types.ObjectId(dto.senderId);
+    const receiverId = new Types.ObjectId(dto.receiverId);
+    if (!conversationId || !senderId || !receiverId) {
+      throw new Error("Invalid conversationId or senderId or receiverId");
+    }
 
     // 1. Tạo tin nhắn mới
     const message = await this.messageModel.create({
       ...dto,
       conversationId,
       senderId,
+      receiverId,
     });
 
     // 2. Cập nhật conversation

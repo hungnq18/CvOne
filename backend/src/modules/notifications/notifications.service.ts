@@ -29,8 +29,6 @@ export class NotificationsService {
 
     const saved = await created.save();
 
-    this.notificationsGateway.sendNotificationToUser(userId, saved);
-
     return saved;
   }
 
