@@ -214,8 +214,8 @@ export default function ChatPage() {
   };
 
   return (
-    <main className="flex justify-center items-center min-h-screen pt-16">
-      <div className="flex h-[90vh] w-[90vw] bg-white rounded-lg shadow-lg overflow-hidden">
+    <main className="flex justify-center items-center h-screen w-screen bg-gray-100 pt-0">
+      <div className="flex h-full w-full bg-white shadow-lg overflow-hidden border border-gray-200">
         <ChatSidebar
           conversations={conversations}
           selectedConversationId={selectedConversationId}
@@ -223,7 +223,6 @@ export default function ChatPage() {
           userId={userId}
           onSelectConversation={handleSelectConversation}
         />
-
         {selectedConversationId ? (
           <div className="flex-1 flex flex-col h-full">
             <ChatMessages

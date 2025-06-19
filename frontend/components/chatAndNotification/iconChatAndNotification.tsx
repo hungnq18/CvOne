@@ -10,21 +10,26 @@ import { useAuth } from '@/hooks/use-auth';
 const IconChatAndNotification: React.FC = () => {
     const pathname = usePathname();
     const { user } = useAuth();
-    const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
+    const [unreadCount, setUnreadCount] = useState(0);
     const [isMounted, setIsMounted] = useState(false);
 
     const checkUnreadMessages = async () => {
         if (!user) {
-            setHasUnreadMessages(false);
+            setUnreadCount(0);
             return;
         }
-
         try {
             const conversations = await getUserConversations(user._id);
-            const hasUnread = conversations.some(conv => conv.unreadCount > 0);
-            setHasUnreadMessages(hasUnread);
+            const totalUnread = conversations.reduce((sum, conv) => {
+                const entry = Array.isArray(conv.unreadCount)
+                    ? conv.unreadCount.find(u => u.userId === user._id)
+                    : null;
+                const count = entry ? entry.count : 0;
+                return sum + count;
+            }, 0);
+            setUnreadCount(totalUnread);
         } catch (err) {
-            // Silent error handling
+            setUnreadCount(0);
         }
     };
 
@@ -37,8 +42,8 @@ const IconChatAndNotification: React.FC = () => {
 
         checkUnreadMessages();
 
-        // Check unread messages every 30 seconds
-        const interval = setInterval(checkUnreadMessages, 30000);
+        // Check unread messages every 3 seconds
+        const interval = setInterval(checkUnreadMessages, 5000);
 
         return () => {
             clearInterval(interval);
@@ -55,7 +60,7 @@ const IconChatAndNotification: React.FC = () => {
         };
 
         const handleLogout = () => {
-            setHasUnreadMessages(false);
+            setUnreadCount(0);
         };
 
         window.addEventListener('authChange', handleAuthChange);
@@ -123,7 +128,6 @@ const IconChatAndNotification: React.FC = () => {
                         d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0"
                     />
                 </svg>
-
                 <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full opacity-0"></div>
             </Link>
 
@@ -145,8 +149,10 @@ const IconChatAndNotification: React.FC = () => {
                         strokeLinecap="round"
                     />
                 </svg>
-                {hasUnreadMessages && (
-                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+                {unreadCount > 0 && (
+                    <div className="absolute -top-1 -right-1 min-w-[1.2em] h-5 px-1 bg-red-500 text-white text-xs rounded-full flex items-center justify-center animate-pulse">
+                        {unreadCount > 99 ? '99+' : unreadCount}
+                    </div>
                 )}
             </Link>
         </div>
