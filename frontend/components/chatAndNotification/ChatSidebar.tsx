@@ -96,7 +96,12 @@ export default function ChatSidebar({
                                                 </>
                                             ) : (
                                                 <>
-                                                    <span className="font-medium">{conv.lastMessage.sender?.first_name || 'Unknown'}: </span>
+                                                    <span className="font-medium">
+                                                        {otherUser
+                                                            ? `${otherUser.first_name} ${otherUser.last_name}`
+                                                            : 'Unknown'}
+                                                        :
+                                                    </span>
                                                     <span>{conv.lastMessage.content}</span>
                                                 </>
                                             )}

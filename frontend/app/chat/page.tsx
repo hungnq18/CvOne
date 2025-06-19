@@ -88,6 +88,7 @@ export default function ChatPage() {
     socket.emit("joinRoom", selectedConversationId);
 
     socket.on("newMessage", async (msg: Message) => {
+      // Nếu là conversation đang mở, thêm vào messages
       if (msg.conversationId === selectedConversationId) {
         const { message, conversationUpdate } = await handleNewMessage(
           msg,
@@ -98,18 +99,41 @@ export default function ChatPage() {
           if (exists) return prev;
           return [...prev, message];
         });
-
-        setConversations((prev) =>
-          prev.map((conv) =>
-            conv._id === msg.conversationId
-              ? {
-                ...conv,
-                ...conversationUpdate,
-              }
-              : conv
-          )
-        );
       }
+
+      // Đẩy conversation có tin nhắn mới lên đầu
+      setConversations((prev) => {
+        // Tìm conversation
+        const idx = prev.findIndex((c) => c._id === msg.conversationId);
+        let updatedConv;
+        if (idx !== -1) {
+          // Cập nhật lastMessage, unreadCount
+          updatedConv = {
+            ...prev[idx],
+            lastMessage: msg,
+            unreadCount:
+              msg.senderId === userId
+                ? prev[idx].unreadCount
+                : (prev[idx].unreadCount || 0) + 1,
+          };
+          // Xoá khỏi vị trí cũ
+          const newList = prev.filter((c) => c._id !== msg.conversationId);
+          // Đưa lên đầu
+          return [updatedConv, ...newList];
+        } else {
+          // Nếu chưa có, thêm mới vào đầu
+          return [
+            {
+              _id: msg.conversationId,
+              participants: [msg.senderId, msg.receiverId],// chạy được không sửa
+              lastMessage: msg,
+              unreadCount: msg.senderId === userId ? 0 : 1,
+
+            },
+            ...prev,
+          ];
+        }
+      });
     });
 
     return () => {
@@ -149,10 +173,8 @@ export default function ChatPage() {
       content,
     };
 
-    // 📤 1. Gửi tin nhắn
     socket.emit("sendMessage", messageDto);
 
-    // 🔔 2. Gửi thông báo realtime cho người nhận
     socket.emit("sendRealtimeNotification", {
       userId: receiverId,
       title: "Tin nhắn mới",
@@ -161,7 +183,34 @@ export default function ChatPage() {
       link: `/chat`,
     });
 
+    // Đẩy conversation lên đầu sidebar
+    setConversations((prev) => { // chạy được không sửa
+      const idx = prev.findIndex((c) => c._id === selectedConversationId);
+      if (idx !== -1) {
+        const updatedConv = {
+          ...prev[idx],
+          lastMessage: {
+            ...prev[idx].lastMessage,
+            content,
+            senderId: userId,
+          },
+        };
+        const newList = prev.filter((c) => c._id !== selectedConversationId);
+        return [updatedConv, ...newList];
+      }
+      return prev;
+    });
+
     setContent("");
+  };
+
+  const handleSelectConversation = (conversationId: string) => {
+    setConversations((prev) =>
+      prev.map((conv) =>
+        conv._id === conversationId ? { ...conv, unreadCount: 0 } : conv
+      )
+    );
+    setSelectedConversationId(conversationId);
   };
 
   return (
@@ -172,7 +221,7 @@ export default function ChatPage() {
           selectedConversationId={selectedConversationId}
           selectedConversationDetail={selectedConversationDetail}
           userId={userId}
-          onSelectConversation={setSelectedConversationId}
+          onSelectConversation={handleSelectConversation}
         />
 
         {selectedConversationId ? (
