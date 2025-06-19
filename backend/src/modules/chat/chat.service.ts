@@ -81,29 +81,4 @@ export class ChatService {
       .populate("senderId", "name") // nếu muốn lấy info người gửi
       .exec();
   }
-
-  async getConversationDetail(conversationId: string, accountId: string) {
-    const user: UserDocument =
-      await this.userService.getUserByAccountId(accountId);
-
-    if (!user || !user._id) {
-      throw new Error("User not found or invalid user ID");
-    }
-    const lastMessage = await this.messageModel
-      .findOne({ conversationId: new Types.ObjectId(conversationId) })
-      .sort({ createdAt: -1 }) // message mới nhất
-      .populate("senderId", "name") // nếu cần
-      .lean();
-
-    const unreadCount = await this.messageModel.countDocuments({
-      conversationId: new Types.ObjectId(conversationId),
-      readBy: { $ne: user._id },
-      senderId: { $ne: user._id }, // chỉ đếm tin từ người kia
-    });
-
-    return {
-      lastMessage,
-      unreadCount,
-    };
-  }
 }
