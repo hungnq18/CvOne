@@ -47,12 +47,15 @@ export class ConversationService {
       .populate([
         {
           path: "participants",
-
           select: "first_name last_name",
         },
         {
           path: "lastMessage",
           select: "content senderId createdAt",
+          populate: {
+            path: "senderId",
+            select: "first_name last_name",
+          },
         },
       ])
       .lean();
