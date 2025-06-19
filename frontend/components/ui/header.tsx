@@ -267,7 +267,7 @@ const navigationItems = {
 
       {
         name: "Thư Ngỏ",
-        href: "/chooseCLTemplate",
+        href: "/clTemplate",
       },
       {
         name: "Công việc của tôi",
