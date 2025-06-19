@@ -8,7 +8,7 @@ import { CreateConversationDto } from "./dto/create-conversation.dto";
 export class ConversationService {
   constructor(
     @InjectModel(Conversation.name)
-    private readonly convModel: Model<Conversation>
+    private readonly convModel: Model<Conversation>,
   ) {}
 
   async createConversation(dto: CreateConversationDto) {
@@ -74,7 +74,7 @@ export class ConversationService {
         $set: {
           "unreadCount.$.count": 0,
         },
-      }
+      },
     );
 
     return {

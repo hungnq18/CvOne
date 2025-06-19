@@ -4,21 +4,14 @@ import { Model, Types } from "mongoose";
 import { Message } from "./schemas/message.schema";
 import { Conversation } from "./schemas/conversation.schema";
 import { SendMessageDto } from "./dto/send-message.dto";
-import { ConversationService } from "../conversation/conversation.service";
-import { UserDocument } from "../users/schemas/user.schema";
 import { UsersService } from "../users/users.service";
-
-interface unreadCount {
-  userId: Types.ObjectId;
-  count: number;
-}
 
 @Injectable()
 export class ChatService {
   constructor(
     @InjectModel(Message.name) private messageModel: Model<Message>,
     @InjectModel(Conversation.name) private convModel: Model<Conversation>,
-    private userService: UsersService
+    private userService: UsersService,
   ) {}
 
   async saveMessage(dto: SendMessageDto) {
@@ -80,5 +73,21 @@ export class ChatService {
       .sort({ createdAt: 1 }) // tăng dần theo thời gian
       .populate("senderId", "name") // nếu muốn lấy info người gửi
       .exec();
+  }
+
+  async readConversation(conversationId: string, userId: string) {
+    const conversation = await this.convModel.findById(conversationId);
+    if (!conversation) {
+      throw new Error("Conversation not found");
+    }
+    // Reset unreadCount cho user này
+    conversation.unreadCount = (conversation.unreadCount || []).map((entry) => {
+      if (entry.userId.toString() === userId) {
+        return { userId: entry.userId, count: 0 };
+      }
+      return entry;
+    });
+    await conversation.save();
+    return conversation;
   }
 }

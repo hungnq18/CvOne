@@ -103,7 +103,7 @@ export const getUserConversations = async (
   userId: string
 ): Promise<Conversation[]> => {
   try {
-    const response = await fetchWithAuth(API_ENDPOINTS.CHAT.GET_CONVERSATIONS);
+    const response = await fetchWithAuth(API_ENDPOINTS.CONVERSATION.GET_ALL);
     if (!Array.isArray(response)) {
       return [];
     }
@@ -122,16 +122,17 @@ export const getUserConversations = async (
 export const getConversationDetail = async (
   conversationId: string
 ): Promise<{
+  _id: string;
+  participants: any[];
   lastMessage: Message | null;
-  unreadCount: number;
 }> => {
   try {
     const response = await fetchWithAuth(
-      API_ENDPOINTS.CHAT.GET_CONVERSATION_DETAIL(conversationId)
+      API_ENDPOINTS.CONVERSATION.GET_BY_ID(conversationId)
     );
-    return response as { lastMessage: Message | null; unreadCount: number };
+    return response as { _id: string; participants: any[]; lastMessage: Message | null };
   } catch (err) {
-    return { lastMessage: null, unreadCount: 0 };
+    return { _id: conversationId, participants: [], lastMessage: null };
   }
 };
 
@@ -144,18 +145,17 @@ export const sendMessage = async (data: {
   content: string;
 }): Promise<Message> => {
   try {
-    // Gửi tin nhắn qua API
-    const response = await fetchWithAuth(API_ENDPOINTS.CHAT.SEND_MESSAGE, {
-      method: "POST",
-      body: JSON.stringify(data),
+    // Backend không có REST endpoint để gửi tin nhắn
+    // Chỉ gửi qua WebSocket
+    socket.emit("sendMessage", {
+      conversationId: data.conversationId,
+      senderId: data.senderId,
+      content: data.content,
+      // Cần thêm receiverId - có thể lấy từ conversation
+      receiverId: "", // Sẽ cần logic để lấy receiverId
     });
 
-    // Gửi qua socket để realtime
-    socket.emit("sendMessage", data);
-
-    return response as Message;
-  } catch (err) {
-    // Trả về message tạm thời nếu API thất bại
+    // Trả về message tạm thời
     return {
       _id: Date.now().toString(),
       conversationId: data.conversationId,
@@ -164,6 +164,9 @@ export const sendMessage = async (data: {
       createdAt: new Date().toISOString(),
       readBy: [],
     };
+  } catch (err) {
+    console.error("Failed to send message:", err);
+    throw err;
   }
 };
 
@@ -175,10 +178,10 @@ export const createConversation = async (
 ): Promise<Conversation | null> => {
   try {
     const response = await fetchWithAuth(
-      API_ENDPOINTS.CHAT.CREATE_CONVERSATION,
+      API_ENDPOINTS.CONVERSATION.CREATE,
       {
         method: "POST",
-        body: JSON.stringify({ participantId }),
+        body: JSON.stringify({ participants: [participantId] }),
       }
     );
     return response as Conversation;
