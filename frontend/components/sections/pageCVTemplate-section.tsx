@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import { useOnClickOutside } from "@/hooks/useOnClickOutside";
 
+
 // --- THÊM COMPONENT TemplatePreviewModal TRỰC TIẾP VÀO FILE NÀY ---
 interface TemplatePreviewModalProps {
   templateId: string;
@@ -70,9 +71,21 @@ const TemplatePreviewModal: FC<TemplatePreviewModalProps> = ({
   const TemplateComponent = templateComponentMap[templateTitle];
 
   const handleUseTemplate = () => {
-    router.push(
-      `/createCV?id=${templateId}&title=${encodeURIComponent(templateTitle)}`
-    );
+    // Bước 1: Lấy token từ cookie của trình duyệt
+    const token = document.cookie
+      .split("; ")
+      .find((row) => row.startsWith("token="))
+      ?.split("=")[1];
+    if (token) {
+      router.push(
+        `/createCV?id=${templateId}&title=${encodeURIComponent(templateTitle)}`
+      );
+    } else {
+      alert("Bạn cần đăng nhập trước khi tạo CV!");
+      router.push("/login");
+    }
+  
+    // Đóng component hiện tại (ví dụ: modal xem trước template) sau khi xử lý
     onClose();
   };
 

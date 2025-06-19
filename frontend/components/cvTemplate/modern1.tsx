@@ -1,3 +1,4 @@
+import { hover } from "framer-motion";
 import Image from "next/image";
 import React from "react";
 
@@ -30,12 +31,42 @@ const HoverableWrapper: React.FC<HoverableWrapperProps> = ({
   sectionId,
   onClick,
 }) => {
+  const labelsWithHoverEffect = [
+    "Họ tên & Chức danh",
+    "KINH NGHIỆM LÀM VIỆC",
+    "HỌC VẤN"
+  ];
+
+  const labelsWithHoverGreenEffect = [
+    "THÔNG TIN CÁ NHÂN",
+    "MỤC TIÊU SỰ NGHIỆP",
+    "KỸ NĂNG"
+  ];
+
+  const shouldApplyHover = labelsWithHoverEffect.includes(label);
+  const shouldAvatar = "Avatar".includes(label);
+  const shouldApplyHoverGreen = labelsWithHoverGreenEffect.includes(label);
+
+  // 3. Tạo chuỗi className dựa trên điều kiện
+  const finalClassName = `
+    relative 
+    group 
+    cursor-pointer
+    rounded-lg 
+    transition-all 
+    duration-300 
+    ease-in-out
+    ${shouldApplyHover ? 'hover:scale-105 hover:bg-white hover:shadow-lg' : ''}
+    ${shouldAvatar ? 'hover:scale-105 hover:shadow-lg' : ''}
+    ${shouldApplyHoverGreen ? 'hover:scale-105 hover:bg-[#004d40] hover:shadow-lg' : ''}
+
+  `;
   // Quyết định class bo tròn dựa trên label
   const borderRadiusClass = label === "Avatar" ? "rounded-full" : "rounded-lg";
 
   return (
     <div
-      className="relative group cursor-pointer"
+      className={finalClassName}
       onClick={() => onClick?.(sectionId)}
     >
       {children}
@@ -45,11 +76,11 @@ const HoverableWrapper: React.FC<HoverableWrapperProps> = ({
       {label !== "Avatar" && (
         <div
           className="absolute top-0 left-4 -translate-y-1/2 bg-[#8BAAFC] text-white text-sm font-bold tracking-wide px-3 py-1 opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none"
-          style={{ 
+          style={{
             borderRadius: "4px 10px 0 0",
             marginTop: "-2%",
-            left: "1%"
-           }} 
+            left: "1%",
+          }}
         >
           {label}
         </div>
@@ -57,11 +88,11 @@ const HoverableWrapper: React.FC<HoverableWrapperProps> = ({
       {label === "Avatar" && (
         <div
           className="absolute top-0 left-4 -translate-y-1/2 bg-[#8BAAFC] text-white text-sm font-bold tracking-wide px-3 py-1 opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none"
-          style={{ 
+          style={{
             borderRadius: "4px 10px 4px 10px",
             marginTop: "-2%",
-            left: "-4%"
-           }} 
+            left: "-4%",
+          }}
         >
           {label}
         </div>
@@ -129,7 +160,7 @@ const ModernCV1: React.FC<ModernCV1Props> = ({ data, onSectionClick }) => {
   };
 
   return (
-    <div className="bg-white font-sans text-gray-800 flex flex-col lg:flex-row min-h-screen">
+    <div className="bg-white font-sans text-gray-800 flex flex-col lg:flex-row min-h-screen pt-5">
       {/* --- CỘT TRÁI (MÀU XANH) --- */}
       <div className="w-full lg:w-[38%] bg-[#004d40] text-white flex flex-col gap-8 py-8 lg:py-12">
         <div className="px-8 lg:px-12">

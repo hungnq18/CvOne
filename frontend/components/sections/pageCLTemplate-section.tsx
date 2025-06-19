@@ -84,7 +84,7 @@ const TemplateSection: React.FC<TemplateSectionProps> = ({ clTemplates }) => {
                 {displayedTemplates.map((template) => (
                     <CVCard
                         key={template.id}
-                        id={template.templateName}
+                        id={template.id}
                         imageUrl={template.imageUrl}
                         title={template.title}
                         isRecommended={template.isRecommended}

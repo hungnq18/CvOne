@@ -9,12 +9,18 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { CVTemplate } from "@/api/cvapi";
 import { templateComponentMap } from "@/components/cvTemplate/index"; // Import nếu bạn đang dùng renderTemplatePreview
+import { useRouter } from "next/navigation";
 
 type CardCVTemplateProps = CVTemplate & {
   onPreviewClick: (template: CVTemplate) => void;
 };
 
-const CardCVTemplate: React.FC<CardCVTemplateProps> = ({ id, imageUrl, title, onPreviewClick }) => {
+const CardCVTemplate: React.FC<CardCVTemplateProps> = ({
+  id,
+  imageUrl,
+  title,
+  onPreviewClick,
+}) => {
   const [isHovered, setIsHovered] = useState(false);
   const { language } = useLanguage();
 
@@ -26,7 +32,7 @@ const CardCVTemplate: React.FC<CardCVTemplateProps> = ({ id, imageUrl, title, on
   const buttonVariants = {
     hidden: { opacity: 0, scale: 0.8 },
     visible: { opacity: 1, scale: 1, transition: { duration: 0.2 } },
-    hover: { scale: 1.05, backgroundColor: "#10B981" },
+    hover: { scale: 1.05, backgroundColor: "#0066FF", color: "white" },
   };
   const TemplateComponent = templateComponentMap[title];
 
@@ -35,24 +41,39 @@ const CardCVTemplate: React.FC<CardCVTemplateProps> = ({ id, imageUrl, title, on
       firstName: "Hoàng Văn",
       lastName: "Bách",
       professional: "Kỹ sư phần mềm",
-      avatar: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQUbcmERWWtK-cjIiojfIK-Ee857Ld-GshI2g&s",
+      avatar:
+        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQUbcmERWWtK-cjIiojfIK-Ee857Ld-GshI2g&s",
       email: "email@example.com",
       phone: "0123456789",
       city: "Thành phố",
       country: "Quốc gia",
-      summary: "Là một kỹ sư phần mềm năng động với hơn 5 năm kinh nghiệm trong việc phát triển các ứng dụng web phức tạp. ",
+      summary:
+        "Là một kỹ sư phần mềm năng động với hơn 5 năm kinh nghiệm trong việc phát triển các ứng dụng web phức tạp. ",
       workHistory: [
-        { title: "Kỹ sư phần mềm cấp cao", company: "Công ty ABC Tech", startDate: "2022-01", endDate: "Hiện tại", description: "Dẫn dắt phát triển các module backend sử dụng Node.js và MongoDB, cải thiện hiệu suất API 30%. Triển khai giao diện người dùng bằng React và Redux, tăng trải nghiệm người dùng. Hướng dẫn nhóm 3 lập trình viên cấp dưới trong các dự án quan trọng." }
+        {
+          title: "Kỹ sư phần mềm cấp cao",
+          company: "Công ty ABC Tech",
+          startDate: "2022-01",
+          endDate: "Hiện tại",
+          description:
+            "Dẫn dắt phát triển các module backend sử dụng Node.js và MongoDB, cải thiện hiệu suất API 30%. Triển khai giao diện người dùng bằng React và Redux, tăng trải nghiệm người dùng. Hướng dẫn nhóm 3 lập trình viên cấp dưới trong các dự án quan trọng.",
+        },
       ],
       education: [
-        { institution: "Trường Đại Học Quốc Gia", major: "Kỹ thuật phần mềm", degree: "Bằng Giỏi", startDate: "2018-09", endDate: "2022-06"}  
+        {
+          institution: "Trường Đại Học Quốc Gia",
+          major: "Kỹ thuật phần mềm",
+          degree: "Bằng Giỏi",
+          startDate: "2018-09",
+          endDate: "2022-06",
+        },
       ],
       skills: [
         { name: "Frontend: React, Next.js, TypeScript, Tailwind CSS" },
         { name: "Công cụ: Git, Docker, Jira" },
       ],
     },
-    templateSpecificData: {}
+    templateSpecificData: {},
   };
 
   const renderTemplatePreview = () => {
@@ -75,15 +96,14 @@ const CardCVTemplate: React.FC<CardCVTemplateProps> = ({ id, imageUrl, title, on
     return (
       <div
         style={{
-          position: 'absolute',
+          position: "absolute",
           top: 0,
           left: 0,
           width: `${templateOriginalWidth}px`,
           height: `${templateOriginalWidth * (297 / 210)}px`,
-          transformOrigin: 'top left',
+          transformOrigin: "top left",
           transform: `scale(${scaleFactor})`,
-          boxShadow: '0 0 5px rgba(0,0,0,0.1)'
-
+          boxShadow: "0 0 5px rgba(0,0,0,0.1)",
         }}
       >
         <TemplateComponent data={previewData} />
@@ -92,7 +112,24 @@ const CardCVTemplate: React.FC<CardCVTemplateProps> = ({ id, imageUrl, title, on
   };
   // --- END: Phần renderTemplatePreview và previewData ---
 
+  // Bên trong component của bạn
+  const router = useRouter();
 
+  const handleCreateCVClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    event.preventDefault();
+    const token = document.cookie
+      .split("; ")
+      .find((row) => row.startsWith("token="))
+      ?.split("=")[1];
+
+    // Kiểm tra token
+    if (token) {
+      router.push(`/createCV?id=${id}&title=${encodeURIComponent(title)}`);
+    } else {
+      alert("Bạn cần đăng nhập để tạo CV!");
+      router.push("/login");
+    }
+  };
   return (
     <motion.div
       className="bg-white rounded-lg shadow-lg overflow-hidden transform"
@@ -127,19 +164,25 @@ const CardCVTemplate: React.FC<CardCVTemplateProps> = ({ id, imageUrl, title, on
                 textAlign: "center",
               }}
             >
-              <span className="text-lg" style={{
-                width: "100%",
-                textAlign: "center",
-              }}>
+              <span
+                className="text-lg"
+                style={{
+                  width: "100%",
+                  textAlign: "center",
+                }}
+              >
                 {language === "vi" ? "Xem trước" : "Preview"}
               </span>
             </motion.button>
 
             {/* Nút Sử dụng mẫu này (có Link riêng) */}
-            <Link href={`/createCV?id=${id}&title=${encodeURIComponent(title)}`}>
+            <a
+              href={`/createCV?id=${id}&title=${encodeURIComponent(title)}`}
+              onClick={handleCreateCVClick}
+              className="your-styling-classes" // Thêm các class CSS để nó trông giống một liên kết hoặc nút bấm
+            >
               <motion.button
-                className="flex items-center bg-green-500 text-white px-5 py-3 rounded-lg hover:bg-green-600"
-                variants={buttonVariants}
+                className="flex items-center bg-blue-500 text-white px-5 py-3 transition-all duration-300 rounded-lg hover:bg-blue-600 hover:scale-105"
                 initial="hidden"
                 animate="visible"
                 whileHover="hover"
@@ -164,7 +207,7 @@ const CardCVTemplate: React.FC<CardCVTemplateProps> = ({ id, imageUrl, title, on
                   />
                 </motion.svg>
               </motion.button>
-            </Link>
+            </a>
           </motion.div>
         )}
       </div>

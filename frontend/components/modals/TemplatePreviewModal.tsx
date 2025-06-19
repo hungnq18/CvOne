@@ -62,7 +62,7 @@ const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({ isOpen, onC
     const handleUseTemplate = () => {
         if (!template) return;
         const params = new URLSearchParams({
-            template: template.templateName,
+            templateId: template.id,
             firstName: firstName,
             lastName: lastName,
         });
@@ -89,7 +89,7 @@ const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({ isOpen, onC
                     )}
                     {!loading && letterData && template && (
                         <div className="bg-white w-full shadow-lg mx-auto" style={{ height: '1123px', width: '794px' }}>
-                             <TemplateRenderer templateName={template.templateName} letterData={letterData} />
+                             <TemplateRenderer templateName={template.title.toLowerCase()} letterData={letterData} />
                         </div>
                     )}
                      {!loading && !template && (

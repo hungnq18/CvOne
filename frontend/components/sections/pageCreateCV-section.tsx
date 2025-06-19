@@ -16,7 +16,6 @@ import {
   FileDown,
   Printer,
   Mail,
-  Send,
   ArrowLeft,
   X,
   Trash2,
@@ -28,8 +27,16 @@ import {
 import Image from "next/image";
 import { CVProvider, useCV } from "@/providers/cv-provider";
 import { useOnClickOutside } from "@/hooks/useOnClickOutside";
+import { jwtDecode } from "jwt-decode";
 
 // --- CÁC COMPONENT POPUP ---
+interface DecodedToken {
+  sub: string; // Hoặc có thể là 'id', 'sub'.
+  role: string;
+}
+
+
+
 
 const Modal: FC<{
   title: string;
@@ -801,7 +808,6 @@ const PageCreateCVContent = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
   const id = searchParams.get("id");
-
   const { currentTemplate, userData, loadTemplate, updateUserData } = useCV();
   const [loading, setLoading] = useState(true);
   const [activeSection, setActiveSection] = useState("info");
@@ -825,17 +831,13 @@ const PageCreateCVContent = () => {
 
     if (idFromUrl) {
       setLoading(true);
-      // Luôn thử coi id trên URL là id của một CV đã tồn tại
       getCVById(idFromUrl)
         .then((cvData) => {
-          // NẾU THÀNH CÔNG - Tải dữ liệu từ CV đã có
           if (cvData && cvData.id) {
             console.log("Đã tải CV có sẵn:", cvData);
-            setCvId(cvData.id); // <-- Sửa: Dùng `id` thay vì `_id`
-            // Giả sử toàn bộ dữ liệu người dùng nằm trong `content.userData`
+            setCvId(cvData.id); 
             updateUserData(cvData.content.userData);
-            // Tải mẫu template tương ứng với CV
-            return getCVTemplateById(cvData.templateId); // <-- Sửa: Dùng `templateId`
+            return getCVTemplateById(cvData.templateId); 
           }
           return Promise.reject("Invalid CV data");
         })
@@ -878,15 +880,40 @@ const PageCreateCVContent = () => {
   };
 
   // Trong PageCreateCVContent
+  const getUserIdFromToken = (): string | null => {
+    if (typeof document === 'undefined') {
+      return null;
+    }
+  
+    const token = document.cookie
+      .split("; ")
+      .find((row) => row.startsWith("token="))
+      ?.split("=")[1];
+    
+    if (!token) {
+      return null;
+    }
+    
+  
+    try {
+      const decoded = jwtDecode<DecodedToken>(token);
+      // THAY ĐỔI DUY NHẤT: Trả về userId thay vì role
+      console.log("decoded", decoded);
+      return decoded.sub;
+    } catch (error) {
+      console.error("Lỗi giải mã token:", error);
+      return null;
+    }
+  };
 
   const handleSaveToDB = async (): Promise<boolean> => {
-    // Bước 1: Kiểm tra dữ liệu đầu vào có hợp lệ không
+    const userId = getUserIdFromToken();
+    console.log("userId", userId);
     if (!userData || !currentTemplate) {
       alert("Chưa có dữ liệu hoặc mẫu CV để lưu.");
       return false;
     }
 
-    // Kiểm tra xem userData có rỗng hay không
     if (Object.keys(userData).length === 0) {
       alert("Dữ liệu CV trống, không thể lưu.");
       return false;
@@ -895,8 +922,6 @@ const PageCreateCVContent = () => {
     setIsSaving(true);
     try {
       if (cvId) {
-        // --- CẬP NHẬT CV ĐÃ CÓ ---
-        // Chuẩn bị dữ liệu để cập nhật. Chỉ cần gửi những gì thay đổi.
         const dataToUpdate: Partial<CV> = {
           content: { userData }, // Gửi toàn bộ nội dung người dùng đã sửa
           title: `CV for ${userData.firstName || "Untitled"}`,
@@ -906,10 +931,10 @@ const PageCreateCVContent = () => {
         console.log("Đang gửi yêu cầu CẬP NHẬT CV:", dataToUpdate);
         await updateCV(cvId, dataToUpdate);
       } else {
-        // --- TẠO MỚI CV ---
-        // Chuẩn bị đầy đủ dữ liệu cho một CV mới theo cấu trúc trong db.json
+        
         const dataToCreate: Omit<CV, "id"> = {
-          userId: "1",
+          // userId:  userId|| "",
+          userId:  "1",
           title: `CV for ${userData.firstName + userData.lastName}`,
           content: { userData },
           isPublic: false,
@@ -1075,7 +1100,7 @@ const PageCreateCVContent = () => {
           <button
             onClick={handleFinish}
             disabled={isSaving}
-            className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg flex items-center gap-2 disabled:opacity-50"
+            className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-lg flex items-center gap-2 disabled:opacity-50"
           >
             {isSaving ? (
               <Loader2 className="animate-spin mr-2" size={18} />
