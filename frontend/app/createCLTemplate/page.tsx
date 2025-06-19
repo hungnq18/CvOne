@@ -5,6 +5,7 @@ import { X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { templates, TemplateType } from './templates';
 import { getProvinces, Province, getDistrictsByProvinceCode, District } from "@/api/locationApi";
+import db from "@/api/db.json"; // Import the local JSON data
 
 interface LetterData {
     firstName: string;
@@ -34,10 +35,36 @@ interface LetterData {
 const CoverLetterBuilderContent = () => {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const selectedTemplate = (searchParams.get('template') || 'cascade') as TemplateType;
-    const initialFirstName = searchParams.get('firstName') || "First Name";
-    const initialLastName = searchParams.get('lastName') || "Last Name";
-    const TemplateComponent = templates[selectedTemplate];
+    const templateId = searchParams.get('templateId') || 'cascade-cl';
+    const initialFirstName = searchParams.get('firstName');
+    const initialLastName = searchParams.get('lastName');
+
+    const selectedTemplateData = db.clTemplates.find(t => t.id === templateId);
+    const templateName = selectedTemplateData ? selectedTemplateData.title.toLowerCase() as TemplateType : 'cascade';
+    const TemplateComponent = templates[templateName];
+
+    const getInitialData = () => {
+        const defaultTemplateData = db.clTemplates.find(t => t.id === 'cascade-cl')?.data;
+        const baseData = selectedTemplateData ? selectedTemplateData.data : defaultTemplateData;
+
+        if (!baseData) {
+            // Fallback if no template data is found at all
+            return { firstName: '', lastName: '', profession: '', city: '', state: '', phone: '', email: '', date: '', recipientFirstName: '', recipientLastName: '', companyName: '', recipientCity: '', recipientState: '', recipientPhone: '', recipientEmail: '', subject: '', greeting: '', opening: '', body: '', callToAction: '', closing: '', signature: '' };
+        }
+
+        const firstName = initialFirstName || baseData.firstName;
+        const lastName = initialLastName || baseData.lastName;
+
+        return {
+            ...baseData,
+            firstName,
+            lastName,
+            signature: `${firstName} ${lastName}`,
+        };
+    };
+
+    const [letterData, setLetterData] = useState<LetterData>(getInitialData());
+
     const [provinces, setProvinces] = useState<Province[]>([]);
     const [districts, setDistricts] = useState<District[]>([]);
 
@@ -50,36 +77,9 @@ const CoverLetterBuilderContent = () => {
         fetchProvinces();
     }, []);
 
-    const [letterData, setLetterData] = useState<LetterData>({
-        firstName: initialFirstName,
-        lastName: initialLastName,
-        profession: "Software Engineer",
-        city: "Hanoi",
-        state: "HN",
-        phone: "+415-555-5555",
-        email: "duongduy203.st@gmail.com",
-        date: "June 11, 2025",
-        recipientFirstName: "Katherine",
-        recipientLastName: "Bloomstein",
-        companyName: "XYZ Company",
-        recipientCity: "Flowerville",
-        recipientState: "Ohio",
-        recipientPhone: "123-456-7890",
-        recipientEmail: "recipient@example.com",
-        subject: "RE: [Job Title], [Ref#], [Source]",
-        greeting: "Dear [Mr. or Ms. Last Name],",
-        opening:
-            "I am writing to express my interest in the Software Engineer position at your esteemed company. With a strong background in collaborative problem-solving, critical thinking, and decision-making, I am excited about the opportunity to contribute my practical skills and innovative solutions to your team.",
-        body: `Throughout my career as a Software Engineer, I have developed a keen ability to work effectively within teams, leveraging collective expertise to tackle complex technical challenges. My approach is grounded in a realistic understanding of project requirements, allowing me to devise solutions that are not only functional but also aligned with end-user needs.
-
-I pride myself on being a practical thinker, which has enabled me to consistently make informed decisions that drive project success. My experiences have equipped me with the ability to analyze intricate systems and collaborate with peers, leading to the successful implementation of software that meets stringent performance criteria and user expectations.
-
-I am particularly drawn to your organization because of its commitment to innovation and excellence. I am eager to bring my skills in collaboration and critical analysis to your team and contribute to projects that make a meaningful impact.`,
-        callToAction:
-            "Thank you for considering my application. I look forward to the possibility of discussing how I can support your organization's goals and contribute to exciting new initiatives.",
-        closing: "Sincerely,",
-        signature: `${initialFirstName} ${initialLastName}`,
-    });
+    useEffect(() => {
+        setLetterData(getInitialData());
+    }, [templateId, initialFirstName, initialLastName]);
 
     const [activeSection, setActiveSection] = useState<string | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);

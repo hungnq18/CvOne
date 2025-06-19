@@ -48,7 +48,7 @@ const CVCard: React.FC<CVCardProps> = ({ id, imageUrl, title, onPreviewClick }) 
   };
 
   const handleUseTemplateClick = () => {
-    router.push(`/createCLTemplate?template=${id}`);
+    router.push(`/chooseOption?templateId=${id}`);
   };
 
   return (
