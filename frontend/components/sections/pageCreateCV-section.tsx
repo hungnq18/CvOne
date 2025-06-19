@@ -2,40 +2,58 @@
 
 import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState, useRef, FC, ReactNode, ChangeEvent } from "react";
-import { getCVTemplateById, CVTemplate, getCVTemplates } from "@/api/cvapi";
+import {
+  getCVTemplateById,
+  getCVTemplates,
+  getCVById,
+  createCV,
+  updateCV,
+  CVTemplate,
+  CV,
+} from "@/api/cvapi";
 import { templateComponentMap } from "@/components/cvTemplate/index";
 import {
   FileDown,
   Printer,
   Mail,
-  Send,
   ArrowLeft,
   X,
   Trash2,
   Edit,
   PlusCircle,
   CheckCircle2,
+  Loader2,
 } from "lucide-react";
 import Image from "next/image";
 import { CVProvider, useCV } from "@/providers/cv-provider";
 import { useOnClickOutside } from "@/hooks/useOnClickOutside";
+import { jwtDecode } from "jwt-decode";
 
 // --- CÁC COMPONENT POPUP ---
+interface DecodedToken {
+  sub: string; // Hoặc có thể là 'id', 'sub'.
+  role: string;
+}
+
+
+
 
 const Modal: FC<{
   title: string;
   onClose: () => void;
   children: ReactNode;
-  onSave: () => void;
-}> = ({ title, onClose, children, onSave }) => {
+  onSave?: () => void;
+  isSaving?: boolean;
+}> = ({ title, onClose, children, onSave, isSaving = false }) => {
   const modalRef = useRef(null);
-  useOnClickOutside(modalRef, onClose);
+  useOnClickOutside(modalRef, onClose); 
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-30 flex justify-center items-center p-4">
       <div
         className="bg-white rounded-lg shadow-xl w-full max-w-lg"
         ref={modalRef}
+        style={{ maxWidth: "36%" }}
       >
         <div className="flex justify-between items-center bg-gray-100 py-3 px-5 rounded-t-lg">
           <h2 className="text-lg font-semibold">{title}</h2>
@@ -48,27 +66,31 @@ const Modal: FC<{
         </div>
         <div className="p-5">
           {children}
-          <div className="flex justify-end mt-6">
-            <button
-              onClick={onClose}
-              className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-md mr-2"
-            >
-              Huỷ
-            </button>
-            <button
-              onClick={onSave}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-md focus:outline-none focus:shadow-outline"
-            >
-              Lưu Thay Đổi
-            </button>
-          </div>
+          {onSave && (
+            <div className="flex justify-end mt-6">
+              <button
+                onClick={onClose}
+                disabled={isSaving}
+                className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-md mr-2 disabled:opacity-50"
+              >
+                Huỷ
+              </button>
+              <button
+                onClick={onSave}
+                disabled={isSaving}
+                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-md focus:outline-none focus:shadow-outline flex items-center justify-center disabled:opacity-50"
+              >
+                {isSaving && <Loader2 className="animate-spin mr-2" size={18}/>}
+                Lưu Thay Đổi
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
   );
 };
 
-// Popup cho Thông tin cá nhân - Đã được đồng bộ với data
 const InfoPopup: FC<{
   onClose: () => void;
   initialData: any;
@@ -522,7 +544,7 @@ const EducationPopup: FC<{
       updatedEducations.push(currentItem);
     }
     setEducations(updatedEducations);
-    setIsEditing(false); // Quay lại màn hình danh sách
+    setIsEditing(false); 
     setCurrentItem(null);
   };
 
@@ -735,6 +757,47 @@ const sidebarSections = [
   { id: "skills", title: "Kỹ năng" },
 ];
 
+const UnsavedChangesPopup: FC<{
+  onSaveAndLeave: () => void;
+  onLeaveWithoutSaving: () => void;
+  onCancel: () => void; // Prop này sẽ được truyền vào 'onClose' của Modal
+  isSaving: boolean;
+}> = ({ onSaveAndLeave, onLeaveWithoutSaving, onCancel, isSaving }) => {
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-60 z-40 flex justify-center items-center p-4 ">
+      <Modal
+        title="Bạn có thay đổi chưa được lưu"
+        onClose={onCancel}
+    >
+      {/* Nội dung và các nút tùy chỉnh của chúng ta sẽ nằm ở đây */}
+      <div className="text-center ">
+        <p className="text-gray-600 mb-6">
+          Bạn có muốn lưu lại những thay đổi này trước khi rời đi không?
+        </p>
+        <div className="flex justify-center gap-4">
+          <button
+            onClick={onLeaveWithoutSaving}
+            disabled={isSaving}
+            className="bg-red-100 hover:bg-red-200 text-red-700 font-semibold py-2 px-6 rounded-md disabled:opacity-50"
+          >
+            Thoát không lưu
+          </button>
+          <button
+            onClick={onSaveAndLeave}
+            disabled={isSaving}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-md flex items-center justify-center disabled:opacity-50"
+          >
+            {isSaving && <Loader2 className="animate-spin mr-2" size={18} />}
+            Lưu và thoát
+          </button>
+        </div>
+      </div>
+    </Modal>
+    </div>
+  );
+};
+
+
 const PageCreateCVSection = () => (
   <CVProvider>
     <PageCreateCVContent />
@@ -745,7 +808,6 @@ const PageCreateCVContent = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
   const id = searchParams.get("id");
-
   const { currentTemplate, userData, loadTemplate, updateUserData } = useCV();
   const [loading, setLoading] = useState(true);
   const [activeSection, setActiveSection] = useState("info");
@@ -757,21 +819,51 @@ const PageCreateCVContent = () => {
   const templateDropdownRef = useRef(null);
   const colorDropdownRef = useRef(null);
 
+  const [cvId, setCvId] = useState<string | null>(id);
+  const [isDirty, setIsDirty] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   useOnClickOutside(templateDropdownRef, () => setShowTemplatePopup(false));
   useOnClickOutside(colorDropdownRef, () => setShowColorPopup(false));
 
   useEffect(() => {
     getCVTemplates().then((data) => setAllTemplates(data));
-    if (id) {
+    const idFromUrl = id;
+
+    if (idFromUrl) {
       setLoading(true);
-      getCVTemplateById(id).then((data) => {
-        if (data) loadTemplate(data);
-        setLoading(false);
-      });
+      getCVById(idFromUrl)
+        .then((cvData) => {
+          if (cvData && cvData.id) {
+            console.log("Đã tải CV có sẵn:", cvData);
+            setCvId(cvData.id); 
+            updateUserData(cvData.content.userData);
+            return getCVTemplateById(cvData.templateId); 
+          }
+          return Promise.reject("Invalid CV data");
+        })
+        .then((templateData) => {
+          if (templateData) loadTemplate(templateData);
+          setLoading(false);
+        })
+        .catch(() => {
+          // NẾU THẤT BẠI - id trên URL là của template, ta đang tạo CV mới
+          console.log("Không tìm thấy CV, đang tải template để tạo mới...");
+          setCvId(null); // Rất quan trọng: Đặt cvId là null
+          getCVTemplateById(idFromUrl).then((templateData) => {
+            if (templateData) {
+              loadTemplate(templateData);
+              // Điền sẵn dữ liệu từ mẫu vào form
+              if (templateData.data?.userData) {
+                updateUserData(templateData.data.userData);
+              }
+            }
+            setLoading(false);
+          });
+        });
     } else {
       setLoading(false);
     }
-  }, [id, loadTemplate]);
+  }, [id, loadTemplate, updateUserData]);
 
   const handleTemplateSelect = (selectedTemplate: CVTemplate) => {
     router.push(
@@ -784,6 +876,106 @@ const PageCreateCVContent = () => {
 
   const handleDataUpdate = (updatedData: any) => {
     updateUserData(updatedData);
+    setIsDirty(true);
+  };
+
+  // Trong PageCreateCVContent
+  const getUserIdFromToken = (): string | null => {
+    if (typeof document === 'undefined') {
+      return null;
+    }
+  
+    const token = document.cookie
+      .split("; ")
+      .find((row) => row.startsWith("token="))
+      ?.split("=")[1];
+    
+    if (!token) {
+      return null;
+    }
+    
+  
+    try {
+      const decoded = jwtDecode<DecodedToken>(token);
+      // THAY ĐỔI DUY NHẤT: Trả về userId thay vì role
+      console.log("decoded", decoded);
+      return decoded.sub;
+    } catch (error) {
+      console.error("Lỗi giải mã token:", error);
+      return null;
+    }
+  };
+
+  const handleSaveToDB = async (): Promise<boolean> => {
+    const userId = getUserIdFromToken();
+    console.log("userId", userId);
+    if (!userData || !currentTemplate) {
+      alert("Chưa có dữ liệu hoặc mẫu CV để lưu.");
+      return false;
+    }
+
+    if (Object.keys(userData).length === 0) {
+      alert("Dữ liệu CV trống, không thể lưu.");
+      return false;
+    }
+
+    setIsSaving(true);
+    try {
+      if (cvId) {
+        const dataToUpdate: Partial<CV> = {
+          content: { userData }, // Gửi toàn bộ nội dung người dùng đã sửa
+          title: `CV for ${userData.firstName || "Untitled"}`,
+          updatedAt: new Date().toISOString(),
+        };
+
+        console.log("Đang gửi yêu cầu CẬP NHẬT CV:", dataToUpdate);
+        await updateCV(cvId, dataToUpdate);
+      } else {
+        
+        const dataToCreate: Omit<CV, "id"> = {
+          // userId:  userId|| "",
+          userId:  "1",
+          title: `CV for ${userData.firstName + userData.lastName}`,
+          content: { userData },
+          isPublic: false,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          templateId: currentTemplate.id,
+          isSaved: true,
+          isFinalized: false,
+        };
+
+        console.log("Đang gửi yêu cầu TẠO MỚI CV:", dataToCreate);
+        const newCV = await createCV(dataToCreate);
+
+        if (newCV && newCV.id) {
+          setCvId(newCV.id);
+          // Cập nhật URL để lần sau sẽ là update
+          router.replace(`/createCV?id=${newCV.id}`, { scroll: false });
+        }
+      }
+      alert("Lưu CV thành công!");
+      setIsDirty(false);
+      return true;
+    } catch (error) {
+      console.error("Lỗi khi lưu CV:", error);
+      alert("Có lỗi xảy ra khi lưu CV của bạn.");
+      return false;
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleFinish = async () => {
+    const isSuccess = await handleSaveToDB();
+    // Chỉ chuyển trang nếu lưu thành công
+    if (isSuccess) {
+      router.push("/myDocuments");
+    }
+  };
+
+  const handleSectionClick = (sectionId: string) => {
+    setActivePopup(sectionId);
   };
 
   const renderCVPreview = () => {
@@ -798,14 +990,24 @@ const PageCreateCVContent = () => {
 
     const componentData = {
       ...currentTemplate.data,
-      userData: userData, 
+      userData: userData,
     };
 
     return (
       <div className="w-full max-w-[1050px] shadow-2xl origin-top scale-[0.6] md:scale-[0.7] lg:scale-[0.8]">
-        <TemplateComponent data={componentData} />
+        <TemplateComponent
+          data={componentData}
+          onSectionClick={handleSectionClick}
+        />
       </div>
     );
+  };
+
+  const handleBackClick = () => {
+    setActivePopup("confirmLeave");
+    if (isDirty) {
+      router.push(`/cvTemplates`);
+    }
   };
 
   return (
@@ -889,13 +1091,23 @@ const PageCreateCVContent = () => {
         </div>
         <div className="flex items-center gap-4">
           <button
-            onClick={() => router.push(`/cvTemplates`)}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg flex items-center gap-2"
+            onClick={handleBackClick}
+            disabled={isSaving}
+            className="bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 px-6 rounded-lg flex items-center gap-2 disabled:opacity-50"
           >
             <ArrowLeft size={18} /> Quay Lại
           </button>
-          <button className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg flex items-center gap-2">
-            <Send size={18} /> Hoàn Thành
+          <button
+            onClick={handleFinish}
+            disabled={isSaving}
+            className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-lg flex items-center gap-2 disabled:opacity-50"
+          >
+            {isSaving ? (
+              <Loader2 className="animate-spin mr-2" size={18} />
+            ) : (
+              <CheckCircle2 size={18} />
+            )}
+            {isSaving ? "Đang lưu..." : "Hoàn Thành"}{" "}
           </button>
         </div>
       </header>
@@ -985,6 +1197,25 @@ const PageCreateCVContent = () => {
           onClose={() => setActivePopup(null)}
           initialData={userData}
           onSave={(updatedData) => handleDataUpdate(updatedData)}
+        />
+      )}
+      {activePopup === "confirmLeave" && (
+        <UnsavedChangesPopup
+          isSaving={isSaving}
+          onCancel={() => {
+            setActivePopup(null);
+          }}
+          onLeaveWithoutSaving={() => {
+            // Logic này giữ nguyên
+            router.push(`/cvTemplates`);
+          }}
+          onSaveAndLeave={async () => {
+            // Logic này cũng giữ nguyên
+            const isSuccess = await handleSaveToDB();
+            if (isSuccess) {
+              router.push(`/cvTemplates`);
+            }
+          }}
         />
       )}
     </div>

@@ -5,6 +5,7 @@ import {
   UseGuards,
   Request,
   Get,
+  Param,
 } from "@nestjs/common";
 import { ConversationService } from "./conversation.service";
 import { CreateConversationDto } from "./dto/create-conversation.dto";
@@ -24,5 +25,18 @@ export class ConversationController {
   async getUserConversations(@Request() req) {
     const userId = req.user.user._id;
     return this.conversationService.getUserConversations(userId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get(":conversationId")
+  async getConversationDetail(
+    @Request() req,
+    @Param("conversationId") conversationId: string
+  ) {
+    const userId = req.user.user._id;
+    return this.conversationService.getConversationDetail(
+      conversationId,
+      userId
+    );
   }
 }

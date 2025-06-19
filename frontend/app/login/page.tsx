@@ -257,6 +257,7 @@ export default function LoginPage() {
                 value={formData.email}
                 onChange={handleInputChange}
                 disabled={isLoading}
+                style={{ backgroundColor: "#f5f5f5" }}
               />
             </div>
 
@@ -269,6 +270,7 @@ export default function LoginPage() {
                 value={formData.password}
                 onChange={handleInputChange}
                 disabled={isLoading}
+                style={{ backgroundColor: "#f5f5f5" }}
               />
               <EyeIcon onClick={() => setShowPassword(!showPassword)} style={{ marginTop: "3%" }}>
                 {showPassword ? <FaEyeSlash /> : <FaEye />}
@@ -285,7 +287,9 @@ export default function LoginPage() {
               <span>{t.noAccount}</span>
               <Link href="/register">{t.registerLink}</Link>
             </RegisterLink>
-
+            <RegisterLink>
+              <Link href="/fogetPassword">{t.fogetPassword}</Link>
+            </RegisterLink>
             <Divider>
               <span>{t.or}</span>
             </Divider>

@@ -14,6 +14,10 @@ import { MailerModule } from "@nestjs-modules/mailer";
 import { join } from "path";
 import { HandlebarsAdapter } from "@nestjs-modules/mailer/dist/adapters/handlebars.adapter";
 import { NotificationsModule } from "./modules/notifications/notifications.module";
+import { ClTemplateModule } from "./modules/cl-template/cl-template.module";
+import { CoverLetter } from "./modules/cover-letter/schemas/cover-letter.schema";
+import { CoverLetterModule } from "./modules/cover-letter/cover-letter.module";
+import { ApplyJobModule } from "./modules/apply-job/apply-job.module";
 
 @Module({
   imports: [
@@ -63,6 +67,9 @@ import { NotificationsModule } from "./modules/notifications/notifications.modul
       inject: [ConfigService],
     }),
     NotificationsModule,
+    ClTemplateModule,
+    CoverLetterModule,
+    ApplyJobModule,
   ],
 })
 export class AppModule {}

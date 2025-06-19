@@ -9,6 +9,8 @@ import {
 } from "./schemas/conversation.schema";
 import { ChatController } from "./chat.controller";
 import { UsersModule } from "../users/users.module";
+import { NotificationsService } from "../notifications/notifications.service";
+import { NotificationsModule } from "../notifications/notifications.module";
 
 @Module({
   imports: [
@@ -17,6 +19,7 @@ import { UsersModule } from "../users/users.module";
       { name: Conversation.name, schema: ConversationSchema },
     ]),
     UsersModule,
+    NotificationsModule,
   ],
   controllers: [ChatController],
   providers: [ChatGateway, ChatService],

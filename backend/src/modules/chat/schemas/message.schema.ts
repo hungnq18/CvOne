@@ -7,6 +7,9 @@ export class Message extends Document {
   conversationId: Types.ObjectId;
 
   @Prop({ type: Types.ObjectId, ref: "User" })
+  receiverId: Types.ObjectId;
+
+  @Prop({ type: Types.ObjectId, ref: "User" })
   senderId: Types.ObjectId;
 
   @Prop()

@@ -1,8 +1,7 @@
-import { API_ENDPOINTS } from './apiConfig';
-import { fetchWithAuth } from './apiClient';
+import { API_ENDPOINTS } from "./apiConfig";
+import { fetchWithAuth } from "./apiClient";
 import socket from "@/utils/socket/client";
-import { User } from '@/types/auth';
-
+import { User } from "@/types/auth";
 
 export interface Message {
   _id: string;
@@ -34,13 +33,16 @@ export interface Conversation {
  */
 export const processMessageData = async (msg: any): Promise<Message> => {
   try {
-    const senderId = typeof msg.senderId === 'object' ? msg.senderId._id : msg.senderId;
-    const userResponse = await fetchWithAuth(API_ENDPOINTS.USER.GET_BY_ID(senderId));
-    
+    const senderId =
+      typeof msg.senderId === "object" ? msg.senderId._id : msg.senderId;
+    const userResponse = await fetchWithAuth(
+      API_ENDPOINTS.USER.GET_BY_ID(senderId)
+    );
+
     return {
       ...msg,
       senderId,
-      sender: userResponse
+      sender: userResponse,
     };
   } catch (err) {
     return msg;
@@ -50,18 +52,25 @@ export const processMessageData = async (msg: any): Promise<Message> => {
 /**
  * Process conversation data to ensure consistent format
  */
-export const processConversationData = async (conv: any, currentUserId: string): Promise<Conversation> => {
+export const processConversationData = async (
+  conv: any,
+  currentUserId: string
+): Promise<Conversation> => {
   try {
-    const otherParticipantId = conv.participants.find((id: string) => id !== currentUserId);
-    const currentUserResponse = await fetchWithAuth(API_ENDPOINTS.USER.GET_BY_ID(currentUserId));
-    const otherUserResponse = otherParticipantId ? 
-      await fetchWithAuth(API_ENDPOINTS.USER.GET_BY_ID(otherParticipantId)) : 
-      undefined;
+    const otherParticipantId = conv.participants.find(
+      (id: string) => id !== currentUserId
+    );
+    const currentUserResponse = await fetchWithAuth(
+      API_ENDPOINTS.USER.GET_BY_ID(currentUserId)
+    );
+    const otherUserResponse = otherParticipantId
+      ? await fetchWithAuth(API_ENDPOINTS.USER.GET_BY_ID(otherParticipantId))
+      : undefined;
 
     return {
       ...conv,
       otherUser: otherUserResponse,
-      currentUser: currentUserResponse
+      currentUser: currentUserResponse,
     };
   } catch (err) {
     return conv;
@@ -71,9 +80,13 @@ export const processConversationData = async (conv: any, currentUserId: string):
 /**
  * Get messages for a specific conversation
  */
-export const getMessages = async (conversationId: string): Promise<Message[]> => {
+export const getMessages = async (
+  conversationId: string
+): Promise<Message[]> => {
   try {
-    const response = await fetchWithAuth(API_ENDPOINTS.CHAT.GET_MESSAGES(conversationId));
+    const response = await fetchWithAuth(
+      API_ENDPOINTS.CHAT.GET_MESSAGES(conversationId)
+    );
     if (!Array.isArray(response)) {
       return [];
     }
@@ -86,13 +99,18 @@ export const getMessages = async (conversationId: string): Promise<Message[]> =>
 /**
  * Get conversations for the current user
  */
-export const getUserConversations = async (userId: string): Promise<Conversation[]> => {
+export const getUserConversations = async (
+  userId: string
+): Promise<Conversation[]> => {
   try {
     const response = await fetchWithAuth(API_ENDPOINTS.CHAT.GET_CONVERSATIONS);
     if (!Array.isArray(response)) {
       return [];
     }
-    return await Promise.all(response.map(conv => processConversationData(conv, userId)));
+
+    return await Promise.all(
+      response.map((conv) => processConversationData(conv, userId))
+    );
   } catch (err) {
     return [];
   }
@@ -101,12 +119,16 @@ export const getUserConversations = async (userId: string): Promise<Conversation
 /**
  * Get conversation details including last message and unread count
  */
-export const getConversationDetail = async (conversationId: string): Promise<{
+export const getConversationDetail = async (
+  conversationId: string
+): Promise<{
   lastMessage: Message | null;
   unreadCount: number;
 }> => {
   try {
-    const response = await fetchWithAuth(API_ENDPOINTS.CHAT.GET_CONVERSATION_DETAIL(conversationId));
+    const response = await fetchWithAuth(
+      API_ENDPOINTS.CHAT.GET_CONVERSATION_DETAIL(conversationId)
+    );
     return response as { lastMessage: Message | null; unreadCount: number };
   } catch (err) {
     return { lastMessage: null, unreadCount: 0 };
@@ -124,8 +146,8 @@ export const sendMessage = async (data: {
   try {
     // Gửi tin nhắn qua API
     const response = await fetchWithAuth(API_ENDPOINTS.CHAT.SEND_MESSAGE, {
-      method: 'POST',
-      body: JSON.stringify(data)
+      method: "POST",
+      body: JSON.stringify(data),
     });
 
     // Gửi qua socket để realtime
@@ -140,7 +162,7 @@ export const sendMessage = async (data: {
       senderId: data.senderId,
       content: data.content,
       createdAt: new Date().toISOString(),
-      readBy: []
+      readBy: [],
     };
   }
 };
@@ -148,12 +170,17 @@ export const sendMessage = async (data: {
 /**
  * Create a new conversation
  */
-export const createConversation = async (participantId: string): Promise<Conversation | null> => {
+export const createConversation = async (
+  participantId: string
+): Promise<Conversation | null> => {
   try {
-    const response = await fetchWithAuth(API_ENDPOINTS.CHAT.CREATE_CONVERSATION, {
-      method: 'POST',
-      body: JSON.stringify({ participantId })
-    });
+    const response = await fetchWithAuth(
+      API_ENDPOINTS.CHAT.CREATE_CONVERSATION,
+      {
+        method: "POST",
+        body: JSON.stringify({ participantId }),
+      }
+    );
     return response as Conversation;
   } catch (err) {
     return null;
@@ -163,12 +190,15 @@ export const createConversation = async (participantId: string): Promise<Convers
 /**
  * Handle new message from socket
  */
-export const handleNewMessage = async (msg: any, userId: string): Promise<{
+export const handleNewMessage = async (
+  msg: any,
+  userId: string
+): Promise<{
   message: Message;
   conversationUpdate: Partial<Conversation>;
 }> => {
   const processedMessage = await processMessageData(msg);
-  
+
   return {
     message: processedMessage,
     conversationUpdate: {
@@ -177,9 +207,9 @@ export const handleNewMessage = async (msg: any, userId: string): Promise<{
         content: processedMessage.content,
         senderId: processedMessage.senderId,
         createdAt: processedMessage.createdAt,
-        sender: processedMessage.sender
+        sender: processedMessage.sender,
       },
-      unreadCount: processedMessage.senderId !== userId ? 1 : 0
-    }
+      unreadCount: processedMessage.senderId !== userId ? 1 : 0,
+    },
   };
 };
