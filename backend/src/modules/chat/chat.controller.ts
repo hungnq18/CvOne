@@ -18,17 +18,4 @@ export class ChatController {
   getMessages(@Param("conversationId") conversationId: string) {
     return this.chatService.getMessagesByConversationId(conversationId);
   }
-
-  @UseGuards(JwtAuthGuard)
-  @Get("conversation-detail/:conversationId")
-  getConversationDetail(
-    @Param("conversationId") conversationId: string,
-    @Request() req
-  ) {
-    const accountId = req.user?.id;
-    if (!accountId) {
-      throw new UnauthorizedException("Invalid user");
-    }
-    return this.chatService.getConversationDetail(conversationId, accountId);
-  }
 }

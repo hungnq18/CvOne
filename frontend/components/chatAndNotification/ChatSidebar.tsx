@@ -1,18 +1,24 @@
-import { Conversation } from '@/api/apiChat';
+import { Conversation, Message } from '@/api/apiChat';
 import { formatTime } from '@/utils/formatTime';
 import { useState } from 'react';
 import { useChat } from '@/providers/ChatProvider';
 
 interface ChatSidebarProps {
     conversations: Conversation[];
-    selectedConversation: string | null;
+    selectedConversationId: string | null;
+    selectedConversationDetail?: {
+        _id: string;
+        participants: any[];
+        lastMessage: Message | null;
+    } | null;
     userId: string | null;
     onSelectConversation: (conversationId: string) => void;
 }
 
 export default function ChatSidebar({
     conversations,
-    selectedConversation,
+    selectedConversationId,
+    selectedConversationDetail,
     userId,
     onSelectConversation
 }: ChatSidebarProps) {
@@ -67,12 +73,13 @@ export default function ChatSidebar({
             <div className="overflow-y-auto h-[calc(90vh-8rem)]">
                 {filteredConversations.map((conv) => {
                     const otherUser = conv.otherUser;
+                    const isSelected = selectedConversationId === conv._id;
 
                     return (
                         <div
                             key={conv._id}
                             onClick={() => handleSelectConversation(conv._id)}
-                            className={`p-4 hover:bg-gray-50 cursor-pointer border-b border-gray-100 transition-colors ${selectedConversation === conv._id ? 'bg-indigo-50' : ''
+                            className={`p-4 hover:bg-gray-50 cursor-pointer border-b border-gray-100 transition-colors ${isSelected ? 'bg-indigo-50 border-l-4 border-l-indigo-500' : ''
                                 }`}
                         >
                             <div className="flex justify-between items-start">
@@ -100,6 +107,12 @@ export default function ChatSidebar({
                                     {conv.lastMessage && (
                                         <span className="text-xs text-gray-400">
                                             {formatTime(conv.lastMessage.createdAt)}
+                                        </span>
+                                    )}
+                                    {/* Hiển thị unread count từ conversations array */}
+                                    {conv.unreadCount > 0 && (
+                                        <span className="mt-1 px-2 py-1 text-xs bg-red-500 text-white rounded-full">
+                                            {conv.unreadCount}
                                         </span>
                                     )}
                                 </div>

@@ -10,6 +10,7 @@ import {
   getMessages,
   sendMessage,
   handleNewMessage,
+  getConversationDetail,
 } from "@/api/apiChat";
 import ChatSidebar from "@/components/chatAndNotification/ChatSidebar";
 import ChatMessages from "@/components/chatAndNotification/ChatMessages";
@@ -18,9 +19,12 @@ import ChatInput from "@/components/chatAndNotification/ChatInput";
 export default function ChatPage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [selectedConversation, setSelectedConversation] = useState<
-    string | null
-  >(null);
+  const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
+  const [selectedConversationDetail, setSelectedConversationDetail] = useState<{
+    _id: string;
+    participants: any[];
+    lastMessage: Message | null;
+  } | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [content, setContent] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -34,7 +38,7 @@ export default function ChatPage() {
           const conversations = await getUserConversations(id);
           setConversations(conversations);
           if (conversations.length > 0) {
-            setSelectedConversation(conversations[0]._id);
+            setSelectedConversationId(conversations[0]._id);
           }
         } catch (err) {
           // Silent error handling
@@ -48,30 +52,43 @@ export default function ChatPage() {
     scrollToBottom();
   }, [messages]);
 
+  // Fetch conversation detail when selectedConversationId changes
   useEffect(() => {
-    if (!selectedConversation || !userId) return;
+    if (!selectedConversationId) {
+      setSelectedConversationDetail(null);
+      return;
+    }
+
+    const fetchConversationDetail = async () => {
+      try {
+        // Sử dụng getConversationDetail từ ConversationService
+        const conversationDetail = await getConversationDetail(selectedConversationId);
+        setSelectedConversationDetail(conversationDetail);
+      } catch (err) {
+        console.error("Failed to fetch conversation detail:", err);
+      }
+    };
+
+    fetchConversationDetail();
+  }, [selectedConversationId]);
+
+  useEffect(() => {
+    if (!selectedConversationId || !userId) return;
 
     const fetchMessages = async () => {
       try {
-        const messages = await getMessages(selectedConversation);
+        const messages = await getMessages(selectedConversationId);
         setMessages(messages);
-        setConversations((prev) =>
-          prev.map((conv) =>
-            conv._id === selectedConversation
-              ? { ...conv, unreadCount: 0 }
-              : conv
-          )
-        );
       } catch (err) {
         // Silent error handling
       }
     };
 
     fetchMessages();
-    socket.emit("joinRoom", selectedConversation);
+    socket.emit("joinRoom", selectedConversationId);
 
     socket.on("newMessage", async (msg: Message) => {
-      if (msg.conversationId === selectedConversation) {
+      if (msg.conversationId === selectedConversationId) {
         const { message, conversationUpdate } = await handleNewMessage(
           msg,
           userId
@@ -86,9 +103,9 @@ export default function ChatPage() {
           prev.map((conv) =>
             conv._id === msg.conversationId
               ? {
-                  ...conv,
-                  ...conversationUpdate,
-                }
+                ...conv,
+                ...conversationUpdate,
+              }
               : conv
           )
         );
@@ -97,9 +114,9 @@ export default function ChatPage() {
 
     return () => {
       socket.off("newMessage");
-      socket.emit("leaveRoom", selectedConversation);
+      socket.emit("leaveRoom", selectedConversationId);
     };
-  }, [selectedConversation, userId]);
+  }, [selectedConversationId, userId]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -117,15 +134,15 @@ export default function ChatPage() {
   }
 
   const handleSend = async () => {
-    if (!content.trim() || !userId || !selectedConversation) return;
+    if (!content.trim() || !userId || !selectedConversationId) return;
 
     const receiverId = getReceiverIdFromConversation(
-      selectedConversation,
+      selectedConversationId,
       userId
     );
 
     const messageDto = {
-      conversationId: selectedConversation,
+      conversationId: selectedConversationId,
       senderId: userId,
       senderName: "Bạn",
       receiverId,
@@ -141,7 +158,7 @@ export default function ChatPage() {
       title: "Tin nhắn mới",
       message: content,
       type: "message",
-      link: `/chat`, // Hoặc có thể là `/chat/${selectedConversation}`
+      link: `/chat`,
     });
 
     setContent("");
@@ -152,12 +169,13 @@ export default function ChatPage() {
       <div className="flex h-[90vh] w-[90vw] bg-white rounded-lg shadow-lg overflow-hidden">
         <ChatSidebar
           conversations={conversations}
-          selectedConversation={selectedConversation}
+          selectedConversationId={selectedConversationId}
+          selectedConversationDetail={selectedConversationDetail}
           userId={userId}
-          onSelectConversation={setSelectedConversation}
+          onSelectConversation={setSelectedConversationId}
         />
 
-        {selectedConversation ? (
+        {selectedConversationId ? (
           <div className="flex-1 flex flex-col h-full">
             <ChatMessages
               messages={messages}

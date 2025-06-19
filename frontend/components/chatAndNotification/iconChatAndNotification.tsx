@@ -4,30 +4,102 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { getUserIdFromToken } from '@/api/userApi';
+import { getUserConversations } from '@/api/apiChat';
+import { useAuth } from '@/hooks/use-auth';
 
 const IconChatAndNotification: React.FC = () => {
     const pathname = usePathname();
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const { user } = useAuth();
+    const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
+    const [isMounted, setIsMounted] = useState(false);
 
-    const checkLoginStatus = () => {
-        const userId = getUserIdFromToken();
-        setIsLoggedIn(!!userId);
+    const checkUnreadMessages = async () => {
+        if (!user) {
+            setHasUnreadMessages(false);
+            return;
+        }
+
+        try {
+            const conversations = await getUserConversations(user._id);
+            const hasUnread = conversations.some(conv => conv.unreadCount > 0);
+            setHasUnreadMessages(hasUnread);
+        } catch (err) {
+            // Silent error handling
+        }
     };
 
     useEffect(() => {
-        checkLoginStatus();
-        const handleCookieChange = () => {
-            checkLoginStatus();
-        };
-        window.addEventListener('storage', handleCookieChange);
-        document.addEventListener('visibilitychange', handleCookieChange);
+        setIsMounted(true);
+    }, []);
+
+    useEffect(() => {
+        if (!isMounted) return;
+
+        checkUnreadMessages();
+
+        // Check unread messages every 30 seconds
+        const interval = setInterval(checkUnreadMessages, 30000);
+
         return () => {
-            window.removeEventListener('storage', handleCookieChange);
-            document.removeEventListener('visibilitychange', handleCookieChange);
+            clearInterval(interval);
+        };
+    }, [user, isMounted]);
+
+    useEffect(() => {
+        const handleAuthChange = () => {
+            setTimeout(checkUnreadMessages, 100);
+        };
+
+        const handleLoginSuccess = () => {
+            setTimeout(checkUnreadMessages, 100);
+        };
+
+        const handleLogout = () => {
+            setHasUnreadMessages(false);
+        };
+
+        window.addEventListener('authChange', handleAuthChange);
+        window.addEventListener('loginSuccess', handleLoginSuccess);
+        window.addEventListener('logout', handleLogout);
+
+        const handleStorageChange = () => {
+            setTimeout(checkUnreadMessages, 100);
+        };
+
+        window.addEventListener('storage', handleStorageChange);
+
+        return () => {
+            window.removeEventListener('authChange', handleAuthChange);
+            window.removeEventListener('loginSuccess', handleLoginSuccess);
+            window.removeEventListener('logout', handleLogout);
+            window.removeEventListener('storage', handleStorageChange);
         };
     }, []);
 
-    if (pathname === '/chat' || !isLoggedIn) {
+    useEffect(() => {
+        const checkAuthStatus = () => {
+            const token = document.cookie
+                .split("; ")
+                .find((row) => row.startsWith("token="))
+                ?.split("=")[1];
+
+            if (token && !user) {
+                window.dispatchEvent(new CustomEvent('authChange'));
+            }
+        };
+
+        const authInterval = setInterval(checkAuthStatus, 2000);
+
+        return () => {
+            clearInterval(authInterval);
+        };
+    }, [user]);
+
+    if (!isMounted) {
+        return null;
+    }
+
+    if (pathname === '/chat' || !user) {
         return null;
     }
 
@@ -35,7 +107,7 @@ const IconChatAndNotification: React.FC = () => {
         <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-3">
             <Link
                 href="/notifications"
-                className="group flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-purple-600 shadow-lg hover:from-purple-600 hover:to-purple-700 transition-all duration-300 transform hover:scale-105"
+                className="group relative flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-purple-600 shadow-lg hover:from-purple-600 hover:to-purple-700 transition-all duration-300 transform hover:scale-105"
             >
                 <svg
                     className="w-6 h-6 text-white transition-transform group-hover:scale-110"
@@ -51,11 +123,13 @@ const IconChatAndNotification: React.FC = () => {
                         d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0"
                     />
                 </svg>
+
+                <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full opacity-0"></div>
             </Link>
 
             <Link
                 href="/chat"
-                className="group flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-green-500 to-green-600 shadow-lg hover:from-green-600 hover:to-green-700 transition-all duration-300 transform hover:scale-105"
+                className="group relative flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-green-500 to-green-600 shadow-lg hover:from-green-600 hover:to-green-700 transition-all duration-300 transform hover:scale-105"
             >
                 <svg
                     className="w-6 h-6 text-white transition-transform group-hover:scale-110"
@@ -71,6 +145,9 @@ const IconChatAndNotification: React.FC = () => {
                         strokeLinecap="round"
                     />
                 </svg>
+                {hasUnreadMessages && (
+                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+                )}
             </Link>
         </div>
     );

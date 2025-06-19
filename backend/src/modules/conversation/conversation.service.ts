@@ -8,7 +8,7 @@ import { CreateConversationDto } from "./dto/create-conversation.dto";
 export class ConversationService {
   constructor(
     @InjectModel(Conversation.name)
-    private readonly convModel: Model<Conversation>
+    private readonly convModel: Model<Conversation>,
   ) {}
 
   async createConversation(dto: CreateConversationDto) {
@@ -47,12 +47,15 @@ export class ConversationService {
       .populate([
         {
           path: "participants",
-
           select: "first_name last_name",
         },
         {
           path: "lastMessage",
           select: "content senderId createdAt",
+          populate: {
+            path: "senderId",
+            select: "first_name last_name",
+          },
         },
       ])
       .lean();
@@ -71,7 +74,7 @@ export class ConversationService {
         $set: {
           "unreadCount.$.count": 0,
         },
-      }
+      },
     );
 
     return {

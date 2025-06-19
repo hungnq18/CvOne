@@ -20,18 +20,18 @@ export default function ChatContent({
         if (!message.trim() || !selectedConversation || !userId) return;
 
         try {
-            const response = await sendMessage({
+            // Gửi tin nhắn qua WebSocket (không có REST API)
+            const tempMessage = await sendMessage({
                 conversationId: selectedConversation,
                 senderId: userId,
                 content: message
             });
 
-            if (response) {
-                setMessages(prev => [...prev, response]);
-                setMessage('');
-            }
+            // Thêm tin nhắn tạm thời vào UI
+            setMessages(prev => [...prev, tempMessage]);
+            setMessage('');
         } catch (error) {
-            // Silent error handling
+            console.error("Failed to send message:", error);
         }
     };
 

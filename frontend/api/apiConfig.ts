@@ -44,11 +44,11 @@ export const API_ENDPOINTS = {
   },
   CHAT: {
     GET_MESSAGES: (convId: string) => `/chat/messages/${convId}`,
-    GET_CONVERSATION_DETAIL: (convId: string) =>
-      `/chat/conversation-detail/${convId}`,
-    GET_CONVERSATIONS: "/conversations",
-    CREATE_CONVERSATION: "/conversations",
-    SEND_MESSAGE: "/chat/messages",
+  },
+  CONVERSATION: {
+    GET_BY_ID: (convId: string) => `/conversations/${convId}`,
+    GET_ALL: "/conversations",
+    CREATE: "/conversations",
   },
   JOB: {
     GET_ALL: "/jobs",
