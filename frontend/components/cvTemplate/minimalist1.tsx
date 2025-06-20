@@ -29,46 +29,95 @@ const HoverableWrapper: React.FC<HoverableWrapperProps> = ({
   label,
   sectionId,
   onClick,
-  // Nhận className từ props
   className,
 }) => {
-  const isAvatar = label === "Avatar";
-  const borderRadiusClass = isAvatar ? "rounded-full" : "rounded-lg";
+  const labelsWithHoverEffect = ["KINH NGHIỆM LÀM VIỆC", "HỌC VẤN"];
+
+  const labelsWithHoverGreenEffect = [
+    "Họ tên & Chức danh",
+    "THÔNG TIN CÁ NHÂN",
+    "MỤC TIÊU SỰ NGHIỆP",
+    "KỸ NĂNG",
+  ];
+
+  const shouldApplyHover = labelsWithHoverEffect.includes(label);
+  const shouldAvatar = "Avatar".includes(label);
+  const shouldApplyHoverGreen = labelsWithHoverGreenEffect.includes(label);
+
+  const finalClassName = `
+    relative 
+    group 
+    cursor-pointer
+    transition-all 
+    duration-300 
+    ease-in-out
+    ${
+      shouldApplyHover ? "hover:scale-105 hover:bg-gray-50 hover:shadow-lg" : ""
+    }
+    ${shouldAvatar ? "hover:scale-105" : ""}
+    ${
+      shouldApplyHoverGreen
+        ? "hover:scale-105 hover:bg-gray-50 hover:shadow-lg"
+        : ""
+    }
+  `;
 
   return (
-    <div
-      className={`
-        relative 
-        group 
-        cursor-pointer 
-        transition-all 
-        duration-300 
-        ease-in-out 
-        hover:scale-105 
-        hover:shadow-xl
-        ${isAvatar ? "overflow-hidden" : ""}
-        ${borderRadiusClass} 
-        ${className || ""}
-      `}
-      onClick={() => onClick?.(sectionId)}
-    >
+    <div className={finalClassName} onClick={() => onClick?.(sectionId)}>
       {children}
-      {/* Lớp viền xanh bây giờ sẽ luôn đúng hình dạng với wrapper */}
-      <div
-        className={`absolute inset-0 border-4 border-[#8BAAFC] opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none ${borderRadiusClass}`}
-      ></div>
-
-      {/* Phần nhãn tên (giữ nguyên) */}
-      <div
-        className="absolute top-0 left-4 -translate-y-1/2 bg-[#8BAAFC] text-white text-sm font-bold tracking-wide px-3 py-1 opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none"
-        style={{
-          borderRadius: "4px 10px 4px 10px",
-          marginTop: isAvatar ? "-2%" : "0",
-          left: isAvatar ? "-4%" : "1%",
-        }}
-      >
-        {label}
-      </div>
+      {shouldAvatar && (
+        <>
+          <div className="absolute inset-0 rounded-full border-4 border-[#8BAAFC] opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none"></div>
+          <div
+            className="absolute -top-2 left-0 bg-[#8BAAFC] text-white text-sm font-bold tracking-wide px-3 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none"
+            style={{
+              borderRadius: "4px 10px 4px 10px",
+              marginTop: "-6%",
+              left: "-15%",
+            }}
+          >
+            {label}
+          </div>
+        </>
+      )}
+      {shouldApplyHoverGreen && (
+        <>
+          <div
+            className="absolute rounded-lg border-4 border-[#8BAAFC] opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none"
+            style={{
+              width: "100%",
+              height: "100%",
+              left: "0%",
+              top: "0%",
+            }}
+          ></div>
+          <div
+            className="absolute top-0 -translate-y-1/2 bg-[#8BAAFC] text-white text-sm font-bold tracking-wide px-3 py-1 opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none"
+            style={{
+              borderRadius: "4px 10px 0 0",
+              marginTop: "-3.5%",
+              left: "1%",
+            }}
+          >
+            {label}
+          </div>
+        </>
+      )}
+      {shouldApplyHover && (
+        <>
+          <div className="absolute inset-0 rounded-lg border-4 border-[#8BAAFC] opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none"></div>
+          <div
+            className="absolute top-0 left-4 -translate-y-1/2 bg-[#8BAAFC] text-white text-sm font-bold tracking-wide px-3 py-1 opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none"
+            style={{
+              borderRadius: "4px 10px 0 0",
+              marginTop: "-2%",
+              left: "1%",
+            }}
+          >
+            {label}
+          </div>
+        </>
+      )}
     </div>
   );
 };
@@ -118,7 +167,7 @@ const SectionWrapper: React.FC<SectionWrapperProps> = ({
   );
 };
 
-// --- MAIN COMPONENT (Giao diện mới) ---
+// --- MAIN COMPONENT (Giao diện mới - Đã sửa Full-Width) ---
 const CVTemplateInspired: React.FC<CVTemplateProps> = ({
   data,
   onSectionClick,
@@ -136,35 +185,43 @@ const CVTemplateInspired: React.FC<CVTemplateProps> = ({
 
   return (
     <div className="bg-white font-sans text-gray-800 flex flex-col-reverse lg:flex-row min-h-screen">
-      {/* --- CỘT TRÁI (NỘI DUNG CHÍNH) --- */}
-      <div className="w-full lg:w-[65%] p-8 lg:p-12">
-        {/* --- Header: Avatar và Tên --- */}
-        <div className="flex w-120 items-center gap-4 mb-12">
-          <HoverableWrapper
-            label="Avatar"
-            sectionId={sectionMap.info}
-            onClick={onSectionClick}
-            className="w-40 h-40 lg:w-48 lg:h-48 shrink-0"
-          >
-            <Image
-              src={userData.avatar || "/avatar-female.png"}
-              alt={`${userData.firstName || ""} ${userData.lastName || ""}`}
-              width={300}
-              height={300}
-              className="w-full h-full object-cover"
-            />
-          </HoverableWrapper>
+      <div className="w-full lg:w-[65%]">
+        <div className="flex items-center gap-6 mb-12">
+          <div className="mt-4 ml-8 relative w-40 h-40 flex-shrink-0">
+            <HoverableWrapper
+              label="Avatar"
+              sectionId={sectionMap.info}
+              onClick={onSectionClick}
+              className="w-full h-full"
+            >
+              <div className="w-full h-full rounded-full overflow-hidden border-4 border-white/80">
+                <div className="w-full h-full relative aspect-square">
+                  <Image
+                    src={userData.avatar || "/avatar-female.png"}
+                    alt={`${userData.firstName || ""} ${
+                      userData.lastName || ""
+                    }`}
+                    fill
+                    style={{ objectFit: "cover" }}
+                    className="rounded-full"
+                  />
+                </div>
+              </div>
+            </HoverableWrapper>
+          </div>
 
-          <div className="p-4 w-100">
+          {/* Khối Tên & Chức danh - Thêm div w-full để chiếm hết không gian còn lại */}
+          <div className="w-full">
             <HoverableWrapper
               label="Họ tên & Chức danh"
               sectionId={sectionMap.info}
               onClick={onSectionClick}
+              className=" w-full"
             >
-              <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 uppercase">
+              <h1 className="pt-12 pr-6 pl-6 text-4xl lg:text-5xl font-bold text-gray-900 uppercase">
                 {userData.firstName} {userData.lastName}
               </h1>
-              <h2 className="text-xl lg:text-2xl text-gray-600 mt-2">
+              <h2 className="pb-6 pr-6 pl-6 text-xl lg:text-2xl text-gray-600 mt-2">
                 {userData.professional || "Chuyên gia"}
               </h2>
             </HoverableWrapper>
@@ -172,7 +229,6 @@ const CVTemplateInspired: React.FC<CVTemplateProps> = ({
         </div>
 
         {/* --- Kinh nghiệm làm việc --- */}
-        {/* Thẻ div thừa đã được xóa bỏ ở đây */}
         <SectionWrapper
           title="KINH NGHIỆM LÀM VIỆC"
           sectionId={sectionMap.experience}
@@ -181,17 +237,12 @@ const CVTemplateInspired: React.FC<CVTemplateProps> = ({
           {(userData.workHistory || []).map((job: any, i: number) => (
             <div key={i}>
               <div className="flex justify-between items-baseline mb-1">
-                <h3 className="font-bold text-lg text-gray-800">
-                  {job.title}
-                </h3>
+                <h3 className="font-bold text-lg text-gray-800">{job.title}</h3>
                 <span className="text-sm font-medium text-gray-600 shrink-0 ml-4">
                   {job.startDate?.slice(5, 7)}/{job.startDate?.slice(0, 4)} -{" "}
                   {job.endDate === "Present"
                     ? "Hiện tại"
-                    : `${job.endDate?.slice(5, 7)}/${job.endDate?.slice(
-                        0,
-                        4
-                      )}`}
+                    : `${job.endDate?.slice(5, 7)}/${job.endDate?.slice(0, 4)}`}
                 </span>
               </div>
               <h4 className="font-semibold text-md text-gray-700 mb-1">
@@ -222,79 +273,72 @@ const CVTemplateInspired: React.FC<CVTemplateProps> = ({
             </div>
           ))}
         </SectionWrapper>
-      </div> {/* <--- ĐÂY LÀ THẺ ĐÓNG CỦA CỘT TRÁI */}
+      </div>
 
       {/* --- CỘT PHẢI (THÔNG TIN PHỤ) -- */}
-      <div className="w-full lg:w-[35%] bg-gray-50 p-8 lg:p-12">
+      <div className="w-full lg:w-[35%] bg-gray-50 p-4 lg:p-8">
         {/* --- Thông tin cá nhân --- */}
-        <div className="mb-10">
+        <div className="mb-10 w-[calc(100%+48px)] -ml-6">
           <HoverableWrapper
             label="THÔNG TIN CÁ NHÂN"
             sectionId={sectionMap.contact}
             onClick={onSectionClick}
+            className="p-4 relative"
           >
-            <div className="p-4">
-              <h2 className="text-xl font-bold text-gray-800 uppercase tracking-wider mb-4 pb-2 border-b-2 border-gray-300">
-                Thông tin cá nhân
-              </h2>
-              <div className="space-y-4 text-gray-700">
-                <div>
-                  <strong className="font-semibold block">Điện thoại:</strong>
-                  <span>{userData.phone}</span>
-                </div>
-                <div>
-                  <strong className="font-semibold block">Email:</strong>
-                  <span className="break-words">{userData.email}</span>
-                </div>
-                <div>
-                  <strong className="font-semibold block">Địa chỉ:</strong>
-                  <span>
-                    {userData.city}, {userData.country}
-                  </span>
-                </div>
+            <h2 className="pt-4 pl-4 text-xl font-bold text-gray-800 uppercase tracking-wider mb-4 pb-2 border-b-2 border-gray-300">
+              Thông tin cá nhân
+            </h2>
+            <div className="pl-4 pb-4 space-y-4 text-gray-700">
+              <div>
+                <strong className="font-semibold block">Điện thoại:</strong>
+                <span>{userData.phone}</span>
+              </div>
+              <div>
+                <strong className="font-semibold block">Email:</strong>
+                <span className="break-words">{userData.email}</span>
+              </div>
+              <div>
+                <strong className="font-semibold block">Địa chỉ:</strong>
+                <span>
+                  {userData.city}, {userData.country}
+                </span>
               </div>
             </div>
           </HoverableWrapper>
         </div>
-        
+
         {/* --- Mục tiêu sự nghiệp --- */}
-        <div className="mb-10">
+        <div className="mb-10 w-[calc(100%+48px)] -ml-6">
           <HoverableWrapper
             label="MỤC TIÊU SỰ NGHIỆP"
             sectionId={sectionMap.summary}
             onClick={onSectionClick}
+            className="p-4 relative"
           >
-            <div className="p-4">
-              <h2 className="text-xl font-bold text-gray-800 uppercase tracking-wider mb-3 pb-2 border-b-2 border-gray-300">
-                Mục tiêu sự nghiệp
-              </h2>
-              <p className="text-gray-700 leading-relaxed">
-                {userData.summary}
-              </p>
-            </div>
+            <h2 className="pt-4 pl-4 text-xl font-bold text-gray-800 uppercase tracking-wider mb-3 pb-2 border-b-2 border-gray-300">
+              Mục tiêu sự nghiệp
+            </h2>
+            <p  className="pl-4 pr-4 pb-4 text-gray-700 leading-relaxed">{userData.summary}</p>
           </HoverableWrapper>
         </div>
 
-        
-
         {/* --- Kỹ năng --- */}
         {userData.skills?.length > 0 && (
-          <div className="mb-10">
+          <div className="mb-10 w-[calc(100%+48px)] -ml-6">
             <HoverableWrapper
               label="KỸ NĂNG"
               sectionId={sectionMap.skills}
               onClick={onSectionClick}
+              className="p-4 relative"
             >
-              <div className="p-4">
-                <h2 className="text-xl font-bold text-gray-800 uppercase tracking-wider mb-4 pb-2 border-b-2 border-gray-300">
-                  Kỹ năng
-                </h2>
-                <ul className="list-inside list-disc space-y-2 text-gray-700">
-                  {userData.skills.map((skill: any, i: number) => (
-                    <li key={i}>{skill.name}</li>
-                  ))}
-                </ul>
-              </div>
+              <h2 className="pl-4 pt-4 text-xl font-bold text-gray-800 uppercase tracking-wider mb-4 pb-2 border-b-2 border-gray-300">
+                Kỹ năng
+              </h2>
+              <ul className="pl-4 pr-4 pb-4 list-inside list-disc space-y-2 text-gray-700">
+                {userData.skills.map((skill: any, i: number) => (
+                  <li key={i}>{skill.name}</li>
+                ))}
+              </ul>
             </HoverableWrapper>
           </div>
         )}
