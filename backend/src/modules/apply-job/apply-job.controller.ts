@@ -96,4 +96,15 @@ export class ApplyJobController {
     const userId = req.user.user._id;
     return this.applyJobService.updateApplyJobByUser(applyJobId, userId, body);
   }
+
+  @UseGuards(JwtAuthGuard)
+  @Get("count-by-create-at/:month/:year")
+  async countByCreateAt(
+    @Param("month") month: number,
+    @Param("year") year: number,
+    @Request() req
+  ) {
+    const userId = req.user.user._id;
+    return this.applyJobService.countByCreateAt(month, year, userId);
+  }
 }

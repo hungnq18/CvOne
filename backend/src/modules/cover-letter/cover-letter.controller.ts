@@ -19,9 +19,11 @@ import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 export class CoverLetterController {
   constructor(private readonly coverLetterService: CoverLetterService) {}
 
+  @UseGuards(JwtAuthGuard)
   @Post()
-  create(@Body() dto: CreateCoverLetterDto) {
-    return this.coverLetterService.create(dto);
+  create(@Body() dto: CreateCoverLetterDto, @Request() req) {
+    const userId = req.user.user._id;
+    return this.coverLetterService.create(dto, userId);
   }
 
   @UseGuards(JwtAuthGuard)

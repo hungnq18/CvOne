@@ -1,7 +1,6 @@
 // export const API_URL = "http://localhost:8000/api";
 export const API_URL = "http://localhost:3001";
 
-
 // API Endpoints
 export const API_ENDPOINTS = {
   AUTH: {
@@ -56,8 +55,14 @@ export const API_ENDPOINTS = {
     CREATE: "/jobs",
     UPDATE: (id: string) => `/jobs/${id}`,
     DELETE: (id: string) => `/jobs/${id}`,
+    COUNTBYPOSTINGDATE: (month: number, year: number) =>
+      `/jobs/count-by-posting-date/${month}/${year}`,
   },
   NOTIFICATION: {
     GET_NOTIFICATIONS: "/notifications",
+  },
+  APPLYJOB: {
+    COUNTBYCREATEAT: (month: number, year: number) =>
+      `/apply-job/count-by-create-at/${month}/${year}`,
   },
 } as const;

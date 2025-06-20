@@ -60,4 +60,21 @@ export class JobsService {
     }
     return job;
   }
+
+  async countJobsByPostingDate(
+    month: number,
+    year: number,
+    userId: string
+  ): Promise<number> {
+    const startDate = new Date(year, month - 1, 1); // Ngày đầu tháng
+    const endDate = new Date(year, month, 1); // Ngày đầu tháng kế tiếp
+
+    return this.jobModel.countDocuments({
+      user_id: new Types.ObjectId(userId), // 👈 Lọc theo userId
+      postingDate: {
+        $gte: startDate,
+        $lt: endDate,
+      },
+    });
+  }
 }
