@@ -1,5 +1,5 @@
 import { AppSidebar } from "@/components/hr/hrSideBar"
-import { DashboardHeader } from "@/components/hr/hrDashHeader"
+import { Header } from "@/components/ui/header"
 import { DashboardContent } from "@/components/hr/hrDashConten"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 
@@ -8,7 +8,7 @@ export function AdminDashboard() {
         <SidebarProvider>
             <AppSidebar />
             <SidebarInset>
-                <DashboardHeader />
+                <Header />
                 <DashboardContent />
             </SidebarInset>
         </SidebarProvider>

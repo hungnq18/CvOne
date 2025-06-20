@@ -1,6 +1,6 @@
 import type React from "react"
 import { AppSidebar } from "@/components/hr/hrSideBar"
-import { DashboardHeader } from "@/components/hr/hrDashHeader"
+import { Header } from "@/components/ui/header"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 
 export default function AdminLayout({
@@ -12,7 +12,7 @@ export default function AdminLayout({
         <SidebarProvider>
             <AppSidebar />
             <SidebarInset>
-                <DashboardHeader />
+                <Header />
                 {children}
             </SidebarInset>
         </SidebarProvider>
