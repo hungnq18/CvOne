@@ -58,6 +58,14 @@ const CardCVTemplate: React.FC<CardCVTemplateProps> = ({
           description:
             "Dẫn dắt phát triển các module backend sử dụng Node.js và MongoDB, cải thiện hiệu suất API 30%. Triển khai giao diện người dùng bằng React và Redux, tăng trải nghiệm người dùng. Hướng dẫn nhóm 3 lập trình viên cấp dưới trong các dự án quan trọng.",
         },
+        {
+          title: "Quản lý dự án",
+          company: "Công ty TechSolutions",
+          startDate: "2024-01",
+          endDate: "Hiện tại",
+          description:
+            "Quản Lý dự án Kyomatcha và là người phụ trách chính trong việc phát triển ứng dụng web. Tạo và duy trì tài liệu dự án, bao gồm kế hoạch dự án, báo cáo tiến độ và tài liệu kỹ thuật. Phối hợp với các nhóm khác để đảm bảo tiến độ dự án và chất lượng sản phẩm.",
+        },
       ],
       education: [
         {
@@ -98,7 +106,7 @@ const CardCVTemplate: React.FC<CardCVTemplateProps> = ({
         style={{
           position: "absolute",
           top: 0,
-          left: 0,
+          left: "2.4%",
           width: `${templateOriginalWidth}px`,
           height: `${templateOriginalWidth * (297 / 210)}px`,
           transformOrigin: "top left",
@@ -124,7 +132,7 @@ const CardCVTemplate: React.FC<CardCVTemplateProps> = ({
 
     // Kiểm tra token
     if (token) {
-      router.push(`/createCV?id=${id}&title=${encodeURIComponent(title)}`);
+      router.push(`/chooseCreateCV?id=${id}`);
     } else {
       alert("Bạn cần đăng nhập để tạo CV!");
       router.push("/login");

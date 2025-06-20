@@ -48,9 +48,9 @@
     },
     {
       "id": "modern-2",
-      "imageUrl": "https://i.postimg.cc/T1LqNtJL/A-nh-ma-n-hi-nh-2025-06-19-lu-c-08-55-12.png",
+      "imageUrl": "https://i.postimg.cc/vTqL3pnd/image.png",
       "title": "The Vanguard",
-      "isRecommended": false,
+      "isRecommended": true,
       "data": {
         "userData": {
           "firstName": "Hoàng Văn",
@@ -76,8 +76,15 @@
               "title": "Kỹ sư phần mềm cấp cao",
               "company": "Công ty QuickTech",
               "startDate": "2022-01",
-              "endDate": "Hiện tại",
+              "endDate": "2023-12",
               "description": "Dẫn dắt phát triển các module backend sử dụng Node.js và MongoDB, cải thiện hiệu suất API 30%. Triển khai giao diện người dùng bằng React và Redux, tăng trải nghiệm người dùng. Hướng dẫn nhóm 3 lập trình viên cấp dưới trong các dự án quan trọng."
+            },
+            {
+              "title": "Quản lý dự án",
+              "company": "Công ty TechSolutions",
+              "startDate": "2024-01",
+              "endDate": "Hiện tại",
+              "description": "Quản Lý dự án Kyomatcha và là người phụ trách chính trong việc phát triển ứng dụng web. Tạo và duy trì tài liệu dự án, bao gồm kế hoạch dự án, báo cáo tiến độ và tài liệu kỹ thuật. Phối hợp với các nhóm khác để đảm bảo tiến độ dự án và chất lượng sản phẩm."
             }
           ],
           "education": [
@@ -207,6 +214,282 @@
       "templateId": "modern-2",
       "isSaved": true,
       "isFinalized": true
+    },
+    {
+      "id": "dbbc",
+      "userId": "683d4acd7d964ee8cab05962",
+      "title": "CV for Hoàng Văn Bách",
+      "content": {
+        "userData": {
+          "firstName": "Hoàng Văn",
+          "lastName": "Bách",
+          "professional": "Kỹ sư phần mềm",
+          "city": "Hà Nội",
+          "country": "Việt Nam",
+          "province": "Hà Nội",
+          "phone": "+84 912 345 678",
+          "email": "email@example.com",
+          "avatar": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQUbcmERWWtK-cjIiojfIK-Ee857Ld-GshI2g&s",
+          "summary": "Là một kỹ sư phần mềm năng động với hơn 5 năm kinh nghiệm trong việc phát triển các ứng dụng web phức tạp. ",
+          "skills": [
+            {
+              "name": "Frontend: React, Next.js, TypeScript, Tailwind CSS"
+            },
+            {
+              "name": "Công cụ: Git, Docker, Jira"
+            }
+          ],
+          "workHistory": [
+            {
+              "title": "Kỹ sư phần mềm cấp cao",
+              "company": "Công ty QuickTech",
+              "startDate": "2022-01",
+              "endDate": "Hiện tại",
+              "description": "Dẫn dắt phát triển các module backend sử dụng Node.js và MongoDB, cải thiện hiệu suất API 30%. Triển khai giao diện người dùng bằng React và Redux, tăng trải nghiệm người dùng. Hướng dẫn nhóm 3 lập trình viên cấp dưới trong các dự án quan trọng."
+            }
+          ],
+          "education": [
+            {
+              "startDate": "2018-09",
+              "endDate": "2022-06",
+              "major": "Kỹ thuật phần mềm",
+              "degree": "Bằng Giỏi",
+              "institution": "Trường Đại Học Quốc Gia"
+            }
+          ]
+        }
+      },
+      "isPublic": false,
+      "createdAt": "2025-06-19T02:56:05.063Z",
+      "updatedAt": "2025-06-19T02:56:05.063Z",
+      "templateId": "modern-1",
+      "isSaved": true,
+      "isFinalized": false
+    },
+    {
+      "id": "7949",
+      "userId": "1",
+      "title": "CV for Hoàng Văn Bách",
+      "content": {
+        "userData": {
+          "firstName": "Hoàng Văn",
+          "lastName": "Bách",
+          "professional": "Kỹ sư phần mềm",
+          "city": "Hà Nội",
+          "country": "Việt Nam",
+          "province": "Hà Nội",
+          "phone": "+84 912 345 678",
+          "email": "email@example.com",
+          "avatar": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQUbcmERWWtK-cjIiojfIK-Ee857Ld-GshI2g&s",
+          "summary": "Là một kỹ sư phần mềm năng động với hơn 5 năm kinh nghiệm trong việc phát triển các ứng dụng web phức tạp. ",
+          "skills": [
+            {
+              "name": "Frontend: React, Next.js, TypeScript, Tailwind CSS"
+            },
+            {
+              "name": "Công cụ: Git, Docker, Jira"
+            }
+          ],
+          "workHistory": [
+            {
+              "title": "Kỹ sư phần mềm cấp cao",
+              "company": "Công ty QuickTech",
+              "startDate": "2022-01",
+              "endDate": "Hiện tại",
+              "description": "Dẫn dắt phát triển các module backend sử dụng Node.js và MongoDB, cải thiện hiệu suất API 30%. Triển khai giao diện người dùng bằng React và Redux, tăng trải nghiệm người dùng. Hướng dẫn nhóm 3 lập trình viên cấp dưới trong các dự án quan trọng."
+            }
+          ],
+          "education": [
+            {
+              "startDate": "2018-09",
+              "endDate": "2022-06",
+              "major": "Kỹ thuật phần mềm",
+              "degree": "Bằng Giỏi",
+              "institution": "Trường Đại Học Quốc Gia"
+            }
+          ]
+        }
+      },
+      "isPublic": false,
+      "createdAt": "2025-06-19T02:56:54.380Z",
+      "updatedAt": "2025-06-19T02:56:54.380Z",
+      "templateId": "modern-1",
+      "isSaved": true,
+      "isFinalized": false
+    },
+    {
+      "id": "61bf",
+      "userId": "1",
+      "title": "CV for Hoàng Văn Bách",
+      "content": {
+        "userData": {
+          "firstName": "Hoàng Văn",
+          "lastName": "Bách",
+          "professional": "Kỹ sư phần mềm",
+          "city": "Hà Nội",
+          "country": "Việt Nam",
+          "province": "Hà Nội",
+          "phone": "+84 912 345 678",
+          "email": "email@example.com",
+          "avatar": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQUbcmERWWtK-cjIiojfIK-Ee857Ld-GshI2g&s",
+          "summary": "Là một kỹ sư phần mềm năng động với hơn 5 năm kinh nghiệm trong việc phát triển các ứng dụng web phức tạp. ",
+          "skills": [
+            {
+              "name": "Frontend: React, Next.js, TypeScript, Tailwind CSS"
+            },
+            {
+              "name": "Công cụ: Git, Docker, Jira"
+            }
+          ],
+          "workHistory": [
+            {
+              "title": "Kỹ sư phần mềm cấp cao",
+              "company": "Công ty QuickTech",
+              "startDate": "2022-01",
+              "endDate": "2023-12",
+              "description": "Dẫn dắt phát triển các module backend sử dụng Node.js và MongoDB, cải thiện hiệu suất API 30%. Triển khai giao diện người dùng bằng React và Redux, tăng trải nghiệm người dùng. Hướng dẫn nhóm 3 lập trình viên cấp dưới trong các dự án quan trọng."
+            },
+            {
+              "title": "Quản lý dự án",
+              "company": "Công ty TechSolutions",
+              "startDate": "2024-01",
+              "endDate": "Hiện tại",
+              "description": "Quản Lý dự án Kyomatcha và là người phụ trách chính trong việc phát triển ứng dụng web. Tạo và duy trì tài liệu dự án, bao gồm kế hoạch dự án, báo cáo tiến độ và tài liệu kỹ thuật. Phối hợp với các nhóm khác để đảm bảo tiến độ dự án và chất lượng sản phẩm."
+            }
+          ],
+          "education": [
+            {
+              "startDate": "2018-09",
+              "endDate": "2022-06",
+              "major": "Kỹ thuật phần mềm",
+              "degree": "Bằng Giỏi",
+              "institution": "Trường Đại Học Quốc Gia"
+            }
+          ]
+        }
+      },
+      "isPublic": false,
+      "createdAt": "2025-06-20T12:08:52.058Z",
+      "updatedAt": "2025-06-20T12:08:52.058Z",
+      "templateId": "modern-2",
+      "isSaved": true,
+      "isFinalized": false
+    },
+    {
+      "id": "fc20",
+      "userId": "1",
+      "title": "CV for Hoàng Văn Bách",
+      "content": {
+        "userData": {
+          "firstName": "Hoàng Văn",
+          "lastName": "Bách",
+          "professional": "Kỹ sư phần mềm",
+          "city": "Hà Nội",
+          "country": "Việt Nam",
+          "province": "Hà Nội",
+          "phone": "+84 912 345 678",
+          "email": "email@example.com",
+          "avatar": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQUbcmERWWtK-cjIiojfIK-Ee857Ld-GshI2g&s",
+          "summary": "Là một kỹ sư phần mềm năng động với hơn 5 năm kinh nghiệm trong việc phát triển các ứng dụng web phức tạp. ",
+          "skills": [
+            {
+              "name": "Frontend: React, Next.js, TypeScript, Tailwind CSS"
+            },
+            {
+              "name": "Công cụ: Git, Docker, Jira"
+            }
+          ],
+          "workHistory": [
+            {
+              "title": "Kỹ sư phần mềm cấp cao",
+              "company": "Công ty QuickTech",
+              "startDate": "2022-01",
+              "endDate": "2023-12",
+              "description": "Dẫn dắt phát triển các module backend sử dụng Node.js và MongoDB, cải thiện hiệu suất API 30%. Triển khai giao diện người dùng bằng React và Redux, tăng trải nghiệm người dùng. Hướng dẫn nhóm 3 lập trình viên cấp dưới trong các dự án quan trọng."
+            },
+            {
+              "title": "Quản lý dự án",
+              "company": "Công ty TechSolutions",
+              "startDate": "2024-01",
+              "endDate": "Hiện tại",
+              "description": "Quản Lý dự án Kyomatcha và là người phụ trách chính trong việc phát triển ứng dụng web. Tạo và duy trì tài liệu dự án, bao gồm kế hoạch dự án, báo cáo tiến độ và tài liệu kỹ thuật. Phối hợp với các nhóm khác để đảm bảo tiến độ dự án và chất lượng sản phẩm."
+            }
+          ],
+          "education": [
+            {
+              "startDate": "2018-09",
+              "endDate": "2022-06",
+              "major": "Kỹ thuật phần mềm",
+              "degree": "Bằng Giỏi",
+              "institution": "Trường Đại Học Quốc Gia"
+            }
+          ]
+        }
+      },
+      "isPublic": false,
+      "createdAt": "2025-06-20T12:11:45.324Z",
+      "updatedAt": "2025-06-20T12:11:45.324Z",
+      "templateId": "modern-2",
+      "isSaved": true,
+      "isFinalized": false
+    },
+    {
+      "id": "bc7f",
+      "userId": "1",
+      "title": "CV for Hoàng Văn Bách",
+      "content": {
+        "userData": {
+          "firstName": "Hoàng Văn",
+          "lastName": "Bách",
+          "professional": "Kỹ sư phần mềm",
+          "city": "Hà Nội",
+          "country": "Việt Nam",
+          "province": "Hà Nội",
+          "phone": "+84 912 345 678",
+          "email": "email@example.com",
+          "avatar": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQUbcmERWWtK-cjIiojfIK-Ee857Ld-GshI2g&s",
+          "summary": "Là một kỹ sư phần mềm năng động với hơn 5 năm kinh nghiệm trong việc phát triển các ứng dụng web phức tạp. ",
+          "skills": [
+            {
+              "name": "Frontend: React, Next.js, TypeScript, Tailwind CSS"
+            },
+            {
+              "name": "Công cụ: Git, Docker, Jira"
+            }
+          ],
+          "workHistory": [
+            {
+              "title": "Kỹ sư phần mềm cấp cao",
+              "company": "Công ty QuickTech",
+              "startDate": "2022-01",
+              "endDate": "2023-12",
+              "description": "Dẫn dắt phát triển các module backend sử dụng Node.js và MongoDB, cải thiện hiệu suất API 30%. Triển khai giao diện người dùng bằng React và Redux, tăng trải nghiệm người dùng. Hướng dẫn nhóm 3 lập trình viên cấp dưới trong các dự án quan trọng."
+            },
+            {
+              "title": "Quản lý dự án",
+              "company": "Công ty TechSolutions",
+              "startDate": "2024-01",
+              "endDate": "Hiện tại",
+              "description": "Quản Lý dự án Kyomatcha và là người phụ trách chính trong việc phát triển ứng dụng web. Tạo và duy trì tài liệu dự án, bao gồm kế hoạch dự án, báo cáo tiến độ và tài liệu kỹ thuật. Phối hợp với các nhóm khác để đảm bảo tiến độ dự án và chất lượng sản phẩm."
+            }
+          ],
+          "education": [
+            {
+              "startDate": "2018-09",
+              "endDate": "2022-06",
+              "major": "Kỹ thuật phần mềm",
+              "degree": "Bằng Giỏi",
+              "institution": "Trường Đại Học Quốc Gia"
+            }
+          ]
+        }
+      },
+      "isPublic": false,
+      "createdAt": "2025-06-20T12:12:30.816Z",
+      "updatedAt": "2025-06-20T12:12:30.816Z",
+      "templateId": "modern-2",
+      "isSaved": true,
+      "isFinalized": false
     }
   ],
   "clTemplates": [

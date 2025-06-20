@@ -10,7 +10,6 @@ import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import { useOnClickOutside } from "@/hooks/useOnClickOutside";
 
-
 // --- THÊM COMPONENT TemplatePreviewModal TRỰC TIẾP VÀO FILE NÀY ---
 interface TemplatePreviewModalProps {
   templateId: string;
@@ -50,6 +49,14 @@ const TemplatePreviewModal: FC<TemplatePreviewModalProps> = ({
           description:
             "Dẫn dắt phát triển các module backend sử dụng Node.js và MongoDB, cải thiện hiệu suất API 30%. Triển khai giao diện người dùng bằng React và Redux, tăng trải nghiệm người dùng. Hướng dẫn nhóm 3 lập trình viên cấp dưới trong các dự án quan trọng.",
         },
+        {
+          title: "Quản lý dự án",
+          company: "Công ty TechSolutions",
+          startDate: "2024-01",
+          endDate: "Hiện tại",
+          description:
+            "Quản Lý dự án Kyomatcha và là người phụ trách chính trong việc phát triển ứng dụng web. Tạo và duy trì tài liệu dự án, bao gồm kế hoạch dự án, báo cáo tiến độ và tài liệu kỹ thuật. Phối hợp với các nhóm khác để đảm bảo tiến độ dự án và chất lượng sản phẩm.",
+        },
       ],
       education: [
         {
@@ -77,15 +84,11 @@ const TemplatePreviewModal: FC<TemplatePreviewModalProps> = ({
       .find((row) => row.startsWith("token="))
       ?.split("=")[1];
     if (token) {
-      router.push(
-        `/createCV?id=${templateId}&title=${encodeURIComponent(templateTitle)}`
-      );
+      router.push(`/chooseCreateCV?id=${templateId}`);
     } else {
       alert("Bạn cần đăng nhập trước khi tạo CV!");
       router.push("/login");
     }
-  
-    // Đóng component hiện tại (ví dụ: modal xem trước template) sau khi xử lý
     onClose();
   };
 
@@ -114,11 +117,9 @@ const TemplatePreviewModal: FC<TemplatePreviewModalProps> = ({
               Không tìm thấy component cho mẫu "{templateTitle}".
             </div>
           ) : (
-            <div className="w-full max-w-[1050px] shadow-2xl origin-top scale-[0.6] md:scale-[0.7] lg:scale-[0.8]">
-            <TemplateComponent
-              data={defaultPreviewData}
-            />
-          </div>
+            <div className="mt-8 w-full max-w-[1050px] shadow-2xl origin-top scale-[0.6] md:scale-[0.7] lg:scale-[0.8]">
+              <TemplateComponent data={defaultPreviewData} />
+            </div>
           )}
         </div>
 
@@ -175,8 +176,6 @@ const CvTemplatesPage: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       const data = await getCVTemplates();
-      // Vẫn parse content ở đây để CardCVTemplate vẫn nhận được content đúng nếu bạn muốn
-      // hoặc bạn có thể bỏ qua parse nếu không dùng content thật ở CardCVTemplate nữa
       const parsedData = data.map((template) => {
         if (typeof template.data === "string") {
           try {
