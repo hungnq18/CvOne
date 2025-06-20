@@ -48,13 +48,13 @@ const StyledButton = styled.button`
   font-size: 14px;
   cursor: pointer;
   border-radius: 4px;
-  background: linear-gradient(to right, rgb(141, 176, 253), rgb(139, 169, 252));
+  background: #2563eb;
   color: white;
   font-weight: 500;
   transition: background 0.2s ease;
 
   &:hover {
-    background: #2563eb;
+    background: #1d4ed8;
   }
 `;
 
