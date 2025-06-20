@@ -13,7 +13,7 @@ interface CoverLetterListProps {
 const translations = {
     en: {
         title: 'Cover Letter List',
-        new: 'New Cover Letter',
+        new: 'Create Cover Letter',
         actions: {
             edit: 'Edit',
             duplicate: 'Duplicate',
@@ -32,7 +32,7 @@ const translations = {
     },
     vi: {
         title: 'Danh sách thư xin việc',
-        new: 'Thư xin việc mới',
+        new: 'Tạo thư xin việc',
         actions: {
             edit: 'Chỉnh sửa',
             duplicate: 'Nhân bản',
@@ -94,7 +94,7 @@ const CoverLetterList: React.FC<CoverLetterListProps> = ({ coverLetters, viewMod
                     <Button
                         type="primary"
                         icon={<FaPlus />}
-                        className="bg-green-500 hover:bg-green-600 border-0 shadow-md hover:shadow-lg transition-all duration-300 flex items-center gap-2 px-4 py-2 rounded-lg"
+                        className="bg-blue-500 hover:bg-blue-600 border-0 shadow-md hover:shadow-lg transition-all duration-300 flex items-center gap-2 px-4 py-2 rounded-lg"
                     >
                         {t.new}
                     </Button>
@@ -104,7 +104,7 @@ const CoverLetterList: React.FC<CoverLetterListProps> = ({ coverLetters, viewMod
                     <Col xs={24} sm={12} md={8} lg={8}>
                         <Card
                             hoverable
-                            className="min-h-[250px] flex items-center justify-center bg-green-50 border border-green-200"
+                            className="min-h-[250px] flex items-center justify-center bg-blue-50 border border-blue-200"
                             bodyStyle={{ padding: '20px', textAlign: 'center' }}
                         >
                             <Button
@@ -112,7 +112,7 @@ const CoverLetterList: React.FC<CoverLetterListProps> = ({ coverLetters, viewMod
                                 shape="circle"
                                 icon={<FaPlus />}
                                 size="large"
-                                className="mb-4 bg-green-500 hover:bg-green-600 border-0 shadow-md hover:shadow-lg transition-all duration-300"
+                                className="mb-4 bg-blue-500 hover:bg-blue-600 border-0 shadow-md hover:shadow-lg transition-all duration-300"
                             />
                             <h3 className="text-lg font-semibold">{t.new}</h3>
                             <p className="text-gray-600 text-sm">

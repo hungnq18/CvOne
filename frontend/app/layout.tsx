@@ -12,7 +12,6 @@ import { ThemeProvider } from "@/providers/theme-provider"
 import IconChatAndNotification from "@/components/chatAndNotification/iconChatAndNotification"
 import FooterWrapper from "@/components/ui/footer-wrapper"
 import { ChatProvider } from '@/providers/ChatProvider'
-
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {

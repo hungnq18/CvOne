@@ -115,6 +115,10 @@ export function useLoginForm() {
       // Decode token để lấy role
       const decoded: DecodedToken = jwtDecode(access_token);
 
+      // Emit custom events để trigger re-render của icon components
+      window.dispatchEvent(new CustomEvent('loginSuccess'));
+      window.dispatchEvent(new CustomEvent('authChange'));
+
       toast({
         title: t.loginSuccess,
         description: `Welcome back, ${formData.email}!`,
