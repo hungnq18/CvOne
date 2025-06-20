@@ -3,9 +3,10 @@
 import React, { useState, useEffect, Suspense } from "react";
 import { X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { templates, TemplateType } from './templates';
+import { templates, TemplateType } from './templates/index';
 import { getProvinces, Province, getDistrictsByProvinceCode, District } from "@/api/locationApi";
-import db from "@/api/db.json"; // Import the local JSON data
+import { createCL, getCLTemplateById, CLTemplate, CreateCLDto, getCLById, updateCL } from "@/api/clApi";
+import Cookies from "js-cookie";
 
 interface LetterData {
     firstName: string;
@@ -35,23 +36,61 @@ interface LetterData {
 const CoverLetterBuilderContent = () => {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const templateId = searchParams.get('templateId') || 'cascade-cl';
+    const templateId = searchParams.get('templateId');
+    const clId = searchParams.get('clId');
     const initialFirstName = searchParams.get('firstName');
     const initialLastName = searchParams.get('lastName');
 
-    const selectedTemplateData = db.clTemplates.find(t => t.id === templateId);
-    const templateName = selectedTemplateData ? selectedTemplateData.title.toLowerCase() as TemplateType : 'cascade';
+    const [selectedTemplateData, setSelectedTemplateData] = useState<CLTemplate | null>(null);
+    const [templateName, setTemplateName] = useState<TemplateType>('cascade');
     const TemplateComponent = templates[templateName];
 
-    const getInitialData = () => {
-        const defaultTemplateData = db.clTemplates.find(t => t.id === 'cascade-cl')?.data;
-        const baseData = selectedTemplateData ? selectedTemplateData.data : defaultTemplateData;
+    useEffect(() => {
+        const fetchClData = async () => {
+            if (clId) {
+                try {
+                    const clData = await getCLById(clId);
+                    if (clData) {
+                        setLetterData(clData.data);
+                        const template = clData.templateId as CLTemplate;
+                        setSelectedTemplateData(template);
+                        setTemplateName(template.title.toLowerCase() as TemplateType);
+                    }
+                } catch (error) {
+                    console.error("Failed to fetch CL data:", error);
+                }
+            }
+        };
 
-        if (!baseData) {
-            // Fallback if no template data is found at all
-            return { firstName: '', lastName: '', profession: '', city: '', state: '', phone: '', email: '', date: '', recipientFirstName: '', recipientLastName: '', companyName: '', recipientCity: '', recipientState: '', recipientPhone: '', recipientEmail: '', subject: '', greeting: '', opening: '', body: '', callToAction: '', closing: '', signature: '' };
+        const fetchTemplateData = async () => {
+            if (templateId) {
+                try {
+                    const data = await getCLTemplateById(templateId);
+                    if (data) {
+                        setSelectedTemplateData(data);
+                        setTemplateName(data.title.toLowerCase() as TemplateType);
+                    }
+                } catch (error) {
+                    console.error("Failed to fetch CL template:", error);
+                }
+            }
+        };
+
+        if (clId) {
+            fetchClData();
+        } else {
+            fetchTemplateData();
+        }
+    }, [clId, templateId]);
+
+    const getInitialData = () => {
+        if (!selectedTemplateData || !selectedTemplateData.data) {
+            const firstName = initialFirstName || '';
+            const lastName = initialLastName || '';
+            return { firstName, lastName, profession: '', city: '', state: '', phone: '', email: '', date: '', recipientFirstName: '', recipientLastName: '', companyName: '', recipientCity: '', recipientState: '', recipientPhone: '', recipientEmail: '', subject: '', greeting: '', opening: '', body: '', callToAction: '', closing: '', signature: `${firstName} ${lastName}`.trim() };
         }
 
+        const baseData = selectedTemplateData.data;
         const firstName = initialFirstName || baseData.firstName;
         const lastName = initialLastName || baseData.lastName;
 
@@ -78,12 +117,67 @@ const CoverLetterBuilderContent = () => {
     }, []);
 
     useEffect(() => {
-        setLetterData(getInitialData());
-    }, [templateId, initialFirstName, initialLastName]);
+        if (!clId) {
+            setLetterData(getInitialData());
+        }
+    }, [selectedTemplateData, initialFirstName, initialLastName, clId]);
 
     const [activeSection, setActiveSection] = useState<string | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [tempData, setTempData] = useState<Partial<LetterData>>({});
+    const [isSaving, setIsSaving] = useState(false);
+
+    const saveCoverLetter = async (clDataToSave: LetterData) => {
+        if (isSaving) return;
+        setIsSaving(true);
+        try {
+            if (clId) {
+                // Update existing CL
+                await updateCL(clId, { data: clDataToSave });
+                alert('Cover letter updated successfully!');
+                router.push('/myDocuments');
+            } else if (templateId) {
+                // Create new CL
+                const newCL: CreateCLDto = {
+                    templateId: templateId,
+                    title: "Untitled Cover Letter",
+                    data: clDataToSave,
+                    isSaved: true,
+                };
+
+                await createCL(newCL);
+                localStorage.removeItem('pendingCL');
+                alert('Cover letter saved successfully!');
+                router.push('/myDocuments');
+            } else {
+                alert("Template not selected!");
+            }
+        } catch (error) {
+            console.error("Failed to save cover letter:", error);
+            alert("Failed to save cover letter. Please try again.");
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleFinishLetter = () => {
+        const token = Cookies.get('token');
+        if (!token) {
+            if (!templateId) {
+                alert("Please select a template first.");
+                router.push('/clTemplate');
+                return;
+            }
+            const pendingCL = {
+                letterData,
+                templateId,
+            };
+            localStorage.setItem('pendingCL', JSON.stringify(pendingCL));
+            router.push('/login');
+        } else {
+            saveCoverLetter(letterData);
+        }
+    };
 
     const handleCityChange = async (cityValue: string, cityField: keyof LetterData, districtField: keyof LetterData) => {
         setTempData(prev => ({
@@ -451,7 +545,7 @@ const CoverLetterBuilderContent = () => {
     };
 
     return (
-        <div className="bg-gray-100 min-h-screen mt-16">
+        <div className="min-h-screen mt-16">
             <div className="max-w-7xl mx-auto flex">
                 {/* Left Sidebar */}
                 <div className="w-80 bg-white p-6 shadow-sm">
@@ -497,9 +591,10 @@ const CoverLetterBuilderContent = () => {
                         </button>
                         <button
                             className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg font-medium transition-colors"
-                            onClick={() => router.push("/dashboard")}
+                            onClick={handleFinishLetter}
+                            disabled={isSaving}
                         >
-                            Finish Letter
+                            {isSaving ? "Saving..." : "Finish Letter"}
                         </button>
                     </div>
                 </div>
