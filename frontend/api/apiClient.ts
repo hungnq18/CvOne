@@ -19,6 +19,13 @@ export async function fetchWithAuth(url: string, options: RequestInit = {}) {
     headers,
   });
 
+  if (response.status === 204 || response.headers.get("content-length") === "0") {
+    if (!response.ok) {
+      throw new Error("Request failed with status " + response.status);
+    }
+    return;
+  }
+
   const data = await response.json();
 
   if (!response.ok) {
