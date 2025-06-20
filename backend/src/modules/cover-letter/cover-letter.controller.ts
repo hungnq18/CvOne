@@ -19,21 +19,25 @@ import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 export class CoverLetterController {
   constructor(private readonly coverLetterService: CoverLetterService) {}
 
+  @UseGuards(JwtAuthGuard)
   @Post()
-  create(@Body() dto: CreateCoverLetterDto) {
-    return this.coverLetterService.create(dto);
+  create(@Body() dto: CreateCoverLetterDto, @Request() req) {
+    const userId = req.user.user._id;
+    return this.coverLetterService.create(dto, userId);
   }
 
   @UseGuards(JwtAuthGuard)
   @Get()
   findAllByUser(@Request() req) {
     const userId = req.user.user._id;
-    return this.coverLetterService.findAllByUser(userId);
+    return this.coverLetterService.findAll(userId);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get(":id")
-  findOne(@Param("id") id: string) {
-    return this.coverLetterService.findOne(id);
+  findOne(@Param("id") id: string, @Request() req) {
+    const userId = req.user.user._id;
+    return this.coverLetterService.findOne(id, userId);
   }
 
   @Patch(":id")
