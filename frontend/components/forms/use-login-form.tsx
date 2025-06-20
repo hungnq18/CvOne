@@ -129,7 +129,7 @@ export function useLoginForm() {
       } else if (decoded.role === "user") {
         router.push("/userDashboard");
       } else if (decoded.role === "hr") {
-        router.push("/hr");
+        router.push("/hr/dashboard");
       } else {
         router.push("/error");
       }
