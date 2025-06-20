@@ -30,23 +30,46 @@ export const getUserIdFromToken = (): string | null => {
         ?.split("=")[1];
     if (!token) return null;
     try {
-        const decoded: DecodedToken = jwtDecode(token);
-        return decoded.user;
+        const decoded: any = jwtDecode(token);
+        // Ưu tiên trường user, nếu không có thì thử các trường khác
+        return decoded.user || decoded.id || decoded.hr || decoded.sub || null;
     } catch {
         return null;
     }
 };
 
 /**
- * Fetch user data using token from cookies
+ * Lấy account_id từ token
+ * @returns The account ID from token or null if not found
+ */
+export const getAccountIdFromToken = (): string | null => {
+    const token = document.cookie
+        .split("; ")
+        .find((row) => row.startsWith("token="))
+        ?.split("=")[1];
+    if (!token) return null;
+    try {
+        const decoded: any = jwtDecode(token);
+        return decoded.user || decoded.id || decoded._id || null; // tuỳ vào token của bạn
+    } catch {
+        return null;
+    }
+};
+
+/**
+ * Lấy toàn bộ user và tìm user theo account_id
  * @returns Promise with user data
  */
-export const fetchUserDataFromToken = async (): Promise<User> => {
-    const userId = getUserIdFromToken();
-    if (!userId) {
-        throw new Error("No user ID found in token");
-    }
-    return getUserById(userId);
+export const fetchUserDataFromToken = async (): Promise<any> => {
+    const accountId = getAccountIdFromToken();
+    console.log("Account ID from token:", accountId); // LOG 1
+    if (!accountId) throw new Error("No account ID found in token");
+    const allUsers = await fetchWithAuth("/api/users"); // GET all users
+    console.log("All users from API:", allUsers); // LOG 2
+    const user = (allUsers as any[]).find(u => u.account_id === accountId);
+    console.log("User found by account_id:", user); // LOG 3
+    if (!user) throw new Error("User not found for this account");
+    return user;
 };
 
 /**

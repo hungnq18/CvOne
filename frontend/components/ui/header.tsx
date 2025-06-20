@@ -157,6 +157,16 @@ const navigationItems = {
         href: "/admin/settings",
       },
     ],
+    hr: [
+      {
+        name: "Dashboard",
+        href: "/hr/dashboard",
+      },
+      {
+        name: "My Profile",
+        href: "/user/profile",
+      },
+    ],
     user: [
       {
         name: "Dashboard",
@@ -250,6 +260,16 @@ const navigationItems = {
         href: "/admin/settings",
       },
     ],
+    hr: [
+      {
+        name: "Bảng điều khiển",
+        href: "/hr/dashboard",
+      },
+      {
+        name: "Hồ sơ của tôi",
+        href: "/user/profile",
+      },
+    ],
     user: [
       {
         name: "Bảng điều khiển",
@@ -315,9 +335,11 @@ export function Header() {
   const navItems =
     role === "admin"
       ? navigationItems[language].admin
-      : role === "user"
-      ? navigationItems[language].user
-      : navigationItems[language].default;
+      : role === "hr"
+        ? navigationItems[language].hr
+        : role === "user"
+          ? navigationItems[language].user
+          : navigationItems[language].default;
 
   const handleLogout = () => {
     logout();

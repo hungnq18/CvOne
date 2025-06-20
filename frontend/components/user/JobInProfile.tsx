@@ -1,10 +1,10 @@
 import React from 'react';
 
-const JobApplications: React.FC = () => {
+const JobInProfile: React.FC = () => {
     return (
         <div className="card bg-white/80 backdrop-blur-sm border border-blue-100 shadow-lg">
             <div className="card-body">
-                <h6 className="text-lg font-semibold mb-4 text-gray-900">Job Applications</h6>
+                <h5 className="text-lg font-semibold mb-4 text-gray-900">Job Applications</h5>
                 <div className="space-y-4">
                     <div className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50/50 transition-colors">
                         <div className="flex justify-between items-start">
@@ -50,4 +50,4 @@ const JobApplications: React.FC = () => {
     );
 };
 
-export default JobApplications; 
+export default JobInProfile; 

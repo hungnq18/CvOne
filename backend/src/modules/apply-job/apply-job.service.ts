@@ -168,4 +168,20 @@ export class ApplyJobService {
     await applyJob.save();
     return applyJob;
   }
+
+  async countByCreateAt(
+    month: number,
+    year: number,
+    userId: string
+  ): Promise<number> {
+    const startDate = new Date(year, month - 1, 1); // ngày đầu tháng
+    const endDate = new Date(year, month, 1); // ngày đầu tháng kế tiếp
+    return this.applyJobModel.countDocuments({
+      userId: new Types.ObjectId(userId),
+      createdAt: {
+        $gte: startDate,
+        $lt: endDate,
+      },
+    });
+  }
 }

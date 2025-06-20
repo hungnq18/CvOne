@@ -55,4 +55,15 @@ export class JobsController {
   getJobById(@Param("id") id: string) {
     return this.jobsService.getJobById(id);
   }
+
+  @UseGuards(JwtAuthGuard)
+  @Get("count-by-posting-date/:month/:year")
+  async countJobsByPostingDate(
+    @Param("month") month: number,
+    @Param("year") year: number,
+    @Request() req
+  ) {
+    const userId = req.user.user._id;
+    return this.jobsService.countJobsByPostingDate(month, year, userId);
+  }
 }

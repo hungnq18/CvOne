@@ -11,6 +11,7 @@ import { ChatController } from "./chat.controller";
 import { UsersModule } from "../users/users.module";
 import { NotificationsService } from "../notifications/notifications.service";
 import { NotificationsModule } from "../notifications/notifications.module";
+import { ConversationModule } from "../conversation/conversation.module";
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { NotificationsModule } from "../notifications/notifications.module";
     ]),
     UsersModule,
     NotificationsModule,
+    ConversationModule,
   ],
   controllers: [ChatController],
   providers: [ChatGateway, ChatService],

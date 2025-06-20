@@ -10,6 +10,7 @@ import {
   getMessages,
   sendMessage,
   handleNewMessage,
+  getConversationDetail,
 } from "@/api/apiChat";
 import ChatSidebar from "@/components/chatAndNotification/ChatSidebar";
 import ChatMessages from "@/components/chatAndNotification/ChatMessages";
@@ -18,9 +19,12 @@ import ChatInput from "@/components/chatAndNotification/ChatInput";
 export default function ChatPage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [selectedConversation, setSelectedConversation] = useState<
-    string | null
-  >(null);
+  const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
+  const [selectedConversationDetail, setSelectedConversationDetail] = useState<{
+    _id: string;
+    participants: any[];
+    lastMessage: Message | null;
+  } | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [content, setContent] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -34,7 +38,7 @@ export default function ChatPage() {
           const conversations = await getUserConversations(id);
           setConversations(conversations);
           if (conversations.length > 0) {
-            setSelectedConversation(conversations[0]._id);
+            setSelectedConversationId(conversations[0]._id);
           }
         } catch (err) {
           // Silent error handling
@@ -48,30 +52,44 @@ export default function ChatPage() {
     scrollToBottom();
   }, [messages]);
 
+  // Fetch conversation detail when selectedConversationId changes
   useEffect(() => {
-    if (!selectedConversation || !userId) return;
+    if (!selectedConversationId) {
+      setSelectedConversationDetail(null);
+      return;
+    }
+
+    const fetchConversationDetail = async () => {
+      try {
+        // Sử dụng getConversationDetail từ ConversationService
+        const conversationDetail = await getConversationDetail(selectedConversationId);
+        setSelectedConversationDetail(conversationDetail);
+      } catch (err) {
+        console.error("Failed to fetch conversation detail:", err);
+      }
+    };
+
+    fetchConversationDetail();
+  }, [selectedConversationId]);
+
+  useEffect(() => {
+    if (!selectedConversationId || !userId) return;
 
     const fetchMessages = async () => {
       try {
-        const messages = await getMessages(selectedConversation);
+        const messages = await getMessages(selectedConversationId);
         setMessages(messages);
-        setConversations((prev) =>
-          prev.map((conv) =>
-            conv._id === selectedConversation
-              ? { ...conv, unreadCount: 0 }
-              : conv
-          )
-        );
       } catch (err) {
         // Silent error handling
       }
     };
 
     fetchMessages();
-    socket.emit("joinRoom", selectedConversation);
+    socket.emit("joinRoom", selectedConversationId);
 
     socket.on("newMessage", async (msg: Message) => {
-      if (msg.conversationId === selectedConversation) {
+      // Nếu là conversation đang mở, thêm vào messages
+      if (msg.conversationId === selectedConversationId) {
         const { message, conversationUpdate } = await handleNewMessage(
           msg,
           userId
@@ -81,25 +99,48 @@ export default function ChatPage() {
           if (exists) return prev;
           return [...prev, message];
         });
-
-        setConversations((prev) =>
-          prev.map((conv) =>
-            conv._id === msg.conversationId
-              ? {
-                  ...conv,
-                  ...conversationUpdate,
-                }
-              : conv
-          )
-        );
       }
+
+      // Đẩy conversation có tin nhắn mới lên đầu
+      setConversations((prev) => {
+        // Tìm conversation
+        const idx = prev.findIndex((c) => c._id === msg.conversationId);
+        let updatedConv;
+        if (idx !== -1) {
+          // Cập nhật lastMessage, unreadCount
+          updatedConv = {
+            ...prev[idx],
+            lastMessage: msg,
+            unreadCount:
+              msg.senderId === userId
+                ? prev[idx].unreadCount
+                : (prev[idx].unreadCount || 0) + 1,
+          };
+          // Xoá khỏi vị trí cũ
+          const newList = prev.filter((c) => c._id !== msg.conversationId);
+          // Đưa lên đầu
+          return [updatedConv, ...newList];
+        } else {
+          // Nếu chưa có, thêm mới vào đầu
+          return [
+            {
+              _id: msg.conversationId,
+              participants: [msg.senderId, msg.receiverId],// chạy được không sửa
+              lastMessage: msg,
+              unreadCount: msg.senderId === userId ? 0 : 1,
+
+            },
+            ...prev,
+          ];
+        }
+      });
     });
 
     return () => {
       socket.off("newMessage");
-      socket.emit("leaveRoom", selectedConversation);
+      socket.emit("leaveRoom", selectedConversationId);
     };
-  }, [selectedConversation, userId]);
+  }, [selectedConversationId, userId]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -117,47 +158,72 @@ export default function ChatPage() {
   }
 
   const handleSend = async () => {
-    if (!content.trim() || !userId || !selectedConversation) return;
+    if (!content.trim() || !userId || !selectedConversationId) return;
 
     const receiverId = getReceiverIdFromConversation(
-      selectedConversation,
+      selectedConversationId,
       userId
     );
 
     const messageDto = {
-      conversationId: selectedConversation,
+      conversationId: selectedConversationId,
       senderId: userId,
       senderName: "Bạn",
       receiverId,
       content,
     };
 
-    // 📤 1. Gửi tin nhắn
     socket.emit("sendMessage", messageDto);
 
-    // 🔔 2. Gửi thông báo realtime cho người nhận
     socket.emit("sendRealtimeNotification", {
       userId: receiverId,
       title: "Tin nhắn mới",
       message: content,
       type: "message",
-      link: `/chat`, // Hoặc có thể là `/chat/${selectedConversation}`
+      link: `/chat`,
+    });
+
+    // Đẩy conversation lên đầu sidebar
+    setConversations((prev) => { // chạy được không sửa
+      const idx = prev.findIndex((c) => c._id === selectedConversationId);
+      if (idx !== -1) {
+        const updatedConv = {
+          ...prev[idx],
+          lastMessage: {
+            ...prev[idx].lastMessage,
+            content,
+            senderId: userId,
+          },
+        };
+        const newList = prev.filter((c) => c._id !== selectedConversationId);
+        return [updatedConv, ...newList];
+      }
+      return prev;
     });
 
     setContent("");
   };
 
+  const handleSelectConversation = (conversationId: string) => {
+    setConversations((prev) =>
+      prev.map((conv) =>
+        conv._id === conversationId ? { ...conv, unreadCount: 0 } : conv
+      )
+    );
+    setSelectedConversationId(conversationId);
+  };
+
   return (
-    <main className="flex justify-center items-center min-h-screen pt-16">
-      <div className="flex h-[90vh] w-[90vw] bg-white rounded-lg shadow-lg overflow-hidden">
+    <main className="flex justify-center items-center h-screen w-screen bg-gray-100 pt-0">
+      <div className="flex h-full w-full bg-white shadow-lg overflow-hidden border border-gray-200">
         <ChatSidebar
           conversations={conversations}
-          selectedConversation={selectedConversation}
+          selectedConversationId={selectedConversationId}
+          selectedConversationDetail={selectedConversationDetail}
           userId={userId}
-          onSelectConversation={setSelectedConversation}
+          onSelectConversation={handleSelectConversation}
         />
-
-        {selectedConversation ? (
+        {selectedConversationId ? (
           <div className="flex-1 flex flex-col h-full">
             <ChatMessages
               messages={messages}
