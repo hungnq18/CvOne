@@ -40,6 +40,17 @@ function StrengthsContent() {
     const templateId = searchParams.get('templateId');
     const [selectedStrengths, setSelectedStrengths] = useState<string[]>([]);
 
+    // Get personal info from URL parameters
+    const personalInfo = {
+        firstName: searchParams.get('firstName') || '',
+        lastName: searchParams.get('lastName') || '',
+        profession: searchParams.get('profession') || '',
+        city: searchParams.get('city') || '',
+        province: searchParams.get('province') || '',
+        phone: searchParams.get('phone') || '',
+        email: searchParams.get('email') || ''
+    };
+
     const handleToggleStrength = (strength: string) => {
         setSelectedStrengths(prev => {
             if (prev.includes(strength)) {
@@ -58,6 +69,14 @@ function StrengthsContent() {
             templateId,
             strengths: JSON.stringify(selectedStrengths),
         });
+
+        // Add personal info to URL params
+        Object.entries(personalInfo).forEach(([key, value]) => {
+            if (value.trim()) {
+                params.append(key, value);
+            }
+        });
+
         router.push(`/work-style?${params.toString()}`);
     };
 

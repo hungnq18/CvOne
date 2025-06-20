@@ -21,7 +21,7 @@ function ChooseOptionContent() {
         if (selectedOption === 'manual') {
             router.push(`/createCLTemplate?${params.toString()}`);
         } else {
-            router.push(`/strengths?${params.toString()}`);
+            router.push(`/personal-info?${params.toString()}`);
         }
     };
 
