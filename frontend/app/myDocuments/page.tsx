@@ -5,7 +5,8 @@ import CVList from '@/components/sections/listMyCV';
 import CoverLetterList from '@/components/sections/listMyCL';
 import '@/styles/myDocuments.css';
 import { useLanguage } from '@/providers/global-provider';
-import { getCLs, CL } from '@/api/clApi';
+import { getCLs, CL, deleteCL, createCL, CreateCLDto } from '@/api/clApi';
+import { useRouter } from 'next/navigation';
 
 export interface CV {
     _id: string;
@@ -60,13 +61,39 @@ export default function Page() {
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const { language } = useLanguage();
     const t = translations[language];
+    const router = useRouter();
 
     const [coverLetterList, setCoverLetterList] = useState<CL[]>([]);
     const [loadingCL, setLoadingCL] = useState(true);
 
     useEffect(() => {
-        const fetchCLs = async () => {
+        const loadCoverLetters = async () => {
             setLoadingCL(true);
+
+            const pendingCLJSON = localStorage.getItem('pendingCL');
+            if (pendingCLJSON) {
+                try {
+                    const pendingCL = JSON.parse(pendingCLJSON);
+                    const { letterData, templateId } = pendingCL;
+
+                    if (letterData && templateId) {
+                        const newCL: CreateCLDto = {
+                            templateId: templateId,
+                            title: letterData.subject || "Untitled Cover Letter",
+                            data: letterData,
+                            isSaved: true,
+                        };
+                        await createCL(newCL);
+                        localStorage.removeItem('pendingCL');
+                        alert('Your pending cover letter has been saved successfully!');
+                    }
+                } catch (error) {
+                    console.error("Failed to save pending cover letter:", error);
+                    alert("There was an error saving your pending cover letter.");
+                    localStorage.removeItem('pendingCL');
+                }
+            }
+
             try {
                 const clData = await getCLs();
                 setCoverLetterList(clData || []);
@@ -77,10 +104,25 @@ export default function Page() {
             }
         };
 
-        if (activeTab === '2') {
-            fetchCLs();
+        loadCoverLetters();
+    }, []);
+
+    const handleCreateNewCL = () => {
+        router.push('/clTemplate');
+    };
+
+    const handleEditCL = (id: string) => {
+        router.push(`/createCLTemplate?clId=${id}`);
+    };
+
+    const handleDeleteCL = async (id: string) => {
+        try {
+            await deleteCL(id);
+            setCoverLetterList(prev => prev.filter(cl => cl._id !== id));
+        } catch (error) {
+            console.error("Failed to delete cover letter:", error);
         }
-    }, [activeTab]);
+    };
 
     const cvList: CV[] = [
         {
@@ -183,7 +225,7 @@ export default function Page() {
                 <div>
                     {activeTab === '1' && <CVList cvList={filteredCVList} viewMode={viewMode} />}
                     {activeTab === '2' && (
-                        loadingCL ? <p>Loading Cover Letters...</p> : <CoverLetterList coverLetters={filteredCoverLetterList} viewMode={viewMode} />
+                        loadingCL ? <p>Loading Cover Letters...</p> : <CoverLetterList coverLetters={filteredCoverLetterList} viewMode={viewMode} onDelete={handleDeleteCL} onEdit={handleEditCL} onCreateNew={handleCreateNewCL} />
                     )}
                 </div>
             </div>

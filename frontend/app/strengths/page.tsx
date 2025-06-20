@@ -58,7 +58,7 @@ function StrengthsContent() {
             templateId,
             strengths: JSON.stringify(selectedStrengths),
         });
-        router.push(`/background?${params.toString()}`);
+        router.push(`/work-style?${params.toString()}`);
     };
 
     const handleBack = () => {

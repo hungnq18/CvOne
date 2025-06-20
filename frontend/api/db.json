@@ -586,7 +586,6 @@
   ],
   "cls": [
     {
-      "id": "cl_001",
       "clTemplateId": "concept-cl",
       "userId": "user_123456",
       "title": "Untitled Cover Letter",
@@ -619,7 +618,6 @@
       "updatedAt": "2025-06-06T10:30:00Z"
     },
     {
-      "id": "cl_002",
       "clTemplateId": "cascade-cl",
       "userId": "user_123456",
       "title": "Untitled Cover Letter",
@@ -650,6 +648,38 @@
       "isSaved": false,
       "createdAt": "2025-06-06T10:00:00Z",
       "updatedAt": "2025-06-06T10:30:00Z"
+    },
+    {
+      "clTemplateId": "cascade-cl",
+      "userId": "1",
+      "title": "Untitled Cover Letter",
+      "content": {
+        "firstName": "Jane",
+        "lastName": "Doe",
+        "profession": "Product Manager",
+        "city": "Da Nang",
+        "state": "Hai Chau",
+        "phone": "+84 987 654 321",
+        "email": "jane.doe@example.com",
+        "date": "June 15, 2025",
+        "recipientFirstName": "Alan",
+        "recipientLastName": "Turing",
+        "companyName": "Innovate Inc.",
+        "recipientCity": "San Francisco",
+        "recipientState": "California",
+        "recipientPhone": "415-111-2222",
+        "recipientEmail": "hiring@innovate.com",
+        "subject": "Regarding the Product Manager Role",
+        "greeting": "Dear Mr. Turing,",
+        "opening": "It is with great enthusiasm that I submit my application for the Product Manager position at Innovate Inc., which I located on LinkedIn. Having followed your company's success in launching groundbreaking products, I am confident that my experience in product lifecycle management aligns with your team's goals.",
+        "body": "In my previous role at TechFlow, I was instrumental in increasing user engagement by 30% through data-driven feature prioritization and a user-centric design approach. I am adept at collaborating with cross-functional teams, including engineering, marketing, and sales, to ensure a cohesive product strategy and successful market launch.\\n\\nMy ability to translate complex technical concepts into clear, actionable plans has been a cornerstone of my career. I am passionate about creating products that not only meet market demands but also provide an exceptional user experience.",
+        "callToAction": "I am eager to discuss how my background in product development and strategic planning can benefit Innovate Inc. Thank you for your time and consideration.",
+        "closing": "Best regards,",
+        "signature": "Jane Doe"
+      },
+      "isSaved": true,
+      "createdAt": "2025-06-19T04:16:28.695Z",
+      "updatedAt": "2025-06-19T04:16:28.695Z"
     }
   ],
   "appliedJobs": [

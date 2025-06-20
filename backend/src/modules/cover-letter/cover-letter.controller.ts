@@ -30,12 +30,14 @@ export class CoverLetterController {
   @Get()
   findAllByUser(@Request() req) {
     const userId = req.user.user._id;
-    return this.coverLetterService.findAllByUser(userId);
+    return this.coverLetterService.findAll(userId);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get(":id")
-  findOne(@Param("id") id: string) {
-    return this.coverLetterService.findOne(id);
+  findOne(@Param("id") id: string, @Request() req) {
+    const userId = req.user.user._id;
+    return this.coverLetterService.findOne(id, userId);
   }
 
   @Patch(":id")

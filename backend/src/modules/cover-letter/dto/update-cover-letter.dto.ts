@@ -1,15 +1,21 @@
-import { IsBoolean, IsNotEmpty, IsObject, IsString } from "class-validator";
+import {
+  IsBoolean,
+  IsNotEmpty,
+  IsObject,
+  IsOptional,
+  IsString,
+} from "class-validator";
 
 export class UpdateCoverLetterDto {
   @IsString()
-  @IsNotEmpty()
-  title: string;
+  @IsOptional()
+  title?: string;
 
   @IsObject()
-  @IsNotEmpty()
-  data: Record<string, any>;
+  @IsOptional()
+  data?: Record<string, any>;
 
   @IsBoolean()
-  @IsNotEmpty()
-  isSaved: boolean;
+  @IsOptional()
+  isSaved?: boolean;
 }
