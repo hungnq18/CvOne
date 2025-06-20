@@ -9,6 +9,7 @@ export const API_ENDPOINTS = {
     REGISTER: "/auth/register",
     PROFILE: "/auth/profile",
     CHANGE_PASSWORD: "/auth/change-password",
+    CREATE: "/cover-letters"
   },
   ACCOUNTS: {
     VERIFY_EMAIL: "/accounts/verify-email",
@@ -39,8 +40,13 @@ export const API_ENDPOINTS = {
     TEMPLATES: "/cvTemplates",
   },
   CL: {
-    TEMPLATES: "/clTemplates",
-    GET_BY_ID: (id: string) => `/clTemplates/${id}`,
+    TEMPLATES: "/cl-templates",
+    TEMPLATE_BY_ID: (id: string) => `/cl-templates/${id}`,
+    GET_BY_ID: (id: string) => `/cover-letters/${id}`,
+    GET_ALL: "/cover-letters",
+    CREATE: "/cover-letters",
+    UPDATE: (id: string) => `/cover-letters/${id}`,
+    DELETE: (id: string) => `/cover-letters/${id}`,
   },
   CHAT: {
     GET_MESSAGES: (convId: string) => `/chat/messages/${convId}`,
