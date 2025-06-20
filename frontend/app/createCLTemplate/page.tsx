@@ -262,10 +262,11 @@ const CoverLetterBuilderContent = () => {
         switch (activeSection) {
             case "name":
                 return (
-                    <div className="space-y-4">
+                    <div className="space-y-6">
+                        {/* Name Row */}
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1 uppercase">
+                                <label className="block text-sm font-medium text-gray-700 mb-2 uppercase">
                                     First Name
                                 </label>
                                 <input
@@ -275,11 +276,11 @@ const CoverLetterBuilderContent = () => {
                                         handleInputChange("firstName", e.target.value)
                                     }
                                     placeholder="e.g. John"
-                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1 uppercase">
+                                <label className="block text-sm font-medium text-gray-700 mb-2 uppercase">
                                     Last Name
                                 </label>
                                 <input
@@ -289,12 +290,14 @@ const CoverLetterBuilderContent = () => {
                                         handleInputChange("lastName", e.target.value)
                                     }
                                     placeholder="e.g. Smith"
-                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
                                 />
                             </div>
                         </div>
+
+                        {/* Profession */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1 uppercase">
+                            <label className="block text-sm font-medium text-gray-700 mb-2 uppercase">
                                 Profession
                             </label>
                             <input
@@ -303,45 +306,49 @@ const CoverLetterBuilderContent = () => {
                                 onChange={(e) =>
                                     handleInputChange("profession", e.target.value)
                                 }
-                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
                             />
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1 uppercase">
-                                City
-                            </label>
-                            <select
-                                value={tempData.city || ""}
-                                onChange={(e) => handleCityChange(e.target.value, "city", "state")}
-                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
-                            >
-                                <option value="">Select a City/Province</option>
-                                {provinces.map((p) => (
-                                    <option key={p.code} value={p.name}>{p.name}</option>
-                                ))}
-                            </select>
-                        </div>
+
+                        {/* State/Province and City */}
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1 uppercase">
+                                <label className="block text-sm font-medium text-gray-700 mb-2 uppercase">
+                                    City
+                                </label>
+                                <select
+                                    value={tempData.city || ""}
+                                    onChange={(e) => handleCityChange(e.target.value, "city", "state")}
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
+                                >
+                                    <option value="">e.g. San Francisco</option>
+                                    {provinces.map((p) => (
+                                        <option key={p.code} value={p.name}>{p.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2 uppercase">
                                     State/Province
                                 </label>
                                 <select
                                     value={tempData.state || ""}
                                     onChange={(e) => handleInputChange("state", e.target.value)}
-                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
                                     disabled={!tempData.city}
                                 >
-                                    <option value="">Select a District</option>
+                                    <option value="">e.g. California or CA</option>
                                     {districts.map(d => (
                                         <option key={d.code} value={d.name}>{d.name}</option>
                                     ))}
                                 </select>
                             </div>
                         </div>
+
+                        {/* Phone and Email */}
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1 uppercase">
+                                <label className="block text-sm font-medium text-gray-700 mb-2 uppercase">
                                     Phone Number
                                 </label>
                                 <input
@@ -349,18 +356,19 @@ const CoverLetterBuilderContent = () => {
                                     value={tempData.phone || ""}
                                     onChange={(e) => handleInputChange("phone", e.target.value)}
                                     placeholder="e.g. +415-555-5555"
-                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1 uppercase">
+                                <label className="block text-sm font-medium text-gray-700 mb-2 uppercase">
                                     Email
                                 </label>
                                 <input
                                     type="email"
                                     value={tempData.email || ""}
                                     onChange={(e) => handleInputChange("email", e.target.value)}
-                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    placeholder="e.g. johnsmith@gmail.com"
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
                                 />
                             </div>
                         </div>
@@ -397,20 +405,20 @@ const CoverLetterBuilderContent = () => {
                             <label className="block text-sm font-medium text-gray-700 mb-1 uppercase">Company Name</label>
                             <input type="text" value={tempData.companyName || ""} onChange={(e) => handleInputChange("companyName", e.target.value)} placeholder="e.g. ACME Technologies" className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1 uppercase">City</label>
-                            <select
-                                value={tempData.recipientCity || ""}
-                                onChange={(e) => handleCityChange(e.target.value, "recipientCity", "recipientState")}
-                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
-                            >
-                                <option value="">Select a City/Province</option>
-                                {provinces.map((p) => (
-                                    <option key={p.code} value={p.name}>{p.name}</option>
-                                ))}
-                            </select>
-                        </div>
                         <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1 uppercase">City</label>
+                                <select
+                                    value={tempData.recipientCity || ""}
+                                    onChange={(e) => handleCityChange(e.target.value, "recipientCity", "recipientState")}
+                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                                >
+                                    <option value="">Select a City/Province</option>
+                                    {provinces.map((p) => (
+                                        <option key={p.code} value={p.name}>{p.name}</option>
+                                    ))}
+                                </select>
+                            </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1 uppercase">State/Province</label>
                                 <select
@@ -426,7 +434,7 @@ const CoverLetterBuilderContent = () => {
                                 </select>
                             </div>
                         </div>
-                         <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1 uppercase">Phone Number</label>
                                 <input type="text" value={tempData.recipientPhone || ""} onChange={(e) => handleInputChange("recipientPhone", e.target.value)} placeholder="e.g. +415-555-5555" className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
@@ -603,31 +611,38 @@ const CoverLetterBuilderContent = () => {
             {/* Edit Modal */}
             {isModalOpen && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-                        <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-xl font-semibold text-gray-800">
-                                Edit {sections.find((s) => s.id === activeSection)?.label}
-                            </h2>
+                    <div className="bg-white rounded-xl p-8 w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-2xl">
+                        <div className="flex justify-between items-start mb-6">
+                            <div>
+                                <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                                    {sections.find((s) => s.id === activeSection)?.label}
+                                </h2>
+                                {activeSection === "name" && (
+                                    <p className="text-gray-600">
+                                        Enter your contact information
+                                    </p>
+                                )}
+                            </div>
                             <button
                                 onClick={closeModal}
-                                className="text-gray-500 hover:text-gray-700"
+                                className="text-gray-400 hover:text-gray-600 transition-colors"
                             >
                                 <X className="w-6 h-6" />
                             </button>
                         </div>
-                        <div className="mb-6">{renderModalContent()}</div>
-                        <div className="flex justify-end space-x-4">
+                        <div className="mb-8">{renderModalContent()}</div>
+                        <div className="flex justify-between">
                             <button
                                 onClick={closeModal}
-                                className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                                className="px-8 py-3 text-gray-700 border border-gray-300 rounded-full hover:bg-gray-50 transition-colors font-medium"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={saveChanges}
-                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                                className="px-8 py-3 bg-yellow-500 text-white rounded-full hover:bg-yellow-600 transition-colors font-medium"
                             >
-                                Save Changes
+                                Save
                             </button>
                         </div>
                     </div>
