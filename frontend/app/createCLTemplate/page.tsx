@@ -45,6 +45,112 @@ const CoverLetterBuilderContent = () => {
     const [templateName, setTemplateName] = useState<TemplateType>('cascade');
     const TemplateComponent = templates[templateName];
 
+    const [letterData, setLetterData] = useState<LetterData>({
+        firstName: '',
+        lastName: '',
+        profession: '',
+        city: '',
+        state: '',
+        phone: '',
+        email: '',
+        date: '',
+        recipientFirstName: '',
+        recipientLastName: '',
+        companyName: '',
+        recipientCity: '',
+        recipientState: '',
+        recipientPhone: '',
+        recipientEmail: '',
+        subject: '',
+        greeting: '',
+        opening: '',
+        body: '',
+        callToAction: '',
+        closing: '',
+        signature: '',
+    });
+
+    const [provinces, setProvinces] = useState<Province[]>([]);
+    const [districts, setDistricts] = useState<District[]>([]);
+    const [recipientDistricts, setRecipientDistricts] = useState<District[]>([]);
+
+    useEffect(() => {
+        const initializeFromLocalStorage = async () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            // If clId or templateId are in the URL, it's a manual flow. Let other useEffects handle it.
+            if (urlParams.has('clId') || urlParams.has('templateId')) {
+                return;
+            }
+
+            const savedDataString = localStorage.getItem('coverLetterData');
+            if (savedDataString) {
+                const coverLetterData = JSON.parse(savedDataString);
+
+                // Populate letter data from localStorage for the AI flow
+                const mappedData: LetterData = {
+                    firstName: coverLetterData.firstName || '',
+                    lastName: coverLetterData.lastName || '',
+                    profession: coverLetterData.profession || '',
+                    city: coverLetterData.city || '',
+                    state: coverLetterData.state || '',
+                    phone: coverLetterData.phone || '',
+                    email: coverLetterData.email || '',
+                    date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+                    recipientFirstName: coverLetterData.recipientFirstName || '',
+                    recipientLastName: coverLetterData.recipientLastName || '',
+                    companyName: coverLetterData.targetCompany || coverLetterData.companyName || '',
+                    recipientCity: coverLetterData.recipientCity || '',
+                    recipientState: coverLetterData.recipientState || '',
+                    recipientPhone: coverLetterData.recipientPhone || '',
+                    recipientEmail: coverLetterData.recipientEmail || '',
+                    subject: coverLetterData.targetJobTitle ? `Application for the ${coverLetterData.targetJobTitle} position` : 'Job Application',
+                    greeting: `Dear ${coverLetterData.recipientFirstName ? coverLetterData.recipientFirstName + ' ' + coverLetterData.recipientLastName : 'Hiring Manager'},`,
+                    opening: '', // AI will populate this
+                    body: `Based on the provided job description for the ${coverLetterData.targetJobTitle || 'position'}, my skills in [Skill 1] and [Skill 2], combined with my strengths in ${coverLetterData.strengths?.join(', ')}, make me a strong candidate. My work style is ${coverLetterData.workStyle}.`, // Placeholder for AI
+                    callToAction: '', // AI will populate this
+                    closing: 'Sincerely,',
+                    signature: `${coverLetterData.firstName || ''} ${coverLetterData.lastName || ''}`.trim(),
+                };
+                setLetterData(mappedData);
+
+                // Pre-load districts for user and recipient city
+                const allProvinces = await getProvinces();
+                if (mappedData.city) {
+                    const selectedProvince = allProvinces.find(p => p.name === mappedData.city);
+                    if (selectedProvince) {
+                        const districtData = await getDistrictsByProvinceCode(selectedProvince.code);
+                        setDistricts(districtData);
+                    }
+                }
+                if (mappedData.recipientCity) {
+                    const selectedProvince = allProvinces.find(p => p.name === mappedData.recipientCity);
+                    if (selectedProvince) {
+                        const districtData = await getDistrictsByProvinceCode(selectedProvince.code);
+                        setRecipientDistricts(districtData);
+                    }
+                }
+
+                // Fetch and set the template from localStorage data
+                if (coverLetterData.templateId) {
+                    try {
+                        const data = await getCLTemplateById(coverLetterData.templateId);
+                        if (data) {
+                            setSelectedTemplateData(data);
+                            setTemplateName(data.title.toLowerCase() as TemplateType);
+                        }
+                    } catch (error) {
+                        console.error("Failed to fetch CL template from localStorage data:", error);
+                    }
+                }
+
+                // Clear the local storage after using the data to prevent re-populating on refresh
+                localStorage.removeItem('coverLetterData');
+            }
+        };
+
+        initializeFromLocalStorage();
+    }, []); // Run only once on mount, after other initializations
+
     useEffect(() => {
         const fetchClData = async () => {
             if (clId) {
@@ -101,20 +207,6 @@ const CoverLetterBuilderContent = () => {
             signature: `${firstName} ${lastName}`,
         };
     };
-
-    const [letterData, setLetterData] = useState<LetterData>(getInitialData());
-
-    const [provinces, setProvinces] = useState<Province[]>([]);
-    const [districts, setDistricts] = useState<District[]>([]);
-
-    useEffect(() => {
-        const fetchProvinces = async () => {
-            const provinceData = await getProvinces();
-            provinceData.sort((a, b) => a.name.localeCompare(b.name));
-            setProvinces(provinceData);
-        };
-        fetchProvinces();
-    }, []);
 
     useEffect(() => {
         if (!clId) {
@@ -190,12 +282,24 @@ const CoverLetterBuilderContent = () => {
             const selectedProvince = provinces.find(p => p.name === cityValue);
             if (selectedProvince) {
                 const districtData = await getDistrictsByProvinceCode(selectedProvince.code);
-                setDistricts(districtData);
+                if (cityField === 'city') {
+                    setDistricts(districtData);
+                } else if (cityField === 'recipientCity') {
+                    setRecipientDistricts(districtData);
+                }
             } else {
-                setDistricts([]);
+                if (cityField === 'city') {
+                    setDistricts([]);
+                } else if (cityField === 'recipientCity') {
+                    setRecipientDistricts([]);
+                }
             }
         } else {
-            setDistricts([]);
+            if (cityField === 'city') {
+                setDistricts([]);
+            } else if (cityField === 'recipientCity') {
+                setRecipientDistricts([]);
+            }
         }
     };
 
@@ -212,23 +316,18 @@ const CoverLetterBuilderContent = () => {
         setTempData(newTempData);
         setIsModalOpen(true);
 
-        let cityToFetch: string | undefined;
-        if (section === 'name') {
-            cityToFetch = newTempData.city;
-        } else if (section === 'recipient') {
-            cityToFetch = newTempData.recipientCity;
-        }
-
-        if (cityToFetch) {
-            const selectedProvince = provinces.find(p => p.name === cityToFetch);
+        if (section === 'name' && newTempData.city) {
+            const selectedProvince = provinces.find(p => p.name === newTempData.city);
             if (selectedProvince) {
                 const districtData = await getDistrictsByProvinceCode(selectedProvince.code);
                 setDistricts(districtData);
-            } else {
-                setDistricts([]);
             }
-        } else {
-            setDistricts([]);
+        } else if (section === 'recipient' && newTempData.recipientCity) {
+            const selectedProvince = provinces.find(p => p.name === newTempData.recipientCity);
+            if (selectedProvince) {
+                const districtData = await getDistrictsByProvinceCode(selectedProvince.code);
+                setRecipientDistricts(districtData);
+            }
         }
     };
 
@@ -310,18 +409,18 @@ const CoverLetterBuilderContent = () => {
                             />
                         </div>
 
-                        {/* State/Province and City */}
+                        {/* City and State */}
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2 uppercase">
-                                    City
+                                    City/Province
                                 </label>
                                 <select
                                     value={tempData.city || ""}
                                     onChange={(e) => handleCityChange(e.target.value, "city", "state")}
                                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
                                 >
-                                    <option value="">e.g. San Francisco</option>
+                                    <option value="">Select City/Province</option>
                                     {provinces.map((p) => (
                                         <option key={p.code} value={p.name}>{p.name}</option>
                                     ))}
@@ -329,7 +428,7 @@ const CoverLetterBuilderContent = () => {
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2 uppercase">
-                                    State/Province
+                                    District
                                 </label>
                                 <select
                                     value={tempData.state || ""}
@@ -337,7 +436,7 @@ const CoverLetterBuilderContent = () => {
                                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
                                     disabled={!tempData.city}
                                 >
-                                    <option value="">e.g. California or CA</option>
+                                    <option value="">Select District</option>
                                     {districts.map(d => (
                                         <option key={d.code} value={d.name}>{d.name}</option>
                                     ))}
@@ -407,28 +506,28 @@ const CoverLetterBuilderContent = () => {
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1 uppercase">City</label>
+                                <label className="block text-sm font-medium text-gray-700 mb-1 uppercase">City/Province</label>
                                 <select
                                     value={tempData.recipientCity || ""}
                                     onChange={(e) => handleCityChange(e.target.value, "recipientCity", "recipientState")}
                                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
                                 >
-                                    <option value="">Select a City/Province</option>
+                                    <option value="">Select City/Province</option>
                                     {provinces.map((p) => (
                                         <option key={p.code} value={p.name}>{p.name}</option>
                                     ))}
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1 uppercase">State/Province</label>
+                                <label className="block text-sm font-medium text-gray-700 mb-1 uppercase">District</label>
                                 <select
                                     value={tempData.recipientState || ""}
                                     onChange={(e) => handleInputChange("recipientState", e.target.value)}
                                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
                                     disabled={!tempData.recipientCity}
                                 >
-                                    <option value="">Select a District</option>
-                                    {districts.map(d => (
+                                    <option value="">Select District</option>
+                                    {recipientDistricts.map(d => (
                                         <option key={d.code} value={d.name}>{d.name}</option>
                                     ))}
                                 </select>
@@ -640,7 +739,7 @@ const CoverLetterBuilderContent = () => {
                             </button>
                             <button
                                 onClick={saveChanges}
-                                className="px-8 py-3 bg-yellow-500 text-white rounded-full hover:bg-yellow-600 transition-colors font-medium"
+                                className="px-8 py-3 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-colors font-medium"
                             >
                                 Save
                             </button>
