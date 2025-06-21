@@ -5,10 +5,82 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft, ArrowRight, ChevronDown } from 'lucide-react';
 import { getProvinces, getDistrictsByProvinceCode, Province, District } from '@/api/locationApi';
 
+const InputField = ({
+    label,
+    field,
+    formData,
+    handleInputChange,
+    handleProvinceChange,
+    errors,
+    loading,
+    selectedProvinceCode,
+    options = [],
+    placeholder,
+    required = false,
+    type = "text",
+    isDropdown = false,
+}: {
+    label: string;
+    field: string;
+    formData: any;
+    handleInputChange: (field: string, value: string) => void;
+    handleProvinceChange: (value: string) => void;
+    errors: { [key: string]: string };
+    loading: boolean;
+    selectedProvinceCode: number | null;
+    options?: string[];
+    placeholder?: string;
+    required?: boolean;
+    type?: string;
+    isDropdown?: boolean;
+}) => {
+    return (
+        <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700 uppercase tracking-wide">
+                {label} {required && <span className="text-red-500">*</span>}
+            </label>
+            {isDropdown ? (
+                <div className="relative">
+                    <select
+                        value={formData[field as keyof typeof formData]}
+                        onChange={(e) => {
+                            if (field === 'city') {
+                                handleProvinceChange(e.target.value);
+                            } else {
+                                handleInputChange(field, e.target.value);
+                            }
+                        }}
+                        className={`w-full px-4 py-3 border rounded-lg bg-white appearance-none pr-10 focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors[field] ? 'border-red-500' : 'border-gray-300'
+                            }`}
+                        disabled={loading || (field === 'state' && !selectedProvinceCode)}
+                    >
+                        <option value="">{placeholder}</option>
+                        {options.map(option => (
+                            <option key={option} value={option}>{option}</option>
+                        ))}
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                </div>
+            ) : (
+                <input
+                    type={type}
+                    value={formData[field as keyof typeof formData]}
+                    onChange={(e) => handleInputChange(field, e.target.value)}
+                    placeholder={placeholder}
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors[field] ? 'border-red-500' : 'border-gray-300'
+                        }`}
+                />
+            )}
+            {errors[field] && (
+                <p className="text-red-500 text-sm">{errors[field]}</p>
+            )}
+        </div>
+    );
+};
+
 function PersonalInfoContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const templateId = searchParams.get('templateId');
 
     const [formData, setFormData] = useState({
         firstName: '',
@@ -24,7 +96,7 @@ function PersonalInfoContent() {
     const [provinces, setProvinces] = useState<Province[]>([]);
     const [districts, setDistricts] = useState<District[]>([]);
     const [selectedProvinceCode, setSelectedProvinceCode] = useState<number | null>(null);
-        const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(false);
 
     // Load provinces on component mount
     useEffect(() => {
@@ -42,6 +114,38 @@ function PersonalInfoContent() {
 
         loadProvinces();
     }, []);
+
+    // Load data from localStorage and initialize the form
+    useEffect(() => {
+        if (provinces.length > 0) {
+            const savedDataString = localStorage.getItem('coverLetterData');
+            let coverLetterData = savedDataString ? JSON.parse(savedDataString) : {};
+
+            const templateId = searchParams.get('templateId');
+            if (templateId) {
+                coverLetterData.templateId = templateId;
+            }
+
+            setFormData({
+                firstName: coverLetterData.firstName || '',
+                lastName: coverLetterData.lastName || '',
+                profession: coverLetterData.profession || '',
+                city: coverLetterData.city || '',
+                state: coverLetterData.state || '',
+                phone: coverLetterData.phone || '',
+                email: coverLetterData.email || ''
+            });
+
+            if (coverLetterData.city) {
+                const selectedProvince = provinces.find(p => p.name === coverLetterData.city);
+                if (selectedProvince) {
+                    setSelectedProvinceCode(selectedProvince.code);
+                }
+            }
+
+            localStorage.setItem('coverLetterData', JSON.stringify(coverLetterData));
+        }
+    }, [provinces, searchParams]);
 
     // Load districts when province changes
     useEffect(() => {
@@ -80,9 +184,9 @@ function PersonalInfoContent() {
         const selectedProvince = provinces.find(p => p.name === value);
         setSelectedProvinceCode(selectedProvince ? selectedProvince.code : null);
 
-        handleInputChange('province', value);
-        // Reset city when province changes
-        handleInputChange('city', '');
+        handleInputChange('city', value);
+        // Reset state when city changes
+        handleInputChange('state', '');
     };
 
     const validateForm = () => {
@@ -102,84 +206,17 @@ function PersonalInfoContent() {
     const handleContinue = () => {
         if (!validateForm()) return;
 
-        const params = new URLSearchParams();
-        if (templateId) params.append('templateId', templateId);
+        const savedDataString = localStorage.getItem('coverLetterData');
+        const coverLetterData = savedDataString ? JSON.parse(savedDataString) : {};
 
-        // Add personal info to URL params
-        Object.entries(formData).forEach(([key, value]) => {
-            if (value.trim()) {
-                params.append(key, value.trim());
-            }
-        });
+        const updatedData = { ...coverLetterData, ...formData };
+        localStorage.setItem('coverLetterData', JSON.stringify(updatedData));
 
-        router.push(`/strengths?${params.toString()}`);
+        router.push(`/recipent-info`);
     };
 
     const handleBack = () => {
         router.back();
-    };
-
-    const InputField = ({
-        label,
-        field,
-        placeholder,
-        required = false,
-        type = "text",
-        isDropdown = false,
-        options = []
-    }: {
-        label: string;
-        field: string;
-        placeholder?: string;
-        required?: boolean;
-        type?: string;
-        isDropdown?: boolean;
-        options?: string[];
-    }) => {
-        return (
-            <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700 uppercase tracking-wide">
-                    {label} {required && <span className="text-red-500">*</span>}
-                </label>
-                {isDropdown ? (
-                    <div className="relative">
-                        <select
-                            value={formData[field as keyof typeof formData]}
-                            onChange={(e) => {
-                                if (field === 'province') {
-                                    handleProvinceChange(e.target.value);
-                                } else {
-                                    handleInputChange(field, e.target.value);
-                                }
-                            }}
-                            className={`w-full px-4 py-3 border rounded-lg bg-white appearance-none pr-10 focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                                errors[field] ? 'border-red-500' : 'border-gray-300'
-                            }`}
-                            disabled={loading || (field === 'city' && !selectedProvinceCode)}
-                        >
-                            <option value="">{placeholder}</option>
-                            {options.map(option => (
-                                <option key={option} value={option}>{option}</option>
-                            ))}
-                        </select>
-                        <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-                    </div>
-                ) : (
-                    <input
-                        type={type}
-                        value={formData[field as keyof typeof formData]}
-                        onChange={(e) => handleInputChange(field, e.target.value)}
-                        placeholder={placeholder}
-                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                            errors[field] ? 'border-red-500' : 'border-gray-300'
-                        }`}
-                    />
-                )}
-                {errors[field] && (
-                    <p className="text-red-500 text-sm">{errors[field]}</p>
-                )}
-            </div>
-        );
     };
 
     return (
@@ -210,12 +247,24 @@ function PersonalInfoContent() {
                             field="firstName"
                             placeholder="First Name"
                             required
+                            formData={formData}
+                            handleInputChange={handleInputChange}
+                            handleProvinceChange={handleProvinceChange}
+                            errors={errors}
+                            loading={loading}
+                            selectedProvinceCode={selectedProvinceCode}
                         />
                         <InputField
                             label="LAST NAME"
                             field="lastName"
                             placeholder="Last Name"
                             required
+                            formData={formData}
+                            handleInputChange={handleInputChange}
+                            handleProvinceChange={handleProvinceChange}
+                            errors={errors}
+                            loading={loading}
+                            selectedProvinceCode={selectedProvinceCode}
                         />
                     </div>
 
@@ -223,41 +272,70 @@ function PersonalInfoContent() {
                     <InputField
                         label="PROFESSION"
                         field="profession"
-                        placeholder="e.g. Senior Sales Manager"
+                        placeholder="e.g. Graphic Designer"
+                        formData={formData}
+                        handleInputChange={handleInputChange}
+                        handleProvinceChange={handleProvinceChange}
+                        errors={errors}
+                        loading={loading}
+                        selectedProvinceCode={selectedProvinceCode}
                     />
 
-                    {/* Location Row */}
+                    {/* City and State */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <InputField
-                            label="CITY"
+                            label="CITY/PROVINCE"
                             field="city"
-                            placeholder={loading ? "Loading provinces..." : "Select your city"}
+                            placeholder="Select your city/province"
                             isDropdown
                             options={provinces.map(p => p.name)}
+                            formData={formData}
+                            handleInputChange={handleInputChange}
+                            handleProvinceChange={handleProvinceChange}
+                            errors={errors}
+                            loading={loading}
+                            selectedProvinceCode={selectedProvinceCode}
                         />
                         <InputField
-                            label="STATE"
+                            label="DISTRICT"
                             field="state"
-                            placeholder={!selectedProvinceCode ? "Select city first" : "Select your state"}
+                            placeholder="Select your district"
                             isDropdown
                             options={districts.map(d => d.name)}
+                            formData={formData}
+                            handleInputChange={handleInputChange}
+                            handleProvinceChange={handleProvinceChange}
+                            errors={errors}
+                            loading={loading}
+                            selectedProvinceCode={selectedProvinceCode}
                         />
                     </div>
 
-                    {/* Contact Row */}
+                    {/* Phone and Email */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <InputField
-                            label="PHONE"
+                            label="PHONE NUMBER"
                             field="phone"
-                            placeholder="e.g. +84982826438"
-                            type="tel"
+                            placeholder="e.g. +84123456789"
+                            formData={formData}
+                            handleInputChange={handleInputChange}
+                            handleProvinceChange={handleProvinceChange}
+                            errors={errors}
+                            loading={loading}
+                            selectedProvinceCode={selectedProvinceCode}
                         />
                         <InputField
                             label="EMAIL ADDRESS"
                             field="email"
-                            placeholder="your.email@gmail.com"
+                            placeholder="e.g. john.doe@email.com"
                             type="email"
                             required
+                            formData={formData}
+                            handleInputChange={handleInputChange}
+                            handleProvinceChange={handleProvinceChange}
+                            errors={errors}
+                            loading={loading}
+                            selectedProvinceCode={selectedProvinceCode}
                         />
                     </div>
                 </div>
