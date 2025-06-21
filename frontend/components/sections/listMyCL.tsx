@@ -1,19 +1,23 @@
 import React from 'react';
-import { Table, Card, Row, Col, Dropdown, Menu, Button } from 'antd';
-import { FaEnvelope, FaPlus } from 'react-icons/fa';
-import { CoverLetter } from '@/app/myDocuments/page';
+import { Card, Row, Col, Dropdown, Menu, Button, Modal, Table } from 'antd';
+import { FaEnvelope, FaPlus, FaEdit, FaTrash, FaDownload, FaCopy, FaFileAlt } from 'react-icons/fa';
+import { CL, CLTemplate } from '@/api/clApi';
 import { DownOutlined } from '@ant-design/icons';
 import { useLanguage } from '@/providers/global-provider';
+import Image from 'next/image';
 
 interface CoverLetterListProps {
-    coverLetters: CoverLetter[];
+    coverLetters: CL[];
     viewMode: 'grid' | 'list';
+    onDelete: (id: string) => void;
+    onEdit: (id: string) => void;
+    onCreateNew: () => void;
 }
 
 const translations = {
     en: {
         title: 'Cover Letter List',
-        new: 'New Cover Letter',
+        new: 'Create Cover Letter',
         actions: {
             edit: 'Edit',
             duplicate: 'Duplicate',
@@ -23,16 +27,17 @@ const translations = {
         },
         fields: {
             title: 'Title',
-            company: 'Company',
+            template: 'Template',
             createdAt: 'Created At',
-            edited: 'Edited {hours} hours ago',
+            lastUpdatedAt: 'Last Updated',
+            actions: 'Actions',
             introduction: 'Introduction'
         },
         tip: 'TIP: Did you know that if you tailor your cover letter to the job description, you double your chances to get an interview?'
     },
     vi: {
         title: 'Danh sách thư xin việc',
-        new: 'Thư xin việc mới',
+        new: 'Tạo thư xin việc',
         actions: {
             edit: 'Chỉnh sửa',
             duplicate: 'Nhân bản',
@@ -42,46 +47,75 @@ const translations = {
         },
         fields: {
             title: 'Tiêu đề',
-            company: 'Công ty',
+            template: 'Mẫu',
             createdAt: 'Ngày tạo',
-            edited: 'Chỉnh sửa {hours} giờ trước',
+            lastUpdatedAt: 'Cập nhật lần cuối',
+            actions: 'Hành động',
             introduction: 'Giới thiệu'
         },
         tip: 'MẸO: Bạn có biết rằng nếu bạn điều chỉnh thư xin việc của mình theo mô tả công việc, bạn sẽ tăng gấp đôi cơ hội được phỏng vấn?'
     }
 };
 
-const CoverLetterList: React.FC<CoverLetterListProps> = ({ coverLetters, viewMode }) => {
+const CoverLetterList: React.FC<CoverLetterListProps> = ({ coverLetters, viewMode, onDelete, onEdit, onCreateNew }) => {
     const { language } = useLanguage();
     const t = translations[language];
+
+    const menu = (cl: CL) => (
+        <Menu onClick={({ key }) => {
+            if (key === 'edit') {
+                onEdit(cl._id!);
+            } else if (key === 'delete') {
+                Modal.confirm({
+                    title: 'Xác nhận xóa',
+                    content: 'Bạn có chắc chắn muốn xóa thư xin việc này không?',
+                    onOk: () => onDelete(cl._id!),
+                });
+            }
+        }}>
+            <Menu.Item key="edit" icon={<FaEdit />}>{t.actions.edit}</Menu.Item>
+            <Menu.Item key="tailor" icon={<FaCopy />}>{t.actions.tailor}</Menu.Item>
+            <Menu.Item key="download" icon={<FaDownload />}>{t.actions.download}</Menu.Item>
+            <Menu.Item key="delete" icon={<FaTrash />}>{t.actions.delete}</Menu.Item>
+        </Menu>
+    );
 
     const columns = [
         {
             title: t.fields.title,
             dataIndex: 'title',
             key: 'title',
+            render: (text: string) => <span className="font-semibold">{text}</span>,
+        },
+        {
+            title: t.fields.template,
+            dataIndex: 'templateId',
+            key: 'template',
+            render: (template: CLTemplate) => template?.title || 'N/A',
         },
         {
             title: t.fields.createdAt,
-            dataIndex: 'created_at',
-            key: 'created_at',
-            render: (date: Date) => date.toLocaleDateString(),
+            dataIndex: 'createdAt',
+            key: 'createdAt',
+            render: (date: string) => new Date(date).toLocaleDateString(),
         },
         {
-            title: t.fields.company,
-            dataIndex: 'company_address',
-            key: 'company_address',
+            title: t.fields.lastUpdatedAt,
+            dataIndex: 'updatedAt',
+            key: 'updatedAt',
+            render: (date: string) => new Date(date).toLocaleDateString(),
+        },
+        {
+            title: t.fields.actions,
+            key: 'actions',
+            align: 'center' as const,
+            render: (_: any, record: CL) => (
+                <Dropdown overlay={menu(record)} trigger={['click']}>
+                    <Button type="text" icon={<DownOutlined />} />
+                </Dropdown>
+            ),
         },
     ];
-
-    const menu = (cl: CoverLetter) => (
-        <Menu>
-            <Menu.Item key="edit">{t.actions.edit}</Menu.Item>
-            <Menu.Item key="tailor">{t.actions.tailor}</Menu.Item>
-            <Menu.Item key="download">{t.actions.download}</Menu.Item>
-            <Menu.Item key="delete">{t.actions.delete}</Menu.Item>
-        </Menu>
-    );
 
     if (viewMode === 'grid') {
         return (
@@ -94,56 +128,48 @@ const CoverLetterList: React.FC<CoverLetterListProps> = ({ coverLetters, viewMod
                     <Button
                         type="primary"
                         icon={<FaPlus />}
-                        className="bg-green-500 hover:bg-green-600 border-0 shadow-md hover:shadow-lg transition-all duration-300 flex items-center gap-2 px-4 py-2 rounded-lg"
+                        onClick={onCreateNew}
+                        className="bg-blue-500 hover:bg-blue-600 border-0 shadow-md hover:shadow-lg transition-all duration-300 flex items-center gap-2 px-4 py-2 rounded-lg"
                     >
                         {t.new}
                     </Button>
                 </div>
                 <Row gutter={[16, 16]}>
-                    {/* New Cover Letter Card */}
-                    <Col xs={24} sm={12} md={8} lg={8}>
-                        <Card
-                            hoverable
-                            className="min-h-[250px] flex items-center justify-center bg-green-50 border border-green-200"
-                            bodyStyle={{ padding: '20px', textAlign: 'center' }}
-                        >
-                            <Button
-                                type="primary"
-                                shape="circle"
-                                icon={<FaPlus />}
-                                size="large"
-                                className="mb-4 bg-green-500 hover:bg-green-600 border-0 shadow-md hover:shadow-lg transition-all duration-300"
-                            />
-                            <h3 className="text-lg font-semibold">{t.new}</h3>
-                            <p className="text-gray-600 text-sm">
-                                {t.tip}
-                            </p>
-                        </Card>
-                    </Col>
-                    {coverLetters.map((cl) => (
-                        <Col key={cl._id} xs={24} sm={12} md={8} lg={8}>
-                            <Card
-                                hoverable
-                                className="min-h-[250px] bg-white border border-gray-200"
-                                bodyStyle={{ padding: '16px' }}
-                                title={
-                                    <div className="flex justify-between items-center">
-                                        <span className="font-semibold text-lg">{cl.title}</span>
-                                        <Dropdown overlay={menu(cl)} trigger={['click']}>
-                                            <Button type="link" icon={<DownOutlined />} />
-                                        </Dropdown>
+                    {coverLetters.map((cl) => {
+                        const template = cl.templateId as CLTemplate;
+                        return (
+                            <Col key={cl._id} xs={24} sm={12} md={8} lg={8}>
+                                <Card
+                                    hoverable
+                                    className="bg-white border border-gray-200 group"
+                                >
+                                    <div className="flex">
+                                        <div className="w-1/3">
+                                            <Image
+                                                src={template.imageUrl}
+                                                alt={cl.title}
+                                                width={150}
+                                                height={210}
+                                                className="object-cover rounded-l-md"
+                                            />
+                                        </div>
+                                        <div className="w-2/3 p-4 flex flex-col justify-between">
+                                            <div>
+                                                <div className="flex justify-between items-start">
+                                                    <h3 className="font-semibold text-lg mb-2">{cl.title}</h3>
+                                                    <Dropdown overlay={menu(cl)} trigger={['click']}>
+                                                        <Button type="text" icon={<DownOutlined />} />
+                                                    </Dropdown>
+                                                </div>
+                                                <p className="text-sm text-gray-500">Created: {new Date(cl.createdAt).toLocaleDateString()}</p>
+                                                <p className="text-sm text-gray-500">Last updated: {new Date(cl.updatedAt).toLocaleDateString()}</p>
+                                            </div>
+                                        </div>
                                     </div>
-                                }
-                                extra={<span className="text-gray-500 text-sm">{t.fields.edited.replace('{hours}', Math.floor(Math.random() * 24).toString())}</span>}
-                            >
-                                <div className="space-y-2">
-                                    <p className="text-sm">{t.fields.company}: {cl.company_address}</p>
-                                    <p className="text-sm">{t.fields.createdAt}: {cl.created_at.toLocaleDateString()}</p>
-                                    <p className="text-sm">{t.fields.introduction}: {cl.introduction?.substring(0, 100)}...</p>
-                                </div>
-                            </Card>
-                        </Col>
-                    ))}
+                                </Card>
+                            </Col>
+                        );
+                    })}
                 </Row>
             </div>
         );
@@ -153,13 +179,14 @@ const CoverLetterList: React.FC<CoverLetterListProps> = ({ coverLetters, viewMod
         <div className="bg-white p-6 shadow-md">
             <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center">
-                    <FaEnvelope className="text-blue-600 mr-2" />
+                    <FaFileAlt className="text-blue-600 mr-2" />
                     <h2 className="text-xl font-semibold text-blue-600">{t.title}</h2>
                 </div>
                 <Button
                     type="primary"
                     icon={<FaPlus />}
-                    className="bg-green-500 hover:bg-green-600 border-0 shadow-md hover:shadow-lg transition-all duration-300 flex items-center gap-2 px-4 py-2 rounded-lg"
+                    onClick={onCreateNew}
+                    className="bg-blue-500 hover:bg-blue-600 border-0 shadow-md hover:shadow-lg transition-all duration-300 flex items-center gap-2 px-4 py-2 rounded-lg"
                 >
                     {t.new}
                 </Button>

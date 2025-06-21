@@ -1,21 +1,25 @@
+// components/Header.tsx
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { DecodedToken } from "@/middleware";
 import { useLanguage } from "@/providers/global-provider";
 import { jwtDecode } from "jwt-decode";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation"; // Thêm useRouter
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import styled from "styled-components";
 import logo from "../../public/logo/logoCVOne.svg";
 
-// Styled components for animations
 const MenuLink = styled(Link)`
   position: relative;
   display: inline-block;
+  color: #333;
+  text-decoration: none;
+  padding: 0.5rem 1rem;
+  font-size: 15px;
+  transition: color 0.2s ease;
 
   &.nav-link::after {
     content: '';
@@ -31,69 +35,64 @@ const MenuLink = styled(Link)`
   &.nav-link:hover::after {
     width: 100%;
   }
-`;
-
-const AnimatedButton = styled(Button)`
-  position: relative;
-  overflow: hidden;
-  z-index: 1;
-  transition: color 0.2s ease;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(to right, rgb(141, 176, 253), rgb(139, 169, 252));
-    transition: left 0.2s ease;
-    z-index: -1;
-  }
 
   &:hover {
-    color: white;
-    &::before {
-      left: 0;
-    }
-  }
-`;
-
-const DropdownMenu = styled.div<{ isOpen: boolean }>`
-  display: ${({ isOpen }) => (isOpen ? "block" : "none")};
-  position: absolute;
-  top: 100%;
-  right: 0;
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.375rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  min-width: 12rem;
-  z-index: 50;
-`;
-
-const DropdownItem = styled(Link)`
-  display: block;
-  padding: 0.5rem 1rem;
-  color: #333;
-  text-decoration: none;
-
-  &:hover {
-    background-color: #f3f4f6;
     color: #058ac3;
   }
 `;
 
-const StyledLink = styled(Link)`
-  &.nav-link {
-    color: #333;
-    text-decoration: none;
-    transition: color 0.2s;
+const StyledButton = styled.button`
+  background: none;
+  border: 1px solid #ccc;
+  padding: 0.4rem 1rem;
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: 4px;
+  background: #2563eb;
+  color: white;
+  font-weight: 500;
+  transition: background 0.2s ease;
 
-    &:hover {
-      color: #058ac3;
-    }
+  &:hover {
+    background: #1d4ed8;
   }
+`;
+
+const PlainButton = styled.button`
+  background: none;
+  border: none;
+  padding: 0.4rem 1rem;
+  font-size: 14px;
+  cursor: pointer;
+  font-weight: 500;
+  color: #333;
+
+  &:hover {
+    color: #058ac3;
+  }
+`;
+
+const HeaderWrapper = styled.header`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  background: white;
+  border-bottom: 1px solid #e5e7eb;
+`;
+
+const Container = styled.div`
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 1rem;
+`;
+
+const FlexRow = styled.div`
+  display: flex;
+  height: 64px;
+  align-items: center;
+  justify-content: space-between;
 `;
 
 const navigationItems = {
@@ -156,6 +155,16 @@ const navigationItems = {
       {
         name: "Settings",
         href: "/admin/settings",
+      },
+    ],
+    hr: [
+      {
+        name: "Dashboard",
+        href: "/hr/dashboard",
+      },
+      {
+        name: "My Profile",
+        href: "/user/profile",
       },
     ],
     user: [
@@ -221,7 +230,7 @@ const navigationItems = {
       },
       {
         name: "Thư ngỏ",
-        href: "/cover-letter",
+        href: "/clTemplate",
         dropdownItems: [
           { name: "Mẫu Thư ngỏ", href: "/clTemplate" },
           { name: "Ví dụ Thư ngỏ", href: "/cover-letter/examples" },
@@ -251,6 +260,16 @@ const navigationItems = {
         href: "/admin/settings",
       },
     ],
+    hr: [
+      {
+        name: "Bảng điều khiển",
+        href: "/hr/dashboard",
+      },
+      {
+        name: "Hồ sơ của tôi",
+        href: "/user/profile",
+      },
+    ],
     user: [
       {
         name: "Bảng điều khiển",
@@ -264,10 +283,10 @@ const navigationItems = {
         name: "CV",
         href: "/cvTemplates",
       },
-      
+
       {
         name: "Thư Ngỏ",
-        href: "/chooseCLTemplate",
+        href: "/clTemplate",
       },
       {
         name: "Công việc của tôi",
@@ -280,7 +299,6 @@ const navigationItems = {
     ],
   },
 };
-
 const languages = [
   { code: "en", name: "English", flag: "🇺🇸" },
   { code: "vi", name: "Tiếng Việt", flag: "🇻🇳" },
@@ -297,11 +315,8 @@ export function Header() {
     setIsMounted(true);
   }, []);
 
-  if (!isMounted) {
-    return null;
-  }
+  if (!isMounted) return null;
 
-  // Lấy role từ token trong cookie
   const getRoleFromToken = () => {
     const token = document.cookie
       .split("; ")
@@ -317,36 +332,27 @@ export function Header() {
   };
 
   const role = getRoleFromToken();
-
-  // Chọn navigation items dựa trên role
   const navItems =
     role === "admin"
       ? navigationItems[language].admin
-      : role === "user"
-        ? navigationItems[language].user
-        : navigationItems[language].default;
+      : role === "hr"
+        ? navigationItems[language].hr
+        : role === "user"
+          ? navigationItems[language].user
+          : navigationItems[language].default;
 
-  // Xử lý logout
   const handleLogout = () => {
-    logout(); // Gọi hàm logout từ useAuth (nếu có logic bổ sung)
-    // Xóa token khỏi cookie
+    logout();
     document.cookie = "token=; path=/; max-age=0";
-    // Điều hướng về trang login
     router.push("/login");
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b">
-      <div className="container mx-auto px-4">
-        <div className="flex h-16 items-center justify-between">
+    <HeaderWrapper>
+      <Container>
+        <FlexRow>
           <Link href="/" className="flex items-center mr-8">
-            <Image
-              src={logo}
-              alt="CV One Logo"
-              width={100}
-              height={35}
-              className="h-auto"
-            />
+            <Image src={logo} alt="CV One Logo" width={100} height={35} className="h-auto" />
           </Link>
 
           <nav className="hidden md:flex items-center space-x-4">
@@ -354,8 +360,8 @@ export function Header() {
               <MenuLink
                 key={item.href}
                 href={item.href}
-                className={`nav-link px-4 py-2 inline-flex items-center text-[15px] ${pathname === item.href ? "text-[#058ac3]" : ""
-                  }`}
+                style={{ color: pathname === item.href ? "#058ac3" : "#333" }}
+                className="nav-link"
               >
                 {item.name}
               </MenuLink>
@@ -365,44 +371,26 @@ export function Header() {
           <div className="flex items-center space-x-4">
             {role ? (
               <>
-                <AnimatedButton
-                  variant="outline"
-                  size="sm"
-                  className="font-medium"
-                  onClick={handleLogout}
-                >
+                <StyledButton onClick={handleLogout}>
                   {language === "en" ? "Logout" : "Đăng xuất"}
-                </AnimatedButton>
+                </StyledButton>
                 {role === "admin" && (
-                  <AnimatedButton
-                    variant="outline"
-                    size="sm"
-                    className="font-medium"
-                    asChild
-                  >
-                    <Link href="/admin/dashboard">
-                      {language === "en" ? "Admin Panel" : "Quản trị"}
-                    </Link>
-                  </AnimatedButton>
+                  <StyledButton as={Link} href="/admin/dashboard">
+                    {language === "en" ? "Admin Panel" : "Quản trị"}
+                  </StyledButton>
                 )}
               </>
             ) : (
-              <Link href="/login">
-                <AnimatedButton variant="outline" size="sm" className="font-medium">
-                  {language === "en" ? "Login" : "Đăng nhập"}
-                </AnimatedButton>
-              </Link>
+              <StyledButton as={Link} href="/login">
+                {language === "en" ? "Login" : "Đăng nhập"}
+              </StyledButton>
             )}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setLanguage(language === "en" ? "vi" : "en")}
-            >
+            <PlainButton onClick={() => setLanguage(language === "en" ? "vi" : "en")}>
               {language === "en" ? "VI" : "EN"}
-            </Button>
+            </PlainButton>
           </div>
-        </div>
-      </div>
-    </header>
+        </FlexRow>
+      </Container>
+    </HeaderWrapper>
   );
 }

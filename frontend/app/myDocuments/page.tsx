@@ -1,10 +1,12 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Tabs } from 'antd';
 import CVList from '@/components/sections/listMyCV';
 import CoverLetterList from '@/components/sections/listMyCL';
 import '@/styles/myDocuments.css';
 import { useLanguage } from '@/providers/global-provider';
+import { getCLs, CL, deleteCL, createCL, CreateCLDto } from '@/api/clApi';
+import { useRouter } from 'next/navigation';
 
 export interface CV {
     _id: string;
@@ -22,28 +24,6 @@ export interface CV {
     skill?: string[];
     summary?: string;
     finalize: boolean;
-}
-
-export interface Resume {
-    _id: string;
-    title: string;
-    createdAt: Date;
-    status: string;
-    image?: string;
-}
-
-export interface CoverLetter {
-    _id: string;
-    user_id: string;
-    cl_template_id: string;
-    title: string;
-    company_address: string;
-    introduction: string;
-    body?: string;
-    closing?: string;
-    signature?: string;
-    created_at: Date;
-    updated_at?: Date;
 }
 
 const translations = {
@@ -81,6 +61,68 @@ export default function Page() {
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const { language } = useLanguage();
     const t = translations[language];
+    const router = useRouter();
+
+    const [coverLetterList, setCoverLetterList] = useState<CL[]>([]);
+    const [loadingCL, setLoadingCL] = useState(true);
+
+    useEffect(() => {
+        const loadCoverLetters = async () => {
+            setLoadingCL(true);
+
+            const pendingCLJSON = localStorage.getItem('pendingCL');
+            if (pendingCLJSON) {
+                try {
+                    const pendingCL = JSON.parse(pendingCLJSON);
+                    const { letterData, templateId } = pendingCL;
+
+                    if (letterData && templateId) {
+                        const newCL: CreateCLDto = {
+                            templateId: templateId,
+                            title: letterData.subject || "Untitled Cover Letter",
+                            data: letterData,
+                            isSaved: true,
+                        };
+                        await createCL(newCL);
+                        localStorage.removeItem('pendingCL');
+                        alert('Your pending cover letter has been saved successfully!');
+                    }
+                } catch (error) {
+                    console.error("Failed to save pending cover letter:", error);
+                    alert("There was an error saving your pending cover letter.");
+                    localStorage.removeItem('pendingCL');
+                }
+            }
+
+            try {
+                const clData = await getCLs();
+                setCoverLetterList(clData || []);
+            } catch (error) {
+                console.error("Failed to fetch cover letters:", error);
+            } finally {
+                setLoadingCL(false);
+            }
+        };
+
+        loadCoverLetters();
+    }, []);
+
+    const handleCreateNewCL = () => {
+        router.push('/clTemplate');
+    };
+
+    const handleEditCL = (id: string) => {
+        router.push(`/createCLTemplate?clId=${id}`);
+    };
+
+    const handleDeleteCL = async (id: string) => {
+        try {
+            await deleteCL(id);
+            setCoverLetterList(prev => prev.filter(cl => cl._id !== id));
+        } catch (error) {
+            console.error("Failed to delete cover letter:", error);
+        }
+    };
 
     const cvList: CV[] = [
         {
@@ -119,22 +161,6 @@ export default function Page() {
         },
     ];
 
-    const coverLetterList: CoverLetter[] = [
-        {
-            _id: 'cl1',
-            user_id: 'user1',
-            cl_template_id: 'template_cl1',
-            title: 'Cover Letter - Web Dev',
-            company_address: '123 Tech Street, Silicon Valley',
-            introduction: 'I am excited to apply for the React Developer position.',
-            body: 'With 3 years of experience in web development...',
-            closing: 'I look forward to discussing my application.',
-            signature: 'Mart Pedunn',
-            created_at: new Date('2025-06-07'),
-            updated_at: new Date('2025-06-07'),
-        },
-    ];
-
     const onTabChange = (key: string) => setActiveTab(key);
     const onSearch = (value: string) => setSearchValue(value);
 
@@ -144,8 +170,7 @@ export default function Page() {
     );
 
     const filteredCoverLetterList = coverLetterList.filter(cl =>
-        cl.title.toLowerCase().includes(searchValue.toLowerCase()) ||
-        cl.company_address.toLowerCase().includes(searchValue.toLowerCase())
+        cl.title.toLowerCase().includes(searchValue.toLowerCase())
     );
 
     const items = [
@@ -199,7 +224,9 @@ export default function Page() {
 
                 <div>
                     {activeTab === '1' && <CVList cvList={filteredCVList} viewMode={viewMode} />}
-                    {activeTab === '2' && <CoverLetterList coverLetters={filteredCoverLetterList} viewMode={viewMode} />}
+                    {activeTab === '2' && (
+                        loadingCL ? <p>Loading Cover Letters...</p> : <CoverLetterList coverLetters={filteredCoverLetterList} viewMode={viewMode} onDelete={handleDeleteCL} onEdit={handleEditCL} onCreateNew={handleCreateNewCL} />
+                    )}
                 </div>
             </div>
         </div>

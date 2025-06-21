@@ -3,8 +3,10 @@
 import React, { useState, useEffect, Suspense } from "react";
 import { X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { templates, TemplateType } from './templates';
+import { templates, TemplateType } from './templates/index';
 import { getProvinces, Province, getDistrictsByProvinceCode, District } from "@/api/locationApi";
+import { createCL, getCLTemplateById, CLTemplate, CreateCLDto, getCLById, updateCL } from "@/api/clApi";
+import Cookies from "js-cookie";
 
 interface LetterData {
     firstName: string;
@@ -34,56 +36,240 @@ interface LetterData {
 const CoverLetterBuilderContent = () => {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const selectedTemplate = (searchParams.get('template') || 'cascade') as TemplateType;
-    const initialFirstName = searchParams.get('firstName') || "First Name";
-    const initialLastName = searchParams.get('lastName') || "Last Name";
-    const TemplateComponent = templates[selectedTemplate];
-    const [provinces, setProvinces] = useState<Province[]>([]);
-    const [districts, setDistricts] = useState<District[]>([]);
+    const templateId = searchParams.get('templateId');
+    const clId = searchParams.get('clId');
+    const initialFirstName = searchParams.get('firstName');
+    const initialLastName = searchParams.get('lastName');
 
-    useEffect(() => {
-        const fetchProvinces = async () => {
-            const provinceData = await getProvinces();
-            provinceData.sort((a, b) => a.name.localeCompare(b.name));
-            setProvinces(provinceData);
-        };
-        fetchProvinces();
-    }, []);
+    const [selectedTemplateData, setSelectedTemplateData] = useState<CLTemplate | null>(null);
+    const [templateName, setTemplateName] = useState<TemplateType>('cascade');
+    const TemplateComponent = templates[templateName];
 
     const [letterData, setLetterData] = useState<LetterData>({
-        firstName: initialFirstName,
-        lastName: initialLastName,
-        profession: "Software Engineer",
-        city: "Hanoi",
-        state: "HN",
-        phone: "+415-555-5555",
-        email: "duongduy203.st@gmail.com",
-        date: "June 11, 2025",
-        recipientFirstName: "Katherine",
-        recipientLastName: "Bloomstein",
-        companyName: "XYZ Company",
-        recipientCity: "Flowerville",
-        recipientState: "Ohio",
-        recipientPhone: "123-456-7890",
-        recipientEmail: "recipient@example.com",
-        subject: "RE: [Job Title], [Ref#], [Source]",
-        greeting: "Dear [Mr. or Ms. Last Name],",
-        opening:
-            "I am writing to express my interest in the Software Engineer position at your esteemed company. With a strong background in collaborative problem-solving, critical thinking, and decision-making, I am excited about the opportunity to contribute my practical skills and innovative solutions to your team.",
-        body: `Throughout my career as a Software Engineer, I have developed a keen ability to work effectively within teams, leveraging collective expertise to tackle complex technical challenges. My approach is grounded in a realistic understanding of project requirements, allowing me to devise solutions that are not only functional but also aligned with end-user needs.
-
-I pride myself on being a practical thinker, which has enabled me to consistently make informed decisions that drive project success. My experiences have equipped me with the ability to analyze intricate systems and collaborate with peers, leading to the successful implementation of software that meets stringent performance criteria and user expectations.
-
-I am particularly drawn to your organization because of its commitment to innovation and excellence. I am eager to bring my skills in collaboration and critical analysis to your team and contribute to projects that make a meaningful impact.`,
-        callToAction:
-            "Thank you for considering my application. I look forward to the possibility of discussing how I can support your organization's goals and contribute to exciting new initiatives.",
-        closing: "Sincerely,",
-        signature: `${initialFirstName} ${initialLastName}`,
+        firstName: '',
+        lastName: '',
+        profession: '',
+        city: '',
+        state: '',
+        phone: '',
+        email: '',
+        date: '',
+        recipientFirstName: '',
+        recipientLastName: '',
+        companyName: '',
+        recipientCity: '',
+        recipientState: '',
+        recipientPhone: '',
+        recipientEmail: '',
+        subject: '',
+        greeting: '',
+        opening: '',
+        body: '',
+        callToAction: '',
+        closing: '',
+        signature: '',
     });
+
+    const [provinces, setProvinces] = useState<Province[]>([]);
+    const [districts, setDistricts] = useState<District[]>([]);
+    const [recipientDistricts, setRecipientDistricts] = useState<District[]>([]);
+
+    useEffect(() => {
+        const initializeFromLocalStorage = async () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            // If clId or templateId are in the URL, it's a manual flow. Let other useEffects handle it.
+            if (urlParams.has('clId') || urlParams.has('templateId')) {
+                return;
+            }
+
+            const savedDataString = localStorage.getItem('coverLetterData');
+            if (savedDataString) {
+                const coverLetterData = JSON.parse(savedDataString);
+
+                // Populate letter data from localStorage for the AI flow
+                const mappedData: LetterData = {
+                    firstName: coverLetterData.firstName || '',
+                    lastName: coverLetterData.lastName || '',
+                    profession: coverLetterData.profession || '',
+                    city: coverLetterData.city || '',
+                    state: coverLetterData.state || '',
+                    phone: coverLetterData.phone || '',
+                    email: coverLetterData.email || '',
+                    date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+                    recipientFirstName: coverLetterData.recipientFirstName || '',
+                    recipientLastName: coverLetterData.recipientLastName || '',
+                    companyName: coverLetterData.targetCompany || coverLetterData.companyName || '',
+                    recipientCity: coverLetterData.recipientCity || '',
+                    recipientState: coverLetterData.recipientState || '',
+                    recipientPhone: coverLetterData.recipientPhone || '',
+                    recipientEmail: coverLetterData.recipientEmail || '',
+                    subject: coverLetterData.targetJobTitle ? `Application for the ${coverLetterData.targetJobTitle} position` : 'Job Application',
+                    greeting: `Dear ${coverLetterData.recipientFirstName ? coverLetterData.recipientFirstName + ' ' + coverLetterData.recipientLastName : 'Hiring Manager'},`,
+                    opening: '', // AI will populate this
+                    body: `Based on the provided job description for the ${coverLetterData.targetJobTitle || 'position'}, my skills in [Skill 1] and [Skill 2], combined with my strengths in ${coverLetterData.strengths?.join(', ')}, make me a strong candidate. My work style is ${coverLetterData.workStyle}.`, // Placeholder for AI
+                    callToAction: '', // AI will populate this
+                    closing: 'Sincerely,',
+                    signature: `${coverLetterData.firstName || ''} ${coverLetterData.lastName || ''}`.trim(),
+                };
+                setLetterData(mappedData);
+
+                // Pre-load districts for user and recipient city
+                const allProvinces = await getProvinces();
+                if (mappedData.city) {
+                    const selectedProvince = allProvinces.find(p => p.name === mappedData.city);
+                    if (selectedProvince) {
+                        const districtData = await getDistrictsByProvinceCode(selectedProvince.code);
+                        setDistricts(districtData);
+                    }
+                }
+                if (mappedData.recipientCity) {
+                    const selectedProvince = allProvinces.find(p => p.name === mappedData.recipientCity);
+                    if (selectedProvince) {
+                        const districtData = await getDistrictsByProvinceCode(selectedProvince.code);
+                        setRecipientDistricts(districtData);
+                    }
+                }
+
+                // Fetch and set the template from localStorage data
+                if (coverLetterData.templateId) {
+                    try {
+                        const data = await getCLTemplateById(coverLetterData.templateId);
+                        if (data) {
+                            setSelectedTemplateData(data);
+                            setTemplateName(data.title.toLowerCase() as TemplateType);
+                        }
+                    } catch (error) {
+                        console.error("Failed to fetch CL template from localStorage data:", error);
+                    }
+                }
+
+                // Clear the local storage after using the data to prevent re-populating on refresh
+                localStorage.removeItem('coverLetterData');
+            }
+        };
+
+        initializeFromLocalStorage();
+    }, []); // Run only once on mount, after other initializations
+
+    useEffect(() => {
+        const fetchClData = async () => {
+            if (clId) {
+                try {
+                    const clData = await getCLById(clId);
+                    if (clData) {
+                        setLetterData(clData.data);
+                        const template = clData.templateId as CLTemplate;
+                        setSelectedTemplateData(template);
+                        setTemplateName(template.title.toLowerCase() as TemplateType);
+                    }
+                } catch (error) {
+                    console.error("Failed to fetch CL data:", error);
+                }
+            }
+        };
+
+        const fetchTemplateData = async () => {
+            if (templateId) {
+                try {
+                    const data = await getCLTemplateById(templateId);
+                    if (data) {
+                        setSelectedTemplateData(data);
+                        setTemplateName(data.title.toLowerCase() as TemplateType);
+                    }
+                } catch (error) {
+                    console.error("Failed to fetch CL template:", error);
+                }
+            }
+        };
+
+        if (clId) {
+            fetchClData();
+        } else {
+            fetchTemplateData();
+        }
+    }, [clId, templateId]);
+
+    const getInitialData = () => {
+        if (!selectedTemplateData || !selectedTemplateData.data) {
+            const firstName = initialFirstName || '';
+            const lastName = initialLastName || '';
+            return { firstName, lastName, profession: '', city: '', state: '', phone: '', email: '', date: '', recipientFirstName: '', recipientLastName: '', companyName: '', recipientCity: '', recipientState: '', recipientPhone: '', recipientEmail: '', subject: '', greeting: '', opening: '', body: '', callToAction: '', closing: '', signature: `${firstName} ${lastName}`.trim() };
+        }
+
+        const baseData = selectedTemplateData.data;
+        const firstName = initialFirstName || baseData.firstName;
+        const lastName = initialLastName || baseData.lastName;
+
+        return {
+            ...baseData,
+            firstName,
+            lastName,
+            signature: `${firstName} ${lastName}`,
+        };
+    };
+
+    useEffect(() => {
+        if (!clId) {
+            setLetterData(getInitialData());
+        }
+    }, [selectedTemplateData, initialFirstName, initialLastName, clId]);
 
     const [activeSection, setActiveSection] = useState<string | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [tempData, setTempData] = useState<Partial<LetterData>>({});
+    const [isSaving, setIsSaving] = useState(false);
+
+    const saveCoverLetter = async (clDataToSave: LetterData) => {
+        if (isSaving) return;
+        setIsSaving(true);
+        try {
+            if (clId) {
+                // Update existing CL
+                await updateCL(clId, { data: clDataToSave });
+                alert('Cover letter updated successfully!');
+                router.push('/myDocuments');
+            } else if (templateId) {
+                // Create new CL
+                const newCL: CreateCLDto = {
+                    templateId: templateId,
+                    title: "Untitled Cover Letter",
+                    data: clDataToSave,
+                    isSaved: true,
+                };
+
+                await createCL(newCL);
+                localStorage.removeItem('pendingCL');
+                alert('Cover letter saved successfully!');
+                router.push('/myDocuments');
+            } else {
+                alert("Template not selected!");
+            }
+        } catch (error) {
+            console.error("Failed to save cover letter:", error);
+            alert("Failed to save cover letter. Please try again.");
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleFinishLetter = () => {
+        const token = Cookies.get('token');
+        if (!token) {
+            if (!templateId) {
+                alert("Please select a template first.");
+                router.push('/clTemplate');
+                return;
+            }
+            const pendingCL = {
+                letterData,
+                templateId,
+            };
+            localStorage.setItem('pendingCL', JSON.stringify(pendingCL));
+            router.push('/login');
+        } else {
+            saveCoverLetter(letterData);
+        }
+    };
 
     const handleCityChange = async (cityValue: string, cityField: keyof LetterData, districtField: keyof LetterData) => {
         setTempData(prev => ({
@@ -96,12 +282,24 @@ I am particularly drawn to your organization because of its commitment to innova
             const selectedProvince = provinces.find(p => p.name === cityValue);
             if (selectedProvince) {
                 const districtData = await getDistrictsByProvinceCode(selectedProvince.code);
-                setDistricts(districtData);
+                if (cityField === 'city') {
+                    setDistricts(districtData);
+                } else if (cityField === 'recipientCity') {
+                    setRecipientDistricts(districtData);
+                }
             } else {
-                setDistricts([]);
+                if (cityField === 'city') {
+                    setDistricts([]);
+                } else if (cityField === 'recipientCity') {
+                    setRecipientDistricts([]);
+                }
             }
         } else {
-            setDistricts([]);
+            if (cityField === 'city') {
+                setDistricts([]);
+            } else if (cityField === 'recipientCity') {
+                setRecipientDistricts([]);
+            }
         }
     };
 
@@ -118,23 +316,18 @@ I am particularly drawn to your organization because of its commitment to innova
         setTempData(newTempData);
         setIsModalOpen(true);
 
-        let cityToFetch: string | undefined;
-        if (section === 'name') {
-            cityToFetch = newTempData.city;
-        } else if (section === 'recipient') {
-            cityToFetch = newTempData.recipientCity;
-        }
-
-        if (cityToFetch) {
-            const selectedProvince = provinces.find(p => p.name === cityToFetch);
+        if (section === 'name' && newTempData.city) {
+            const selectedProvince = provinces.find(p => p.name === newTempData.city);
             if (selectedProvince) {
                 const districtData = await getDistrictsByProvinceCode(selectedProvince.code);
                 setDistricts(districtData);
-            } else {
-                setDistricts([]);
             }
-        } else {
-            setDistricts([]);
+        } else if (section === 'recipient' && newTempData.recipientCity) {
+            const selectedProvince = provinces.find(p => p.name === newTempData.recipientCity);
+            if (selectedProvince) {
+                const districtData = await getDistrictsByProvinceCode(selectedProvince.code);
+                setRecipientDistricts(districtData);
+            }
         }
     };
 
@@ -168,10 +361,11 @@ I am particularly drawn to your organization because of its commitment to innova
         switch (activeSection) {
             case "name":
                 return (
-                    <div className="space-y-4">
+                    <div className="space-y-6">
+                        {/* Name Row */}
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1 uppercase">
+                                <label className="block text-sm font-medium text-gray-700 mb-2 uppercase">
                                     First Name
                                 </label>
                                 <input
@@ -181,11 +375,11 @@ I am particularly drawn to your organization because of its commitment to innova
                                         handleInputChange("firstName", e.target.value)
                                     }
                                     placeholder="e.g. John"
-                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1 uppercase">
+                                <label className="block text-sm font-medium text-gray-700 mb-2 uppercase">
                                     Last Name
                                 </label>
                                 <input
@@ -195,12 +389,14 @@ I am particularly drawn to your organization because of its commitment to innova
                                         handleInputChange("lastName", e.target.value)
                                     }
                                     placeholder="e.g. Smith"
-                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
                                 />
                             </div>
                         </div>
+
+                        {/* Profession */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1 uppercase">
+                            <label className="block text-sm font-medium text-gray-700 mb-2 uppercase">
                                 Profession
                             </label>
                             <input
@@ -209,45 +405,49 @@ I am particularly drawn to your organization because of its commitment to innova
                                 onChange={(e) =>
                                     handleInputChange("profession", e.target.value)
                                 }
-                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
                             />
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1 uppercase">
-                                City
-                            </label>
-                            <select
-                                value={tempData.city || ""}
-                                onChange={(e) => handleCityChange(e.target.value, "city", "state")}
-                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
-                            >
-                                <option value="">Select a City/Province</option>
-                                {provinces.map((p) => (
-                                    <option key={p.code} value={p.name}>{p.name}</option>
-                                ))}
-                            </select>
-                        </div>
+
+                        {/* City and State */}
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1 uppercase">
-                                    State/Province
+                                <label className="block text-sm font-medium text-gray-700 mb-2 uppercase">
+                                    City/Province
+                                </label>
+                                <select
+                                    value={tempData.city || ""}
+                                    onChange={(e) => handleCityChange(e.target.value, "city", "state")}
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
+                                >
+                                    <option value="">Select City/Province</option>
+                                    {provinces.map((p) => (
+                                        <option key={p.code} value={p.name}>{p.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2 uppercase">
+                                    District
                                 </label>
                                 <select
                                     value={tempData.state || ""}
                                     onChange={(e) => handleInputChange("state", e.target.value)}
-                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
                                     disabled={!tempData.city}
                                 >
-                                    <option value="">Select a District</option>
+                                    <option value="">Select District</option>
                                     {districts.map(d => (
                                         <option key={d.code} value={d.name}>{d.name}</option>
                                     ))}
                                 </select>
                             </div>
                         </div>
+
+                        {/* Phone and Email */}
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1 uppercase">
+                                <label className="block text-sm font-medium text-gray-700 mb-2 uppercase">
                                     Phone Number
                                 </label>
                                 <input
@@ -255,18 +455,19 @@ I am particularly drawn to your organization because of its commitment to innova
                                     value={tempData.phone || ""}
                                     onChange={(e) => handleInputChange("phone", e.target.value)}
                                     placeholder="e.g. +415-555-5555"
-                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1 uppercase">
+                                <label className="block text-sm font-medium text-gray-700 mb-2 uppercase">
                                     Email
                                 </label>
                                 <input
                                     type="email"
                                     value={tempData.email || ""}
                                     onChange={(e) => handleInputChange("email", e.target.value)}
-                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    placeholder="e.g. johnsmith@gmail.com"
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
                                 />
                             </div>
                         </div>
@@ -303,36 +504,36 @@ I am particularly drawn to your organization because of its commitment to innova
                             <label className="block text-sm font-medium text-gray-700 mb-1 uppercase">Company Name</label>
                             <input type="text" value={tempData.companyName || ""} onChange={(e) => handleInputChange("companyName", e.target.value)} placeholder="e.g. ACME Technologies" className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1 uppercase">City</label>
-                            <select
-                                value={tempData.recipientCity || ""}
-                                onChange={(e) => handleCityChange(e.target.value, "recipientCity", "recipientState")}
-                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
-                            >
-                                <option value="">Select a City/Province</option>
-                                {provinces.map((p) => (
-                                    <option key={p.code} value={p.name}>{p.name}</option>
-                                ))}
-                            </select>
-                        </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1 uppercase">State/Province</label>
+                                <label className="block text-sm font-medium text-gray-700 mb-1 uppercase">City/Province</label>
+                                <select
+                                    value={tempData.recipientCity || ""}
+                                    onChange={(e) => handleCityChange(e.target.value, "recipientCity", "recipientState")}
+                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                                >
+                                    <option value="">Select City/Province</option>
+                                    {provinces.map((p) => (
+                                        <option key={p.code} value={p.name}>{p.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1 uppercase">District</label>
                                 <select
                                     value={tempData.recipientState || ""}
                                     onChange={(e) => handleInputChange("recipientState", e.target.value)}
                                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
                                     disabled={!tempData.recipientCity}
                                 >
-                                    <option value="">Select a District</option>
-                                    {districts.map(d => (
+                                    <option value="">Select District</option>
+                                    {recipientDistricts.map(d => (
                                         <option key={d.code} value={d.name}>{d.name}</option>
                                     ))}
                                 </select>
                             </div>
                         </div>
-                         <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1 uppercase">Phone Number</label>
                                 <input type="text" value={tempData.recipientPhone || ""} onChange={(e) => handleInputChange("recipientPhone", e.target.value)} placeholder="e.g. +415-555-5555" className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
@@ -451,7 +652,7 @@ I am particularly drawn to your organization because of its commitment to innova
     };
 
     return (
-        <div className="bg-gray-100 min-h-screen mt-16">
+        <div className="min-h-screen mt-16">
             <div className="max-w-7xl mx-auto flex">
                 {/* Left Sidebar */}
                 <div className="w-80 bg-white p-6 shadow-sm">
@@ -497,9 +698,10 @@ I am particularly drawn to your organization because of its commitment to innova
                         </button>
                         <button
                             className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg font-medium transition-colors"
-                            onClick={() => router.push("/dashboard")}
+                            onClick={handleFinishLetter}
+                            disabled={isSaving}
                         >
-                            Finish Letter
+                            {isSaving ? "Saving..." : "Finish Letter"}
                         </button>
                     </div>
                 </div>
@@ -508,31 +710,38 @@ I am particularly drawn to your organization because of its commitment to innova
             {/* Edit Modal */}
             {isModalOpen && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-                        <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-xl font-semibold text-gray-800">
-                                Edit {sections.find((s) => s.id === activeSection)?.label}
-                            </h2>
+                    <div className="bg-white rounded-xl p-8 w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-2xl">
+                        <div className="flex justify-between items-start mb-6">
+                            <div>
+                                <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                                    {sections.find((s) => s.id === activeSection)?.label}
+                                </h2>
+                                {activeSection === "name" && (
+                                    <p className="text-gray-600">
+                                        Enter your contact information
+                                    </p>
+                                )}
+                            </div>
                             <button
                                 onClick={closeModal}
-                                className="text-gray-500 hover:text-gray-700"
+                                className="text-gray-400 hover:text-gray-600 transition-colors"
                             >
                                 <X className="w-6 h-6" />
                             </button>
                         </div>
-                        <div className="mb-6">{renderModalContent()}</div>
-                        <div className="flex justify-end space-x-4">
+                        <div className="mb-8">{renderModalContent()}</div>
+                        <div className="flex justify-between">
                             <button
                                 onClick={closeModal}
-                                className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                                className="px-8 py-3 text-gray-700 border border-gray-300 rounded-full hover:bg-gray-50 transition-colors font-medium"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={saveChanges}
-                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                                className="px-8 py-3 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-colors font-medium"
                             >
-                                Save Changes
+                                Save
                             </button>
                         </div>
                     </div>

@@ -1,10 +1,14 @@
-export const API_URL = "http://localhost:3001";
+export const API_URL = "http://localhost:8000/api";
+// export const API_URL = "http://localhost:3001";
 
+// API Endpoints
 export const API_ENDPOINTS = {
   AUTH: {
     LOGIN: "/auth/login",
     REGISTER: "/auth/register",
     PROFILE: "/auth/profile",
+    CHANGE_PASSWORD: "/auth/change-password",
+    CREATE: "/cover-letters"
   },
   ACCOUNTS: {
     VERIFY_EMAIL: "/accounts/verify-email",
@@ -32,14 +36,24 @@ export const API_ENDPOINTS = {
     UPDATE: (id: string) => `/cvs/${id}`,
     DELETE: (id: string) => `/cvs/${id}`,
     SHARE: (id: string) => `/cvs/${id}/share`,
-    TEMPLATES: "/cvTemplates"
+    TEMPLATES: "/cv-templates",
   },
   CL: {
-    TEMPLATES: "/clTemplates",
-    GET_BY_ID: (id: string) => `/clTemplates/${id}`
+    TEMPLATES: "/cl-templates",
+    TEMPLATE_BY_ID: (id: string) => `/cl-templates/${id}`,
+    GET_BY_ID: (id: string) => `/cover-letters/${id}`,
+    GET_ALL: "/cover-letters",
+    CREATE: "/cover-letters",
+    UPDATE: (id: string) => `/cover-letters/${id}`,
+    DELETE: (id: string) => `/cover-letters/${id}`,
   },
   CHAT: {
-    GET_CONVERSATION: (convId: string) => `/chat/messages/${convId}`,
+    GET_MESSAGES: (convId: string) => `/chat/messages/${convId}`,
+  },
+  CONVERSATION: {
+    GET_BY_ID: (convId: string) => `/conversations/${convId}`,
+    GET_ALL: "/conversations",
+    CREATE: "/conversations",
   },
   JOB: {
     GET_ALL: "/jobs",
@@ -47,5 +61,14 @@ export const API_ENDPOINTS = {
     CREATE: "/jobs",
     UPDATE: (id: string) => `/jobs/${id}`,
     DELETE: (id: string) => `/jobs/${id}`,
+    COUNTBYPOSTINGDATE: (month: number, year: number) =>
+      `/jobs/count-by-posting-date/${month}/${year}`,
+  },
+  NOTIFICATION: {
+    GET_NOTIFICATIONS: "/notifications",
+  },
+  APPLYJOB: {
+    COUNTBYCREATEAT: (month: number, year: number) =>
+      `/apply-job/count-by-create-at/${month}/${year}`,
   },
 } as const;

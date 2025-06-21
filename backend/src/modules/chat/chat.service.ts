@@ -4,8 +4,6 @@ import { Model, Types } from "mongoose";
 import { Message } from "./schemas/message.schema";
 import { Conversation } from "./schemas/conversation.schema";
 import { SendMessageDto } from "./dto/send-message.dto";
-import { ConversationService } from "../conversation/conversation.service";
-import { UserDocument } from "../users/schemas/user.schema";
 import { UsersService } from "../users/users.service";
 
 @Injectable()
@@ -13,30 +11,58 @@ export class ChatService {
   constructor(
     @InjectModel(Message.name) private messageModel: Model<Message>,
     @InjectModel(Conversation.name) private convModel: Model<Conversation>,
-    private userService: UsersService
+    private userService: UsersService,
   ) {}
 
   async saveMessage(dto: SendMessageDto) {
     const conversationId = new Types.ObjectId(dto.conversationId);
     const senderId = new Types.ObjectId(dto.senderId);
+    const receiverId = new Types.ObjectId(dto.receiverId);
+
+    if (!conversationId || !senderId || !receiverId) {
+      throw new Error("Invalid conversationId or senderId or receiverId");
+    }
 
     // 1. Tạo tin nhắn mới
     const message = await this.messageModel.create({
       ...dto,
       conversationId,
       senderId,
+      receiverId,
     });
 
-    // 2. Cập nhật conversation
-    await this.convModel.findByIdAndUpdate(conversationId, {
-      $set: {
-        lastMessage: message._id,
-        updatedAt: new Date(),
-      },
-      $inc: {
-        unreadCount: 1,
-      },
+    // 2. Tìm conversation
+    const conversation = await this.convModel.findById(conversationId);
+    if (!conversation) {
+      throw new Error("Conversation not found");
+    }
+
+    // 3. Cập nhật lastMessage
+    conversation.lastMessage = message._id as Types.ObjectId;
+
+    // 4. Cập nhật unreadCount cho người nhận
+    const receiverIdStr = receiverId.toString();
+    let found = false;
+
+    conversation.unreadCount = (conversation.unreadCount || []).map((entry) => {
+      if (entry.userId.toString() === receiverIdStr) {
+        found = true;
+        return {
+          userId: entry.userId,
+          count: entry.count + 1,
+        };
+      }
+      return entry;
     });
+
+    if (!found) {
+      conversation.unreadCount.push({
+        userId: receiverId,
+        count: 1,
+      });
+    }
+
+    await conversation.save();
 
     return message;
   }
@@ -49,28 +75,19 @@ export class ChatService {
       .exec();
   }
 
-  async getConversationDetail(conversationId: string, accountId: string) {
-    const user: UserDocument =
-      await this.userService.getUserByAccountId(accountId);
-
-    if (!user || !user._id) {
-      throw new Error("User not found or invalid user ID");
+  async readConversation(conversationId: string, userId: string) {
+    const conversation = await this.convModel.findById(conversationId);
+    if (!conversation) {
+      throw new Error("Conversation not found");
     }
-    const lastMessage = await this.messageModel
-      .findOne({ conversationId: new Types.ObjectId(conversationId) })
-      .sort({ createdAt: -1 }) // message mới nhất
-      .populate("senderId", "name") // nếu cần
-      .lean();
-
-    const unreadCount = await this.messageModel.countDocuments({
-      conversationId: new Types.ObjectId(conversationId),
-      readBy: { $ne: user._id },
-      senderId: { $ne: user._id }, // chỉ đếm tin từ người kia
+    // Reset unreadCount cho user này
+    conversation.unreadCount = (conversation.unreadCount || []).map((entry) => {
+      if (entry.userId.toString() === userId) {
+        return { userId: entry.userId, count: 0 };
+      }
+      return entry;
     });
-
-    return {
-      lastMessage,
-      unreadCount,
-    };
+    await conversation.save();
+    return conversation;
   }
 }

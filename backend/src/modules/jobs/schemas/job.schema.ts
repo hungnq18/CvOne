@@ -44,9 +44,6 @@ export class Job {
   responsibilities: string;
 
   @Prop()
-  company_id: Types.ObjectId;
-
-  @Prop()
   user_id: Types.ObjectId;
 }
 

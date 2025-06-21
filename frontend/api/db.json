@@ -2,10 +2,110 @@
   "cvTemplates": [
     {
       "id": "modern-1",
-      "imageUrl": "https://th.bing.com/th/id/OIP.GdDZiF0OCgYG8FQ7_yoxUwHaKi?rs=1&pid=ImgDetMain",
+      "imageUrl": "https://i.postimg.cc/FRnVxM3X/A-nh-ma-n-hi-nh-2025-06-19-lu-c-08-54-42.png",
       "title": "The Signature",
       "isRecommended": true,
       "data": {
+        "userData": {
+          "firstName": "Hoàng Văn",
+          "lastName": "Bách",
+          "professional": "Kỹ sư phần mềm",
+          "city": "Hà Nội",
+          "country": "Việt Nam",
+          "province": "Hà Nội",
+          "phone": "+84 912 345 678",
+          "email": "email@example.com",
+          "avatar": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQUbcmERWWtK-cjIiojfIK-Ee857Ld-GshI2g&s",
+          "summary": "Là một kỹ sư phần mềm năng động với hơn 5 năm kinh nghiệm trong việc phát triển các ứng dụng web phức tạp. ",
+          "skills": [
+            {
+              "name": "Frontend: React, Next.js, TypeScript, Tailwind CSS"
+            },
+            {
+              "name": "Công cụ: Git, Docker, Jira"
+            }
+          ],
+          "workHistory": [
+            {
+              "title": "Kỹ sư phần mềm cấp cao",
+              "company": "Công ty QuickTech",
+              "startDate": "2022-01",
+              "endDate": "Hiện tại",
+              "description": "Dẫn dắt phát triển các module backend sử dụng Node.js và MongoDB, cải thiện hiệu suất API 30%. Triển khai giao diện người dùng bằng React và Redux, tăng trải nghiệm người dùng. Hướng dẫn nhóm 3 lập trình viên cấp dưới trong các dự án quan trọng."
+            }
+          ],
+          "education": [
+            {
+              "startDate": "2018-09",
+              "endDate": "2022-06",
+              "major": "Kỹ thuật phần mềm",
+              "degree": "Bằng Giỏi",
+              "institution": "Trường Đại Học Quốc Gia"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "modern-2",
+      "imageUrl": "https://i.postimg.cc/vTqL3pnd/image.png",
+      "title": "The Vanguard",
+      "isRecommended": true,
+      "data": {
+        "userData": {
+          "firstName": "Hoàng Văn",
+          "lastName": "Bách",
+          "professional": "Kỹ sư phần mềm",
+          "city": "Hà Nội",
+          "country": "Việt Nam",
+          "province": "Hà Nội",
+          "phone": "+84 912 345 678",
+          "email": "email@example.com",
+          "avatar": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQUbcmERWWtK-cjIiojfIK-Ee857Ld-GshI2g&s",
+          "summary": "Là một kỹ sư phần mềm năng động với hơn 5 năm kinh nghiệm trong việc phát triển các ứng dụng web phức tạp. ",
+          "skills": [
+            {
+              "name": "Frontend: React, Next.js, TypeScript, Tailwind CSS"
+            },
+            {
+              "name": "Công cụ: Git, Docker, Jira"
+            }
+          ],
+          "workHistory": [
+            {
+              "title": "Kỹ sư phần mềm cấp cao",
+              "company": "Công ty QuickTech",
+              "startDate": "2022-01",
+              "endDate": "2023-12",
+              "description": "Dẫn dắt phát triển các module backend sử dụng Node.js và MongoDB, cải thiện hiệu suất API 30%. Triển khai giao diện người dùng bằng React và Redux, tăng trải nghiệm người dùng. Hướng dẫn nhóm 3 lập trình viên cấp dưới trong các dự án quan trọng."
+            },
+            {
+              "title": "Quản lý dự án",
+              "company": "Công ty TechSolutions",
+              "startDate": "2024-01",
+              "endDate": "Hiện tại",
+              "description": "Quản Lý dự án Kyomatcha và là người phụ trách chính trong việc phát triển ứng dụng web. Tạo và duy trì tài liệu dự án, bao gồm kế hoạch dự án, báo cáo tiến độ và tài liệu kỹ thuật. Phối hợp với các nhóm khác để đảm bảo tiến độ dự án và chất lượng sản phẩm."
+            }
+          ],
+          "education": [
+            {
+              "startDate": "2018-09",
+              "endDate": "2022-06",
+              "major": "Kỹ thuật phần mềm",
+              "degree": "Bằng Giỏi",
+              "institution": "Trường Đại Học Quốc Gia"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "cvs": [
+    {
+      "id": "cv_001",
+      "userId": "1",
+      "title": "Software Developer CV",
+      "content": {
         "userData": {
           "firstName": "Nguyen",
           "lastName": "Van A",
@@ -15,12 +115,21 @@
           "province": "Hanoi",
           "phone": "+84 912 345 678",
           "email": "vana@example.com",
-          "avatar": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTc38v-qLznWkdUNPXjE858zI06Og_JgVQvpg&s",
+          "avatar": "https://studiochupanhdep.com/Upload/Images/Album/anh-cv-02.jpg",
           "summary": "A passionate developer with 5 years of experience in full-stack development.",
           "skills": [
-            { "name": "JavaScript", "rating": 5 },
-            { "name": "React", "rating": 4 },
-            { "name": "Node.js", "rating": 4 }
+            {
+              "name": "JavaScript",
+              "rating": 5
+            },
+            {
+              "name": "React",
+              "rating": 4
+            },
+            {
+              "name": "Node.js",
+              "rating": 4
+            }
           ],
           "workHistory": [
             {
@@ -41,14 +150,19 @@
             }
           ]
         }
-      }
+      },
+      "isPublic": true,
+      "createdAt": "2025-06-06T10:00:00Z",
+      "updatedAt": "2025-06-06T10:30:00Z",
+      "templateId": "modern-1",
+      "isSaved": true,
+      "isFinalized": true
     },
     {
-      "id": "modern-2",
-      "imageUrl": "https://th.bing.com/th/id/OIP.GdDZiF0OCgYG8FQ7_yoxUwHaKi?rs=1&pid=ImgDetMain",
-      "title": "The Vanguard",
-      "isRecommended": false,
-      "data": {
+      "id": "cv_002",
+      "userId": "1",
+      "title": "Designer CV",
+      "content": {
         "userData": {
           "firstName": "Tran",
           "lastName": "Thi B",
@@ -58,53 +172,332 @@
           "province": "Ho Chi Minh",
           "phone": "+84 987 654 321",
           "email": "thib@example.com",
-          "avatar": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTc38v-qLznWkdUNPXjE858zI06Og_JgVQvpg&s",
-          "summary": "Creative UI/UX designer with 3 years of experience in web and mobile design.",
+          "avatar": "https://topstudio.com.vn/wp-content/uploads/2023/02/chup-hinh-chan-dung-cv-chuyen-nghiep-hcm-4.jpg",
+          "summary": "A passionate developer with 5 years of experience in full-stack development.",
           "skills": [
-            { "name": "Figma", "rating": 5 },
-            { "name": "Adobe XD", "rating": 4 },
-            { "name": "Photoshop", "rating": 4 }
+            {
+              "name": "JavaScript",
+              "rating": 5
+            },
+            {
+              "name": "React",
+              "rating": 4
+            },
+            {
+              "name": "Node.js",
+              "rating": 4
+            }
           ],
           "workHistory": [
             {
-              "title": "UI Designer",
-              "company": "Design Studio",
-              "startDate": "2021-01-01",
-              "endDate": "2023-01-01",
-              "description": "Created user interfaces for web and mobile applications."
+              "title": "Frontend Developer",
+              "company": "ABC Corp",
+              "startDate": "2020-01-01",
+              "endDate": "2022-06-01",
+              "description": "Worked on UI/UX and SPA using React."
             }
           ],
           "education": [
             {
-              "startDate": "2017-09-01",
-              "endDate": "2021-06-30",
-              "major": "Graphic Design",
+              "startDate": "2016-09-01",
+              "endDate": "2020-06-30",
+              "major": "Computer Science",
               "degree": "Bachelor",
-              "institution": "HCM University of Fine Arts"
+              "institution": "FPT University"
             }
           ]
         }
-      }
-    }
-  ],
-  "cvs": [
-    {
-      "id": "cv_001",
-      "userId": "user_123456",
-      "title": "Software Developer CV",
-      "content": "{\"userData\":{\"firstName\":\"Nguyen\",\"lastName\":\"Van A\",\"professional\":\"Software Developer\",\"city\":\"Hanoi\",\"country\":\"Vietnam\",\"province\":\"Hanoi\",\"phone\":\"+84 912 345 678\",\"email\":\"vana@example.com\",\"avatar\":\"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTc38v-qLznWkdUNPXjE858zI06Og_JgVQvpg&s\",\"summary\":\"A passionate developer with 5 years of experience in full-stack development.\",\"skills\":[{\"name\":\"JavaScript\",\"rating\":5},{\"name\":\"React\",\"rating\":4},{\"name\":\"Node.js\",\"rating\":4}],\"workHistory\":[{\"title\":\"Frontend Developer\",\"company\":\"ABC Corp\",\"startDate\":\"2020-01-01\",\"endDate\":\"2022-06-01\",\"description\":\"Worked on UI/UX and SPA using React.\"}],\"education\":[{\"startDate\":\"2016-09-01\",\"endDate\":\"2020-06-30\",\"major\":\"Computer Science\",\"degree\":\"Bachelor\",\"institution\":\"FPT University\"}]}}",
+      },
       "isPublic": true,
       "createdAt": "2025-06-06T10:00:00Z",
-      "updatedAt": "2025-06-06T10:30:00Z"
+      "updatedAt": "2025-06-06T10:30:00Z",
+      "templateId": "modern-2",
+      "isSaved": true,
+      "isFinalized": true
+    },
+    {
+      "id": "dbbc",
+      "userId": "683d4acd7d964ee8cab05962",
+      "title": "CV for Hoàng Văn Bách",
+      "content": {
+        "userData": {
+          "firstName": "Hoàng Văn",
+          "lastName": "Bách",
+          "professional": "Kỹ sư phần mềm",
+          "city": "Hà Nội",
+          "country": "Việt Nam",
+          "province": "Hà Nội",
+          "phone": "+84 912 345 678",
+          "email": "email@example.com",
+          "avatar": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQUbcmERWWtK-cjIiojfIK-Ee857Ld-GshI2g&s",
+          "summary": "Là một kỹ sư phần mềm năng động với hơn 5 năm kinh nghiệm trong việc phát triển các ứng dụng web phức tạp. ",
+          "skills": [
+            {
+              "name": "Frontend: React, Next.js, TypeScript, Tailwind CSS"
+            },
+            {
+              "name": "Công cụ: Git, Docker, Jira"
+            }
+          ],
+          "workHistory": [
+            {
+              "title": "Kỹ sư phần mềm cấp cao",
+              "company": "Công ty QuickTech",
+              "startDate": "2022-01",
+              "endDate": "Hiện tại",
+              "description": "Dẫn dắt phát triển các module backend sử dụng Node.js và MongoDB, cải thiện hiệu suất API 30%. Triển khai giao diện người dùng bằng React và Redux, tăng trải nghiệm người dùng. Hướng dẫn nhóm 3 lập trình viên cấp dưới trong các dự án quan trọng."
+            }
+          ],
+          "education": [
+            {
+              "startDate": "2018-09",
+              "endDate": "2022-06",
+              "major": "Kỹ thuật phần mềm",
+              "degree": "Bằng Giỏi",
+              "institution": "Trường Đại Học Quốc Gia"
+            }
+          ]
+        }
+      },
+      "isPublic": false,
+      "createdAt": "2025-06-19T02:56:05.063Z",
+      "updatedAt": "2025-06-19T02:56:05.063Z",
+      "templateId": "modern-1",
+      "isSaved": true,
+      "isFinalized": false
+    },
+    {
+      "id": "7949",
+      "userId": "1",
+      "title": "CV for Hoàng Văn Bách",
+      "content": {
+        "userData": {
+          "firstName": "Hoàng Văn",
+          "lastName": "Bách",
+          "professional": "Kỹ sư phần mềm",
+          "city": "Hà Nội",
+          "country": "Việt Nam",
+          "province": "Hà Nội",
+          "phone": "+84 912 345 678",
+          "email": "email@example.com",
+          "avatar": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQUbcmERWWtK-cjIiojfIK-Ee857Ld-GshI2g&s",
+          "summary": "Là một kỹ sư phần mềm năng động với hơn 5 năm kinh nghiệm trong việc phát triển các ứng dụng web phức tạp. ",
+          "skills": [
+            {
+              "name": "Frontend: React, Next.js, TypeScript, Tailwind CSS"
+            },
+            {
+              "name": "Công cụ: Git, Docker, Jira"
+            }
+          ],
+          "workHistory": [
+            {
+              "title": "Kỹ sư phần mềm cấp cao",
+              "company": "Công ty QuickTech",
+              "startDate": "2022-01",
+              "endDate": "Hiện tại",
+              "description": "Dẫn dắt phát triển các module backend sử dụng Node.js và MongoDB, cải thiện hiệu suất API 30%. Triển khai giao diện người dùng bằng React và Redux, tăng trải nghiệm người dùng. Hướng dẫn nhóm 3 lập trình viên cấp dưới trong các dự án quan trọng."
+            }
+          ],
+          "education": [
+            {
+              "startDate": "2018-09",
+              "endDate": "2022-06",
+              "major": "Kỹ thuật phần mềm",
+              "degree": "Bằng Giỏi",
+              "institution": "Trường Đại Học Quốc Gia"
+            }
+          ]
+        }
+      },
+      "isPublic": false,
+      "createdAt": "2025-06-19T02:56:54.380Z",
+      "updatedAt": "2025-06-19T02:56:54.380Z",
+      "templateId": "modern-1",
+      "isSaved": true,
+      "isFinalized": false
+    },
+    {
+      "id": "61bf",
+      "userId": "1",
+      "title": "CV for Hoàng Văn Bách",
+      "content": {
+        "userData": {
+          "firstName": "Hoàng Văn",
+          "lastName": "Bách",
+          "professional": "Kỹ sư phần mềm",
+          "city": "Hà Nội",
+          "country": "Việt Nam",
+          "province": "Hà Nội",
+          "phone": "+84 912 345 678",
+          "email": "email@example.com",
+          "avatar": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQUbcmERWWtK-cjIiojfIK-Ee857Ld-GshI2g&s",
+          "summary": "Là một kỹ sư phần mềm năng động với hơn 5 năm kinh nghiệm trong việc phát triển các ứng dụng web phức tạp. ",
+          "skills": [
+            {
+              "name": "Frontend: React, Next.js, TypeScript, Tailwind CSS"
+            },
+            {
+              "name": "Công cụ: Git, Docker, Jira"
+            }
+          ],
+          "workHistory": [
+            {
+              "title": "Kỹ sư phần mềm cấp cao",
+              "company": "Công ty QuickTech",
+              "startDate": "2022-01",
+              "endDate": "2023-12",
+              "description": "Dẫn dắt phát triển các module backend sử dụng Node.js và MongoDB, cải thiện hiệu suất API 30%. Triển khai giao diện người dùng bằng React và Redux, tăng trải nghiệm người dùng. Hướng dẫn nhóm 3 lập trình viên cấp dưới trong các dự án quan trọng."
+            },
+            {
+              "title": "Quản lý dự án",
+              "company": "Công ty TechSolutions",
+              "startDate": "2024-01",
+              "endDate": "Hiện tại",
+              "description": "Quản Lý dự án Kyomatcha và là người phụ trách chính trong việc phát triển ứng dụng web. Tạo và duy trì tài liệu dự án, bao gồm kế hoạch dự án, báo cáo tiến độ và tài liệu kỹ thuật. Phối hợp với các nhóm khác để đảm bảo tiến độ dự án và chất lượng sản phẩm."
+            }
+          ],
+          "education": [
+            {
+              "startDate": "2018-09",
+              "endDate": "2022-06",
+              "major": "Kỹ thuật phần mềm",
+              "degree": "Bằng Giỏi",
+              "institution": "Trường Đại Học Quốc Gia"
+            }
+          ]
+        }
+      },
+      "isPublic": false,
+      "createdAt": "2025-06-20T12:08:52.058Z",
+      "updatedAt": "2025-06-20T12:08:52.058Z",
+      "templateId": "modern-2",
+      "isSaved": true,
+      "isFinalized": false
+    },
+    {
+      "id": "fc20",
+      "userId": "1",
+      "title": "CV for Hoàng Văn Bách",
+      "content": {
+        "userData": {
+          "firstName": "Hoàng Văn",
+          "lastName": "Bách",
+          "professional": "Kỹ sư phần mềm",
+          "city": "Hà Nội",
+          "country": "Việt Nam",
+          "province": "Hà Nội",
+          "phone": "+84 912 345 678",
+          "email": "email@example.com",
+          "avatar": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQUbcmERWWtK-cjIiojfIK-Ee857Ld-GshI2g&s",
+          "summary": "Là một kỹ sư phần mềm năng động với hơn 5 năm kinh nghiệm trong việc phát triển các ứng dụng web phức tạp. ",
+          "skills": [
+            {
+              "name": "Frontend: React, Next.js, TypeScript, Tailwind CSS"
+            },
+            {
+              "name": "Công cụ: Git, Docker, Jira"
+            }
+          ],
+          "workHistory": [
+            {
+              "title": "Kỹ sư phần mềm cấp cao",
+              "company": "Công ty QuickTech",
+              "startDate": "2022-01",
+              "endDate": "2023-12",
+              "description": "Dẫn dắt phát triển các module backend sử dụng Node.js và MongoDB, cải thiện hiệu suất API 30%. Triển khai giao diện người dùng bằng React và Redux, tăng trải nghiệm người dùng. Hướng dẫn nhóm 3 lập trình viên cấp dưới trong các dự án quan trọng."
+            },
+            {
+              "title": "Quản lý dự án",
+              "company": "Công ty TechSolutions",
+              "startDate": "2024-01",
+              "endDate": "Hiện tại",
+              "description": "Quản Lý dự án Kyomatcha và là người phụ trách chính trong việc phát triển ứng dụng web. Tạo và duy trì tài liệu dự án, bao gồm kế hoạch dự án, báo cáo tiến độ và tài liệu kỹ thuật. Phối hợp với các nhóm khác để đảm bảo tiến độ dự án và chất lượng sản phẩm."
+            }
+          ],
+          "education": [
+            {
+              "startDate": "2018-09",
+              "endDate": "2022-06",
+              "major": "Kỹ thuật phần mềm",
+              "degree": "Bằng Giỏi",
+              "institution": "Trường Đại Học Quốc Gia"
+            }
+          ]
+        }
+      },
+      "isPublic": false,
+      "createdAt": "2025-06-20T12:11:45.324Z",
+      "updatedAt": "2025-06-20T12:11:45.324Z",
+      "templateId": "modern-2",
+      "isSaved": true,
+      "isFinalized": false
+    },
+    {
+      "id": "bc7f",
+      "userId": "1",
+      "title": "CV for Hoàng Văn Bách",
+      "content": {
+        "userData": {
+          "firstName": "Hoàng Văn",
+          "lastName": "Bách",
+          "professional": "Kỹ sư phần mềm",
+          "city": "Hà Nội",
+          "country": "Việt Nam",
+          "province": "Hà Nội",
+          "phone": "+84 912 345 678",
+          "email": "email@example.com",
+          "avatar": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQUbcmERWWtK-cjIiojfIK-Ee857Ld-GshI2g&s",
+          "summary": "Là một kỹ sư phần mềm năng động với hơn 5 năm kinh nghiệm trong việc phát triển các ứng dụng web phức tạp. ",
+          "skills": [
+            {
+              "name": "Frontend: React, Next.js, TypeScript, Tailwind CSS"
+            },
+            {
+              "name": "Công cụ: Git, Docker, Jira"
+            }
+          ],
+          "workHistory": [
+            {
+              "title": "Kỹ sư phần mềm cấp cao",
+              "company": "Công ty QuickTech",
+              "startDate": "2022-01",
+              "endDate": "2023-12",
+              "description": "Dẫn dắt phát triển các module backend sử dụng Node.js và MongoDB, cải thiện hiệu suất API 30%. Triển khai giao diện người dùng bằng React và Redux, tăng trải nghiệm người dùng. Hướng dẫn nhóm 3 lập trình viên cấp dưới trong các dự án quan trọng."
+            },
+            {
+              "title": "Quản lý dự án",
+              "company": "Công ty TechSolutions",
+              "startDate": "2024-01",
+              "endDate": "Hiện tại",
+              "description": "Quản Lý dự án Kyomatcha và là người phụ trách chính trong việc phát triển ứng dụng web. Tạo và duy trì tài liệu dự án, bao gồm kế hoạch dự án, báo cáo tiến độ và tài liệu kỹ thuật. Phối hợp với các nhóm khác để đảm bảo tiến độ dự án và chất lượng sản phẩm."
+            }
+          ],
+          "education": [
+            {
+              "startDate": "2018-09",
+              "endDate": "2022-06",
+              "major": "Kỹ thuật phần mềm",
+              "degree": "Bằng Giỏi",
+              "institution": "Trường Đại Học Quốc Gia"
+            }
+          ]
+        }
+      },
+      "isPublic": false,
+      "createdAt": "2025-06-20T12:12:30.816Z",
+      "updatedAt": "2025-06-20T12:12:30.816Z",
+      "templateId": "modern-2",
+      "isSaved": true,
+      "isFinalized": false
     }
   ],
   "clTemplates": [
     {
       "id": "concept-cl",
-      "templateName": "concept",
       "imageUrl": "https://cdn-images.zety.com/templates/zety/cascade-24-duo-silver-dark-1414@1x.png",
       "title": "Concept",
-      "isRecommended": true,
+      "isRecommended": false,
       "data": {
         "firstName": "John",
         "lastName": "Smith",
@@ -124,7 +517,7 @@
         "subject": "RE: Software Engineer Position",
         "greeting": "Dear Ms. Bloomstein,",
         "opening": "I am writing to express my interest in the Software Engineer position at your esteemed company. With a strong background in collaborative problem-solving, critical thinking, and decision-making, I am excited about the opportunity to contribute my practical skills and innovative solutions to your team.",
-        "body": "Throughout my career as a Software Engineer, I have developed a keen ability to work effectively within teams, leveraging collective expertise to tackle complex technical challenges. My approach is grounded in a realistic understanding of project requirements, allowing me to devise solutions that are not only functional but also aligned with end-user needs.\\n\\nI pride myself on being a practical thinker, which has enabled me to consistently make informed decisions that drive project success. My experiences have equipped me with the ability to analyze intricate systems and collaborate with peers, leading to the successful implementation of software that meets stringent performance criteria and user expectations.\\n\\nI am particularly drawn to your organization because of its commitment to innovation and excellence. I am eager to bring my skills in collaboration and critical analysis to your team and contribute to projects that make a meaningful impact.",
+        "body": "Throughout my career as a Software Engineer, I have developed a keen ability to work effectively within teams, leveraging collective expertise to tackle complex technical challenges. My approach is grounded in a realistic understanding of project requirements, allowing me to devise solutions that are not only functional but also aligned with end-user needs.\\n\\nI pride myself on being a practical thinker, which has enabled me to consistently make informed decisions that drive project success. I am eager to bring my skills in collaboration and critical analysis to your team and contribute to projects that make a meaningful impact.",
         "callToAction": "Thank you for considering my application. I look forward to the possibility of discussing how I can support your organization's goals and contribute to exciting new initiatives.",
         "closing": "Sincerely,",
         "signature": "Duong Viet Duy"
@@ -132,10 +525,9 @@
     },
     {
       "id": "cascade-cl",
-      "templateName": "cascade",
       "imageUrl": "https://cdn-images.zety.com/templates/zety/concept-31-classic-silver-dark-1886@1x.png",
       "title": "Cascade",
-      "isRecommended": false,
+      "isRecommended": true,
       "data": {
         "firstName": "Jane",
         "lastName": "Doe",
@@ -163,7 +555,6 @@
     },
     {
       "id": "crisp-cl",
-      "templateName": "crisp",
       "imageUrl": "https://cdn-images.zety.com/templates/zety/crisp-36-classic-silver-dark-2099@1x.png",
       "title": "Crisp",
       "isRecommended": false,
@@ -195,29 +586,130 @@
   ],
   "cls": [
     {
-      "id": "cl_001",
       "clTemplateId": "concept-cl",
       "userId": "user_123456",
-      "title": "Software Engineer CL",
-      "content": "{\"userData\":{\"firstName\":\"Nguyen\",\"lastName\":\"Van A\",\"professional\":\"Software Developer\",\"city\":\"Hanoi\",\"country\":\"Vietnam\",\"province\":\"Hanoi\",\"phone\":\"+84 912 345 678\",\"email\":\"vana@example.com\",\"avatar\":\"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTc38v-qLznWkdUNPXjE858zI06Og_JgVQvpg&s\",\"summary\":\"A passionate developer with 5 years of experience in full-stack development.\",\"skills\":[{\"name\":\"JavaScript\",\"rating\":5},{\"name\":\"React\",\"rating\":4},{\"name\":\"Node.js\",\"rating\":4}],\"workHistory\":[{\"title\":\"Frontend Developer\",\"company\":\"ABC Corp\",\"startDate\":\"2020-01-01\",\"endDate\":\"2022-06-01\",\"description\":\"Worked on UI/UX and SPA using React.\"}],\"education\":[{\"startDate\":\"2016-09-01\",\"endDate\":\"2020-06-30\",\"major\":\"Computer Science\",\"degree\":\"Bachelor\",\"institution\":\"FPT University\"}]}}",
+      "title": "Untitled Cover Letter",
+      "content": {
+        "firstName": "John",
+        "lastName": "Smith",
+        "profession": "Software Engineer",
+        "city": "Hanoi",
+        "state": "Cau Giay",
+        "phone": "+84 123 456 789",
+        "email": "duongduy@example.com",
+        "date": "June 12, 2025",
+        "recipientFirstName": "Katherine",
+        "recipientLastName": "Bloomstein",
+        "companyName": "XYZ Company",
+        "recipientCity": "Flowerville",
+        "recipientState": "Ohio",
+        "recipientPhone": "123-456-7890",
+        "recipientEmail": "recipient@example.com",
+        "subject": "RE: Software Engineer Position",
+        "greeting": "Dear Ms. Bloomstein,",
+        "opening": "I am writing to express my interest in the Software Engineer position at your esteemed company. With a strong background in collaborative problem-solving, critical thinking, and decision-making, I am excited about the opportunity to contribute my practical skills and innovative solutions to your team.",
+        "body": "Throughout my career as a Software Engineer, I have developed a keen ability to work effectively within teams, leveraging collective expertise to tackle complex technical challenges. My approach is grounded in a realistic understanding of project requirements, allowing me to devise solutions that are not only functional but also aligned with end-user needs.\\n\\nI pride myself on being a practical thinker, which has enabled me to consistently make informed decisions that drive project success. I am eager to bring my skills in collaboration and critical analysis to your team and contribute to projects that make a meaningful impact.",
+        "callToAction": "Thank you for considering my application. I look forward to the possibility of discussing how I can support your organization's goals and contribute to exciting new initiatives.",
+        "closing": "Sincerely,",
+        "signature": "Duong Viet Duy"
+      },
+      "isSaved": false,
       "createdAt": "2025-06-06T10:00:00Z",
       "updatedAt": "2025-06-06T10:30:00Z"
     },
     {
-      "id": "cl_002",
       "clTemplateId": "cascade-cl",
       "userId": "user_123456",
-      "title": "Product Manager CL",
-      "content": "{\"userData\":{\"firstName\":\"Tran\",\"lastName\":\"Thi B\",\"professional\":\"UI/UX Designer\",\"city\":\"Ho Chi Minh\",\"country\":\"Vietnam\",\"province\":\"Ho Chi Minh\",\"phone\":\"+84 987 654 321\",\"email\":\"thib@example.com\",\"avatar\":\"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTc38v-qLznWkdUNPXjE858zI06Og_JgVQvpg&s\",\"summary\":\"Creative UI/UX designer with 3 years of experience in web and mobile design.\",\"skills\":[{\"name\":\"Figma\",\"rating\":5},{\"name\":\"Adobe XD\",\"rating\":4},{\"name\":\"Photoshop\",\"rating\":4}],\"workHistory\":[{\"title\":\"UI Designer\",\"company\":\"Design Studio\",\"startDate\":\"2021-01-01\",\"endDate\":\"2023-01-01\",\"description\":\"Created user interfaces for web and mobile applications.\"}],\"education\":[{\"startDate\":\"2017-09-01\",\"endDate\":\"2021-06-30\",\"major\":\"Graphic Design\",\"degree\":\"Bachelor\",\"institution\":\"HCM University of Fine Arts\"}]}}",
+      "title": "Untitled Cover Letter",
+      "content": {
+        "firstName": "Jane",
+        "lastName": "Doe",
+        "profession": "Product Manager",
+        "city": "Da Nang",
+        "state": "Hai Chau",
+        "phone": "+84 987 654 321",
+        "email": "jane.doe@example.com",
+        "date": "June 15, 2025",
+        "recipientFirstName": "Alan",
+        "recipientLastName": "Turing",
+        "companyName": "Innovate Inc.",
+        "recipientCity": "San Francisco",
+        "recipientState": "California",
+        "recipientPhone": "415-111-2222",
+        "recipientEmail": "hiring@innovate.com",
+        "subject": "Regarding the Product Manager Role",
+        "greeting": "Dear Mr. Turing,",
+        "opening": "It is with great enthusiasm that I submit my application for the Product Manager position at Innovate Inc., which I located on LinkedIn. Having followed your company's success in launching groundbreaking products, I am confident that my experience in product lifecycle management aligns with your team's goals.",
+        "body": "In my previous role at TechFlow, I was instrumental in increasing user engagement by 30% through data-driven feature prioritization and a user-centric design approach. I am adept at collaborating with cross-functional teams, including engineering, marketing, and sales, to ensure a cohesive product strategy and successful market launch.\\n\\nMy ability to translate complex technical concepts into clear, actionable plans has been a cornerstone of my career. I am passionate about creating products that not only meet market demands but also provide an exceptional user experience.",
+        "callToAction": "I am eager to discuss how my background in product development and strategic planning can benefit Innovate Inc. Thank you for your time and consideration.",
+        "closing": "Best regards,",
+        "signature": "Jane Doe"
+      },
+      "isSaved": false,
       "createdAt": "2025-06-06T10:00:00Z",
       "updatedAt": "2025-06-06T10:30:00Z"
+    },
+    {
+      "clTemplateId": "cascade-cl",
+      "userId": "1",
+      "title": "Untitled Cover Letter",
+      "content": {
+        "firstName": "Jane",
+        "lastName": "Doe",
+        "profession": "Product Manager",
+        "city": "Da Nang",
+        "state": "Hai Chau",
+        "phone": "+84 987 654 321",
+        "email": "jane.doe@example.com",
+        "date": "June 15, 2025",
+        "recipientFirstName": "Alan",
+        "recipientLastName": "Turing",
+        "companyName": "Innovate Inc.",
+        "recipientCity": "San Francisco",
+        "recipientState": "California",
+        "recipientPhone": "415-111-2222",
+        "recipientEmail": "hiring@innovate.com",
+        "subject": "Regarding the Product Manager Role",
+        "greeting": "Dear Mr. Turing,",
+        "opening": "It is with great enthusiasm that I submit my application for the Product Manager position at Innovate Inc., which I located on LinkedIn. Having followed your company's success in launching groundbreaking products, I am confident that my experience in product lifecycle management aligns with your team's goals.",
+        "body": "In my previous role at TechFlow, I was instrumental in increasing user engagement by 30% through data-driven feature prioritization and a user-centric design approach. I am adept at collaborating with cross-functional teams, including engineering, marketing, and sales, to ensure a cohesive product strategy and successful market launch.\\n\\nMy ability to translate complex technical concepts into clear, actionable plans has been a cornerstone of my career. I am passionate about creating products that not only meet market demands but also provide an exceptional user experience.",
+        "callToAction": "I am eager to discuss how my background in product development and strategic planning can benefit Innovate Inc. Thank you for your time and consideration.",
+        "closing": "Best regards,",
+        "signature": "Jane Doe"
+      },
+      "isSaved": true,
+      "createdAt": "2025-06-19T04:16:28.695Z",
+      "updatedAt": "2025-06-19T04:16:28.695Z"
     }
   ],
-  
-  
   "appliedJobs": [
-    { "id": "apply1", "job_id": "job1", "user_id": "user1", "cv_id": "cv1", "coverletter_id": "cover1", "status": "Applied", "submit_at": "2025-06-04" },
-    { "id": "apply2", "job_id": "job2", "user_id": "user2", "cv_id": "cv2", "coverletter_id": "cover2", "status": "Interview Scheduled", "submit_at": "2025-06-03" }
+    {
+      "id": "665fa2c2b5c69a4b0c1a1a11",
+      "job_id": "665f98a3a0d5e6a7b8d12345",
+      "user_id": "665f99b4c8e8c3b7d9e67890",
+      "cv_id": "665f9abc1b2c3d4e5f012345",
+      "coverletter_id": "665f9def234567890abcdef1",
+      "status": "pending",
+      "submit_at": "2025-06-18T14:35:00.000Z"
+    },
+    {
+      "id": "665fa2c2b5c69a4b0c1a1a12",
+      "job_id": "665f98a3a0d5e6a7b8d12346",
+      "user_id": "665f99b4c8e8c3b7d9e67891",
+      "cv_id": "665f9abc1b2c3d4e5f012346",
+      "coverletter_id": "665f9def234567890abcdef2",
+      "status": "accepted",
+      "submit_at": "2025-06-17T10:15:00.000Z"
+    },
+    {
+      "id": "665fa2c2b5c69a4b0c1a1a13",
+      "job_id": "665f98a3a0d5e6a7b8d12347",
+      "user_id": "665f99b4c8e8c3b7d9e67892",
+      "cv_id": "665f9abc1b2c3d4e5f012347",
+      "coverletter_id": "665f9def234567890abcdef3",
+      "status": "rejected",
+      "submit_at": "2025-06-16T09:00:00.000Z"
+    }
   ],
   "userCVs": [
     {
@@ -226,14 +718,25 @@
       "image": "https://i-vn2.joboko.com/blogs/img/va/2021/11/16/anh-cv-nen-de-anh-gi-1.jpg",
       "user_id": "user1",
       "description": "CV for web developer role",
-      "languages": ["English", "Vietnamese"],
+      "languages": [
+        "English",
+        "Vietnamese"
+      ],
       "create_at": "2025-06-01",
       "is_public": true,
       "templateCV_id": "template1",
       "heading": "Web Developer Resume",
-      "education": ["BSc Computer Science - XYZ University"],
-      "work_history": ["Web Developer at Tech Corp (2023-2025)"],
-      "skill": ["React", "Node.js", "TypeScript"],
+      "education": [
+        "BSc Computer Science - XYZ University"
+      ],
+      "work_history": [
+        "Web Developer at Tech Corp (2023-2025)"
+      ],
+      "skill": [
+        "React",
+        "Node.js",
+        "TypeScript"
+      ],
       "summary": "Experienced web developer with 3+ years in React and Node.js",
       "finalize": true
     },
@@ -243,19 +746,28 @@
       "image": "https://i-vn2.joboko.com/blogs/img/va/2021/11/16/anh-cv-nen-de-anh-gi-1.jpg",
       "user_id": "user2",
       "description": "CV for UI/UX designer role",
-      "languages": ["English"],
+      "languages": [
+        "English"
+      ],
       "create_at": "2025-05-30",
       "is_public": false,
       "templateCV_id": "template2",
       "heading": "UI/UX Designer Resume",
-      "education": ["BA Design - ABC University"],
-      "work_history": ["Designer at Design Studio (2022-2025)"],
-      "skill": ["Figma", "Adobe XD"],
+      "education": [
+        "BA Design - ABC University"
+      ],
+      "work_history": [
+        "Designer at Design Studio (2022-2025)"
+      ],
+      "skill": [
+        "Figma",
+        "Adobe XD"
+      ],
       "summary": "Creative designer with expertise in UI/UX",
       "finalize": false
     }
   ],
-  "jobs": [ 
+  "jobs": [
     {
       "Experience": "5 to 15 Years",
       "Qualifications": "M.Tech",

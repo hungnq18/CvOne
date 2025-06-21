@@ -3,7 +3,7 @@
     align-items: center;
     width: 240px;
     height: 36px;
-    background-color: #4CAF50;
+    background-color: #058ac3;
     border-radius: 18px;
     box-shadow: 0 2px 8px rgba(191, 232, 193, 0.2);
     overflow: hidden;
@@ -74,8 +74,8 @@
 }
 
 .custom-search:hover {
-    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
-    background-color: #45a049;
+    box-shadow: 0 4px 12px rgba(5, 138, 195, 0.3);
+    background-color: #058ac3;
 }
 
 .custom-search:hover #search-icon-circle {
@@ -115,9 +115,9 @@
     align-items: center;
     width: 240px;
     height: 40px;
-    background-color: #4CAF50;
+    background-color: #058ac3;
     border-radius: 20px;
-    box-shadow: 0 2px 8px rgba(76, 175, 80, 0.2);
+    box-shadow: 0 2px 8px rgba(5, 138, 195, 0.2);
     overflow: hidden;
     transition: all 0.3s ease;
 }
@@ -162,8 +162,8 @@
 
 /* Hover effects */
 .custom-search:hover {
-    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
-    background-color: #45a049;
+    box-shadow: 0 4px 12px rgba(5, 138, 195, 0.3);
+    background-color: #058ac3;
 }
 
 .custom-search:hover #search-icon-circle {

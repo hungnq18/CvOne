@@ -25,7 +25,7 @@ export class AuthController {
   constructor(
     private readonly accountsService: AccountsService,
     private readonly jwtService: JwtService,
-    private readonly authService: AuthService
+    private readonly authService: AuthService,
   ) {}
 
   @Post("register") //register
@@ -74,8 +74,11 @@ export class AuthController {
   @Post("change-password")
   async changePassword(
     @Request() req,
-    @Body() changePasswordDto: ChangePasswordDto
+    @Body() changePasswordDto: ChangePasswordDto,
   ) {
-    return this.authService.changePassword(req.user.id, changePasswordDto);
+    return this.authService.changePassword(
+      req.user.account._id,
+      changePasswordDto,
+    );
   }
 }

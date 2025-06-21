@@ -30,6 +30,7 @@ const translations = {
     googleButton: "Sign in with Google",
     noAccount: "Don't have an account?",
     registerLink: "Register now",
+    fogetPassword: "Forgot password?",
     loginSuccess: "Login successful!",
     loginFailed: "Login failed",
     invalidCredentials: "Invalid credentials",
@@ -49,6 +50,7 @@ const translations = {
     googleButton: "Đăng nhập với Google",
     noAccount: "Chưa có tài khoản?",
     registerLink: "Đăng ký ngay",
+    fogetPassword: "Quên mật khẩu?",
     loginSuccess: "Đăng nhập thành công!",
     loginFailed: "Đăng nhập thất bại",
     invalidCredentials: "Thông tin đăng nhập không chính xác",
@@ -113,6 +115,10 @@ export function useLoginForm() {
       // Decode token để lấy role
       const decoded: DecodedToken = jwtDecode(access_token);
 
+      // Emit custom events để trigger re-render của icon components
+      window.dispatchEvent(new CustomEvent('loginSuccess'));
+      window.dispatchEvent(new CustomEvent('authChange'));
+
       toast({
         title: t.loginSuccess,
         description: `Welcome back, ${formData.email}!`,
@@ -123,7 +129,7 @@ export function useLoginForm() {
       } else if (decoded.role === "user") {
         router.push("/userDashboard");
       } else if (decoded.role === "hr") {
-        router.push("/hr");
+        router.push("/hr/dashboard");
       } else {
         router.push("/error");
       }
@@ -154,4 +160,4 @@ export function useLoginForm() {
     handleGoogleLogin,
     setShowPassword
   }
-} 
+}

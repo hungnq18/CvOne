@@ -14,8 +14,7 @@ const RegisterWrapper = styled.div`
   align-items: center;
   justify-content: center;
   background: #f0f0f0;
-  margin-top: 90px;
-  padding: 50px 0;
+  padding: 100px 0 50px 0;
 `
 
 const RegisterContainer = styled.div`
@@ -206,6 +205,7 @@ export default function RegisterPage() {
                     value={formData.first_name}
                     onChange={handleInputChange}
                     required
+                    style={{ backgroundColor: "#f5f5f5" }}
                   />
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
@@ -217,6 +217,7 @@ export default function RegisterPage() {
                     value={formData.last_name}
                     onChange={handleInputChange}
                     required
+                    style={{ backgroundColor: "#f5f5f5" }}
                   />
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
@@ -228,6 +229,7 @@ export default function RegisterPage() {
                     value={formData.email}
                     onChange={handleInputChange}
                     required
+                    style={{ backgroundColor: "#f5f5f5" }}
                   />
                 </div>
                 <PasswordWrapper>
@@ -240,6 +242,7 @@ export default function RegisterPage() {
                       value={formData.password}
                       onChange={handleInputChange}
                       required
+                      style={{ backgroundColor: "#f5f5f5" }}
                     />
                     <EyeIcon onClick={() => setShowPassword(!showPassword)}>
                       {showPassword ? <FaEyeSlash /> : <FaEye />}
@@ -256,6 +259,7 @@ export default function RegisterPage() {
                       value={formData.confirmPassword}
                       onChange={handleInputChange}
                       required
+                      style={{ backgroundColor: "#f5f5f5" }}
                     />
                     <EyeIcon onClick={() => setShowConfirmPassword(!showConfirmPassword)}>
                       {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
