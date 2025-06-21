@@ -178,7 +178,7 @@ const navigationItems = {
       },
       {
         name: "Cover Letter",
-        href: "/chooseCLTemplate",
+        href: "/clTemplate",
       },
       {
         name: "My Jobs",
