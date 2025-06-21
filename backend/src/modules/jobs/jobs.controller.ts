@@ -33,7 +33,7 @@ export class JobsController {
   @UseGuards(JwtAuthGuard)
   @Post()
   create(@Body() createJobDto: CreateJobDto, @Request() req) {
-    const accountId = req.user?.id;
+    const accountId = req.user?.account._id;
     if (!accountId) {
       throw new UnauthorizedException("Invalid user");
     }

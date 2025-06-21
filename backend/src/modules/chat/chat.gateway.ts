@@ -21,13 +21,12 @@ export class ChatGateway {
     private readonly notificationsService: NotificationsService,
     private readonly notificationsGateway: NotificationsGateway,
     private readonly convModel: ConversationService
-
   ) {}
 
   @SubscribeMessage("sendMessage")
   async handleSendMessage(
     @MessageBody() dto: SendMessageDto,
-    @ConnectedSocket() client: Socket,
+    @ConnectedSocket() client: Socket
   ) {
     const message = await this.chatService.saveMessage(dto);
 
@@ -37,7 +36,7 @@ export class ChatGateway {
   @SubscribeMessage("joinRoom")
   handleJoinRoom(
     @MessageBody() roomId: string,
-    @ConnectedSocket() client: Socket,
+    @ConnectedSocket() client: Socket
   ) {
     client.join(roomId);
   }
@@ -67,7 +66,7 @@ export class ChatGateway {
       type: string;
       link?: string;
     },
-    @ConnectedSocket() client: Socket,
+    @ConnectedSocket() client: Socket
   ) {
     const notification = await this.notificationsService.createNotification(
       {
@@ -76,23 +75,10 @@ export class ChatGateway {
         type: data.type,
         link: data.link,
       },
-      data.userId,
+      data.userId
     );
 
     // Gửi thông báo realtime tới người dùng cụ thể
     this.notificationsGateway.sendNotificationToUser(data.userId, notification);
-  }
-
-  @SubscribeMessage("readConversation")
-  async handleReadConversation(
-    @MessageBody() data: { conversationId: string; userId: string },
-  ) {
-    const { conversationId, userId } = data;
-    await this.chatService.readConversation(conversationId, userId);
-    // Optional: emit update về client để sync UI
-    this.server.to(conversationId).emit("unreadReset", {
-      userId,
-      conversationId,
-    });
   }
 }
