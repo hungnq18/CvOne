@@ -1,7 +1,7 @@
 "use client";
 
-import { useRouter, useSearchParams } from 'next/navigation';
-import { useState } from "react";
+import { useRouter } from 'next/navigation';
+import { useState, useEffect } from "react";
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 
 const workStyles = [
@@ -33,8 +33,17 @@ const workStyles = [
 
 export default function WorkStylePage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
+
+  useEffect(() => {
+    const savedDataString = localStorage.getItem('coverLetterData');
+    if (savedDataString) {
+        const coverLetterData = JSON.parse(savedDataString);
+        if (coverLetterData.workStyle) {
+            setSelectedStyle(coverLetterData.workStyle);
+        }
+    }
+  }, []);
 
   const handleBack = () => {
     router.back();
@@ -43,9 +52,13 @@ export default function WorkStylePage() {
   const handleContinue = () => {
     if (!selectedStyle) return;
 
-    const currentParams = new URLSearchParams(searchParams.toString());
-    currentParams.append('workStyle', selectedStyle);
-    router.push(`/work-history?${currentParams.toString()}`);
+    const savedDataString = localStorage.getItem('coverLetterData');
+    const coverLetterData = savedDataString ? JSON.parse(savedDataString) : {};
+
+    const updatedData = { ...coverLetterData, workStyle: selectedStyle };
+    localStorage.setItem('coverLetterData', JSON.stringify(updatedData));
+
+    router.push(`/work-history`);
   };
 
   return (

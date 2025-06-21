@@ -44,7 +44,7 @@ const InputField = ({
                     <select
                         value={formData[field as keyof typeof formData]}
                         onChange={(e) => {
-                            if (field === 'city') {
+                            if (field === 'recipientCity') {
                                 handleProvinceChange(e.target.value);
                             } else {
                                 handleInputChange(field, e.target.value);
@@ -52,7 +52,7 @@ const InputField = ({
                         }}
                         className={`w-full px-4 py-3 border rounded-lg bg-white appearance-none pr-10 focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors[field] ? 'border-red-500' : 'border-gray-300'
                             }`}
-                        disabled={loading || (field === 'state' && !selectedProvinceCode)}
+                        disabled={loading || (field === 'recipientState' && !selectedProvinceCode)}
                     >
                         <option value="">{placeholder}</option>
                         {options.map(option => (
@@ -78,18 +78,17 @@ const InputField = ({
     );
 };
 
-function PersonalInfoContent() {
+function RecipentInfoContent() {
     const router = useRouter();
-    const searchParams = useSearchParams();
 
     const [formData, setFormData] = useState({
-        firstName: '',
-        lastName: '',
-        profession: '',
-        city: '',
-        state: '',
-        phone: '',
-        email: ''
+        recipientFirstName: '',
+        recipientLastName: '',
+        companyName: '',
+        recipientCity: '',
+        recipientState: '',
+        recipientPhone: '',
+        recipientEmail: ''
     });
 
     const [errors, setErrors] = useState<{[key: string]: string}>({});
@@ -119,33 +118,27 @@ function PersonalInfoContent() {
     useEffect(() => {
         if (provinces.length > 0) {
             const savedDataString = localStorage.getItem('coverLetterData');
-            let coverLetterData = savedDataString ? JSON.parse(savedDataString) : {};
+            if (savedDataString) {
+                const coverLetterData = JSON.parse(savedDataString);
+                setFormData({
+                    recipientFirstName: coverLetterData.recipientFirstName || '',
+                    recipientLastName: coverLetterData.recipientLastName || '',
+                    companyName: coverLetterData.companyName || '',
+                    recipientCity: coverLetterData.recipientCity || '',
+                    recipientState: coverLetterData.recipientState || '',
+                    recipientPhone: coverLetterData.recipientPhone || '',
+                    recipientEmail: coverLetterData.recipientEmail || ''
+                });
 
-            const templateId = searchParams.get('templateId');
-            if (templateId) {
-                coverLetterData.templateId = templateId;
-            }
-
-            setFormData({
-                firstName: coverLetterData.firstName || '',
-                lastName: coverLetterData.lastName || '',
-                profession: coverLetterData.profession || '',
-                city: coverLetterData.city || '',
-                state: coverLetterData.state || '',
-                phone: coverLetterData.phone || '',
-                email: coverLetterData.email || ''
-            });
-
-            if (coverLetterData.city) {
-                const selectedProvince = provinces.find(p => p.name === coverLetterData.city);
-                if (selectedProvince) {
-                    setSelectedProvinceCode(selectedProvince.code);
+                if (coverLetterData.recipientCity) {
+                    const selectedProvince = provinces.find(p => p.name === coverLetterData.recipientCity);
+                    if (selectedProvince) {
+                        setSelectedProvinceCode(selectedProvince.code);
+                    }
                 }
             }
-
-            localStorage.setItem('coverLetterData', JSON.stringify(coverLetterData));
         }
-    }, [provinces, searchParams]);
+    }, [provinces]);
 
     // Load districts when province changes
     useEffect(() => {
@@ -184,19 +177,20 @@ function PersonalInfoContent() {
         const selectedProvince = provinces.find(p => p.name === value);
         setSelectedProvinceCode(selectedProvince ? selectedProvince.code : null);
 
-        handleInputChange('city', value);
+        handleInputChange('recipientCity', value);
         // Reset state when city changes
-        handleInputChange('state', '');
+        handleInputChange('recipientState', '');
     };
 
     const validateForm = () => {
         const newErrors: {[key: string]: string} = {};
 
-        if (!formData.firstName.trim()) newErrors.firstName = 'First name is required';
-        if (!formData.lastName.trim()) newErrors.lastName = 'Last name is required';
-        if (!formData.email.trim()) newErrors.email = 'Email address is required';
-        else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-            newErrors.email = 'Please enter a valid email address';
+        if (!formData.recipientFirstName.trim()) newErrors.recipientFirstName = 'First name is required';
+        if (!formData.recipientLastName.trim()) newErrors.recipientLastName = 'Last name is required';
+        if (!formData.companyName.trim()) newErrors.companyName = 'Company name is required';
+        if (!formData.recipientEmail.trim()) newErrors.recipientEmail = 'Email address is required';
+        else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.recipientEmail)) {
+            newErrors.recipientEmail = 'Please enter a valid email address';
         }
 
         setErrors(newErrors);
@@ -212,7 +206,7 @@ function PersonalInfoContent() {
         const updatedData = { ...coverLetterData, ...formData };
         localStorage.setItem('coverLetterData', JSON.stringify(updatedData));
 
-        router.push(`/recipent-info`);
+        router.push(`/strengths`);
     };
 
     const handleBack = () => {
@@ -226,10 +220,10 @@ function PersonalInfoContent() {
                 {/* Header */}
                 <div className="text-center space-y-4">
                     <h1 className="text-2xl font-bold text-gray-900">
-                        What's the best way for employers to contact you?
+                        Who are you writing to?
                     </h1>
                     <p className="text-gray-600">
-                        We suggest including an email and phone number.
+                        Enter the recipient's information for your cover letter.
                     </p>
                 </div>
 
@@ -244,8 +238,8 @@ function PersonalInfoContent() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <InputField
                             label="FIRST NAME"
-                            field="firstName"
-                            placeholder="First Name"
+                            field="recipientFirstName"
+                            placeholder="Recipient's First Name"
                             required
                             formData={formData}
                             handleInputChange={handleInputChange}
@@ -256,8 +250,8 @@ function PersonalInfoContent() {
                         />
                         <InputField
                             label="LAST NAME"
-                            field="lastName"
-                            placeholder="Last Name"
+                            field="recipientLastName"
+                            placeholder="Recipient's Last Name"
                             required
                             formData={formData}
                             handleInputChange={handleInputChange}
@@ -268,11 +262,12 @@ function PersonalInfoContent() {
                         />
                     </div>
 
-                    {/* Profession */}
+                    {/* Company */}
                     <InputField
-                        label="PROFESSION"
-                        field="profession"
-                        placeholder="e.g. Graphic Designer"
+                        label="COMPANY NAME"
+                        field="companyName"
+                        placeholder="e.g. Google, Microsoft, Apple"
+                        required
                         formData={formData}
                         handleInputChange={handleInputChange}
                         handleProvinceChange={handleProvinceChange}
@@ -281,12 +276,12 @@ function PersonalInfoContent() {
                         selectedProvinceCode={selectedProvinceCode}
                     />
 
-                    {/* City and State */}
+                    {/* Location Row */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <InputField
                             label="CITY/PROVINCE"
-                            field="city"
-                            placeholder="Select your city/province"
+                            field="recipientCity"
+                            placeholder={loading ? "Loading provinces..." : "Select city/province"}
                             isDropdown
                             options={provinces.map(p => p.name)}
                             formData={formData}
@@ -298,8 +293,8 @@ function PersonalInfoContent() {
                         />
                         <InputField
                             label="DISTRICT"
-                            field="state"
-                            placeholder="Select your district"
+                            field="recipientState"
+                            placeholder={!selectedProvinceCode ? "Select city/province first" : "Select district"}
                             isDropdown
                             options={districts.map(d => d.name)}
                             formData={formData}
@@ -311,12 +306,13 @@ function PersonalInfoContent() {
                         />
                     </div>
 
-                    {/* Phone and Email */}
+                    {/* Contact Row */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <InputField
                             label="PHONE NUMBER"
-                            field="phone"
+                            field="recipientPhone"
                             placeholder="e.g. +84123456789"
+                            type="tel"
                             formData={formData}
                             handleInputChange={handleInputChange}
                             handleProvinceChange={handleProvinceChange}
@@ -326,8 +322,8 @@ function PersonalInfoContent() {
                         />
                         <InputField
                             label="EMAIL ADDRESS"
-                            field="email"
-                            placeholder="e.g. john.doe@email.com"
+                            field="recipientEmail"
+                            placeholder="recipient.email@example.com"
                             type="email"
                             required
                             formData={formData}
@@ -362,10 +358,10 @@ function PersonalInfoContent() {
     );
 }
 
-export default function PersonalInfoPage() {
+export default function RecipentInfoPage() {
     return (
         <Suspense fallback={<div>Loading...</div>}>
-            <PersonalInfoContent />
+            <RecipentInfoContent />
         </Suspense>
     );
 }

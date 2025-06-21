@@ -1,39 +1,53 @@
 "use client";
 
-import { useRouter, useSearchParams } from 'next/navigation';
-import { useState } from "react";
+import { useRouter } from 'next/navigation';
+import { useState, useEffect } from "react";
 import { ArrowLeft, ArrowRight, Check } from 'lucide-react';
 
 export default function CustomizePage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
 
   const [hasSpecificJob, setHasSpecificJob] = useState<boolean | null>(null);
   const [jobTitle, setJobTitle] = useState<string>("");
   const [targetCompany, setTargetCompany] = useState<string>("");
   const [hasJobDescription, setHasJobDescription] = useState<boolean | null>(null);
 
+  useEffect(() => {
+    const savedDataString = localStorage.getItem('coverLetterData');
+    if (savedDataString) {
+        const coverLetterData = JSON.parse(savedDataString);
+        setHasSpecificJob(coverLetterData.hasSpecificJob ?? null);
+        setJobTitle(coverLetterData.targetJobTitle || "");
+        setTargetCompany(coverLetterData.targetCompany || "");
+        setHasJobDescription(coverLetterData.hasJobDescription ?? null);
+    }
+  }, []);
+
   const handleBack = () => {
     router.back();
   };
 
   const handleContinue = () => {
-    const currentParams = new URLSearchParams(searchParams.toString());
-    currentParams.append('hasSpecificJob', hasSpecificJob?.toString() || 'false');
+    const savedDataString = localStorage.getItem('coverLetterData');
+    const coverLetterData = savedDataString ? JSON.parse(savedDataString) : {};
 
-    if (hasSpecificJob) {
-      currentParams.append('targetJobTitle', jobTitle);
-      currentParams.append('targetCompany', targetCompany);
-      currentParams.append('hasJobDescription', hasJobDescription?.toString() || 'false');
+    const updatedData = {
+        ...coverLetterData,
+        hasSpecificJob: hasSpecificJob,
+        targetJobTitle: jobTitle,
+        targetCompany: targetCompany,
+        hasJobDescription: hasJobDescription
+    };
 
-      // If user has job description, go to job-description page
-      if (hasJobDescription === true) {
-        router.push(`/job-description?${currentParams.toString()}`);
-        return;
-      }
+    localStorage.setItem('coverLetterData', JSON.stringify(updatedData));
+
+
+    if (hasSpecificJob && hasJobDescription) {
+        router.push(`/job-description`);
+    } else {
+        // Assuming the next step is to finalize/create the letter
+        router.push(`/createCLTemplate`);
     }
-
-    router.push(`/finalize?${currentParams.toString()}`);
   };
 
   const isFormComplete = () => {

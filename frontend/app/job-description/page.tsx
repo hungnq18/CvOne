@@ -1,22 +1,35 @@
 "use client";
 
-import { useRouter, useSearchParams } from 'next/navigation';
-import { useState } from "react";
+import { useRouter } from 'next/navigation';
+import { useState, useEffect } from "react";
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 
 export default function JobDescriptionPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [jobDescription, setJobDescription] = useState<string>("");
+
+  useEffect(() => {
+    const savedDataString = localStorage.getItem('coverLetterData');
+    if (savedDataString) {
+        const coverLetterData = JSON.parse(savedDataString);
+        if (coverLetterData.jobDescription) {
+            setJobDescription(coverLetterData.jobDescription);
+        }
+    }
+    }, []);
 
   const handleBack = () => {
     router.back();
   };
 
   const handleContinue = () => {
-    const currentParams = new URLSearchParams(searchParams.toString());
-    currentParams.append('jobDescription', jobDescription.trim());
-    router.push(`/finalize?${currentParams.toString()}`);
+    const savedDataString = localStorage.getItem('coverLetterData');
+    const coverLetterData = savedDataString ? JSON.parse(savedDataString) : {};
+
+    const updatedData = { ...coverLetterData, jobDescription: jobDescription.trim() };
+    localStorage.setItem('coverLetterData', JSON.stringify(updatedData));
+
+    router.push(`/createCLTemplate`);
   };
 
   const maxLength = 5000;

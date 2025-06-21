@@ -1,13 +1,22 @@
 "use client";
 
-import { useRouter, useSearchParams } from 'next/navigation';
-import { useState } from "react";
+import { useRouter } from 'next/navigation';
+import { useState, useEffect } from "react";
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 
 export default function WorkHistoryPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [jobTitle, setJobTitle] = useState<string>("");
+
+  useEffect(() => {
+    const savedDataString = localStorage.getItem('coverLetterData');
+    if (savedDataString) {
+        const coverLetterData = JSON.parse(savedDataString);
+        if (coverLetterData.jobTitle) {
+            setJobTitle(coverLetterData.jobTitle);
+        }
+    }
+  }, []);
 
   const handleBack = () => {
     router.back();
@@ -16,9 +25,13 @@ export default function WorkHistoryPage() {
   const handleContinue = () => {
     if (!jobTitle.trim()) return;
 
-    const currentParams = new URLSearchParams(searchParams.toString());
-    currentParams.append('jobTitle', jobTitle.trim());
-    router.push(`/customize?${currentParams.toString()}`);
+    const savedDataString = localStorage.getItem('coverLetterData');
+    const coverLetterData = savedDataString ? JSON.parse(savedDataString) : {};
+
+    const updatedData = { ...coverLetterData, jobTitle: jobTitle.trim() };
+    localStorage.setItem('coverLetterData', JSON.stringify(updatedData));
+
+    router.push(`/customize`);
   };
 
   return (
