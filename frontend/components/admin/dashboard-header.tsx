@@ -14,8 +14,7 @@ export function DashboardHeader() {
   const handleLogout = () => {
     logout();
     document.cookie = "token=; path=/; max-age=0";
-    router.push('/login');
-    router.refresh();
+    window.location.href = '/login';
   }
   return (
     <header className="flex h-16 shrink-0 items-center gap-4 border-b bg-white px-6">

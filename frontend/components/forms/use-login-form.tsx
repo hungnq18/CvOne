@@ -110,7 +110,7 @@ export function useLoginForm() {
       const { access_token } = response.data;
 
       // Lưu token vào cookie
-      document.cookie = `token=${access_token}; path=/; max-age=86400`;
+      document.cookie = `token=${access_token}; path=/; max-age=3600; SameSite=Lax; Secure`;
 
       // Decode token để lấy role
       const decoded: DecodedToken = jwtDecode(access_token);
@@ -125,13 +125,12 @@ export function useLoginForm() {
       });
 
       if (decoded.role === "admin") {
-        router.push("/admin")
+        window.location.href = "/admin"
       } else if (decoded.role === "hr") {
-        router.push("/hr/dashboard")
+        window.location.href = "/hr/dashboard"
       } else {
-        router.push("/")
+        window.location.href = "/"
       }
-      router.refresh()
 
     } catch (err: any) {
       const msg =
