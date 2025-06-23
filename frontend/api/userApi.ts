@@ -1,14 +1,14 @@
 /**
  * User API Module
  * author: HungNQ
- * 
+ *
  * This module provides functions for managing user data:
  * - Getting all users
  * - Getting user by ID
  * - Updating user information
  * - Deleting user
  * - Changing password
- * 
+ *
  * All functions use fetchWithAuth to ensure authenticated requests
  * and proper authorization for admin operations
  */
@@ -184,4 +184,3 @@ export const changePassword = async (
         throw new Error(error.message || 'Failed to change password. Please try again.');
     }
 };
- 
