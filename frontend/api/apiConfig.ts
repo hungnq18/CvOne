@@ -30,12 +30,12 @@ export const API_ENDPOINTS = {
     UPLOAD_AVATAR: "/profile/avatar",
   },
   CV: {
-    GET_ALL: "/cvs",
-    GET_BY_ID: (id: string) => `/cvs/${id}`,
-    CREATE: "/cvs",
-    UPDATE: (id: string) => `/cvs/${id}`,
-    DELETE: (id: string) => `/cvs/${id}`,
-    SHARE: (id: string) => `/cvs/${id}/share`,
+    GET_ALL: "/cv",
+    GET_BY_ID: (id: string) => `/cv/${id}`,
+    CREATE: "/cv",
+    UPDATE: (id: string) => `/cv/${id}`,
+    DELETE: (id: string) => `/cv/${id}`,
+    SHARE: (id: string) => `/cv/${id}/share`,
     TEMPLATES: "/cv-templates",
   },
   CL: {

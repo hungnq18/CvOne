@@ -15,7 +15,7 @@ import { fetchWithAuth, fetchWithoutAuth } from "./apiClient";
 import { API_ENDPOINTS } from "./apiConfig";
 
 export type CVTemplate = {
-  id: string;
+  _id: string;
   imageUrl: string;
   title: string;
   isRecommended?: boolean;
@@ -24,7 +24,7 @@ export type CVTemplate = {
 
 
 export interface CV {
-  id: string; 
+  _id: string; 
   userId: string;
   title?: string;
   content: {
@@ -33,7 +33,7 @@ export interface CV {
   isPublic: boolean;
   createdAt: string;
   updatedAt: string;
-  templateId: string; 
+  cvTemplateId: string;
   isSaved: boolean;
   isFinalized: boolean;
 }
@@ -77,7 +77,7 @@ export async function getCVById(id: string) {
  * @param data - CV data to create
  * @returns Promise with created CV
  */
-export async function createCV(data: Omit<CV, "id">) {
+export async function createCV(data: Omit<CV, "_id">) {
   return fetchWithAuth(API_ENDPOINTS.CV.CREATE, {
     method: "POST",
     body: JSON.stringify(data)  
