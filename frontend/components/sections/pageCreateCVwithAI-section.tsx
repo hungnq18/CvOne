@@ -53,7 +53,6 @@ interface FormProps {
   onUpdate: (updatedData: any) => void;
 }
 
-// Xóa toàn bộ định nghĩa các form và Step ở file này, chỉ giữ lại phần logic CreateCVwithAI và các phần khác.
 const PageCreateCVwithAI = () => (
   <CVProvider>
     <CreateCVwithAI />
@@ -119,7 +118,6 @@ function CreateCVwithAI() {
   useEffect(() => {
     getCVTemplates().then((data) => setAllTemplates(data));
 
-    // Logic tải template hiện tại giữ nguyên
     if (templateId) {
       getCVTemplateById(templateId).then((template) => {
         if (template) {
@@ -132,7 +130,7 @@ function CreateCVwithAI() {
     }
   }, [templateId, loadTemplate, updateUserData]);
 
-  // Hàm renderCVPreview giống hệt trang pageCreateCV-section.tsx
+  
   const renderCVPreview = () => {
     if (!currentTemplate || !userData) {
       return <p className="text-center">Đang tải Mẫu...</p>;
@@ -169,8 +167,7 @@ function CreateCVwithAI() {
   };
 
   const handleTemplateSelect = (selectedTemplate: CVTemplate) => {
-    // Khi chọn template mới, chuyển trang với id của template đó
-    router.push(`/createCV-AI?id=${selectedTemplate.id}`);
+    router.push(`/createCV-AI?id=${selectedTemplate._id}`);
     setShowTemplatePopup(false);
   };
 
@@ -209,14 +206,14 @@ function CreateCVwithAI() {
       return false;
     }
     try {
-        const dataToCreate: Omit<CV, "id"> = {
-          userId: "1",
+        const dataToCreate: Omit<CV, "_id"> = {
+          userId: userId || "", 
           title: `CV for ${userData.firstName} ${userData.lastName}`,
           content: { userData },
           isPublic: false,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
-          templateId: currentTemplate.id,
+          cvTemplateId: currentTemplate._id,
           isSaved: true,
           isFinalized: false,
         };

@@ -37,7 +37,6 @@ const DropdownArrow = () => (
   <span className="absolute -top-[8px] left-1/2 -translate-x-1/2 w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-b-[8px] border-b-white" />
 );
 
-// Dữ liệu cho Sidebar (giữ lại)
 const sidebarSections = [
   { id: "info", title: "Thông tin cá nhân" },
   { id: "contact", title: "Liên hệ" },
@@ -47,7 +46,6 @@ const sidebarSections = [
   { id: "skills", title: "Kỹ năng" },
 ];
 
-// --- COMPONENT CHÍNH ---
 const PageCreateCVSection = () => (
   <CVProvider>
     <PageCreateCVContent />
@@ -83,21 +81,12 @@ const PageCreateCVContent = () => {
     if (idFromUrl) {
       setLoading(true);
       getCVById(idFromUrl)
-        .then((cvData) => {
-          if (cvData && cvData.id) {
-            console.log("Đã tải CV có sẵn:", cvData);
-            setCvId(cvData.id);
-            updateUserData(cvData.content.userData);
-            return getCVTemplateById(cvData.templateId);
-          }
-          return Promise.reject("Invalid CV data");
-        })
         .then((templateData) => {
           if (templateData) loadTemplate(templateData);
           setLoading(false);
         })
         .catch(() => {
-          console.log("Không tìm thấy CV, đang tải template để tạo mới...");
+          console.log("đang tải template để tạo mới...");
           setCvId(null);
           getCVTemplateById(idFromUrl).then((templateData) => {
             if (templateData) {
@@ -116,9 +105,7 @@ const PageCreateCVContent = () => {
 
   const handleTemplateSelect = (selectedTemplate: CVTemplate) => {
     router.push(
-      `/createCV?id=${selectedTemplate.id}&title=${encodeURIComponent(
-        selectedTemplate.title
-      )}`
+      `/createCV?id=${selectedTemplate._id}`
     );
     setShowTemplatePopup(false);
   };
@@ -165,18 +152,18 @@ const PageCreateCVContent = () => {
         };
         await updateCV(cvId, dataToUpdate);
       } else {
-        const dataToCreate: Omit<CV, "id"> = {
-          // userId: userId || "", 
-          userId: "1",
+        const dataToCreate: Omit<CV, "_id"> = {
+          userId: userId || "", 
           title: `CV for ${userData.firstName} ${userData.lastName}`,
           content: { userData },
           isPublic: false,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
-          templateId: currentTemplate.id,
+          cvTemplateId: currentTemplate._id,
           isSaved: true,
           isFinalized: false,
         };
+        console.log("Dữ liệu tạo mới CV:", dataToCreate);
         const newCV = await createCV(dataToCreate);
         if (newCV && newCV.id) {
           setCvId(newCV.id);
@@ -293,7 +280,7 @@ const PageCreateCVContent = () => {
                   <div className="grid grid-cols-3 gap-4">
                     {allTemplates.map((item) => (
                       <button
-                        key={item.id}
+                        key={item._id}
                         onClick={() => handleTemplateSelect(item)}
                         className="relative rounded-md overflow-hidden border-2 transition-colors duration-200
                                    hover:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
@@ -311,7 +298,7 @@ const PageCreateCVContent = () => {
                         <p className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs text-center py-1">
                           {item.title}
                         </p>
-                        {currentTemplate?.id === item.id && (
+                        {currentTemplate?._id === item._id && (
                           <div className="absolute inset-0 bg-blue-500 bg-opacity-60 flex items-center justify-center">
                             <CheckCircle2 size={32} className="text-white" />
                           </div>

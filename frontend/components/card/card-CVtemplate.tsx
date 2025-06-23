@@ -16,7 +16,7 @@ type CardCVTemplateProps = CVTemplate & {
 };
 
 const CardCVTemplate: React.FC<CardCVTemplateProps> = ({
-  id,
+  _id,
   imageUrl,
   title,
   onPreviewClick,
@@ -132,7 +132,7 @@ const CardCVTemplate: React.FC<CardCVTemplateProps> = ({
 
     // Kiểm tra token
     if (token) {
-      router.push(`/chooseCreateCV?id=${id}`);
+      router.push(`/chooseCreateCV?id=${_id}`);
     } else {
       alert("Bạn cần đăng nhập để tạo CV!");
       router.push("/login");
@@ -166,7 +166,7 @@ const CardCVTemplate: React.FC<CardCVTemplateProps> = ({
               initial="hidden"
               animate="visible"
               whileHover="hover"
-              onClick={() => onPreviewClick({ id, imageUrl, title })} // Gọi callback
+              onClick={() => onPreviewClick({ _id, imageUrl, title })} // Gọi callback
               style={{
                 width: "84%",
                 textAlign: "center",
@@ -185,7 +185,7 @@ const CardCVTemplate: React.FC<CardCVTemplateProps> = ({
 
             {/* Nút Sử dụng mẫu này (có Link riêng) */}
             <a
-              href={`/createCV?id=${id}&title=${encodeURIComponent(title)}`}
+              href={`/createCV?id=${_id}`}
               onClick={handleCreateCVClick}
               className="your-styling-classes" // Thêm các class CSS để nó trông giống một liên kết hoặc nút bấm
             >

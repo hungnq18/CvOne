@@ -10,7 +10,7 @@ import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import { useOnClickOutside } from "@/hooks/useOnClickOutside";
 
-// --- THÊM COMPONENT TemplatePreviewModal TRỰC TIẾP VÀO FILE NÀY ---
+
 interface TemplatePreviewModalProps {
   templateId: string;
   templateTitle: string;
@@ -78,7 +78,6 @@ const TemplatePreviewModal: FC<TemplatePreviewModalProps> = ({
   const TemplateComponent = templateComponentMap[templateTitle];
 
   const handleUseTemplate = () => {
-    // Bước 1: Lấy token từ cookie của trình duyệt
     const token = document.cookie
       .split("; ")
       .find((row) => row.startsWith("token="))
@@ -111,7 +110,6 @@ const TemplatePreviewModal: FC<TemplatePreviewModalProps> = ({
 
         {/* Nội dung Preview Template */}
         <div className="flex-grow pt-4 overflow-y-auto flex justify-center items-start">
-          {/* items-start để nội dung ở trên cùng */}
           {!TemplateComponent ? (
             <div className=" text-red-600">
               Không tìm thấy component cho mẫu "{templateTitle}".
@@ -150,8 +148,6 @@ const TemplatePreviewModal: FC<TemplatePreviewModalProps> = ({
     </div>
   );
 };
-
-// --- Kết thúc TemplatePreviewModal ---
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -199,7 +195,6 @@ const CvTemplatesPage: React.FC = () => {
     viewMode === "recommended" ? recommendedTemplates : cvTemplates;
 
   const handleCardPreviewClick = (template: CVTemplate) => {
-    // Đổi tên hàm để rõ ràng hơn
     setSelectedTemplateForPreview(template);
   };
 
@@ -247,22 +242,18 @@ const CvTemplatesPage: React.FC = () => {
         key={viewMode}
       >
         {displayedTemplates.map((template) => (
-          // Không thêm onClick trực tiếp vào div ngoài CardCVTemplate
-          // để CardCVTemplate tự quản lý các nút click của nó
           <CardCVTemplate
-            key={template.id}
-            id={template.id}
+            key={template._id}
+            _id={template._id}
             imageUrl={template.imageUrl}
             title={template.title}
-            onPreviewClick={handleCardPreviewClick} // Truyền hàm callback cho nút Preview
+            onPreviewClick={handleCardPreviewClick} 
           />
         ))}
       </motion.div>
-
-      {/* Render TemplatePreviewModal nếu có template được chọn */}
       {selectedTemplateForPreview && (
         <TemplatePreviewModal
-          templateId={selectedTemplateForPreview.id}
+          templateId={selectedTemplateForPreview._id}
           templateTitle={selectedTemplateForPreview.title}
           onClose={handleClosePreviewModal}
         />
