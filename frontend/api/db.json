@@ -769,6 +769,8 @@
   ],
   "jobs": [
     {
+      "id": "job_001",
+      "user_id": "user_123456",
       "Experience": "5 to 15 Years",
       "Qualifications": "M.Tech",
       "Salary Range": "$59K-$99K",
