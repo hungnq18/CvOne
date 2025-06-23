@@ -6,12 +6,16 @@ import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useRouter } from "next/navigation"
+import { useAuth } from "@/hooks/use-auth"
 
 export function DashboardHeader() {
+  const { logout } = useAuth()
   const router = useRouter();
   const handleLogout = () => {
-    localStorage.removeItem('token');
+    logout();
+    document.cookie = "token=; path=/; max-age=0";
     router.push('/login');
+    router.refresh();
   }
   return (
     <header className="flex h-16 shrink-0 items-center gap-4 border-b bg-white px-6">

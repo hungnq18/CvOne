@@ -8,6 +8,7 @@ import { FcGoogle } from "react-icons/fc"
 import styled from "styled-components"
 import logoImg from "../../public/logo/logoCVOne.svg"
 import { useLoginForm } from "@/components/forms/use-login-form"
+import { useRouter } from "next/navigation"
 
 const LoginWrapper = styled.div`
   min-height: 100vh;
@@ -38,7 +39,7 @@ const LogoSide = styled.div`
   flex: 1;
   max-width: 400px;
   padding: 40px;
-  
+
   @media (max-width: 768px) {
     display: none;
   }
@@ -60,7 +61,7 @@ const FormSide = styled.div`
   justify-content: center;
   padding: 40px;
   min-width: 320px;
-  
+
   @media (max-width: 768px) {
     padding: 20px;
     width: 100%;
@@ -201,7 +202,7 @@ const Divider = styled.div`
   align-items: center;
   text-align: center;
   margin: 20px 0;
-  
+
   &::before,
   &::after {
     content: '';
@@ -229,15 +230,30 @@ export default function LoginPage() {
     handleGoogleLogin,
     setShowPassword
   } = useLoginForm()
+  const router = useRouter()
+
+  const handleLogin = async (role: string) => {
+    try {
+      if (role === "admin") {
+        window.location.href = "/admin"
+      } else if (role === "hr") {
+        window.location.href = "/hr/dashboard"
+      } else {
+        router.push("/")
+      }
+    } catch (error) {
+      console.error("Login failed", error)
+    }
+  }
 
   return (
     <LoginWrapper>
       <LoginContainer>
         <LogoSide>
           <ImageWrapper>
-            <Image 
-              src={logoImg} 
-              alt="Logo" 
+            <Image
+              src={logoImg}
+              alt="Logo"
               fill
               style={{ objectFit: "contain" }}
               priority
@@ -293,7 +309,7 @@ export default function LoginPage() {
             <Divider>
               <span>{t.or}</span>
             </Divider>
-            
+
             <GoogleButton
               type="button"
               onClick={handleGoogleLogin}

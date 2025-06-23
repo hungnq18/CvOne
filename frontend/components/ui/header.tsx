@@ -353,6 +353,7 @@ export function Header() {
     logout();
     document.cookie = "token=; path=/; max-age=0";
     router.push("/login");
+    router.refresh();
   };
 
   return (
