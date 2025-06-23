@@ -352,8 +352,7 @@ export function Header() {
   const handleLogout = () => {
     logout();
     document.cookie = "token=; path=/; max-age=0";
-    router.push("/login");
-    router.refresh();
+    window.location.href = "/login";
   };
 
   return (

@@ -4,9 +4,9 @@ import React, { useState, useEffect, Suspense } from "react";
 import { X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { templates, TemplateType } from './templates/index';
-import { getProvinces, Province, getDistrictsByProvinceCode, District } from "@/api/locationApi";
 import { createCL, getCLTemplateById, CLTemplate, CreateCLDto, getCLById, updateCL } from "@/api/clApi";
 import Cookies from "js-cookie";
+import { useLocations } from "@/hooks/useLocations";
 
 interface LetterData {
     firstName: string;
@@ -70,9 +70,13 @@ const CoverLetterBuilderContent = () => {
         signature: '',
     });
 
-    const [provinces, setProvinces] = useState<Province[]>([]);
-    const [districts, setDistricts] = useState<District[]>([]);
-    const [recipientDistricts, setRecipientDistricts] = useState<District[]>([]);
+    const {
+        provinces,
+        districts,
+        recipientDistricts,
+        fetchDistrictsForCity,
+        fetchDistrictsForRecipientCity
+    } = useLocations();
 
     useEffect(() => {
         const initializeFromLocalStorage = async () => {
@@ -113,21 +117,12 @@ const CoverLetterBuilderContent = () => {
                 };
                 setLetterData(mappedData);
 
-                // Pre-load districts for user and recipient city
-                const allProvinces = await getProvinces();
+                // Pre-load districts for user and recipient city using the hook
                 if (mappedData.city) {
-                    const selectedProvince = allProvinces.find(p => p.name === mappedData.city);
-                    if (selectedProvince) {
-                        const districtData = await getDistrictsByProvinceCode(selectedProvince.code);
-                        setDistricts(districtData);
-                    }
+                    await fetchDistrictsForCity(mappedData.city);
                 }
                 if (mappedData.recipientCity) {
-                    const selectedProvince = allProvinces.find(p => p.name === mappedData.recipientCity);
-                    if (selectedProvince) {
-                        const districtData = await getDistrictsByProvinceCode(selectedProvince.code);
-                        setRecipientDistricts(districtData);
-                    }
+                    await fetchDistrictsForRecipientCity(mappedData.recipientCity);
                 }
 
                 // Fetch and set the template from localStorage data
@@ -149,7 +144,7 @@ const CoverLetterBuilderContent = () => {
         };
 
         initializeFromLocalStorage();
-    }, []); // Run only once on mount, after other initializations
+    }, []); // This effect now depends on the fetch functions from the hook
 
     useEffect(() => {
         const fetchClData = async () => {
@@ -271,35 +266,17 @@ const CoverLetterBuilderContent = () => {
         }
     };
 
-    const handleCityChange = async (cityValue: string, cityField: keyof LetterData, districtField: keyof LetterData) => {
-        setTempData(prev => ({
-            ...prev,
-            [cityField]: cityValue,
-            [districtField]: ''
-        }));
+    const handleCityChange = async (cityValue: string, isRecipient: boolean) => {
+        const fieldToUpdate = isRecipient ? 'recipientCity' : 'city';
+        const districtFieldToUpdate = isRecipient ? 'recipientState' : 'state';
 
-        if (cityValue) {
-            const selectedProvince = provinces.find(p => p.name === cityValue);
-            if (selectedProvince) {
-                const districtData = await getDistrictsByProvinceCode(selectedProvince.code);
-                if (cityField === 'city') {
-                    setDistricts(districtData);
-                } else if (cityField === 'recipientCity') {
-                    setRecipientDistricts(districtData);
-                }
-            } else {
-                if (cityField === 'city') {
-                    setDistricts([]);
-                } else if (cityField === 'recipientCity') {
-                    setRecipientDistricts([]);
-                }
-            }
+        handleInputChange(fieldToUpdate, cityValue);
+        handleInputChange(districtFieldToUpdate, ''); // Reset district
+
+        if (isRecipient) {
+            await fetchDistrictsForRecipientCity(cityValue);
         } else {
-            if (cityField === 'city') {
-                setDistricts([]);
-            } else if (cityField === 'recipientCity') {
-                setRecipientDistricts([]);
-            }
+            await fetchDistrictsForCity(cityValue);
         }
     };
 
@@ -317,17 +294,9 @@ const CoverLetterBuilderContent = () => {
         setIsModalOpen(true);
 
         if (section === 'name' && newTempData.city) {
-            const selectedProvince = provinces.find(p => p.name === newTempData.city);
-            if (selectedProvince) {
-                const districtData = await getDistrictsByProvinceCode(selectedProvince.code);
-                setDistricts(districtData);
-            }
+            await fetchDistrictsForCity(newTempData.city);
         } else if (section === 'recipient' && newTempData.recipientCity) {
-            const selectedProvince = provinces.find(p => p.name === newTempData.recipientCity);
-            if (selectedProvince) {
-                const districtData = await getDistrictsByProvinceCode(selectedProvince.code);
-                setRecipientDistricts(districtData);
-            }
+            await fetchDistrictsForRecipientCity(newTempData.recipientCity);
         }
     };
 
@@ -417,7 +386,7 @@ const CoverLetterBuilderContent = () => {
                                 </label>
                                 <select
                                     value={tempData.city || ""}
-                                    onChange={(e) => handleCityChange(e.target.value, "city", "state")}
+                                    onChange={(e) => handleCityChange(e.target.value, false)}
                                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
                                 >
                                     <option value="">Select City/Province</option>
@@ -509,7 +478,7 @@ const CoverLetterBuilderContent = () => {
                                 <label className="block text-sm font-medium text-gray-700 mb-1 uppercase">City/Province</label>
                                 <select
                                     value={tempData.recipientCity || ""}
-                                    onChange={(e) => handleCityChange(e.target.value, "recipientCity", "recipientState")}
+                                    onChange={(e) => handleCityChange(e.target.value, true)}
                                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
                                 >
                                     <option value="">Select City/Province</option>
