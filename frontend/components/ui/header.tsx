@@ -146,15 +146,19 @@ const navigationItems = {
     admin: [
       {
         name: "Dashboard",
-        href: "/admin/dashboard",
+        href: "/admin",
       },
       {
         name: "Manage Users",
-        href: "/admin/users",
+        href: "/admin/user",
       },
       {
-        name: "Settings",
-        href: "/admin/settings",
+        name: "Manage CV Template",
+        href: "/admin/cv-template",
+      },
+      {
+        name: "Manage CL Template",
+        href: "/admin/cl-template",
       },
     ],
     hr: [
@@ -249,15 +253,19 @@ const navigationItems = {
     admin: [
       {
         name: "Bảng điều khiển",
-        href: "/admin/dashboard",
+        href: "/admin",
       },
       {
         name: "Quản lý Người dùng",
-        href: "/admin/users",
+        href: "/admin/user",
       },
       {
-        name: "Cài đặt",
-        href: "/admin/settings",
+        name: "Quản lý CV Template",
+        href: "/admin/cv-template",
+      },
+      {
+        name: "Quản lý CL Template",
+        href: "/admin/cl-template",
       },
     ],
     hr: [
@@ -345,6 +353,7 @@ export function Header() {
     logout();
     document.cookie = "token=; path=/; max-age=0";
     router.push("/login");
+    router.refresh();
   };
 
   return (
@@ -375,7 +384,7 @@ export function Header() {
                   {language === "en" ? "Logout" : "Đăng xuất"}
                 </StyledButton>
                 {role === "admin" && (
-                  <StyledButton as={Link} href="/admin/dashboard">
+                  <StyledButton as={Link} href="/admin">
                     {language === "en" ? "Admin Panel" : "Quản trị"}
                   </StyledButton>
                 )}

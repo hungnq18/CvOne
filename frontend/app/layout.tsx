@@ -15,6 +15,7 @@ import { ChatProvider } from '@/providers/ChatProvider'
 import { AppSidebar } from "@/components/hr/hrSideBar"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { jwtDecode } from "jwt-decode"
+import { cookies } from "next/headers"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -24,11 +25,8 @@ export const metadata: Metadata = {
 }
 
 function getRoleFromToken() {
-  if (typeof document === 'undefined') return null;
-  const token = document.cookie
-    .split('; ')
-    .find((row) => row.startsWith('token='))
-    ?.split('=')[1];
+  const cookieStore = cookies()
+  const token = cookieStore.get('token')?.value
   if (!token) return null;
   try {
     const decoded: any = jwtDecode(token);
@@ -43,10 +41,8 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  let role: string | null = null;
-  if (typeof window !== 'undefined') {
-    role = getRoleFromToken();
-  }
+  const role = getRoleFromToken();
+
   return (
     <html lang="en">
       <body className={`${inter.className} min-h-screen flex flex-col`}>
@@ -61,29 +57,33 @@ export default function RootLayout({
                   disableTransitionOnChange
                 >
                   <ChatProvider>
-                    <div className="flex flex-col min-h-screen">
-                      {typeof window !== 'undefined' && getRoleFromToken() === 'hr' ? (
-                        <SidebarProvider>
-                          <div className="flex flex-1 min-h-0">
-                            <AppSidebar />
-                            <div className="flex-1 flex flex-col min-h-0">
-                              <SidebarInset>
-                                <Header />
-                                <main className="flex-1 min-h-0">{children}</main>
-                              </SidebarInset>
+                    {role === 'admin' ? (
+                      children
+                    ) : (
+                      <div className="flex flex-col min-h-screen">
+                        {role === 'hr' ? (
+                          <SidebarProvider>
+                            <div className="flex flex-1 min-h-0">
+                              <AppSidebar />
+                              <div className="flex-1 flex flex-col min-h-0">
+                                <SidebarInset>
+                                  <Header />
+                                  <main className="flex-1 min-h-0">{children}</main>
+                                </SidebarInset>
+                              </div>
                             </div>
-                          </div>
-                        </SidebarProvider>
-                      ) : (
-                        <>
-                          <Header />
-                          <main className="flex-1 min-h-0">{children}</main>
-                        </>
-                      )}
-                      <div className="relative z-10">
-                        <FooterWrapper />
+                          </SidebarProvider>
+                        ) : (
+                          <>
+                            <Header />
+                            <main className="flex-1 min-h-0">{children}</main>
+                          </>
+                        )}
+                        <div className="relative z-10">
+                          <FooterWrapper />
+                        </div>
                       </div>
-                    </div>
+                    )}
                     <IconChatAndNotification />
                     <Toaster />
                   </ChatProvider>
