@@ -2,8 +2,10 @@ import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@n
 import { User } from '../../common/decorators/user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CvTemplate } from '../cv-template/schemas/cv-template.schema';
+import { CvAiService } from './cv-ai.service';
 import { CvService } from './cv.service';
 import { CreateCvDto } from './dto/create-cv.dto';
+import { GenerateCvDto } from './dto/generate-cv.dto';
 
 /**
  * Controller for handling CV (Curriculum Vitae) related requests
@@ -12,7 +14,10 @@ import { CreateCvDto } from './dto/create-cv.dto';
  */
 @Controller('cv')
 export class CvController {
-  constructor(private readonly cvService: CvService) {}
+  constructor(
+    private readonly cvService: CvService,
+    private readonly cvAiService: CvAiService,
+  ) {}
 
   /**
    * Get all CVs for the authenticated user
@@ -150,5 +155,58 @@ export class CvController {
   @Get('templates/:id')
   async getTemplateById(@Param('id') id: string): Promise<CvTemplate> {
     return this.cvService.getTemplateById(id);
+  }
+
+  /**
+   * Generate CV with AI based on job description
+   * @param generateCvDto - Job description and generation parameters
+   * @param userId - The ID of the authenticated user
+   */
+  @UseGuards(JwtAuthGuard)
+  @Post('generate-with-ai')
+  async generateCvWithAI(@Body() generateCvDto: GenerateCvDto, @User('_id') userId: string) {
+    return this.cvAiService.generateCvWithAI(userId, generateCvDto);
+  }
+
+  /**
+   * Generate and save CV with AI
+   * @param generateCvDto - Job description and generation parameters
+   * @param userId - The ID of the authenticated user
+   */
+  @UseGuards(JwtAuthGuard)
+  @Post('generate-and-save')
+  async generateAndSaveCv(@Body() generateCvDto: GenerateCvDto, @User('_id') userId: string) {
+    // Generate CV with AI
+    const aiResult = await this.cvAiService.generateCvWithAI(userId, generateCvDto);
+    
+    if (!aiResult.success) {
+      throw new Error('Failed to generate CV with AI');
+    }
+
+    // Create CV using the generated content
+    const createCvDto: CreateCvDto = {
+      cvTemplateId: aiResult.data.cvTemplateId,
+      title: aiResult.data.title,
+      content: aiResult.data.content,
+    };
+
+    // Save the generated CV
+    const savedCv = await this.cvService.createCV(createCvDto, userId);
+
+    return {
+      success: true,
+      message: 'CV generated and saved successfully',
+      cv: savedCv,
+      jobAnalysis: aiResult.data.jobAnalysis,
+    };
+  }
+
+  /**
+   * Check OpenAI API status
+   */
+  @UseGuards(JwtAuthGuard)
+  @Get('ai-status')
+  async checkAiStatus() {
+    return this.cvAiService.checkOpenAiStatus();
   }
 } 

@@ -1,3 +1,4 @@
+
 import StyledComponentsRegistry from "@/api/registry";
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/providers/auth-provider";
@@ -16,6 +17,7 @@ import { CVProvider } from "@/providers/cv-provider";
 import { AppSidebar } from "@/components/hr/hrSideBar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { jwtDecode } from "jwt-decode";
+import { cookies } from "next/headers"
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -26,11 +28,8 @@ export const metadata: Metadata = {
 };
 
 function getRoleFromToken() {
-  if (typeof document === "undefined") return null;
-  const token = document.cookie
-    .split("; ")
-    .find((row) => row.startsWith("token="))
-    ?.split("=")[1];
+  const cookieStore = cookies()
+  const token = cookieStore.get('token')?.value
   if (!token) return null;
   try {
     const decoded: any = jwtDecode(token);
@@ -45,10 +44,7 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  let role: string | null = null;
-  if (typeof window !== "undefined") {
-    role = getRoleFromToken();
-  }
+  const role = getRoleFromToken();
   return (
     <html lang="en">
       <body className={`${inter.className} min-h-screen flex flex-col`}>
@@ -64,18 +60,18 @@ export default function RootLayout({
                 >
                   <ChatProvider>
                     <CVProvider>
+                    {role === 'admin' ? (
+                      children
+                    ) : (
                       <div className="flex flex-col min-h-screen">
-                        {typeof window !== "undefined" &&
-                        getRoleFromToken() === "hr" ? (
+                        {role === 'hr' ? (
                           <SidebarProvider>
                             <div className="flex flex-1 min-h-0">
                               <AppSidebar />
                               <div className="flex-1 flex flex-col min-h-0">
                                 <SidebarInset>
                                   <Header />
-                                  <main className="flex-1 min-h-0">
-                                    {children}
-                                  </main>
+                                  <main className="flex-1 min-h-0">{children}</main>
                                 </SidebarInset>
                               </div>
                             </div>
@@ -90,9 +86,10 @@ export default function RootLayout({
                           <FooterWrapper />
                         </div>
                       </div>
-                    </CVProvider>
+                    )}
                     <IconChatAndNotification />
                     <Toaster />
+                   </CVProvider>
                   </ChatProvider>
                 </ThemeProvider>
               </EmailVerificationProvider>

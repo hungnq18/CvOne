@@ -3,6 +3,7 @@
 import type * as React from "react"
 import { usePathname } from "next/navigation"
 import { LayoutDashboard, Users, FileText, Mail } from "lucide-react"
+import Link from "next/link";
 
 import {
     Sidebar,
@@ -16,27 +17,26 @@ import {
     SidebarRail,
 } from "@/components/ui/sidebar"
 
-// Menu items với đường dẫn thực tế
 const menuItems = [
     {
         title: "Dashboard",
-        url: "/admin",
+        url: "/hr/dashboard",
         icon: LayoutDashboard,
     },
     {
-        title: "Manage User",
-        url: "/admin/users",
-        icon: Users,
-    },
-    {
-        title: "Manage CV Template",
-        url: "/admin/cv-templates",
+        title: "Manage Job",
+        url: "/hr/manageJob",
         icon: FileText,
     },
     {
-        title: "Manage CL Template",
-        url: "/admin/cl-templates",
+        title: "Manage Apply Job",
+        url: "/hr/manageApplyJob",
         icon: Mail,
+    },
+    {
+        title: "Manage Candidate",
+        url: "/hr/manageCandidate",
+        icon: Users,
     },
 ]
 
@@ -69,10 +69,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                                             isActive={isActive}
                                             className="text-slate-200 hover:bg-slate-700 hover:text-white data-[active=true]:bg-blue-600 data-[active=true]:text-white"
                                         >
-                                            <a href={item.url} className="flex items-center gap-3 px-3 py-2">
+                                            <Link href={item.url} className="flex items-center gap-3 px-3 py-2">
                                                 <item.icon className="h-5 w-5" />
                                                 <span>{item.title}</span>
-                                            </a>
+                                            </Link>
                                         </SidebarMenuButton>
                                     </SidebarMenuItem>
                                 )
