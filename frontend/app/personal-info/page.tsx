@@ -35,7 +35,7 @@ const InputField = ({
     isDropdown?: boolean;
 }) => {
     return (
-        <div className="space-y-2">
+        <div className="space-y-2 " >
             <label className="block text-sm font-medium text-gray-700 uppercase tracking-wide">
                 {label} {required && <span className="text-red-500">*</span>}
             </label>
@@ -220,7 +220,7 @@ function PersonalInfoContent() {
     };
 
     return (
-        <div className="min-h-screen bg-white flex flex-col items-center justify-center py-12 px-4">
+        <div className="min-h-screen pt-20 bg-white flex flex-col items-center justify-center py-12 px-4">
             <div className="w-full max-w-2xl space-y-8">
 
                 {/* Header */}

@@ -2,35 +2,24 @@
 
 import React, {
   useState,
-  FC,
-  ChangeEvent,
-  ReactNode,
   useEffect,
   useRef,
 } from "react";
 import {
-  Check,
   ChevronLeft,
   ChevronRight,
-  Edit,
-  PlusCircle,
-  Trash2,
-  X,
 } from "lucide-react";
-import { CVProvider, useCV } from "@/providers/cv-provider";
+import {  useCV } from "@/providers/cv-provider";
 import { templateComponentMap } from "@/components/cvTemplate/index";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
   getCVTemplateById,
   getCVTemplates,
   CVTemplate,
-  updateCV,
   createCV,
   CV,
 } from "@/api/cvapi";
-import Image from "next/image";
 import { useOnClickOutside } from "@/hooks/useOnClickOutside";
-import { CVEditorPopupsManager } from "@/components/forms/CVEditorPopups";
 import { jwtDecode } from "jwt-decode";
 import {
   InfoForm,
@@ -41,6 +30,8 @@ import {
   SkillsForm,
   Step,
 } from "@/components/forms/createCV-AIForm";
+import UpJdStep from "@/components/sections/up_JDforCV-AI";
+
 
 // --- INTERFACES & TYPES ---
 interface DecodedToken {
@@ -52,12 +43,6 @@ interface FormProps {
   data: any;
   onUpdate: (updatedData: any) => void;
 }
-
-const PageCreateCVwithAI = () => (
-  <CVProvider>
-    <CreateCVwithAI />
-  </CVProvider>
-);
 
 function CreateCVwithAI() {
   const steps = [
@@ -99,6 +84,10 @@ function CreateCVwithAI() {
     },
     {
       id: 7,
+      name: "Thêm thông tin công việc",
+    },
+    {
+      id: 8,
       name: "Hoàn tất",
       description:
         "Xem lại toàn bộ thông tin CV của bạn trước khi lưu hoặc xuất file.",
@@ -232,6 +221,8 @@ function CreateCVwithAI() {
     }
   };
 
+
+
   const renderCurrentStepForm = () => {
     const safeUserData = userData || {};
     switch (currentStep) {
@@ -248,7 +239,7 @@ function CreateCVwithAI() {
       case 6:
         return <SkillsForm data={safeUserData} onUpdate={updateUserData} />;
       case 7:
-        return <div>Đây là trang cuối cùng để xem lại CV, sửa với AI</div>;
+        return <div><UpJdStep/></div>;
       default:
         return null;
     }
@@ -333,4 +324,4 @@ function CreateCVwithAI() {
   );
 }
 
-export default PageCreateCVwithAI;
+export default CreateCVwithAI;
