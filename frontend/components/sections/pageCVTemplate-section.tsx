@@ -11,7 +11,6 @@ import { X } from "lucide-react";
 import { useOnClickOutside } from "@/hooks/useOnClickOutside";
 
 
-// --- THÊM COMPONENT TemplatePreviewModal TRỰC TIẾP VÀO FILE NÀY ---
 interface TemplatePreviewModalProps {
   templateId: string;
   templateTitle: string;
@@ -50,6 +49,14 @@ const TemplatePreviewModal: FC<TemplatePreviewModalProps> = ({
           description:
             "Dẫn dắt phát triển các module backend sử dụng Node.js và MongoDB, cải thiện hiệu suất API 30%. Triển khai giao diện người dùng bằng React và Redux, tăng trải nghiệm người dùng. Hướng dẫn nhóm 3 lập trình viên cấp dưới trong các dự án quan trọng.",
         },
+        {
+          title: "Quản lý dự án",
+          company: "Công ty TechSolutions",
+          startDate: "2024-01",
+          endDate: "Hiện tại",
+          description:
+            "Quản Lý dự án Kyomatcha và là người phụ trách chính trong việc phát triển ứng dụng web. Tạo và duy trì tài liệu dự án, bao gồm kế hoạch dự án, báo cáo tiến độ và tài liệu kỹ thuật. Phối hợp với các nhóm khác để đảm bảo tiến độ dự án và chất lượng sản phẩm.",
+        },
       ],
       education: [
         {
@@ -71,21 +78,16 @@ const TemplatePreviewModal: FC<TemplatePreviewModalProps> = ({
   const TemplateComponent = templateComponentMap[templateTitle];
 
   const handleUseTemplate = () => {
-    // Bước 1: Lấy token từ cookie của trình duyệt
     const token = document.cookie
       .split("; ")
       .find((row) => row.startsWith("token="))
       ?.split("=")[1];
     if (token) {
-      router.push(
-        `/createCV?id=${templateId}&title=${encodeURIComponent(templateTitle)}`
-      );
+      router.push(`/chooseCreateCV?id=${templateId}`);
     } else {
       alert("Bạn cần đăng nhập trước khi tạo CV!");
       router.push("/login");
     }
-  
-    // Đóng component hiện tại (ví dụ: modal xem trước template) sau khi xử lý
     onClose();
   };
 
@@ -108,17 +110,14 @@ const TemplatePreviewModal: FC<TemplatePreviewModalProps> = ({
 
         {/* Nội dung Preview Template */}
         <div className="flex-grow pt-4 overflow-y-auto flex justify-center items-start">
-          {/* items-start để nội dung ở trên cùng */}
           {!TemplateComponent ? (
             <div className=" text-red-600">
               Không tìm thấy component cho mẫu "{templateTitle}".
             </div>
           ) : (
-            <div className="w-full max-w-[1050px] shadow-2xl origin-top scale-[0.6] md:scale-[0.7] lg:scale-[0.8]">
-            <TemplateComponent
-              data={defaultPreviewData}
-            />
-          </div>
+            <div className="mt-8 w-full max-w-[1050px] shadow-2xl origin-top scale-[0.6] md:scale-[0.7] lg:scale-[0.8]">
+              <TemplateComponent data={defaultPreviewData} />
+            </div>
           )}
         </div>
 
@@ -150,8 +149,6 @@ const TemplatePreviewModal: FC<TemplatePreviewModalProps> = ({
   );
 };
 
-// --- Kết thúc TemplatePreviewModal ---
-
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
@@ -175,8 +172,6 @@ const CvTemplatesPage: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       const data = await getCVTemplates();
-      // Vẫn parse content ở đây để CardCVTemplate vẫn nhận được content đúng nếu bạn muốn
-      // hoặc bạn có thể bỏ qua parse nếu không dùng content thật ở CardCVTemplate nữa
       const parsedData = data.map((template) => {
         if (typeof template.data === "string") {
           try {
@@ -200,7 +195,6 @@ const CvTemplatesPage: React.FC = () => {
     viewMode === "recommended" ? recommendedTemplates : cvTemplates;
 
   const handleCardPreviewClick = (template: CVTemplate) => {
-    // Đổi tên hàm để rõ ràng hơn
     setSelectedTemplateForPreview(template);
   };
 
@@ -248,22 +242,18 @@ const CvTemplatesPage: React.FC = () => {
         key={viewMode}
       >
         {displayedTemplates.map((template) => (
-          // Không thêm onClick trực tiếp vào div ngoài CardCVTemplate
-          // để CardCVTemplate tự quản lý các nút click của nó
           <CardCVTemplate
-            key={template.id}
-            id={template.id}
+            key={template._id}
+            _id={template._id}
             imageUrl={template.imageUrl}
             title={template.title}
-            onPreviewClick={handleCardPreviewClick} // Truyền hàm callback cho nút Preview
+            onPreviewClick={handleCardPreviewClick} 
           />
         ))}
       </motion.div>
-
-      {/* Render TemplatePreviewModal nếu có template được chọn */}
       {selectedTemplateForPreview && (
         <TemplatePreviewModal
-          templateId={selectedTemplateForPreview.id}
+          templateId={selectedTemplateForPreview._id}
           templateTitle={selectedTemplateForPreview.title}
           onClose={handleClosePreviewModal}
         />

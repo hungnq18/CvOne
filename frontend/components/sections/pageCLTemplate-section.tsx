@@ -7,8 +7,7 @@ import { useLanguage } from '@/providers/global-provider';
 import TemplatePreviewModal from '@/components/modals/TemplatePreviewModal';
 
 type CLTemplate = {
-    id: string;
-    templateName: string;
+    _id: string;
     imageUrl: string;
     title: string;
     isRecommended?: boolean;
@@ -83,8 +82,8 @@ const TemplateSection: React.FC<TemplateSectionProps> = ({ clTemplates }) => {
             >
                 {displayedTemplates.map((template) => (
                     <CVCard
-                        key={template.id}
-                        id={template.id}
+                        key={template._id}
+                        id={template._id}
                         imageUrl={template.imageUrl}
                         title={template.title}
                         isRecommended={template.isRecommended}
@@ -96,7 +95,7 @@ const TemplateSection: React.FC<TemplateSectionProps> = ({ clTemplates }) => {
                 <TemplatePreviewModal
                     isOpen={!!previewingTemplate}
                     onClose={handleCloseModal}
-                    templateId={previewingTemplate.id}
+                    templateId={previewingTemplate._id}
                     templateTitle={previewingTemplate.title}
                 />
             )}

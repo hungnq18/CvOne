@@ -62,7 +62,7 @@ const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({ isOpen, onC
     const handleUseTemplate = () => {
         if (!template) return;
         const params = new URLSearchParams({
-            templateId: template.id,
+            templateId: template._id,
             firstName: firstName,
             lastName: lastName,
         });
@@ -111,7 +111,7 @@ const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({ isOpen, onC
                         </div>
                     </div>
                     <div className="space-y-3">
-                        <button onClick={handleUseTemplate} className="w-full bg-green-500 text-white py-3 rounded-lg font-semibold hover:bg-green-600 transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5" disabled={loading || !template}>
+                        <button onClick={handleUseTemplate} className="w-full bg-blue-500 text-white py-3 rounded-lg font-semibold hover:bg-blue-600 transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5" disabled={loading || !template}>
                             <span className="flex items-center justify-center">
                                 <Edit className="w-5 h-5 mr-2" />
                                 Dùng mẫu này
@@ -120,9 +120,6 @@ const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({ isOpen, onC
                         <button onClick={onClose} className="w-full bg-white text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors border border-gray-300">Đóng lại</button>
                     </div>
                 </div>
-                 <button onClick={onClose} className="absolute top-4 right-[21rem] text-gray-400 hover:text-gray-800 transition-colors z-10">
-                    <X size={28} />
-                 </button>
             </div>
         </div>
     );

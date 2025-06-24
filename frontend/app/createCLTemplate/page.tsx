@@ -3,9 +3,10 @@
 import React, { useState, useEffect, Suspense } from "react";
 import { X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { templates, TemplateType } from './templates';
-import { getProvinces, Province, getDistrictsByProvinceCode, District } from "@/api/locationApi";
-import db from "@/api/db.json"; // Import the local JSON data
+import { templates, TemplateType } from './templates/index';
+import { createCL, getCLTemplateById, CLTemplate, CreateCLDto, getCLById, updateCL } from "@/api/clApi";
+import Cookies from "js-cookie";
+import { useLocations } from "@/hooks/useLocations";
 
 interface LetterData {
     firstName: string;
@@ -35,23 +36,162 @@ interface LetterData {
 const CoverLetterBuilderContent = () => {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const templateId = searchParams.get('templateId') || 'cascade-cl';
+    const templateId = searchParams.get('templateId');
+    const clId = searchParams.get('clId');
     const initialFirstName = searchParams.get('firstName');
     const initialLastName = searchParams.get('lastName');
 
-    const selectedTemplateData = db.clTemplates.find(t => t.id === templateId);
-    const templateName = selectedTemplateData ? selectedTemplateData.title.toLowerCase() as TemplateType : 'cascade';
+    const [selectedTemplateData, setSelectedTemplateData] = useState<CLTemplate | null>(null);
+    const [templateName, setTemplateName] = useState<TemplateType>('cascade');
     const TemplateComponent = templates[templateName];
 
-    const getInitialData = () => {
-        const defaultTemplateData = db.clTemplates.find(t => t.id === 'cascade-cl')?.data;
-        const baseData = selectedTemplateData ? selectedTemplateData.data : defaultTemplateData;
+    const [letterData, setLetterData] = useState<LetterData>({
+        firstName: '',
+        lastName: '',
+        profession: '',
+        city: '',
+        state: '',
+        phone: '',
+        email: '',
+        date: '',
+        recipientFirstName: '',
+        recipientLastName: '',
+        companyName: '',
+        recipientCity: '',
+        recipientState: '',
+        recipientPhone: '',
+        recipientEmail: '',
+        subject: '',
+        greeting: '',
+        opening: '',
+        body: '',
+        callToAction: '',
+        closing: '',
+        signature: '',
+    });
 
-        if (!baseData) {
-            // Fallback if no template data is found at all
-            return { firstName: '', lastName: '', profession: '', city: '', state: '', phone: '', email: '', date: '', recipientFirstName: '', recipientLastName: '', companyName: '', recipientCity: '', recipientState: '', recipientPhone: '', recipientEmail: '', subject: '', greeting: '', opening: '', body: '', callToAction: '', closing: '', signature: '' };
+    const {
+        provinces,
+        districts,
+        recipientDistricts,
+        fetchDistrictsForCity,
+        fetchDistrictsForRecipientCity
+    } = useLocations();
+
+    useEffect(() => {
+        const initializeFromLocalStorage = async () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            // If clId or templateId are in the URL, it's a manual flow. Let other useEffects handle it.
+            if (urlParams.has('clId') || urlParams.has('templateId')) {
+                return;
+            }
+
+            const savedDataString = localStorage.getItem('coverLetterData');
+            if (savedDataString) {
+                const coverLetterData = JSON.parse(savedDataString);
+
+                // Populate letter data from localStorage for the AI flow
+                const mappedData: LetterData = {
+                    firstName: coverLetterData.firstName || '',
+                    lastName: coverLetterData.lastName || '',
+                    profession: coverLetterData.profession || '',
+                    city: coverLetterData.city || '',
+                    state: coverLetterData.state || '',
+                    phone: coverLetterData.phone || '',
+                    email: coverLetterData.email || '',
+                    date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+                    recipientFirstName: coverLetterData.recipientFirstName || '',
+                    recipientLastName: coverLetterData.recipientLastName || '',
+                    companyName: coverLetterData.targetCompany || coverLetterData.companyName || '',
+                    recipientCity: coverLetterData.recipientCity || '',
+                    recipientState: coverLetterData.recipientState || '',
+                    recipientPhone: coverLetterData.recipientPhone || '',
+                    recipientEmail: coverLetterData.recipientEmail || '',
+                    subject: coverLetterData.targetJobTitle ? `Application for the ${coverLetterData.targetJobTitle} position` : 'Job Application',
+                    greeting: `Dear ${coverLetterData.recipientFirstName ? coverLetterData.recipientFirstName + ' ' + coverLetterData.recipientLastName : 'Hiring Manager'},`,
+                    opening: '', // AI will populate this
+                    body: `Based on the provided job description for the ${coverLetterData.targetJobTitle || 'position'}, my skills in [Skill 1] and [Skill 2], combined with my strengths in ${coverLetterData.strengths?.join(', ')}, make me a strong candidate. My work style is ${coverLetterData.workStyle}.`, // Placeholder for AI
+                    callToAction: '', // AI will populate this
+                    closing: 'Sincerely,',
+                    signature: `${coverLetterData.firstName || ''} ${coverLetterData.lastName || ''}`.trim(),
+                };
+                setLetterData(mappedData);
+
+                // Pre-load districts for user and recipient city using the hook
+                if (mappedData.city) {
+                    await fetchDistrictsForCity(mappedData.city);
+                }
+                if (mappedData.recipientCity) {
+                    await fetchDistrictsForRecipientCity(mappedData.recipientCity);
+                }
+
+                // Fetch and set the template from localStorage data
+                if (coverLetterData.templateId) {
+                    try {
+                        const data = await getCLTemplateById(coverLetterData.templateId);
+                        if (data) {
+                            setSelectedTemplateData(data);
+                            setTemplateName(data.title.toLowerCase() as TemplateType);
+                        }
+                    } catch (error) {
+                        console.error("Failed to fetch CL template from localStorage data:", error);
+                    }
+                }
+
+                // Clear the local storage after using the data to prevent re-populating on refresh
+                localStorage.removeItem('coverLetterData');
+            }
+        };
+
+        initializeFromLocalStorage();
+    }, []); // This effect now depends on the fetch functions from the hook
+
+    useEffect(() => {
+        const fetchClData = async () => {
+            if (clId) {
+                try {
+                    const clData = await getCLById(clId);
+                    if (clData) {
+                        setLetterData(clData.data);
+                        const template = clData.templateId as CLTemplate;
+                        setSelectedTemplateData(template);
+                        setTemplateName(template.title.toLowerCase() as TemplateType);
+                    }
+                } catch (error) {
+                    console.error("Failed to fetch CL data:", error);
+                }
+            }
+        };
+
+        const fetchTemplateData = async () => {
+            if (templateId) {
+                try {
+                    const data = await getCLTemplateById(templateId);
+                    if (data) {
+                        setSelectedTemplateData(data);
+                        setTemplateName(data.title.toLowerCase() as TemplateType);
+                    }
+                } catch (error) {
+                    console.error("Failed to fetch CL template:", error);
+                }
+            }
+        };
+
+        if (clId) {
+            fetchClData();
+        } else {
+            fetchTemplateData();
+        }
+    }, [clId, templateId]);
+
+    const getInitialData = () => {
+        if (!selectedTemplateData || !selectedTemplateData.data) {
+            const firstName = initialFirstName || '';
+            const lastName = initialLastName || '';
+            return { firstName, lastName, profession: '', city: '', state: '', phone: '', email: '', date: '', recipientFirstName: '', recipientLastName: '', companyName: '', recipientCity: '', recipientState: '', recipientPhone: '', recipientEmail: '', subject: '', greeting: '', opening: '', body: '', callToAction: '', closing: '', signature: `${firstName} ${lastName}`.trim() };
         }
 
+        const baseData = selectedTemplateData.data;
         const firstName = initialFirstName || baseData.firstName;
         const lastName = initialLastName || baseData.lastName;
 
@@ -63,45 +203,80 @@ const CoverLetterBuilderContent = () => {
         };
     };
 
-    const [letterData, setLetterData] = useState<LetterData>(getInitialData());
-
-    const [provinces, setProvinces] = useState<Province[]>([]);
-    const [districts, setDistricts] = useState<District[]>([]);
-
     useEffect(() => {
-        const fetchProvinces = async () => {
-            const provinceData = await getProvinces();
-            provinceData.sort((a, b) => a.name.localeCompare(b.name));
-            setProvinces(provinceData);
-        };
-        fetchProvinces();
-    }, []);
-
-    useEffect(() => {
-        setLetterData(getInitialData());
-    }, [templateId, initialFirstName, initialLastName]);
+        if (!clId) {
+            setLetterData(getInitialData());
+        }
+    }, [selectedTemplateData, initialFirstName, initialLastName, clId]);
 
     const [activeSection, setActiveSection] = useState<string | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [tempData, setTempData] = useState<Partial<LetterData>>({});
+    const [isSaving, setIsSaving] = useState(false);
 
-    const handleCityChange = async (cityValue: string, cityField: keyof LetterData, districtField: keyof LetterData) => {
-        setTempData(prev => ({
-            ...prev,
-            [cityField]: cityValue,
-            [districtField]: ''
-        }));
+    const saveCoverLetter = async (clDataToSave: LetterData) => {
+        if (isSaving) return;
+        setIsSaving(true);
+        try {
+            if (clId) {
+                // Update existing CL
+                await updateCL(clId, { data: clDataToSave });
+                alert('Cover letter updated successfully!');
+                router.push('/myDocuments');
+            } else if (templateId) {
+                // Create new CL
+                const newCL: CreateCLDto = {
+                    templateId: templateId,
+                    title: "Untitled Cover Letter",
+                    data: clDataToSave,
+                    isSaved: true,
+                };
 
-        if (cityValue) {
-            const selectedProvince = provinces.find(p => p.name === cityValue);
-            if (selectedProvince) {
-                const districtData = await getDistrictsByProvinceCode(selectedProvince.code);
-                setDistricts(districtData);
+                await createCL(newCL);
+                localStorage.removeItem('pendingCL');
+                alert('Cover letter saved successfully!');
+                router.push('/myDocuments');
             } else {
-                setDistricts([]);
+                alert("Template not selected!");
             }
+        } catch (error) {
+            console.error("Failed to save cover letter:", error);
+            alert("Failed to save cover letter. Please try again.");
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleFinishLetter = () => {
+        const token = Cookies.get('token');
+        if (!token) {
+            if (!templateId) {
+                alert("Please select a template first.");
+                router.push('/clTemplate');
+                return;
+            }
+            const pendingCL = {
+                letterData,
+                templateId,
+            };
+            localStorage.setItem('pendingCL', JSON.stringify(pendingCL));
+            router.push('/login');
         } else {
-            setDistricts([]);
+            saveCoverLetter(letterData);
+        }
+    };
+
+    const handleCityChange = async (cityValue: string, isRecipient: boolean) => {
+        const fieldToUpdate = isRecipient ? 'recipientCity' : 'city';
+        const districtFieldToUpdate = isRecipient ? 'recipientState' : 'state';
+
+        handleInputChange(fieldToUpdate, cityValue);
+        handleInputChange(districtFieldToUpdate, ''); // Reset district
+
+        if (isRecipient) {
+            await fetchDistrictsForRecipientCity(cityValue);
+        } else {
+            await fetchDistrictsForCity(cityValue);
         }
     };
 
@@ -118,23 +293,10 @@ const CoverLetterBuilderContent = () => {
         setTempData(newTempData);
         setIsModalOpen(true);
 
-        let cityToFetch: string | undefined;
-        if (section === 'name') {
-            cityToFetch = newTempData.city;
-        } else if (section === 'recipient') {
-            cityToFetch = newTempData.recipientCity;
-        }
-
-        if (cityToFetch) {
-            const selectedProvince = provinces.find(p => p.name === cityToFetch);
-            if (selectedProvince) {
-                const districtData = await getDistrictsByProvinceCode(selectedProvince.code);
-                setDistricts(districtData);
-            } else {
-                setDistricts([]);
-            }
-        } else {
-            setDistricts([]);
+        if (section === 'name' && newTempData.city) {
+            await fetchDistrictsForCity(newTempData.city);
+        } else if (section === 'recipient' && newTempData.recipientCity) {
+            await fetchDistrictsForRecipientCity(newTempData.recipientCity);
         }
     };
 
@@ -168,10 +330,11 @@ const CoverLetterBuilderContent = () => {
         switch (activeSection) {
             case "name":
                 return (
-                    <div className="space-y-4">
+                    <div className="space-y-6">
+                        {/* Name Row */}
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1 uppercase">
+                                <label className="block text-sm font-medium text-gray-700 mb-2 uppercase">
                                     First Name
                                 </label>
                                 <input
@@ -181,11 +344,11 @@ const CoverLetterBuilderContent = () => {
                                         handleInputChange("firstName", e.target.value)
                                     }
                                     placeholder="e.g. John"
-                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1 uppercase">
+                                <label className="block text-sm font-medium text-gray-700 mb-2 uppercase">
                                     Last Name
                                 </label>
                                 <input
@@ -195,12 +358,14 @@ const CoverLetterBuilderContent = () => {
                                         handleInputChange("lastName", e.target.value)
                                     }
                                     placeholder="e.g. Smith"
-                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
                                 />
                             </div>
                         </div>
+
+                        {/* Profession */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1 uppercase">
+                            <label className="block text-sm font-medium text-gray-700 mb-2 uppercase">
                                 Profession
                             </label>
                             <input
@@ -209,45 +374,49 @@ const CoverLetterBuilderContent = () => {
                                 onChange={(e) =>
                                     handleInputChange("profession", e.target.value)
                                 }
-                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
                             />
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1 uppercase">
-                                City
-                            </label>
-                            <select
-                                value={tempData.city || ""}
-                                onChange={(e) => handleCityChange(e.target.value, "city", "state")}
-                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
-                            >
-                                <option value="">Select a City/Province</option>
-                                {provinces.map((p) => (
-                                    <option key={p.code} value={p.name}>{p.name}</option>
-                                ))}
-                            </select>
-                        </div>
+
+                        {/* City and State */}
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1 uppercase">
-                                    State/Province
+                                <label className="block text-sm font-medium text-gray-700 mb-2 uppercase">
+                                    City/Province
+                                </label>
+                                <select
+                                    value={tempData.city || ""}
+                                    onChange={(e) => handleCityChange(e.target.value, false)}
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
+                                >
+                                    <option value="">Select City/Province</option>
+                                    {provinces.map((p) => (
+                                        <option key={p.code} value={p.name}>{p.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2 uppercase">
+                                    District
                                 </label>
                                 <select
                                     value={tempData.state || ""}
                                     onChange={(e) => handleInputChange("state", e.target.value)}
-                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
                                     disabled={!tempData.city}
                                 >
-                                    <option value="">Select a District</option>
+                                    <option value="">Select District</option>
                                     {districts.map(d => (
                                         <option key={d.code} value={d.name}>{d.name}</option>
                                     ))}
                                 </select>
                             </div>
                         </div>
+
+                        {/* Phone and Email */}
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1 uppercase">
+                                <label className="block text-sm font-medium text-gray-700 mb-2 uppercase">
                                     Phone Number
                                 </label>
                                 <input
@@ -255,18 +424,19 @@ const CoverLetterBuilderContent = () => {
                                     value={tempData.phone || ""}
                                     onChange={(e) => handleInputChange("phone", e.target.value)}
                                     placeholder="e.g. +415-555-5555"
-                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1 uppercase">
+                                <label className="block text-sm font-medium text-gray-700 mb-2 uppercase">
                                     Email
                                 </label>
                                 <input
                                     type="email"
                                     value={tempData.email || ""}
                                     onChange={(e) => handleInputChange("email", e.target.value)}
-                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    placeholder="e.g. johnsmith@gmail.com"
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
                                 />
                             </div>
                         </div>
@@ -303,36 +473,36 @@ const CoverLetterBuilderContent = () => {
                             <label className="block text-sm font-medium text-gray-700 mb-1 uppercase">Company Name</label>
                             <input type="text" value={tempData.companyName || ""} onChange={(e) => handleInputChange("companyName", e.target.value)} placeholder="e.g. ACME Technologies" className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1 uppercase">City</label>
-                            <select
-                                value={tempData.recipientCity || ""}
-                                onChange={(e) => handleCityChange(e.target.value, "recipientCity", "recipientState")}
-                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
-                            >
-                                <option value="">Select a City/Province</option>
-                                {provinces.map((p) => (
-                                    <option key={p.code} value={p.name}>{p.name}</option>
-                                ))}
-                            </select>
-                        </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1 uppercase">State/Province</label>
+                                <label className="block text-sm font-medium text-gray-700 mb-1 uppercase">City/Province</label>
+                                <select
+                                    value={tempData.recipientCity || ""}
+                                    onChange={(e) => handleCityChange(e.target.value, true)}
+                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                                >
+                                    <option value="">Select City/Province</option>
+                                    {provinces.map((p) => (
+                                        <option key={p.code} value={p.name}>{p.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1 uppercase">District</label>
                                 <select
                                     value={tempData.recipientState || ""}
                                     onChange={(e) => handleInputChange("recipientState", e.target.value)}
                                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
                                     disabled={!tempData.recipientCity}
                                 >
-                                    <option value="">Select a District</option>
-                                    {districts.map(d => (
+                                    <option value="">Select District</option>
+                                    {recipientDistricts.map(d => (
                                         <option key={d.code} value={d.name}>{d.name}</option>
                                     ))}
                                 </select>
                             </div>
                         </div>
-                         <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1 uppercase">Phone Number</label>
                                 <input type="text" value={tempData.recipientPhone || ""} onChange={(e) => handleInputChange("recipientPhone", e.target.value)} placeholder="e.g. +415-555-5555" className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
@@ -451,7 +621,7 @@ const CoverLetterBuilderContent = () => {
     };
 
     return (
-        <div className="bg-gray-100 min-h-screen mt-16">
+        <div className="min-h-screen mt-16">
             <div className="max-w-7xl mx-auto flex">
                 {/* Left Sidebar */}
                 <div className="w-80 bg-white p-6 shadow-sm">
@@ -497,9 +667,10 @@ const CoverLetterBuilderContent = () => {
                         </button>
                         <button
                             className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg font-medium transition-colors"
-                            onClick={() => router.push("/dashboard")}
+                            onClick={handleFinishLetter}
+                            disabled={isSaving}
                         >
-                            Finish Letter
+                            {isSaving ? "Saving..." : "Finish Letter"}
                         </button>
                     </div>
                 </div>
@@ -508,31 +679,38 @@ const CoverLetterBuilderContent = () => {
             {/* Edit Modal */}
             {isModalOpen && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-                        <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-xl font-semibold text-gray-800">
-                                Edit {sections.find((s) => s.id === activeSection)?.label}
-                            </h2>
+                    <div className="bg-white rounded-xl p-8 w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-2xl">
+                        <div className="flex justify-between items-start mb-6">
+                            <div>
+                                <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                                    {sections.find((s) => s.id === activeSection)?.label}
+                                </h2>
+                                {activeSection === "name" && (
+                                    <p className="text-gray-600">
+                                        Enter your contact information
+                                    </p>
+                                )}
+                            </div>
                             <button
                                 onClick={closeModal}
-                                className="text-gray-500 hover:text-gray-700"
+                                className="text-gray-400 hover:text-gray-600 transition-colors"
                             >
                                 <X className="w-6 h-6" />
                             </button>
                         </div>
-                        <div className="mb-6">{renderModalContent()}</div>
-                        <div className="flex justify-end space-x-4">
+                        <div className="mb-8">{renderModalContent()}</div>
+                        <div className="flex justify-between">
                             <button
                                 onClick={closeModal}
-                                className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                                className="px-8 py-3 text-gray-700 border border-gray-300 rounded-full hover:bg-gray-50 transition-colors font-medium"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={saveChanges}
-                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                                className="px-8 py-3 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-colors font-medium"
                             >
-                                Save Changes
+                                Save
                             </button>
                         </div>
                     </div>

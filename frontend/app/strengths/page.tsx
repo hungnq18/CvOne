@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import React, { useState, useEffect, Suspense } from 'react';
+import { useRouter } from 'next/navigation';
 import { ArrowLeft, ArrowRight, Check } from 'lucide-react';
 
 const strengthsList = [
@@ -36,9 +36,17 @@ const ProgressBar = ({ step }: { step: number }) => {
 
 function StrengthsContent() {
     const router = useRouter();
-    const searchParams = useSearchParams();
-    const templateId = searchParams.get('templateId');
     const [selectedStrengths, setSelectedStrengths] = useState<string[]>([]);
+
+    useEffect(() => {
+        const savedDataString = localStorage.getItem('coverLetterData');
+        if (savedDataString) {
+            const coverLetterData = JSON.parse(savedDataString);
+            if (coverLetterData.strengths) {
+                setSelectedStrengths(coverLetterData.strengths);
+            }
+        }
+    }, []);
 
     const handleToggleStrength = (strength: string) => {
         setSelectedStrengths(prev => {
@@ -53,12 +61,13 @@ function StrengthsContent() {
     };
 
     const handleContinue = () => {
-        if (!templateId) return;
-        const params = new URLSearchParams({
-            templateId,
-            strengths: JSON.stringify(selectedStrengths),
-        });
-        router.push(`/background?${params.toString()}`);
+        const savedDataString = localStorage.getItem('coverLetterData');
+        const coverLetterData = savedDataString ? JSON.parse(savedDataString) : {};
+
+        const updatedData = { ...coverLetterData, strengths: selectedStrengths };
+        localStorage.setItem('coverLetterData', JSON.stringify(updatedData));
+
+        router.push(`/work-style`);
     };
 
     const handleBack = () => {

@@ -48,13 +48,13 @@ const StyledButton = styled.button`
   font-size: 14px;
   cursor: pointer;
   border-radius: 4px;
-  background: linear-gradient(to right, rgb(141, 176, 253), rgb(139, 169, 252));
+  background: #2563eb;
   color: white;
   font-weight: 500;
   transition: background 0.2s ease;
 
   &:hover {
-    background: #2563eb;
+    background: #1d4ed8;
   }
 `;
 
@@ -146,15 +146,29 @@ const navigationItems = {
     admin: [
       {
         name: "Dashboard",
-        href: "/admin/dashboard",
+        href: "/admin",
       },
       {
         name: "Manage Users",
-        href: "/admin/users",
+        href: "/admin/user",
       },
       {
-        name: "Settings",
-        href: "/admin/settings",
+        name: "Manage CV Template",
+        href: "/admin/cv-template",
+      },
+      {
+        name: "Manage CL Template",
+        href: "/admin/cl-template",
+      },
+    ],
+    hr: [
+      {
+        name: "Dashboard",
+        href: "/hr/dashboard",
+      },
+      {
+        name: "My Profile",
+        href: "/user/profile",
       },
     ],
     user: [
@@ -239,15 +253,29 @@ const navigationItems = {
     admin: [
       {
         name: "Bảng điều khiển",
-        href: "/admin/dashboard",
+        href: "/admin",
       },
       {
         name: "Quản lý Người dùng",
-        href: "/admin/users",
+        href: "/admin/user",
       },
       {
-        name: "Cài đặt",
-        href: "/admin/settings",
+        name: "Quản lý CV Template",
+        href: "/admin/cv-template",
+      },
+      {
+        name: "Quản lý CL Template",
+        href: "/admin/cl-template",
+      },
+    ],
+    hr: [
+      {
+        name: "Bảng điều khiển",
+        href: "/hr/dashboard",
+      },
+      {
+        name: "Hồ sơ của tôi",
+        href: "/user/profile",
       },
     ],
     user: [
@@ -315,14 +343,16 @@ export function Header() {
   const navItems =
     role === "admin"
       ? navigationItems[language].admin
-      : role === "user"
-      ? navigationItems[language].user
-      : navigationItems[language].default;
+      : role === "hr"
+        ? navigationItems[language].hr
+        : role === "user"
+          ? navigationItems[language].user
+          : navigationItems[language].default;
 
   const handleLogout = () => {
     logout();
     document.cookie = "token=; path=/; max-age=0";
-    router.push("/login");
+    window.location.href = "/login";
   };
 
   return (
@@ -353,7 +383,7 @@ export function Header() {
                   {language === "en" ? "Logout" : "Đăng xuất"}
                 </StyledButton>
                 {role === "admin" && (
-                  <StyledButton as={Link} href="/admin/dashboard">
+                  <StyledButton as={Link} href="/admin">
                     {language === "en" ? "Admin Panel" : "Quản trị"}
                   </StyledButton>
                 )}

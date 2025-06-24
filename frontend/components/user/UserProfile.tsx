@@ -8,8 +8,8 @@ import ChangePasswordModal from './ChangePasswordModal';
 import ProfileCard from './ProfileCard';
 import SocialIcons from './SocialIcons';
 import UserInfo from './UserInfo';
-import JobApplications from './JobApplications';
-import { fetchUserDataFromToken, updateUserProfile, changePassword } from '@/api/userApi';
+import JobInProfile from './JobInProfile';
+import { fetchUserDataFromToken, updateUserProfile, changePassword, getUserIdFromToken, getUserById } from '@/api/userApi';
 
 const UserProfile: React.FC = () => {
     const [user, setUser] = useState<User | null>(null);
@@ -21,7 +21,9 @@ const UserProfile: React.FC = () => {
     const fetchUserData = async () => {
         try {
             setIsLoading(true);
-            const userData = await fetchUserDataFromToken();
+            const userId = getUserIdFromToken();
+            if (!userId) throw new Error("No user ID found in token");
+            const userData = await getUserById(userId);
             setUser(userData);
             setError(null);
         } catch (err) {
@@ -32,12 +34,15 @@ const UserProfile: React.FC = () => {
         }
     };
 
+    useEffect(() => {
+        fetchUserData();
+    }, []);
+
     const handleSaveProfile = async (updatedUser: User) => {
         try {
             if (!user?._id) {
                 throw new Error("No user ID found");
             }
-            setIsLoading(true);
             const updatedUserData = await updateUserProfile(user._id, updatedUser);
             setUser(updatedUserData);
             setIsEditModalOpen(false);
@@ -45,14 +50,11 @@ const UserProfile: React.FC = () => {
         } catch (err) {
             console.error("Error updating profile:", err);
             setError(err instanceof Error ? err.message : "Failed to update profile. Please try again later.");
-        } finally {
-            setIsLoading(false);
         }
     };
 
     const handleChangePassword = async (currentPassword: string, newPassword: string) => {
         try {
-            setIsLoading(true);
             await changePassword(currentPassword, newPassword);
             setIsChangePasswordModalOpen(false);
             setError(null);
@@ -60,14 +62,8 @@ const UserProfile: React.FC = () => {
         } catch (err) {
             console.error("Error changing password:", err);
             setError(err instanceof Error ? err.message : "Failed to change password. Please try again later.");
-        } finally {
-            setIsLoading(false);
         }
     };
-
-    useEffect(() => {
-        fetchUserData();
-    }, []);
 
     if (isLoading) {
         return (
@@ -111,7 +107,7 @@ const UserProfile: React.FC = () => {
                                 onEdit={() => setIsEditModalOpen(true)}
                                 onChangePassword={() => setIsChangePasswordModalOpen(true)}
                             />
-                            <JobApplications />
+                            <JobInProfile />
                         </div>
                     </div>
                 </div>

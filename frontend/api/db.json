@@ -1,7 +1,7 @@
 {
-  "cvTemplates": [
+  "cv-templates": [
     {
-      "id": "modern-1",
+      "_id": "modern-1",
       "imageUrl": "https://i.postimg.cc/FRnVxM3X/A-nh-ma-n-hi-nh-2025-06-19-lu-c-08-54-42.png",
       "title": "The Signature",
       "isRecommended": true,
@@ -47,10 +47,10 @@
       }
     },
     {
-      "id": "modern-2",
-      "imageUrl": "https://i.postimg.cc/T1LqNtJL/A-nh-ma-n-hi-nh-2025-06-19-lu-c-08-55-12.png",
+      "_id": "modern-2",
+      "imageUrl": "https://i.postimg.cc/vTqL3pnd/image.png",
       "title": "The Vanguard",
-      "isRecommended": false,
+      "isRecommended": true,
       "data": {
         "userData": {
           "firstName": "Hoàng Văn",
@@ -76,8 +76,15 @@
               "title": "Kỹ sư phần mềm cấp cao",
               "company": "Công ty QuickTech",
               "startDate": "2022-01",
-              "endDate": "Hiện tại",
+              "endDate": "2023-12",
               "description": "Dẫn dắt phát triển các module backend sử dụng Node.js và MongoDB, cải thiện hiệu suất API 30%. Triển khai giao diện người dùng bằng React và Redux, tăng trải nghiệm người dùng. Hướng dẫn nhóm 3 lập trình viên cấp dưới trong các dự án quan trọng."
+            },
+            {
+              "title": "Quản lý dự án",
+              "company": "Công ty TechSolutions",
+              "startDate": "2024-01",
+              "endDate": "Hiện tại",
+              "description": "Quản Lý dự án Kyomatcha và là người phụ trách chính trong việc phát triển ứng dụng web. Tạo và duy trì tài liệu dự án, bao gồm kế hoạch dự án, báo cáo tiến độ và tài liệu kỹ thuật. Phối hợp với các nhóm khác để đảm bảo tiến độ dự án và chất lượng sản phẩm."
             }
           ],
           "education": [
@@ -93,9 +100,9 @@
       }
     }
   ],
-  "cvs": [
+  "cv": [
     {
-      "id": "cv_001",
+      "_id": "cv_001",
       "userId": "1",
       "title": "Software Developer CV",
       "content": {
@@ -152,7 +159,7 @@
       "isFinalized": true
     },
     {
-      "id": "cv_002",
+      "_id": "cv_002",
       "userId": "1",
       "title": "Designer CV",
       "content": {
@@ -303,7 +310,6 @@
   ],
   "cls": [
     {
-      "id": "cl_001",
       "clTemplateId": "concept-cl",
       "userId": "user_123456",
       "title": "Untitled Cover Letter",
@@ -336,7 +342,6 @@
       "updatedAt": "2025-06-06T10:30:00Z"
     },
     {
-      "id": "cl_002",
       "clTemplateId": "cascade-cl",
       "userId": "user_123456",
       "title": "Untitled Cover Letter",
@@ -367,26 +372,67 @@
       "isSaved": false,
       "createdAt": "2025-06-06T10:00:00Z",
       "updatedAt": "2025-06-06T10:30:00Z"
+    },
+    {
+      "clTemplateId": "cascade-cl",
+      "userId": "1",
+      "title": "Untitled Cover Letter",
+      "content": {
+        "firstName": "Jane",
+        "lastName": "Doe",
+        "profession": "Product Manager",
+        "city": "Da Nang",
+        "state": "Hai Chau",
+        "phone": "+84 987 654 321",
+        "email": "jane.doe@example.com",
+        "date": "June 15, 2025",
+        "recipientFirstName": "Alan",
+        "recipientLastName": "Turing",
+        "companyName": "Innovate Inc.",
+        "recipientCity": "San Francisco",
+        "recipientState": "California",
+        "recipientPhone": "415-111-2222",
+        "recipientEmail": "hiring@innovate.com",
+        "subject": "Regarding the Product Manager Role",
+        "greeting": "Dear Mr. Turing,",
+        "opening": "It is with great enthusiasm that I submit my application for the Product Manager position at Innovate Inc., which I located on LinkedIn. Having followed your company's success in launching groundbreaking products, I am confident that my experience in product lifecycle management aligns with your team's goals.",
+        "body": "In my previous role at TechFlow, I was instrumental in increasing user engagement by 30% through data-driven feature prioritization and a user-centric design approach. I am adept at collaborating with cross-functional teams, including engineering, marketing, and sales, to ensure a cohesive product strategy and successful market launch.\\n\\nMy ability to translate complex technical concepts into clear, actionable plans has been a cornerstone of my career. I am passionate about creating products that not only meet market demands but also provide an exceptional user experience.",
+        "callToAction": "I am eager to discuss how my background in product development and strategic planning can benefit Innovate Inc. Thank you for your time and consideration.",
+        "closing": "Best regards,",
+        "signature": "Jane Doe"
+      },
+      "isSaved": true,
+      "createdAt": "2025-06-19T04:16:28.695Z",
+      "updatedAt": "2025-06-19T04:16:28.695Z"
     }
   ],
   "appliedJobs": [
     {
-      "id": "apply1",
-      "job_id": "job1",
-      "user_id": "user1",
-      "cv_id": "cv1",
-      "coverletter_id": "cover1",
-      "status": "Applied",
-      "submit_at": "2025-06-04"
+      "id": "665fa2c2b5c69a4b0c1a1a11",
+      "job_id": "665f98a3a0d5e6a7b8d12345",
+      "user_id": "665f99b4c8e8c3b7d9e67890",
+      "cv_id": "665f9abc1b2c3d4e5f012345",
+      "coverletter_id": "665f9def234567890abcdef1",
+      "status": "pending",
+      "submit_at": "2025-06-18T14:35:00.000Z"
     },
     {
-      "id": "apply2",
-      "job_id": "job2",
-      "user_id": "user2",
-      "cv_id": "cv2",
-      "coverletter_id": "cover2",
-      "status": "Interview Scheduled",
-      "submit_at": "2025-06-03"
+      "id": "665fa2c2b5c69a4b0c1a1a12",
+      "job_id": "665f98a3a0d5e6a7b8d12346",
+      "user_id": "665f99b4c8e8c3b7d9e67891",
+      "cv_id": "665f9abc1b2c3d4e5f012346",
+      "coverletter_id": "665f9def234567890abcdef2",
+      "status": "accepted",
+      "submit_at": "2025-06-17T10:15:00.000Z"
+    },
+    {
+      "id": "665fa2c2b5c69a4b0c1a1a13",
+      "job_id": "665f98a3a0d5e6a7b8d12347",
+      "user_id": "665f99b4c8e8c3b7d9e67892",
+      "cv_id": "665f9abc1b2c3d4e5f012347",
+      "coverletter_id": "665f9def234567890abcdef3",
+      "status": "rejected",
+      "submit_at": "2025-06-16T09:00:00.000Z"
     }
   ],
   "userCVs": [
@@ -447,6 +493,8 @@
   ],
   "jobs": [
     {
+      "id": "job_001",
+      "user_id": "user_123456",
       "Experience": "5 to 15 Years",
       "Qualifications": "M.Tech",
       "Salary Range": "$59K-$99K",
@@ -599,7 +647,7 @@
   ],
   "users": [
     {
-      "_id": "1",
+      "_id": "6856d261b97d00ccf205c6c8",
       "account_id": "acc_1",
       "first_name": "John",
       "last_name": "Doe",

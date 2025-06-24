@@ -21,7 +21,7 @@ function ChooseOptionContent() {
         if (selectedOption === 'manual') {
             router.push(`/createCLTemplate?${params.toString()}`);
         } else {
-            router.push(`/strengths?${params.toString()}`);
+            router.push(`/personal-info?${params.toString()}`);
         }
     };
 
@@ -46,7 +46,7 @@ function ChooseOptionContent() {
     };
 
     return (
-        <div className=" bg-white flex flex-col items-center justify-center py-12 mt-16">
+        <div className=" bg-white flex flex-col items-center justify-center py-12 min-h-screen">
             <div className="w-full max-w-4xl flex flex-col items-center">
                 <h1 className="text-3xl font-bold text-gray-800 mb-12">
                     How do you want to start your cover letter?

@@ -24,14 +24,22 @@ export class CoverLetterService {
     return this.coverLetterModel.create(payload);
   }
 
-  async findAllByUser(userId: string): Promise<CoverLetter[]> {
-    return this.coverLetterModel.find({ userId }).sort({ createdAt: -1 });
+  async findAll(userId: string): Promise<CoverLetter[]> {
+    return this.coverLetterModel
+      .find({ userId: new Types.ObjectId(userId) })
+      .populate("templateId")
+      .exec();
   }
 
-  async findOne(id: string): Promise<CoverLetter> {
-    const doc = await this.coverLetterModel.findById(id);
-    if (!doc) throw new NotFoundException("Cover Letter not found");
-    return doc;
+  async findOne(id: string, userId: string): Promise<CoverLetter> {
+    const cl = await this.coverLetterModel.findOne({
+      _id: id,
+      userId: new Types.ObjectId(userId),
+    });
+    if (!cl) {
+      throw new NotFoundException("Cover letter not found");
+    }
+    return cl;
   }
 
   async update(id: string, dto: UpdateCoverLetterDto): Promise<CoverLetter> {

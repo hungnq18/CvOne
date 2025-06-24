@@ -125,13 +125,11 @@ export function useLoginForm() {
       });
 
       if (decoded.role === "admin") {
-        router.push("/admin");
-      } else if (decoded.role === "user") {
-        router.push("/userDashboard");
+        window.location.href = "/admin"
       } else if (decoded.role === "hr") {
-        router.push("/hr");
+        window.location.href = "/hr/dashboard"
       } else {
-        router.push("/error");
+        window.location.href = "/"
       }
 
     } catch (err: any) {
