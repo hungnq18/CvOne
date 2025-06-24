@@ -46,11 +46,6 @@ const sidebarSections = [
   { id: "skills", title: "Kỹ năng" },
 ];
 
-const PageCreateCVSection = () => (
-  <CVProvider>
-    <PageCreateCVContent />
-  </CVProvider>
-);
 
 const PageCreateCVContent = () => {
   const searchParams = useSearchParams();
@@ -399,4 +394,4 @@ const PageCreateCVContent = () => {
   );
 };
 
-export default PageCreateCVSection;
+export default PageCreateCVContent;
