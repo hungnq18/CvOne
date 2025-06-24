@@ -11,7 +11,12 @@ import {
 } from "react";
 import { CVTemplate } from "@/api/cvapi";
 
+
 interface CVContextType {
+  pdfFile: Uint8Array | null;
+  setPdfFile: (file: Uint8Array | null) => void;
+  jobDescription: string;
+  setJobDescription: (description: string) => void;
   currentTemplate: CVTemplate | null;
   userData: any | null;
   loadTemplate: (template: CVTemplate) => void;
@@ -29,6 +34,8 @@ export const useCV = () => {
 };
 
 export const CVProvider = ({ children }: { children: ReactNode }) => {
+  const [pdfFile, setPdfFile] = useState<Uint8Array | null>(null);
+
   const [currentTemplate, setCurrentTemplate] = useState<CVTemplate | null>(
     null
   );
@@ -42,7 +49,13 @@ export const CVProvider = ({ children }: { children: ReactNode }) => {
     setUserData((prevData: any) => ({ ...prevData, ...newData }));
   }, []);
 
+  const [jobDescription, setJobDescription] = useState<string>("");
+
   const value = {
+    pdfFile,
+    setPdfFile,
+    jobDescription,
+    setJobDescription,
     currentTemplate,
     userData,
     loadTemplate,
