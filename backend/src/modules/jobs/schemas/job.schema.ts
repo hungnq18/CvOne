@@ -43,8 +43,8 @@ export class Job {
   @Prop({ required: true })
   responsibilities: string;
 
-  @Prop()
-  user_id: Types.ObjectId;
+  @Prop({ type: Types.ObjectId, ref: "User", required: true })
+  postedBy: Types.ObjectId;
 }
 
 export const JobSchema = SchemaFactory.createForClass(Job);

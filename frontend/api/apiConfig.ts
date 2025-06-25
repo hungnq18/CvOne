@@ -63,6 +63,7 @@ export const API_ENDPOINTS = {
     DELETE: (id: string) => `/jobs/${id}`,
     COUNTBYPOSTINGDATE: (month: number, year: number) =>
       `/jobs/count-by-posting-date/${month}/${year}`,
+    GET_JOB_BY_HR: "jobs/by-hr",
   },
   NOTIFICATION: {
     GET_NOTIFICATIONS: "/notifications",
@@ -80,5 +81,10 @@ export const API_ENDPOINTS = {
     GET_APPLY_JOB_DETAIL: (id: string) => `/apply-job/${id}`,
     UPDATE_STATUS_BY_HR: (id: string) => `/apply-job/${id}/status/by-hr`,
     UPDATE_APPLY_JOB_BY_USER: (id: string) => `/apply-job/${id}/user-update`,
+  },
+  SAVED_JOB: {
+    GET_SAVE_JOB: "/saved-job",
+    SAVE_JOB: (jobId: string) => `/saved-job/${jobId}`,
+    UN_SAVE_JOB: (jobId: string) => `/saved-job/${jobId}`,
   },
 } as const;

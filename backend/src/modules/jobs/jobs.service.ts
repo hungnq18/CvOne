@@ -19,19 +19,12 @@ export class JobsService {
     return this.jobModel.find().skip(skip).limit(limit).exec();
   }
 
-  async create(jobData: CreateJobDto, accountId: string): Promise<JobDocument> {
+  async create(jobData: CreateJobDto, userId: string): Promise<JobDocument> {
     // Sử dụng await để lấy user từ Promise
-
-    const user: UserDocument =
-      await this.userService.getUserByAccountId(accountId);
-
-    if (!user || !user._id) {
-      throw new Error("User not found or invalid user ID");
-    }
 
     const transformedData = {
       ...jobData,
-      user_id: user._id,
+      postedBy: new Types.ObjectId(userId),
     };
 
     const createdJob = new this.jobModel(transformedData);
@@ -70,11 +63,15 @@ export class JobsService {
     const endDate = new Date(year, month, 1); // Ngày đầu tháng kế tiếp
 
     return this.jobModel.countDocuments({
-      user_id: new Types.ObjectId(userId), // 👈 Lọc theo userId
+      postedBy: new Types.ObjectId(userId),
       postingDate: {
         $gte: startDate,
         $lt: endDate,
       },
     });
+  }
+
+  async getJobsByHr(userId: string): Promise<JobDocument[]> {
+    return this.jobModel.find({ user_id: userId }).exec();
   }
 }
