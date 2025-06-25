@@ -1,28 +1,31 @@
-import StyledComponentsRegistry from '@/api/registry'
-import { Toaster } from "@/components/ui/toaster"
-import { AuthProvider } from "@/providers/auth-provider"
-import { EmailVerificationProvider } from "@/providers/email-verification-provider"
-import { GlobalProvider } from "@/providers/global-provider"
-import type { Metadata } from "next"
-import { Inter } from "next/font/google"
-import type React from "react"
-import "./globals.css"
-import { Header } from '@/components/ui/header'
-import { ThemeProvider } from "@/providers/theme-provider"
-import IconChatAndNotification from "@/components/chatAndNotification/iconChatAndNotification"
-import FooterWrapper from "@/components/ui/footer-wrapper"
-import { ChatProvider } from '@/providers/ChatProvider'
-import { AppSidebar } from "@/components/hr/hrSideBar"
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
-import { jwtDecode } from "jwt-decode"
+
+import StyledComponentsRegistry from "@/api/registry";
+import { Toaster } from "@/components/ui/toaster";
+import { AuthProvider } from "@/providers/auth-provider";
+import { EmailVerificationProvider } from "@/providers/email-verification-provider";
+import { GlobalProvider } from "@/providers/global-provider";
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import type React from "react";
+import "./globals.css";
+import { Header } from "@/components/ui/header";
+import { ThemeProvider } from "@/providers/theme-provider";
+import IconChatAndNotification from "@/components/chatAndNotification/iconChatAndNotification";
+import FooterWrapper from "@/components/ui/footer-wrapper";
+import { ChatProvider } from "@/providers/ChatProvider";
+import { CVProvider } from "@/providers/cv-provider";
+import { AppSidebar } from "@/components/hr/hrSideBar";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { jwtDecode } from "jwt-decode";
 import { cookies } from "next/headers"
 
-const inter = Inter({ subsets: ["latin"] })
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "CVOne - Professional CV & Resume Builder",
-  description: "Create professional CVs and resumes with CVOne's easy-to-use builder",
-}
+  description:
+    "Create professional CVs and resumes with CVOne's easy-to-use builder",
+};
 
 function getRoleFromToken() {
   const cookieStore = cookies()
@@ -39,10 +42,9 @@ function getRoleFromToken() {
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode
+  children: React.ReactNode;
 }>) {
   const role = getRoleFromToken();
-
   return (
     <html lang="en" className="overflow-x-hidden">
       <body className={`${inter.className} min-h-screen flex flex-col overflow-x-hidden`}>
@@ -57,6 +59,7 @@ export default function RootLayout({
                   disableTransitionOnChange
                 >
                   <ChatProvider>
+                    <CVProvider>
                     {role === 'admin' ? (
                       children
                     ) : (
@@ -86,6 +89,7 @@ export default function RootLayout({
                     )}
                     <IconChatAndNotification />
                     <Toaster />
+                   </CVProvider>
                   </ChatProvider>
                 </ThemeProvider>
               </EmailVerificationProvider>
@@ -94,5 +98,5 @@ export default function RootLayout({
         </StyledComponentsRegistry>
       </body>
     </html>
-  )
+  );
 }

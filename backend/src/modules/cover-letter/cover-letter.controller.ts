@@ -14,10 +14,16 @@ import { CoverLetterService } from "./cover-letter.service";
 import { CreateCoverLetterDto } from "./dto/create-cover-letter.dto";
 import { UpdateCoverLetterDto } from "./dto/update-cover-letter.dto";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
+import { CvAiService } from "../cv/cv-ai.service";
+import { OpenAiService } from "../cv/openai.service";
+import { CreateGenerateCoverLetterDto } from "./dto/create-generate-cl-ai.dto";
 
 @Controller("cover-letters")
 export class CoverLetterController {
-  constructor(private readonly coverLetterService: CoverLetterService) {}
+  constructor(
+    private readonly coverLetterService: CoverLetterService,
+    private openAiService: OpenAiService
+  ) {}
 
   @UseGuards(JwtAuthGuard)
   @Post()
@@ -48,5 +54,11 @@ export class CoverLetterController {
   @Delete(":id")
   remove(@Param("id") id: string) {
     return this.coverLetterService.remove(id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post("generate/ai")
+  async generateByAi(@Body() dto: CreateGenerateCoverLetterDto) {
+    return this.openAiService.generateCoverLetterByAi(dto);
   }
 }
