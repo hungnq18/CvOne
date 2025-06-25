@@ -4,12 +4,14 @@ import { Model, Types } from "mongoose";
 import { CoverLetter } from "./schemas/cover-letter.schema";
 import { CreateCoverLetterDto } from "./dto/create-cover-letter.dto";
 import { UpdateCoverLetterDto } from "./dto/update-cover-letter.dto";
+import { OpenAiService } from "../cv/openai.service";
 
 @Injectable()
 export class CoverLetterService {
   constructor(
     @InjectModel(CoverLetter.name)
-    private coverLetterModel: Model<CoverLetter>
+    private coverLetterModel: Model<CoverLetter>,
+    private openAiService: OpenAiService
   ) {}
 
   async create(

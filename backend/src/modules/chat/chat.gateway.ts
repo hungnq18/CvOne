@@ -20,13 +20,13 @@ export class ChatGateway {
     private readonly chatService: ChatService,
     private readonly notificationsService: NotificationsService,
     private readonly notificationsGateway: NotificationsGateway,
-    private readonly convModel: ConversationService,
+    private readonly convModel: ConversationService
   ) {}
 
   @SubscribeMessage("sendMessage")
   async handleSendMessage(
     @MessageBody() dto: SendMessageDto,
-    @ConnectedSocket() client: Socket,
+    @ConnectedSocket() client: Socket
   ) {
     const message = await this.chatService.saveMessage(dto);
 
@@ -36,14 +36,14 @@ export class ChatGateway {
   @SubscribeMessage("joinRoom")
   handleJoinRoom(
     @MessageBody() roomId: string,
-    @ConnectedSocket() client: Socket,
+    @ConnectedSocket() client: Socket
   ) {
     client.join(roomId);
   }
 
   @SubscribeMessage("readConversation")
   async handleReadConversation(
-    @MessageBody() data: { conversationId: string; userId: string },
+    @MessageBody() data: { conversationId: string; userId: string }
   ) {
     const { conversationId, userId } = data;
 
@@ -66,7 +66,7 @@ export class ChatGateway {
       type: string;
       link?: string;
     },
-    @ConnectedSocket() client: Socket,
+    @ConnectedSocket() client: Socket
   ) {
     const notification = await this.notificationsService.createNotification(
       {
@@ -75,7 +75,7 @@ export class ChatGateway {
         type: data.type,
         link: data.link,
       },
-      data.userId,
+      data.userId
     );
 
     // Gửi thông báo realtime tới người dùng cụ thể
