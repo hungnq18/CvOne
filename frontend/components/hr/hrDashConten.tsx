@@ -40,12 +40,12 @@ export function DashboardContent() {
     const appliedJobs = db.appliedJobs || [];
 
     return (
-        <div className="flex-1 space-y-6 p-6 pt-0 bg-gray-50">
+        <div className="flex-1 space-y-6 p-6 pt-0 bg-gray-50 w-full max-w-full">
             {/* Bảng danh sách các appliedJobs */}
-            <div className="bg-white rounded-lg shadow p-6 mb-6">
+            <div className="bg-white rounded-lg shadow p-6 mb-6 overflow-x-auto w-full">
                 <h2 className="text-xl font-bold mb-4">Danh sách Applied Jobs</h2>
-                <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
+                <div className="overflow-x-auto w-full">
+                    <table className="min-w-[700px] w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                             <tr>
                                 <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Job ID</th>

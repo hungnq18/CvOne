@@ -44,7 +44,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     const pathname = usePathname()
 
     return (
-        <Sidebar className="border-r-0" {...props}>
+        <Sidebar className="border-r-0 w-64 min-w-[220px] max-w-xs" {...props}>
             <SidebarHeader className="h-16 border-b border-sidebar-border">
                 <div className="flex items-center gap-2 px-4">
                     <div className="flex h-8 w-8 items-center justify-center rounded bg-blue-600">
