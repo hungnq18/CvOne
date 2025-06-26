@@ -250,17 +250,17 @@ export default function ManageJobPage() {
     }
 
     return (
-        <div className="p-6 space-y-6">
-            <div className="flex justify-between items-center">
-                <h1 className="text-3xl font-bold">Manage Jobs</h1>
+        <div className="p-2 sm:p-4 md:p-6 space-y-6 max-w-full">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                <h1 className="text-2xl sm:text-3xl font-bold">Manage Jobs</h1>
                 <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
                     <DialogTrigger asChild>
-                        <Button className="flex items-center gap-2">
+                        <Button className="flex items-center gap-2 w-full sm:w-auto">
                             <Plus className="h-4 w-4" />
                             Add New Job
                         </Button>
                     </DialogTrigger>
-                    <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                    <DialogContent className="w-full max-w-xl sm:max-w-2xl max-h-[80vh] overflow-y-auto">
                         <DialogHeader>
                             <DialogTitle>Add New Job</DialogTitle>
                             <DialogDescription>
@@ -405,31 +405,31 @@ export default function ManageJobPage() {
             <Card>
                 <CardHeader>
                     <CardTitle>Job Listings</CardTitle>
-                    <div className="flex items-center space-x-2">
-                        <div className="relative">
+                    <div className="flex items-center space-x-2 w-full">
+                        <div className="relative w-full max-w-xs">
                             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                             <Input
                                 placeholder="Search jobs..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="pl-8"
+                                className="pl-8 w-full"
                             />
                         </div>
                     </div>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="overflow-x-auto p-0">
                     <Table>
                         <TableHeader>
                             <TableRow>
                                 <TableHead>Job Title</TableHead>
-                                <TableHead>Role</TableHead>
+                                <TableHead className="hidden md:table-cell">Role</TableHead>
                                 <TableHead>Location</TableHead>
-                                <TableHead>Experience</TableHead>
-                                <TableHead>Salary Range</TableHead>
+                                <TableHead className="hidden lg:table-cell">Experience</TableHead>
+                                <TableHead className="hidden md:table-cell">Salary Range</TableHead>
                                 <TableHead>Work Type</TableHead>
                                 <TableHead>Status</TableHead>
-                                <TableHead>Applications</TableHead>
-                                <TableHead>Posted Date</TableHead>
+                                <TableHead className="hidden md:table-cell">Applications</TableHead>
+                                <TableHead className="hidden lg:table-cell">Posted Date</TableHead>
                                 <TableHead>Actions</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -437,15 +437,15 @@ export default function ManageJobPage() {
                             {filteredJobs.map((job) => (
                                 <TableRow key={job._id}>
                                     <TableCell className="font-medium">{job["Job Title"]}</TableCell>
-                                    <TableCell>{job.Role}</TableCell>
+                                    <TableCell className="hidden md:table-cell">{job.Role}</TableCell>
                                     <TableCell>
                                         <div className="flex items-center space-x-1">
                                             <MapPin className="h-4 w-4 text-muted-foreground" />
                                             <span>{job.location}, {job.Country}</span>
                                         </div>
                                     </TableCell>
-                                    <TableCell>{job.Experience}</TableCell>
-                                    <TableCell>
+                                    <TableCell className="hidden lg:table-cell">{job.Experience}</TableCell>
+                                    <TableCell className="hidden md:table-cell">
                                         <div className="flex items-center space-x-1">
                                             <DollarSign className="h-4 w-4 text-muted-foreground" />
                                             <span>{job["Salary Range"]}</span>
@@ -461,8 +461,8 @@ export default function ManageJobPage() {
                                             {job.status || "Active"}
                                         </Badge>
                                     </TableCell>
-                                    <TableCell>{job.applications || 0}</TableCell>
-                                    <TableCell>
+                                    <TableCell className="hidden md:table-cell">{job.applications || 0}</TableCell>
+                                    <TableCell className="hidden lg:table-cell">
                                         <div className="flex items-center space-x-1">
                                             <Calendar className="h-4 w-4 text-muted-foreground" />
                                             <span>{job["Job Posting Date"]}</span>
@@ -501,7 +501,7 @@ export default function ManageJobPage() {
 
             {/* Edit Dialog */}
             <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-                <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                <DialogContent className="w-full max-w-xl sm:max-w-2xl max-h-[80vh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle>Edit Job</DialogTitle>
                         <DialogDescription>

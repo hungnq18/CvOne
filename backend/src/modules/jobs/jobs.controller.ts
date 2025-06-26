@@ -25,7 +25,7 @@ export class JobsController {
   @Get()
   async findAll(
     @Query("page") page: number = 1,
-    @Query("limit") limit: number = 10
+    @Query("limit") limit: number = 10,
   ) {
     const jobs = await this.jobsService.findAll(page, limit);
     return { data: jobs, page, limit };
@@ -62,7 +62,7 @@ export class JobsController {
     return this.jobsService.delete(id);
   }
 
-  @UseGuards(JwtAuthGuard)
+  // @UseGuards(JwtAuthGuard)
   @Get(":id")
   getJobById(@Param("id") id: string) {
     return this.jobsService.getJobById(id);
@@ -73,7 +73,7 @@ export class JobsController {
   async countJobsByPostingDate(
     @Param("month") month: number,
     @Param("year") year: number,
-    @Request() req
+    @Request() req,
   ) {
     const userId = req.user.user._id;
     return this.jobsService.countJobsByPostingDate(month, year, userId);

@@ -1,7 +1,36 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { jwtDecode } from "jwt-decode";
 
-const protectedPaths = ["/dashboard", "/admin", "/user/profile"];
+
+const adminRoutes = [
+  "/admin", 
+  "/dashboard", 
+  "/settings"];
+
+const hrRoutes = [
+  "/hr/dashboard",
+  "/hr/manageJob",
+  "/hr/manageApplyJob",
+  "/hr/manageCandidate"
+];
+
+const userRoutes = [
+  "/userDashboard",
+];
+
+const roleBasedPaths: { [key: string]: string[] } = {};
+adminRoutes.forEach((route) => {
+  roleBasedPaths[route] = ["admin"];
+});
+hrRoutes.forEach((route) => {
+  roleBasedPaths[route] = ["hr"];
+});
+userRoutes.forEach((route) => {
+  roleBasedPaths[route] = ["user"];
+});
+
+// Nếu có route dùng chung cho nhiều role
+roleBasedPaths["/user/profile"] = ["admin", "hr", "user"];
 
 export interface DecodedToken {
   exp: number;
@@ -13,24 +42,31 @@ export function middleware(request: NextRequest) {
   const token = request.cookies.get("token")?.value;
   const path = request.nextUrl.pathname;
 
-  const isProtectedPath = protectedPaths.some(
-    (protectedPath) =>
-      path === protectedPath || path.startsWith(`${protectedPath}/`)
-  );
+  // Tìm role yêu cầu cho path này
+  const requiredRoles = Object.entries(roleBasedPaths).find(([route]) =>
+    path === route || path.startsWith(`${route}/`)
+  )?.[1];
 
-  if (isProtectedPath && !token) {
+  // Nếu route yêu cầu role mà không có token thì redirect
+  if (requiredRoles && !token) {
     const url = new URL("/login", request.url);
     url.searchParams.set("callbackUrl", encodeURI(request.url));
     return NextResponse.redirect(url);
   }
 
-  // Kiểm tra token hết hạn
+  // Nếu có token, kiểm tra role và hạn token
   if (token) {
     try {
       const decoded: DecodedToken = jwtDecode(token);
       const currentTime = Math.floor(Date.now() / 1000);
       if (decoded.exp < currentTime) {
         // Token hết hạn, xóa cookie và redirect
+        const response = NextResponse.redirect(new URL("/login", request.url));
+        response.cookies.delete("token");
+        return response;
+      }
+      // Nếu route yêu cầu role mà user không có role phù hợp thì redirect
+      if (requiredRoles && !requiredRoles.includes(decoded.role)) {
         const response = NextResponse.redirect(new URL("/login", request.url));
         response.cookies.delete("token");
         return response;
