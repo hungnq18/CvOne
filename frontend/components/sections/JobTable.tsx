@@ -6,19 +6,29 @@ import type { ColumnsType } from 'antd/es/table';
 import { Job, translations } from '@/app/myJobs/page';
 import { useLanguage } from '@/providers/global-provider';
 import '@/styles/jobButtons.css';
+import { useRouter } from 'next/navigation';
+import { fetchWithAuth } from '@/api/apiClient';
+import { API_ENDPOINTS } from '@/api/apiConfig';
 
 interface JobTableProps {
     jobs: Job[];
     translations: typeof translations;
+    onRemove?: (jobId: string) => void;
 }
 
-const JobTable: React.FC<JobTableProps> = ({ jobs, translations }) => {
+const JobTable: React.FC<JobTableProps> = ({ jobs, translations, onRemove }) => {
     const { language } = useLanguage();
     const t = translations[language];
+    const router = useRouter();
 
-    const handleDelete = (jobId: string) => {
-        // TODO: Implement delete functionality
-        console.log('Delete job:', jobId);
+    const handleDelete = async (jobId: string) => {
+        if (!jobId) return;
+        try {
+            await fetchWithAuth(API_ENDPOINTS.SAVED_JOB.UN_SAVE_JOB(jobId), { method: 'DELETE' });
+            if (onRemove) onRemove(jobId);
+        } catch (err) {
+            alert('Failed to remove saved job');
+        }
     };
 
     const handleArchive = (jobId: string) => {
@@ -27,8 +37,8 @@ const JobTable: React.FC<JobTableProps> = ({ jobs, translations }) => {
     };
 
     const handleView = (jobId: string) => {
-        // TODO: Implement view functionality
-        console.log('View job:', jobId);
+        if (!jobId) return;
+        router.push(`/jobPage/${jobId}`);
     };
 
     const columns: ColumnsType<Job> = [
@@ -73,15 +83,26 @@ const JobTable: React.FC<JobTableProps> = ({ jobs, translations }) => {
             title: t.table.skills,
             key: 'skills',
             dataIndex: 'skills',
-            render: (skills: string[]) => (
-                <>
-                    {skills.map((skill) => (
-                        <Tag color="blue" key={skill}>
-                            {skill}
-                        </Tag>
-                    ))}
-                </>
-            ),
+            render: (skills: string[] | string | undefined) => {
+                let skillArr: string[] = [];
+                if (Array.isArray(skills)) {
+                    skillArr = skills;
+                } else if (typeof skills === 'string') {
+                    skillArr = skills.split(',').map(s => s.trim()).filter(Boolean);
+                }
+                const showSkills = skillArr.slice(0, 3);
+                const hasMore = skillArr.length > 3;
+                return (
+                    <>
+                        {showSkills.map((skill) => (
+                            <Tag color="blue" key={skill}>
+                                {skill}
+                            </Tag>
+                        ))}
+                        {hasMore && <Tag color="blue">...</Tag>}
+                    </>
+                );
+            },
         },
         {
             title: t.table.actions,
@@ -112,7 +133,7 @@ const JobTable: React.FC<JobTableProps> = ({ jobs, translations }) => {
                     </button>
                     <button
                         className="job-button delete-button"
-                        onClick={() => handleDelete(record._id)}
+                        onClick={() => handleDelete((record as any).savedId || record._id)}
                     >
                         <span className="text">{t.actions.remove}</span>
                         <span className="icon">

@@ -165,22 +165,63 @@ export const findRelatedLocalJobs = async (currentJob: Job, count: number): Prom
     const currentRole = currentJob.role;
 
     return allJobs
-      .filter(job => {
-        // Exclude the current job itself
-        if (job._id === currentJob._id) return false;
+        .filter(job => {
+            // Exclude the current job itself
+            if (job._id === currentJob._id) return false;
 
-        // Check for matching role
-        const hasSameRole = job.role === currentRole;
+            // Check for matching role
+            const hasSameRole = job.role === currentRole;
 
-        // Check for at least one matching skill
-        const jobSkills = (job.skills || '').toLowerCase().split(',').map(s => s.trim());
-        const hasSharedSkill = currentSkills.some(skill => skill && jobSkills.includes(skill));
-        
-        return hasSameRole || hasSharedSkill;
-      })
-      .slice(0, count);
+            // Check for at least one matching skill
+            const jobSkills = (job.skills || '').toLowerCase().split(',').map(s => s.trim());
+            const hasSharedSkill = currentSkills.some(skill => skill && jobSkills.includes(skill));
+            
+            return hasSameRole || hasSharedSkill;
+        })
+        .slice(0, count);
   } catch (error) {
     console.error('Error finding related jobs:', error);
+    return [];
+  }
+};
+
+/**
+ * Save a job for the current user
+ * @param jobId - The job ID to save
+ * @returns Promise with API response
+ */
+export const saveJob = async (jobId: string): Promise<any> => {
+  try {
+    return await fetchWithAuth(API_ENDPOINTS.SAVED_JOB.SAVE_JOB(jobId), {
+      method: "POST",
+    });
+  } catch (error) {
+    throw error;
+  }
+};
+
+/**
+ * Get saved jobs for the current user
+ * @returns Promise with array of saved job objects
+ */
+export const getSavedJobsByUser = async (): Promise<any[]> => {
+  try {
+    return await fetchWithAuth(API_ENDPOINTS.SAVED_JOB.GET_SAVE_JOB);
+  } catch (error) {
+    console.error('Error fetching saved jobs:', error);
+    return [];
+  }
+};
+
+/**
+ * Get applied jobs for the current user
+ * @returns Promise with array of applied job objects
+ */
+export const getAppliedJobsByUser = async (): Promise<any[]> => {
+  try {
+    return await fetchWithAuth(API_ENDPOINTS.APPLYJOB.GET_APPLY_JOB_BY_USER);
+  } catch (error) {
+    console.error('Error fetching applied jobs:', error);
     return [];
   }
 };
