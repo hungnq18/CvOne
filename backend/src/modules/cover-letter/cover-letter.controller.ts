@@ -17,7 +17,7 @@ import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { CvAiService } from "../cv/cv-ai.service";
 import { OpenAiService } from "../cv/openai.service";
 import { CreateGenerateCoverLetterDto } from "./dto/create-generate-cl-ai.dto";
-
+import * as path from "path";
 @Controller("cover-letters")
 export class CoverLetterController {
   constructor(
@@ -60,5 +60,23 @@ export class CoverLetterController {
   @Post("generate/ai")
   async generateByAi(@Body() dto: CreateGenerateCoverLetterDto) {
     return this.openAiService.generateCoverLetterByAi(dto);
+  }
+
+  // @UseGuards(JwtAuthGuard)
+  @Post("extract/from-path")
+  async extractFromFilePath(
+    @Body()
+    body: {
+      fileName: string;
+      templateId: string;
+      jobDescription: string;
+    }
+  ) {
+    const fullPath = path.join(process.cwd(), "/uploads/", body.fileName);
+    return this.openAiService.extractCoverLetterFromPdf(
+      fullPath,
+      body.templateId,
+      body.jobDescription
+    );
   }
 }
