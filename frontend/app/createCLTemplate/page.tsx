@@ -153,6 +153,7 @@ const CoverLetterBuilderContent = () => {
                     const clData = await getCLById(clId);
                     if (clData) {
                         setLetterData(clData.data);
+                        setClTitle(clData.title || '');
                         const template = clData.templateId as CLTemplate;
                         setSelectedTemplateData(template);
                         setTemplateName(template.title.toLowerCase() as TemplateType);
@@ -213,21 +214,23 @@ const CoverLetterBuilderContent = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [tempData, setTempData] = useState<Partial<LetterData>>({});
     const [isSaving, setIsSaving] = useState(false);
+    const [isTitleModalOpen, setIsTitleModalOpen] = useState(false);
+    const [clTitle, setClTitle] = useState('');
 
-    const saveCoverLetter = async (clDataToSave: LetterData) => {
+    const saveCoverLetter = async (clDataToSave: LetterData, title: string) => {
         if (isSaving) return;
         setIsSaving(true);
         try {
             if (clId) {
                 // Update existing CL
-                await updateCL(clId, { data: clDataToSave });
+                await updateCL(clId, { data: clDataToSave, title: title });
                 alert('Cover letter updated successfully!');
                 router.push('/myDocuments');
             } else if (templateId) {
                 // Create new CL
                 const newCL: CreateCLDto = {
                     templateId: templateId,
-                    title: "Untitled Cover Letter",
+                    title: title,
                     data: clDataToSave,
                     isSaved: true,
                 };
@@ -262,8 +265,17 @@ const CoverLetterBuilderContent = () => {
             localStorage.setItem('pendingCL', JSON.stringify(pendingCL));
             router.push('/login');
         } else {
-            saveCoverLetter(letterData);
+            setIsTitleModalOpen(true);
         }
+    };
+
+    const handleSaveWithTitle = () => {
+        if (!clTitle.trim()) {
+            alert('Vui lòng nhập tiêu đề cho Cover Letter.');
+            return;
+        }
+        saveCoverLetter(letterData, clTitle.trim());
+        setIsTitleModalOpen(false);
     };
 
     const handleCityChange = async (cityValue: string, isRecipient: boolean) => {
@@ -711,6 +723,42 @@ const CoverLetterBuilderContent = () => {
                                 className="px-8 py-3 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-colors font-medium"
                             >
                                 Save
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Title Modal */}
+            {isTitleModalOpen && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg p-8 w-full max-w-lg shadow-xl transform transition-all">
+                        <h2 className="text-xl font-semibold text-blue-800 mb-2">
+                            Bạn vui lòng nhập tiêu đề Cover Letter để quản lý dễ dàng hơn
+                        </h2>
+                        <p className="text-sm text-gray-500 mb-4">
+                            Ví dụ: Thư ứng tuyển FPT, Thư ứng tuyển vị trí Marketing...
+                        </p>
+                        <input
+                            type="text"
+                            value={clTitle}
+                            onChange={(e) => setClTitle(e.target.value)}
+                            placeholder="Tiêu đề Cover Letter"
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
+                        <div className="flex justify-end space-x-4 mt-6">
+                            <button
+                                onClick={() => setIsTitleModalOpen(false)}
+                                className="px-6 py-2 text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                            >
+                                Quay lại
+                            </button>
+                            <button
+                                onClick={handleSaveWithTitle}
+                                className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-300"
+                                disabled={!clTitle.trim() || isSaving}
+                            >
+                                {isSaving ? "Đang lưu..." : "Tiếp tục"}
                             </button>
                         </div>
                     </div>
