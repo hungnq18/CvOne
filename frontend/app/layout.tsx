@@ -46,8 +46,8 @@ export default function RootLayout({
 }>) {
   const role = getRoleFromToken();
   return (
-    <html lang="en">
-      <body className={`${inter.className} min-h-screen flex flex-col`}>
+    <html lang="en" className="overflow-x-hidden">
+      <body className={`${inter.className} min-h-screen flex flex-col overflow-x-hidden`}>
         <StyledComponentsRegistry>
           <GlobalProvider>
             <AuthProvider>

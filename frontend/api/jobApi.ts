@@ -9,9 +9,8 @@
  * - Deleting a job
  */
 
-import { fetchWithAuth } from "./apiClient";
+import { fetchWithAuth, fetchWithoutAuth } from "./apiClient";
 import { API_ENDPOINTS } from "./apiConfig";
-import db from './db.json';
 
 export interface Job {
   _id: string;
@@ -30,8 +29,8 @@ export interface Job {
   responsibilities: string;
   company_id: string;
   user_id: string;
-  createdAt: string;
-  updatedAt: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface DashboardJob {
@@ -53,24 +52,41 @@ export interface ApplyJob {
 }
 
 /**
- * Get all jobs
+ * Get all jobs (public endpoint)
  * @returns Promise with array of jobs
  */
-export const getJobs = async (): Promise<Job[]> => {
-  return fetchWithAuth(API_ENDPOINTS.JOB.GET_ALL);
+export const getJobs = async (page: number = 1, limit: number = 100): Promise<Job[]> => {
+  try {
+    console.log('Fetching jobs with params:', { page, limit });
+    const response = await fetchWithoutAuth(`${API_ENDPOINTS.JOB.GET_ALL}?page=${page}&limit=${limit}`);
+    console.log('Jobs response:', response);
+    // Backend returns { data: jobs[], page, limit }
+    return response?.data || [];
+  } catch (error) {
+    console.error('Error fetching jobs:', error);
+    return [];
+  }
 };
 
 /**
- * Get job by ID
+ * Get job by ID (requires auth)
  * @param id - The job ID to fetch
  * @returns Promise with job data
  */
 export const getJobById = async (id: string): Promise<Job | undefined> => {
-  return fetchWithAuth(API_ENDPOINTS.JOB.GET_BY_ID(id));
+  try {
+    console.log('Fetching job by ID:', id);
+    const response = await fetchWithAuth(API_ENDPOINTS.JOB.GET_BY_ID(id));
+    console.log('Job by ID response:', response);
+    return response;
+  } catch (error) {
+    console.error('Error fetching job by ID:', error);
+    return undefined;
+  }
 };
 
 /**
- * Create a new job
+ * Create a new job (requires HR auth)
  * @param data - Job data to create
  * @returns Promise with the created job
  */
@@ -82,20 +98,20 @@ export const createJob = async (data: Omit<Job, "_id" | "createdAt" | "updatedAt
 };
 
 /**
- * Update a job
+ * Update a job (requires HR auth)
  * @param id - The job ID to update
  * @param data - Job data to update
  * @returns Promise with the updated job
  */
 export const updateJob = async (id: string, data: Partial<Job>): Promise<Job> => {
   return fetchWithAuth(API_ENDPOINTS.JOB.UPDATE(id), {
-    method: "PATCH",
+    method: "PUT",
     body: JSON.stringify(data),
   });
 };
 
 /**
- * Delete a job
+ * Delete a job (requires HR auth)
  * @param id - The job ID to delete
  * @returns Promise with the deletion result
  */
@@ -105,79 +121,66 @@ export const deleteJob = async (id: string): Promise<void> => {
   });
 };
 
-
-// Helper to parse the inconsistent benefits string into a string array
-const parseBenefitsString = (benefits: string): string[] => {
-    if (!benefits || typeof benefits !== 'string') return [];
-    // This regex handles the specific format `{'benefit1, benefit2, ...'}`
-    return benefits.replace(/^{'(.*)'}$/, '$1').split(', ');
+/**
+ * Get jobs by HR user (requires HR auth)
+ * @returns Promise with array of jobs created by HR
+ */
+export const getJobsByHR = async (): Promise<Job[]> => {
+  try {
+    const response = await fetchWithAuth(API_ENDPOINTS.JOB.GET_JOB_BY_HR);
+    return response || [];
+  } catch (error) {
+    console.error('Error fetching jobs by HR:', error);
+    return [];
+  }
 };
 
-
-// get data from db.json
-const allLocalJobs: Job[] = (db as any).jobs.map((job: any, index: number) => ({
-    _id: `job_raw_${index}`, // Create a stable ID for client-side operations
-    title: job['Job Title'],
-    description: job['Job Description'],
-    role: job['Role'],
-    workType: job['Work Type'],
-    postingDate: new Date(job['Job Posting Date']).toISOString(),
-    experience: job['Experience'],
-    qualifications: job['Qualifications'],
-    salaryRange: job['Salary Range'],
-    location: job['location'],
-    country: job['Country'],
-    benefits: parseBenefitsString(job['Benefits']),
-    skills: job['skills'] || '',
-    responsibilities: job['Responsibilities'] || '',
-    company_id: 'N/A', // Placeholder
-    user_id: 'N/A',   // Placeholder
-    createdAt: new Date(job['Job Posting Date']).toISOString(),
-    updatedAt: new Date(job['Job Posting Date']).toISOString(),
-}));
-
-
 /**
- * Get all jobs from local db.json
+ * Get all jobs (synchronous version for backward compatibility)
  * @returns Array of jobs
  */
-export const getLocalJobs = (): Job[] => {
-  return allLocalJobs;
+export const getLocalJobs = async (): Promise<Job[]> => {
+  return getJobs();
 };
 
 /**
- * Get job by ID from local db.json
+ * Get job by ID (synchronous version for backward compatibility)
  * @param id - The job ID to fetch
  * @returns Job data or undefined if not found
  */
-export const getLocalJobById = (id: string): Job | undefined => {
-  return allLocalJobs.find(job => job._id === id);
+export const getLocalJobById = async (id: string): Promise<Job | undefined> => {
+  return getJobById(id);
 };
 
 /**
- * Find related jobs from local db.json based on skills
+ * Find related jobs based on skills and role
  * @param currentJob - The job to find related jobs for
  * @param count - The number of related jobs to return
  * @returns Array of related jobs
  */
-// get job have same role or have same skill
-export const findRelatedLocalJobs = (currentJob: Job, count: number): Job[] => {
+export const findRelatedLocalJobs = async (currentJob: Job, count: number): Promise<Job[]> => {
+  try {
+    const allJobs = await getJobs();
     const currentSkills = (currentJob.skills || '').toLowerCase().split(',').map(s => s.trim());
     const currentRole = currentJob.role;
 
-    return allLocalJobs
-        .filter(job => {
-            // Exclude the current job itself
-            if (job._id === currentJob._id) return false;
+    return allJobs
+      .filter(job => {
+        // Exclude the current job itself
+        if (job._id === currentJob._id) return false;
 
-            // Check for matching role
-            const hasSameRole = job.role === currentRole;
+        // Check for matching role
+        const hasSameRole = job.role === currentRole;
 
-            // Check for at least one matching skill
-            const jobSkills = (job.skills || '').toLowerCase().split(',').map(s => s.trim());
-            const hasSharedSkill = currentSkills.some(skill => skill && jobSkills.includes(skill));
-            
-            return hasSameRole || hasSharedSkill;
-        })
-        .slice(0, count);
+        // Check for at least one matching skill
+        const jobSkills = (job.skills || '').toLowerCase().split(',').map(s => s.trim());
+        const hasSharedSkill = currentSkills.some(skill => skill && jobSkills.includes(skill));
+        
+        return hasSameRole || hasSharedSkill;
+      })
+      .slice(0, count);
+  } catch (error) {
+    console.error('Error finding related jobs:', error);
+    return [];
+  }
 };

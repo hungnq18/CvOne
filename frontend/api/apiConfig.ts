@@ -8,7 +8,7 @@ export const API_ENDPOINTS = {
     REGISTER: "/auth/register",
     PROFILE: "/auth/profile",
     CHANGE_PASSWORD: "/auth/change-password",
-    CREATE: "/cover-letters"
+    CREATE: "/cover-letters",
   },
   ACCOUNTS: {
     VERIFY_EMAIL: "/accounts/verify-email",
@@ -63,6 +63,7 @@ export const API_ENDPOINTS = {
     DELETE: (id: string) => `/jobs/${id}`,
     COUNTBYPOSTINGDATE: (month: number, year: number) =>
       `/jobs/count-by-posting-date/${month}/${year}`,
+    GET_JOB_BY_HR: "jobs/by-hr",
   },
   NOTIFICATION: {
     GET_NOTIFICATIONS: "/notifications",
@@ -70,5 +71,20 @@ export const API_ENDPOINTS = {
   APPLYJOB: {
     COUNTBYCREATEAT: (month: number, year: number) =>
       `/apply-job/count-by-create-at/${month}/${year}`,
+    GET_ALL: "/apply-job",
+    GET_BY_ID: (id: string) => `/apply-job/${id}`,
+    CREATE: "/apply-job",
+    UPDATE: (id: string) => `/apply-job/${id}`,
+    GET_APPLY_JOB_BY_USER: `/apply-job/by-user`,
+    GET_APPLY_JOB_BY_HR: `/apply-job/by-hr`,
+    GET_APPLY_JOB_BY_JOB: `/apply-job/by-job`,
+    GET_APPLY_JOB_DETAIL: (id: string) => `/apply-job/${id}`,
+    UPDATE_STATUS_BY_HR: (id: string) => `/apply-job/${id}/status/by-hr`,
+    UPDATE_APPLY_JOB_BY_USER: (id: string) => `/apply-job/${id}/user-update`,
+  },
+  SAVED_JOB: {
+    GET_SAVE_JOB: "/saved-job",
+    SAVE_JOB: (jobId: string) => `/saved-job/${jobId}`,
+    UN_SAVE_JOB: (jobId: string) => `/saved-job/${jobId}`,
   },
 } as const;
