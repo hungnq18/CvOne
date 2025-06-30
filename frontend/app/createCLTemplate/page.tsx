@@ -661,7 +661,7 @@ const CoverLetterBuilderContent = () => {
                     <div className="space-y-4">
                         <button
                             className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg font-medium transition-colors"
-                            onClick={() => router.push("/clTemplate")}
+                            onClick={() => router.back()}
                         >
                             Go Back
                         </button>
