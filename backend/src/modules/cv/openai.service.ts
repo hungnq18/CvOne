@@ -5,6 +5,8 @@ import { CreateGenerateCoverLetterDto } from "../cover-letter/dto/create-generat
 import { InjectModel } from "@nestjs/mongoose";
 import { User } from "../users/schemas/user.schema";
 import { Model } from "mongoose";
+import * as fs from "fs";
+import * as pdfParse from "pdf-parse";
 
 @Injectable()
 export class OpenAiService {
@@ -21,6 +23,7 @@ export class OpenAiService {
     }
 
     this.openai = new OpenAI({
+      baseURL: "https://models.github.ai/inference",
       apiKey: apiKey,
     });
   }
@@ -534,7 +537,7 @@ Guidelines:
 `;
 
       const completion = await this.openai.chat.completions.create({
-        model: "gpt-3.5-turbo",
+        model: "openai/gpt-4.1",
         messages: [
           {
             role: "system",
@@ -546,8 +549,6 @@ Guidelines:
             content: prompt,
           },
         ],
-        temperature: 0.4,
-        max_tokens: 500,
       });
       const response = completion.choices[0]?.message?.content;
       if (!response) {
@@ -582,7 +583,6 @@ Guidelines:
           closing: "Sincerely,",
           signature: `${firstName} ${lastName}`,
         },
-        isSaved: false,
       };
 
       return coverLetter;
@@ -590,5 +590,86 @@ Guidelines:
       console.error("Cover letter generation failed:", error);
       throw new Error("Failed to generate cover letter: " + error.message);
     }
+  }
+
+  async extractCoverLetterFromPdf(
+    filePath: string,
+    templateId: string,
+    jobDescription: string
+  ) {
+    // 1. Validate file existence
+    if (!fs.existsSync(filePath)) {
+      throw new Error("PDF file does not exist");
+    }
+
+    // 2. Read and extract text from PDF
+    const dataBuffer = fs.readFileSync(filePath);
+    const pdfData = await pdfParse(dataBuffer);
+    const pdfText = pdfData.text; // Extracted text from PDF
+
+    const prompt = `
+    You are an expert at analyzing cover letters. Below is the content of a cover letter extracted from a PDF and a job description. Your task is to extract the following fields from the cover letter, tailoring the content to highlight skills, experiences, or qualifications that align with the job description. If a field cannot be directly extracted, infer or summarize relevant information where possible, ensuring the output is concise and relevant to the job description.
+
+    **Cover Letter Content**:
+    ${pdfText}
+
+    **Job Description**:
+    ${jobDescription}
+
+    **Fields to Extract**:
+    {
+      "firstName": "", // First name of the applicant
+      "lastName": "", // Last name of the applicant
+      "email": "", // Email address of the applicant
+      "phone": "", // Phone number of the applicant
+      "subject": "", // Subject or title of the cover letter
+      "greeting": "", // Greeting (e.g., "Dear Hiring Manager")
+      "opening": "", // Opening paragraph, emphasizing motivation or fit for the job
+      "relevantSkills": "", // Key skills from the cover letter that match the job description
+      "relevantExperience": "", // Key experiences from the cover letter that align with the job description
+      "callToAction": "", // Call to action (e.g., request for interview)
+      "closing": "", // Closing statement (e.g., "Sincerely")
+      "signature": "" // Signature or sign-off name
+    }
+
+    Return **valid JSON only** with the extracted fields. Ensure that "relevantSkills" and "relevantExperience" highlight specific details from the cover letter that match the job description.
+  `;
+
+    // 3. Send request to OpenAI with cover letter text and job description
+    const completion = await this.openai.chat.completions.create({
+      model: "openai/gpt-4.1", // Use a modern model like gpt-4o for better performance
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are a professional cover letter writer. Generate only the requested fields in JSON format.",
+        },
+        {
+          role: "user",
+          content: prompt,
+        },
+      ],
+    });
+
+    // 4. Process response
+    const response = completion.choices[0]?.message?.content;
+    if (!response) {
+      throw new Error("No response from OpenAI");
+    }
+
+    // 5. Parse JSON response
+    let parsed;
+    try {
+      parsed = JSON.parse(response);
+    } catch (e) {
+      throw new Error(`Failed to parse OpenAI response as JSON: ${e.message}`);
+    }
+
+    // 6. Return result
+    return {
+      templateId,
+      title: "Extracted from PDF",
+      data: parsed,
+    };
   }
 }

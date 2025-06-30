@@ -19,6 +19,7 @@ import { CoverLetter } from "./modules/cover-letter/schemas/cover-letter.schema"
 import { CoverLetterModule } from "./modules/cover-letter/cover-letter.module";
 import { ApplyJobModule } from "./modules/apply-job/apply-job.module";
 import { SavedJobModule } from "./modules/saved-job/saved-job.module";
+import { UploadModule } from "./modules/upload/upload.module";
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { SavedJobModule } from "./modules/saved-job/saved-job.module";
     ChatModule,
     ConversationModule,
     SavedJobModule,
+    UploadModule,
     MailerModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({

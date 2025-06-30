@@ -11,11 +11,13 @@ import { NestFactory } from "@nestjs/core";
 import * as dotenv from "dotenv";
 import { AppModule } from "./app.module";
 import { IoAdapter } from "@nestjs/platform-socket.io";
+import { join } from "path";
+import { NestExpressApplication } from "@nestjs/platform-express";
 
 dotenv.config();
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
   // Enable CORS
   app.enableCors({
     origin: ["http://localhost:3000"], // Frontend URL
@@ -39,6 +41,10 @@ async function bootstrap() {
   // Global prefix for all routes
   app.setGlobalPrefix("api");
   app.useWebSocketAdapter(new IoAdapter(app));
+
+  app.useStaticAssets(join(__dirname, "uploads"), {
+    prefix: "/uploads/",
+  });
 
   const port = process.env.PORT || 8000;
   await app.listen(port);
