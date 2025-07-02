@@ -7,6 +7,9 @@ import { templates, TemplateType } from './templates/index';
 import { createCL, getCLTemplateById, CLTemplate, CreateCLDto, getCLById, updateCL } from "@/api/clApi";
 import Cookies from "js-cookie";
 import { useLocations } from "@/hooks/useLocations";
+import { fetchWithAuth } from "@/api/apiClient";
+import { API_ENDPOINTS } from "@/api/apiConfig";
+import { toast } from "react-hot-toast";
 
 interface LetterData {
     firstName: string;
@@ -40,10 +43,13 @@ const CoverLetterBuilderContent = () => {
     const clId = searchParams.get('clId');
     const initialFirstName = searchParams.get('firstName');
     const initialLastName = searchParams.get('lastName');
+    const clFilename = searchParams.get('clFilename');
+    const jdFilename = searchParams.get('jdFilename');
 
     const [selectedTemplateData, setSelectedTemplateData] = useState<CLTemplate | null>(null);
     const [templateName, setTemplateName] = useState<TemplateType>('cascade');
     const TemplateComponent = templates[templateName];
+    const [isExtracting, setIsExtracting] = useState(false);
 
     const [letterData, setLetterData] = useState<LetterData>({
         firstName: '',
@@ -147,6 +153,32 @@ const CoverLetterBuilderContent = () => {
     }, []); // This effect now depends on the fetch functions from the hook
 
     useEffect(() => {
+        const extractData = async () => {
+            if (clFilename && jdFilename && templateId) {
+                setIsExtracting(true);
+                try {
+                    const extractedData = await fetchWithAuth(API_ENDPOINTS.CL.EXTRACT_COVER_LETTER, {
+                        method: 'POST',
+                        body: JSON.stringify({ coverLetterFileName: clFilename, jobDescriptionFileName: jdFilename, templateId }),
+                    });
+
+                    if (extractedData) {
+                        setLetterData(prevData => ({ ...prevData, ...extractedData }));
+                        toast.success("Data extracted successfully!");
+                    }
+                } catch (error) {
+                    toast.error("Failed to extract data from your files.");
+                    console.error("Extraction failed:", error);
+                } finally {
+                    setIsExtracting(false);
+                }
+            }
+        };
+
+        extractData();
+    }, [clFilename, jdFilename, templateId]);
+
+    useEffect(() => {
         const fetchClData = async () => {
             if (clId) {
                 try {
@@ -180,10 +212,10 @@ const CoverLetterBuilderContent = () => {
 
         if (clId) {
             fetchClData();
-        } else {
+        } else if (templateId && !clFilename && !jdFilename) {
             fetchTemplateData();
         }
-    }, [clId, templateId]);
+    }, [clId, templateId, clFilename, jdFilename]);
 
     const getInitialData = () => {
         if (!selectedTemplateData || !selectedTemplateData.data) {
@@ -205,10 +237,10 @@ const CoverLetterBuilderContent = () => {
     };
 
     useEffect(() => {
-        if (!clId) {
+        if (!clId && !clFilename && !jdFilename) {
             setLetterData(getInitialData());
         }
-    }, [selectedTemplateData, initialFirstName, initialLastName, clId]);
+    }, [selectedTemplateData, initialFirstName, initialLastName, clId, clFilename, jdFilename]);
 
     const [activeSection, setActiveSection] = useState<string | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -631,6 +663,20 @@ const CoverLetterBuilderContent = () => {
                 return <div>Select a section to edit</div>;
         }
     };
+
+    if (isExtracting) {
+        return (
+            <div className="fixed inset-0 flex flex-col items-center justify-center bg-white z-50">
+                <div className="animate-spin rounded-full h-24 w-24 border-t-4 border-b-4 border-blue-600 mb-6"></div>
+                <h2 className="text-2xl font-bold text-gray-800 mb-2">
+                    Đang phân tích dữ liệu...
+                </h2>
+                <p className="text-gray-600">
+                    Quá trình này có thể mất một chút thời gian. Vui lòng chờ.
+                </p>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen mt-16">

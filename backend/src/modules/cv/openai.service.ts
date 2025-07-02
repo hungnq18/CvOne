@@ -441,8 +441,8 @@ Return only valid JSON array.
   }
 
   private generateFallbackSummary(userProfile: any, jobAnalysis: any): string {
-    return `Experienced ${jobAnalysis.experienceLevel} professional with expertise in ${jobAnalysis.requiredSkills?.slice(0, 3).join(", ") || "software development"}. 
-    Passionate about delivering high-quality solutions and collaborating with cross-functional teams. 
+    return `Experienced ${jobAnalysis.experienceLevel} professional with expertise in ${jobAnalysis.requiredSkills?.slice(0, 3).join(", ") || "software development"}.
+    Passionate about delivering high-quality solutions and collaborating with cross-functional teams.
     Strong problem-solving skills and commitment to continuous learning and professional development.`;
   }
 
@@ -465,7 +465,7 @@ Return only valid JSON array.
         company: "Previous Company",
         startDate: startDate.toISOString().split("T")[0],
         endDate: endDate.toISOString().split("T")[0],
-        description: `Developed and maintained applications using ${jobAnalysis.technologies?.slice(0, 3).join(", ") || "modern technologies"}. 
+        description: `Developed and maintained applications using ${jobAnalysis.technologies?.slice(0, 3).join(", ") || "modern technologies"}.
       Collaborated with cross-functional teams to deliver high-quality software solutions.`,
       },
     ];
@@ -593,56 +593,61 @@ Guidelines:
   }
 
   async extractCoverLetterFromPdf(
-    filePath: string,
-    templateId: string,
-    jobDescription: string
+    coverLetterPath: string,
+    jdPath: string,
+    templateId: string
   ) {
     // 1. Validate file existence
-    if (!fs.existsSync(filePath)) {
-      throw new Error("PDF file does not exist");
+    if (!fs.existsSync(coverLetterPath)) {
+      throw new Error("Cover letter PDF file does not exist");
+    }
+    if (!fs.existsSync(jdPath)) {
+      throw new Error("Job description PDF file does not exist");
     }
 
-    // 2. Read and extract text from PDF
-    const dataBuffer = fs.readFileSync(filePath);
-    const pdfData = await pdfParse(dataBuffer);
-    const pdfText = pdfData.text; // Extracted text from PDF
+    // 2. Read and extract text from both PDFs
+    const coverLetterBuffer = fs.readFileSync(coverLetterPath);
+    const jdBuffer = fs.readFileSync(jdPath);
+
+    const coverLetterText = (await pdfParse(coverLetterBuffer)).text;
+    const jobDescriptionText = (await pdfParse(jdBuffer)).text;
 
     const prompt = `
-    You are an expert at analyzing cover letters. Below is the content of a cover letter extracted from a PDF and a job description. Your task is to extract the following fields from the cover letter, tailoring the content to highlight skills, experiences, or qualifications that align with the job description. If a field cannot be directly extracted, infer or summarize relevant information where possible, ensuring the output is concise and relevant to the job description.
+  You are an expert at analyzing cover letters. Below is the content of a cover letter and a job description. Your task is to extract the following fields from the cover letter, tailoring the content to highlight skills, experiences, or qualifications that align with the job description.
 
-    **Cover Letter Content**:
-    ${pdfText}
+  *Cover Letter Content*:
+  ${coverLetterText}
 
-    **Job Description**:
-    ${jobDescription}
+  *Job Description*:
+  ${jobDescriptionText}
 
-    **Fields to Extract**:
-    {
-      "firstName": "", // First name of the applicant
-      "lastName": "", // Last name of the applicant
-      "email": "", // Email address of the applicant
-      "phone": "", // Phone number of the applicant
-      "subject": "", // Subject or title of the cover letter
-      "greeting": "", // Greeting (e.g., "Dear Hiring Manager")
-      "opening": "", // Opening paragraph, emphasizing motivation or fit for the job
-      "relevantSkills": "", // Key skills from the cover letter that match the job description
-      "relevantExperience": "", // Key experiences from the cover letter that align with the job description
-      "callToAction": "", // Call to action (e.g., request for interview)
-      "closing": "", // Closing statement (e.g., "Sincerely")
-      "signature": "" // Signature or sign-off name
-    }
+  *Fields to Extract*:
+  {
+    "firstName": "",
+    "lastName": "",
+    "email": "",
+    "phone": "",
+    "subject": "",
+    "greeting": "",
+    "opening": "",
+    "relevantSkills": "",
+    "relevantExperience": "",
+    "callToAction": "",
+    "closing": "",
+    "signature": ""
+  }
 
-    Return **valid JSON only** with the extracted fields. Ensure that "relevantSkills" and "relevantExperience" highlight specific details from the cover letter that match the job description.
+  Return *valid JSON only* with the extracted fields.
   `;
 
-    // 3. Send request to OpenAI with cover letter text and job description
+    // 3. Call OpenAI
     const completion = await this.openai.chat.completions.create({
-      model: "openai/gpt-4.1", // Use a modern model like gpt-4o for better performance
+      model: "openai/gpt-4.1",
       messages: [
         {
           role: "system",
           content:
-            "You are a professional cover letter writer. Generate only the requested fields in JSON format.",
+            "You are a professional cover letter writer. Respond only with valid JSON.",
         },
         {
           role: "user",
@@ -651,21 +656,18 @@ Guidelines:
       ],
     });
 
-    // 4. Process response
     const response = completion.choices[0]?.message?.content;
     if (!response) {
       throw new Error("No response from OpenAI");
     }
 
-    // 5. Parse JSON response
     let parsed;
     try {
       parsed = JSON.parse(response);
-    } catch (e) {
-      throw new Error(`Failed to parse OpenAI response as JSON: ${e.message}`);
+    } catch (err) {
+      throw new Error("Invalid JSON returned from OpenAI: " + err.message);
     }
 
-    // 6. Return result
     return {
       templateId,
       title: "Extracted from PDF",

@@ -3,11 +3,15 @@
 import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft, ArrowRight, UploadCloud, FileText } from 'lucide-react';
+import { toast } from 'react-hot-toast';
+import { API_ENDPOINTS, API_URL } from '@/api/apiConfig';
+import Cookies from 'js-cookie';
 
 function UploadJDContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const templateId = searchParams.get('templateId');
+    const clFilename = searchParams.get('clFilename');
     // We would also get the uploaded CL reference here, e.g.,
     // const clId = searchParams.get('clId');
 
@@ -22,45 +26,50 @@ function UploadJDContent() {
 
     const handleContinue = async () => {
         if (!uploadedFile) {
-            alert("Please upload the job description first.");
+            toast.error("Please upload the job description first.");
             return;
-        }
-        if (!templateId) {
-             router.push('/clTemplate');
-             return;
         }
 
         setIsUploading(true);
 
-        // Here we would have the logic to:
-        // 1. Upload the JD file to the server.
-        // 2. The server would process the previously uploaded Cover Letter and the new JD.
-        // 3. The server would extract information and create a new cover letter draft.
-        // 4. The server returns the ID of the new draft.
+        const formData = new FormData();
+        formData.append('file', uploadedFile);
 
-        // For now, we will simulate this process.
-        console.log("Simulating upload of Cover Letter and JD...");
-        // In a real application, you would make an API call here.
-        // const formData = new FormData();
-        // formData.append('clId', clId); // from previous step
-        // formData.append('jdFile', uploadedFile);
-        // const response = await api.processUploadedFiles(formData);
+        const token = Cookies.get("token");
+        const headers: HeadersInit = {};
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
 
-        // After processing, navigate to the editor with the new CL data.
-        // const newClId = response.clId;
+        try {
+            const uploadResponse = await fetch(`${API_URL}${API_ENDPOINTS.UPLOAD.UPLOAD_FILE}`, {
+                method: 'POST',
+                headers: headers,
+                body: formData,
+            });
 
-        // Simulate a delay
-        await new Promise(resolve => setTimeout(resolve, 1000));
+            const uploadResponseData = await uploadResponse.json();
 
-        setIsUploading(false);
+            if (!uploadResponse.ok) {
+                throw new Error(uploadResponseData.message || 'JD file upload failed');
+            }
 
-        // For now, let's just push to the createCLTemplate page.
-        // In a real scenario, we'd pass the new CL id.
-        const params = new URLSearchParams({ templateId });
-        // params.append('clId', newClId);
+            toast.success('JD uploaded successfully!');
+            const jdFilename = uploadResponseData.filename;
 
-        // The user would land on the editor page with pre-filled data.
-        router.push(`/createCLTemplate?${params.toString()}`);
+            const params = new URLSearchParams();
+            if (templateId) params.append('templateId', templateId);
+            if (clFilename) params.append('clFilename', clFilename);
+            if (jdFilename) params.append('jdFilename', jdFilename);
+
+            router.push(`/createCLTemplate?${params.toString()}`);
+
+        } catch (error: any) {
+            console.error('Error during JD upload process:', error);
+            toast.error(error.message || 'Failed to process JD. Please try again.');
+        } finally {
+            setIsUploading(false);
+        }
     };
 
     const handleBack = () => {
