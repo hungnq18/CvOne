@@ -35,17 +35,25 @@ export class ApplyJobController {
 
   @UseGuards(JwtAuthGuard)
   @Get("by-user")
-  async getByUser(@Request() req) {
+  async getByUser(
+    @Request() req,
+    @Query("page") page = 1,
+    @Query("limit") limit = 10
+  ) {
     const userId = req.user.user._id;
-    return this.applyJobService.getByUser(userId);
+    return this.applyJobService.getByUser(userId, +page, +limit);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles("hr")
   @Get("by-hr")
-  async getByHr(@Request() req) {
+  async getByHr(
+    @Request() req,
+    @Query("page") page = 1,
+    @Query("limit") limit = 10
+  ) {
     const userId = req.user.user._id;
-    return this.applyJobService.getByHr(userId);
+    return this.applyJobService.getByHr(userId, +page, +limit);
   }
 
   @UseGuards(JwtAuthGuard)

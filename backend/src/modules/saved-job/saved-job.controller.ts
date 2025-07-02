@@ -6,6 +6,7 @@ import {
   Param,
   Request,
   UseGuards,
+  Query,
 } from "@nestjs/common";
 import { SavedJobService } from "./saved-job.service";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
@@ -23,9 +24,13 @@ export class SavedJobController {
 
   @UseGuards(JwtAuthGuard)
   @Get()
-  async getSavedJobs(@Request() req) {
+  async getSavedJobs(
+    @Request() req,
+    @Query("page") page = 1,
+    @Query("limit") limit = 10
+  ) {
     const userId = req.user.user._id;
-    return this.savedJobService.getSavedJobs(userId);
+    return this.savedJobService.getSavedJobs(userId, +page, +limit);
   }
 
   @UseGuards(JwtAuthGuard)

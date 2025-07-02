@@ -71,7 +71,34 @@ export class JobsService {
     });
   }
 
-  async getJobsByHr(userId: string): Promise<JobDocument[]> {
-    return this.jobModel.find({ user_id: userId }).exec();
+  async getJobsByHr(
+    userId: string,
+    page: number = 1,
+    limit: number = 10
+  ): Promise<{
+    data: JobDocument[];
+    total: number;
+    page: number;
+    limit: number;
+  }> {
+    const skip = (page - 1) * limit;
+
+    const [data, total] = await Promise.all([
+      this.jobModel
+        .find({ user_id: userId })
+        .populate("user_id")
+        .skip(skip)
+        .limit(limit)
+        .sort() // optional: sort by latest
+        .exec(),
+      this.jobModel.countDocuments({ user_id: userId }),
+    ]);
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+    };
   }
 }

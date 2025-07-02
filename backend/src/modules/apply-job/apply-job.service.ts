@@ -42,22 +42,56 @@ export class ApplyJobService {
       .populate("jobId userId cvId coverletterId");
   }
 
-  async getByUser(userId: string) {
-    return this.applyJobModel
-      .find({ userId })
-      .populate("jobId cvId coverletterId");
+  async getByUser(userId: string, page = 1, limit = 10) {
+    const skip = (page - 1) * limit;
+
+    const [data, total] = await Promise.all([
+      this.applyJobModel
+        .find({ userId })
+        .populate("jobId cvId coverletterId userId")
+        .skip(skip)
+        .limit(limit)
+        .sort(),
+      this.applyJobModel.countDocuments({ userId }),
+    ]);
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+    };
   }
 
-  async getByHr(userId: string) {
-    return this.applyJobModel
+  async getByHr(userId: string, page = 1, limit = 10) {
+    const skip = (page - 1) * limit;
+
+    // Lấy tất cả ứng tuyển và populate job
+    const results = await this.applyJobModel
       .find()
       .populate({
         path: "jobId",
-        match: { userId }, // 👈 lọc job theo HR userId
+        match: { user_id: userId },
       })
       .populate("cvId")
       .populate("coverletterId")
-      .then((results) => results.filter((item) => item.jobId)); // 👈 lọc bỏ những cái null do match
+      .populate("userId")
+      .skip(skip)
+      .limit(limit)
+      .sort();
+
+    // Lọc ra các bản ghi có jobId không null (ứng tuyển vào job của HR này)
+    const filtered = results.filter((item) => item.jobId);
+
+    // Áp dụng phân trang sau khi lọc
+    const paginated = filtered.slice(skip, skip + limit);
+
+    return {
+      data: paginated,
+      total: filtered.length,
+      page,
+      limit,
+    };
   }
 
   async getApplyJobDetail(applyJobId: string) {
