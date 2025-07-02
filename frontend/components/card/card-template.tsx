@@ -94,22 +94,6 @@ const CVCard: React.FC<CVCardProps> = ({ id, imageUrl, title, onPreviewClick }) 
               onClick={handleUseTemplateClick}
             >
               {language === "vi" ? "Sử dụng mẫu này" : "Use this template"}
-              <motion.svg
-                className="ml-2 w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-                animate={{ x: isHovered ? 5 : 0 }}
-                transition={{ duration: 0.3 }}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 5l7 7-7 7"
-                />
-              </motion.svg>
             </motion.button>
           </motion.div>
         )}

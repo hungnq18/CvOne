@@ -3,6 +3,10 @@
 import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft, ArrowRight, UploadCloud, FileText } from 'lucide-react';
+import { toast } from 'react-hot-toast';
+import { API_ENDPOINTS, API_URL } from '@/api/apiConfig';
+import Cookies from 'js-cookie';
+
 
 function UploadCLTemplateContent() {
     const router = useRouter();
@@ -17,26 +21,53 @@ function UploadCLTemplateContent() {
         }
     };
 
-    const handleContinue = () => {
+    const handleContinue = async () => {
         if (!uploadedFile) {
-            alert("Please upload your cover letter first.");
+            toast.error("Please upload your cover letter first.");
             return;
         }
-        if (!templateId) {
-             router.push('/clTemplate');
-             return;
+
+        setIsUploading(true);
+        const formData = new FormData();
+        formData.append('file', uploadedFile);
+
+        const token = Cookies.get("token");
+        const headers: HeadersInit = {};
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
         }
 
-        // Here we would typically handle the file upload to a server.
-        // For now, let's just simulate it and navigate to the next step.
-        // We can pass the file info or a reference to it if needed.
+        try {
+            const response = await fetch(`${API_URL}${API_ENDPOINTS.UPLOAD.UPLOAD_FILE}`, {
+                method: 'POST',
+                headers: headers,
+                body: formData,
+            });
 
-        const params = new URLSearchParams({ templateId });
-        // In a real app, we might get a CL id from the backend after upload
-        // and pass it to the next page.
-        // e.g., params.append('clId', 'newly-created-cl-id');
+            const responseData = await response.json();
 
-        router.push(`/uploadJD?${params.toString()}`);
+            if (!response.ok) {
+                throw new Error(responseData.message || 'File upload failed');
+            }
+
+            toast.success('File uploaded successfully!');
+            console.log('Upload successful:', responseData);
+
+            const params = new URLSearchParams();
+            if (templateId) {
+                params.append('templateId', templateId);
+            }
+            if (responseData.filename) {
+                params.append('clFilename', responseData.filename);
+            }
+            router.push(`/uploadJD?${params.toString()}`);
+
+        } catch (error: any) {
+            console.error('Error uploading file:', error);
+            toast.error(error.message || 'Failed to upload file. Please try again.');
+        } finally {
+            setIsUploading(false);
+        }
     };
 
     const handleBack = () => {
@@ -54,12 +85,12 @@ function UploadCLTemplateContent() {
                 </p>
 
                 <div className="w-full max-w-lg mb-16">
-                    <label
+                     <label
                         htmlFor="cover-letter-upload"
                         className="flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100"
-                    >
+                     >
                         {uploadedFile ? (
-                            <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                         <div className="flex flex-col items-center justify-center pt-5 pb-6">
                                 <FileText className="w-10 h-10 mb-3 text-blue-500" />
                                 <p className="mb-2 text-sm text-gray-700 font-semibold">
                                     {uploadedFile.name}
@@ -71,11 +102,11 @@ function UploadCLTemplateContent() {
                         ) : (
                             <div className="flex flex-col items-center justify-center pt-5 pb-6">
                                 <UploadCloud className="w-10 h-10 mb-3 text-gray-400" />
-                                <p className="mb-2 text-sm text-gray-500">
-                                    <span className="font-semibold">Click to upload</span> or drag and drop
-                                </p>
+                             <p className="mb-2 text-sm text-gray-500">
+                                 <span className="font-semibold">Click to upload</span> or drag and drop
+                             </p>
                                 <p className="text-xs text-gray-500">DOCX, PDF (MAX. 5MB)</p>
-                            </div>
+                         </div>
                         )}
                         <input
                             id="cover-letter-upload"
@@ -84,9 +115,8 @@ function UploadCLTemplateContent() {
                             onChange={handleFileChange}
                             accept=".pdf,.doc,.docx"
                         />
-                    </label>
-                </div>
-            </div>
+                     </label>
+                     </div>
 
             <div className="flex w-full justify-between max-w-2xl">
                 <button
@@ -97,7 +127,7 @@ function UploadCLTemplateContent() {
                     Back
                 </button>
                 <button
-                    onClick={handleContinue}
+                     onClick={handleContinue}
                     disabled={!uploadedFile || isUploading}
                     className="flex items-center gap-2 px-8 py-3 text-lg font-semibold text-white bg-blue-500 rounded-full hover:bg-blue-600 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
                 >
@@ -105,8 +135,9 @@ function UploadCLTemplateContent() {
                     <ArrowRight size={20} />
                 </button>
             </div>
-        </div>
-    );
+         </div>
+     </div>
+ );
 }
 
 export default function UploadCLTemplatePage() {
