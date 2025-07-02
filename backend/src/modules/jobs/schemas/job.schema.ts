@@ -44,7 +44,7 @@ export class Job {
   responsibilities: string;
 
   @Prop({ type: Types.ObjectId, ref: "User", required: true })
-  postedBy: Types.ObjectId;
+  user_id: Types.ObjectId;
 }
 
 export const JobSchema = SchemaFactory.createForClass(Job);

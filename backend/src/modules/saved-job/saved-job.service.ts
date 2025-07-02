@@ -30,11 +30,35 @@ export class SavedJobService {
     });
   }
 
-  async getSavedJobs(userId: string): Promise<SavedJob[]> {
-    return this.savedJobModel
-      .find({ userId: new Types.ObjectId(userId) })
-      .populate("jobId")
-      .sort({ createdAt: -1 });
+  async getSavedJobs(
+    userId: string,
+    page = 1,
+    limit = 10
+  ): Promise<{
+    data: SavedJob[];
+    total: number;
+    page: number;
+    limit: number;
+  }> {
+    const skip = (page - 1) * limit;
+
+    const [data, total] = await Promise.all([
+      this.savedJobModel
+        .find({ userId: new Types.ObjectId(userId) })
+        .populate("jobId")
+        .populate("userId")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      this.savedJobModel.countDocuments({ userId: new Types.ObjectId(userId) }),
+    ]);
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+    };
   }
 
   async unsaveJob(
