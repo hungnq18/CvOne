@@ -20,8 +20,10 @@ function ChooseOptionContent() {
 
         if (selectedOption === 'manual') {
             router.push(`/createCLTemplate?${params.toString()}`);
-        } else {
+        } else if (selectedOption === 'ai') {
             router.push(`/personal-info?${params.toString()}`);
+        } else if (selectedOption === 'upload') {
+            router.push(`/uploadCLTemplate?${params.toString()}`);
         }
     };
 
@@ -47,12 +49,12 @@ function ChooseOptionContent() {
 
     return (
         <div className=" bg-white flex flex-col items-center justify-center py-12 min-h-screen">
-            <div className="w-full max-w-4xl flex flex-col items-center">
+            <div className="w-full max-w-5xl flex flex-col items-center">
                 <h1 className="text-3xl font-bold text-gray-800 mb-12">
                     How do you want to start your cover letter?
                 </h1>
 
-                <div className="flex gap-8 mb-16">
+                <div className="flex flex-wrap justify-center gap-8 mb-16">
                     <OptionCard
                         id="ai"
                         icon={<Bot size={40} />}
@@ -64,6 +66,12 @@ function ChooseOptionContent() {
                         icon={<Smile size={40} />}
                         title="Generate by manual"
                         description="We'll start from the beginning."
+                    />
+                    <OptionCard
+                        id="upload"
+                        icon={<FileUp size={40} />}
+                        title="Upload cover letter"
+                        description="We'll extract information from your cover letter."
                     />
                 </div>
             </div>
