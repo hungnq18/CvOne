@@ -63,7 +63,7 @@ export class CoverLetterController {
   }
 
   // @UseGuards(JwtAuthGuard)
-  @Post("extract-from-pdf")
+  @Post("extract/from-path")
   async extractFromPdfFiles(
     @Body()
     body: {
@@ -74,13 +74,13 @@ export class CoverLetterController {
   ) {
     const coverLetterPath = path.join(
       process.cwd(),
-      "uploads",
+      "uploads/",
       body.coverLetterFileName
     );
 
     const jdPath = path.join(
       process.cwd(),
-      "uploads",
+      "uploads/",
       body.jobDescriptionFileName
     );
 

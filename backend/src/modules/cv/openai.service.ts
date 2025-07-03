@@ -441,8 +441,8 @@ Return only valid JSON array.
   }
 
   private generateFallbackSummary(userProfile: any, jobAnalysis: any): string {
-    return `Experienced ${jobAnalysis.experienceLevel} professional with expertise in ${jobAnalysis.requiredSkills?.slice(0, 3).join(", ") || "software development"}. 
-    Passionate about delivering high-quality solutions and collaborating with cross-functional teams. 
+    return `Experienced ${jobAnalysis.experienceLevel} professional with expertise in ${jobAnalysis.requiredSkills?.slice(0, 3).join(", ") || "software development"}.
+    Passionate about delivering high-quality solutions and collaborating with cross-functional teams.
     Strong problem-solving skills and commitment to continuous learning and professional development.`;
   }
 
@@ -465,7 +465,7 @@ Return only valid JSON array.
         company: "Previous Company",
         startDate: startDate.toISOString().split("T")[0],
         endDate: endDate.toISOString().split("T")[0],
-        description: `Developed and maintained applications using ${jobAnalysis.technologies?.slice(0, 3).join(", ") || "modern technologies"}. 
+        description: `Developed and maintained applications using ${jobAnalysis.technologies?.slice(0, 3).join(", ") || "modern technologies"}.
       Collaborated with cross-functional teams to deliver high-quality software solutions.`,
       },
     ];
@@ -613,32 +613,42 @@ Guidelines:
     const jobDescriptionText = (await pdfParse(jdBuffer)).text;
 
     const prompt = `
-  You are an expert at analyzing cover letters. Below is the content of a cover letter and a job description. Your task is to extract the following fields from the cover letter, tailoring the content to highlight skills, experiences, or qualifications that align with the job description.
-  
-  **Cover Letter Content**:
-  ${coverLetterText}
-  
-  **Job Description**:
-  ${jobDescriptionText}
-  
-  **Fields to Extract**:
-  {
-    "firstName": "",
-    "lastName": "",
-    "email": "",
-    "phone": "",
-    "subject": "",
-    "greeting": "",
-    "opening": "",
-    "relevantSkills": "",
-    "relevantExperience": "",
-    "callToAction": "",
-    "closing": "",
-    "signature": ""
-  }
-  
-  Return **valid JSON only** with the extracted fields.
-  `;
+You are an expert at analyzing cover letters. Below is the content of a cover letter extracted from a PDF and a job description.
+
+Your task is to extract and enhance the following specific fields from the cover letter to better match the job description. Ensure the extracted content is relevant, professional, and tailored to the job requirements while preserving the applicant’s tone and personal details.
+
+---
+
+**Cover Letter Content**:
+${coverLetterText}
+
+**Job Description**:
+${jobDescriptionText}
+
+---
+
+**Return a valid JSON object with ONLY the following fields**:
+
+{
+  "firstName": "",       // First name of the applicant
+  "lastName": "",        // Last name of the applicant
+  "email": "",           // Email address
+  "phone": "",           // Phone number
+  "subject": "",         // Subject or position applied for
+  "greeting": "",        // e.g. "Dear Hiring Manager"
+  "opening": "",         // Opening paragraph showing interest and motivation
+  "body": "",            // Main body elaborating on experience and skills
+  "callToAction": "",    // A polite request for an interview or next step
+  "closing": "",         // e.g. "Sincerely"
+  "signature": ""        // Applicant's full name or sign-off
+}
+
+**IMPORTANT**:
+- Return only this JSON structure.
+- Do NOT include any explanation, extra text, or additional fields.
+- Ensure all fields are filled if possible; infer when necessary from context.
+- Be concise and relevant.
+`;
 
     // 3. Call OpenAI
     const completion = await this.openai.chat.completions.create({
