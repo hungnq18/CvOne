@@ -64,29 +64,30 @@ export class CoverLetterController {
 
   // @UseGuards(JwtAuthGuard)
   @Post("extract/from-path")
-async extractFromPdfFiles(
-  @Body() body: {
-    coverLetterFileName: string;
-    jobDescriptionFileName: string;
-    templateId: string;
-  }
-) {
-  const coverLetterPath = path.join(
-    process.cwd(),
-    "uploads",
-    body.coverLetterFileName
-  );
+  async extractFromPdfFiles(
+    @Body()
+    body: {
+      coverLetterFileName: string;
+      jobDescriptionFileName: string;
+      templateId: string;
+    }
+  ) {
+    const coverLetterPath = path.join(
+      process.cwd(),
+      "uploads/",
+      body.coverLetterFileName
+    );
 
-  const jdPath = path.join(
-    process.cwd(),
-    "uploads",
-    body.jobDescriptionFileName
-  );
+    const jdPath = path.join(
+      process.cwd(),
+      "uploads/",
+      body.jobDescriptionFileName
+    );
 
-  return this.openAiService.extractCoverLetterFromPdf(
-    coverLetterPath,
-    jdPath,
-    body.templateId
-  );
+    return this.openAiService.extractCoverLetterFromPdf(
+      coverLetterPath,
+      jdPath,
+      body.templateId
+    );
   }
 }

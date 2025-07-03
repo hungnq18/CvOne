@@ -29,22 +29,11 @@ export class UploadController {
           const uniqueSuffix =
             Date.now() + "-" + Math.round(Math.random() * 1e9);
           const ext = extname(file.originalname);
-          const baseName = file.mimetype.startsWith("image/")
-            ? "image"
-            : "file";
-          cb(null, `${baseName}-${uniqueSuffix}${ext}`);
+          cb(null, `image-${uniqueSuffix}${ext}`);
         },
       }),
       fileFilter: (req, file, cb) => {
-        const allowedTypes = [
-          "image/jpeg",
-          "image/png",
-          "image/webp",
-          "image/jpg",
-          "application/pdf",
-        ];
-
-        if (!allowedTypes.includes(file.mimetype)) {
+        if (!file.mimetype.match(/^image\/(jpeg|png|webp|jpg)$/)) {
           return cb(
             new BadRequestException("Only image and PDF files are allowed!"),
             false

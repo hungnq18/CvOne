@@ -613,32 +613,42 @@ Guidelines:
     const jobDescriptionText = (await pdfParse(jdBuffer)).text;
 
     const prompt = `
-  You are an expert at analyzing cover letters. Below is the content of a cover letter and a job description. Your task is to extract the following fields from the cover letter, tailoring the content to highlight skills, experiences, or qualifications that align with the job description.
+You are an expert at analyzing cover letters. Below is the content of a cover letter extracted from a PDF and a job description.
 
-  *Cover Letter Content*:
-  ${coverLetterText}
+Your task is to extract and enhance the following specific fields from the cover letter to better match the job description. Ensure the extracted content is relevant, professional, and tailored to the job requirements while preserving the applicant’s tone and personal details.
 
-  *Job Description*:
-  ${jobDescriptionText}
+---
 
-  *Fields to Extract*:
-  {
-    "firstName": "",
-    "lastName": "",
-    "email": "",
-    "phone": "",
-    "subject": "",
-    "greeting": "",
-    "opening": "",
-    "relevantSkills": "",
-    "relevantExperience": "",
-    "callToAction": "",
-    "closing": "",
-    "signature": ""
-  }
+**Cover Letter Content**:
+${coverLetterText}
 
-  Return *valid JSON only* with the extracted fields.
-  `;
+**Job Description**:
+${jobDescriptionText}
+
+---
+
+**Return a valid JSON object with ONLY the following fields**:
+
+{
+  "firstName": "",       // First name of the applicant
+  "lastName": "",        // Last name of the applicant
+  "email": "",           // Email address
+  "phone": "",           // Phone number
+  "subject": "",         // Subject or position applied for
+  "greeting": "",        // e.g. "Dear Hiring Manager"
+  "opening": "",         // Opening paragraph showing interest and motivation
+  "body": "",            // Main body elaborating on experience and skills
+  "callToAction": "",    // A polite request for an interview or next step
+  "closing": "",         // e.g. "Sincerely"
+  "signature": ""        // Applicant's full name or sign-off
+}
+
+**IMPORTANT**:
+- Return only this JSON structure.
+- Do NOT include any explanation, extra text, or additional fields.
+- Ensure all fields are filled if possible; infer when necessary from context.
+- Be concise and relevant.
+`;
 
     // 3. Call OpenAI
     const completion = await this.openai.chat.completions.create({
