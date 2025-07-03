@@ -1,8 +1,8 @@
 'use client';
 
 import React from 'react';
-import { Table, Tag, Space } from 'antd';
-import type { ColumnsType } from 'antd/es/table';
+import { Table, Tag, Space, Tooltip } from 'antd';
+import type { ColumnsType, TablePaginationConfig } from 'antd/es/table';
 import { Job, translations } from '@/app/myJobs/page';
 import { useLanguage } from '@/providers/global-provider';
 import '@/styles/jobButtons.css';
@@ -14,19 +14,23 @@ interface JobTableProps {
     jobs: Job[];
     translations: typeof translations;
     onRemove?: (jobId: string) => void;
+    pagination?: TablePaginationConfig;
+    loading?: boolean;
 }
 
-const JobTable: React.FC<JobTableProps> = ({ jobs, translations, onRemove }) => {
+const JobTable: React.FC<JobTableProps> = ({ jobs, translations, onRemove, pagination, loading }) => {
     const { language } = useLanguage();
     const t = translations[language];
     const router = useRouter();
 
     const handleDelete = async (jobId: string) => {
+        console.log('Deleting saved-job with id:', jobId);
         if (!jobId) return;
         try {
             await fetchWithAuth(API_ENDPOINTS.SAVED_JOB.UN_SAVE_JOB(jobId), { method: 'DELETE' });
             if (onRemove) onRemove(jobId);
         } catch (err) {
+            console.error('Failed to remove saved job', err);
             alert('Failed to remove saved job');
         }
     };
@@ -84,23 +88,19 @@ const JobTable: React.FC<JobTableProps> = ({ jobs, translations, onRemove }) => 
             key: 'skills',
             dataIndex: 'skills',
             render: (skills: string[] | string | undefined) => {
-                let skillArr: string[] = [];
+                let skillStr = '';
                 if (Array.isArray(skills)) {
-                    skillArr = skills;
+                    skillStr = skills.join(', ');
                 } else if (typeof skills === 'string') {
-                    skillArr = skills.split(',').map(s => s.trim()).filter(Boolean);
+                    skillStr = skills;
                 }
-                const showSkills = skillArr.slice(0, 3);
-                const hasMore = skillArr.length > 3;
+                const maxLen = 30;
+                const isLong = skillStr.length > maxLen;
+                const display = isLong ? skillStr.slice(0, maxLen) + '...' : skillStr;
                 return (
-                    <>
-                        {showSkills.map((skill) => (
-                            <Tag color="blue" key={skill}>
-                                {skill}
-                            </Tag>
-                        ))}
-                        {hasMore && <Tag color="blue">...</Tag>}
-                    </>
+                    <Tooltip title={isLong ? skillStr : undefined}>
+                        <Tag color="blue" style={{ margin: 0 }}>{display}</Tag>
+                    </Tooltip>
                 );
             },
         },
@@ -121,19 +121,10 @@ const JobTable: React.FC<JobTableProps> = ({ jobs, translations, onRemove }) => 
                         </span>
                     </button>
                     <button
-                        className="job-button archive-button"
-                        onClick={() => handleArchive(record._id)}
-                    >
-                        <span className="text">{t.actions.archive}</span>
-                        <span className="icon">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-                                <path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z" />
-                            </svg>
-                        </span>
-                    </button>
-                    <button
                         className="job-button delete-button"
-                        onClick={() => handleDelete((record as any).savedId || record._id)}
+                        onClick={() => {
+                            handleDelete((record as any).savedId || record._id);
+                        }}
                     >
                         <span className="text">{t.actions.remove}</span>
                         <span className="icon">
@@ -147,7 +138,7 @@ const JobTable: React.FC<JobTableProps> = ({ jobs, translations, onRemove }) => 
         },
     ];
 
-    return <Table columns={columns} dataSource={jobs} rowKey="_id" />;
+    return <Table columns={columns} dataSource={jobs} rowKey="_id" pagination={pagination} loading={loading} />;
 };
 
 export default JobTable; 

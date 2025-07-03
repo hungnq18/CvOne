@@ -51,14 +51,18 @@ const CVSection: React.FC = () => {
         >
           {cvTemplates.map((template) => (
             <CardCVTemplate
-              key={template.id}
-              id={template.id}
+              key={template._id}
+              _id={template._id}
               imageUrl={template.imageUrl}
               title={
                 typeof template.title === 'string'
                   ? template.title
                   : template.title?.[language] ?? template.title
               }
+              onPreviewClick={(template) => {
+
+
+              }}
             />
           ))}
         </motion.div>

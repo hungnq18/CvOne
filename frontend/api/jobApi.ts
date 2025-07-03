@@ -201,27 +201,31 @@ export const saveJob = async (jobId: string): Promise<any> => {
 };
 
 /**
- * Get saved jobs for the current user
- * @returns Promise with array of saved job objects
+ * Get saved jobs for the current user (paginated)
+ * @param page - Page number
+ * @param limit - Items per page
+ * @returns Promise with paginated saved jobs
  */
-export const getSavedJobsByUser = async (): Promise<any[]> => {
+export const getSavedJobsByUser = async (page: number = 1, limit: number = 10): Promise<any> => {
   try {
-    return await fetchWithAuth(API_ENDPOINTS.SAVED_JOB.GET_SAVE_JOB);
+    return await fetchWithAuth(`${API_ENDPOINTS.SAVED_JOB.GET_SAVE_JOB}?page=${page}&limit=${limit}`);
   } catch (error) {
     console.error('Error fetching saved jobs:', error);
-    return [];
+    return { data: [], total: 0, page, limit };
   }
 };
 
 /**
- * Get applied jobs for the current user
- * @returns Promise with array of applied job objects
+ * Get applied jobs for the current user (paginated)
+ * @param page - Page number
+ * @param limit - Items per page
+ * @returns Promise with paginated applied jobs
  */
-export const getAppliedJobsByUser = async (): Promise<any[]> => {
+export const getAppliedJobsByUser = async (page: number = 1, limit: number = 10): Promise<any> => {
   try {
-    return await fetchWithAuth(API_ENDPOINTS.APPLYJOB.GET_APPLY_JOB_BY_USER);
+    return await fetchWithAuth(`${API_ENDPOINTS.APPLYJOB.GET_APPLY_JOB_BY_USER}?page=${page}&limit=${limit}`);
   } catch (error) {
     console.error('Error fetching applied jobs:', error);
-    return [];
+    return { data: [], total: 0, page, limit };
   }
 };

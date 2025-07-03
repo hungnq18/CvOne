@@ -178,7 +178,7 @@ export default function JobDetailClient({ id }: JobDetailClientProps) {
                                             window.location.href = '/login';
                                             return;
                                         }
-
+                                        window.location.href = `/user/applyOption?jobId=${job._id}`;
                                     }}
                                 >
                                     Apply Now
