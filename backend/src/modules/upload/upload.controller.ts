@@ -35,12 +35,13 @@ export class UploadController {
       fileFilter: (req, file, cb) => {
         if (!file.mimetype.match(/^image\/(jpeg|png|webp|jpg)$/)) {
           return cb(
-            new BadRequestException("Only image files are allowed!"),
+            new BadRequestException("Only image and PDF files are allowed!"),
             false
           );
         }
         cb(null, true);
       },
+
       limits: { fileSize: 5 * 1024 * 1024 }, // giới hạn 5MB
     })
   )

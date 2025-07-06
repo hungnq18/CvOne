@@ -46,6 +46,7 @@ export const API_ENDPOINTS = {
     CREATE: "/cover-letters",
     UPDATE: (id: string) => `/cover-letters/${id}`,
     DELETE: (id: string) => `/cover-letters/${id}`,
+    EXTRACT_COVER_LETTER: "/cover-letters/extract/from-path",
   },
   CHAT: {
     GET_MESSAGES: (convId: string) => `/chat/messages/${convId}`,
@@ -86,5 +87,8 @@ export const API_ENDPOINTS = {
     GET_SAVE_JOB: "/saved-jobs",
     SAVE_JOB: (jobId: string) => `/saved-jobs/${jobId}`,
     UN_SAVE_JOB: (jobId: string) => `/saved-jobs/${jobId}`,
+  },
+  UPLOAD: {
+    UPLOAD_FILE: "/upload",
   },
 } as const;
