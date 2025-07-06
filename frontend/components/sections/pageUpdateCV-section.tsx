@@ -6,7 +6,6 @@ import {
   getCVTemplateById,
   getCVTemplates,
   getCVById,
-  createCV,
   updateCV,
   CVTemplate,
   CV,
@@ -25,7 +24,7 @@ import Image from "next/image";
 import { CVProvider, useCV } from "@/providers/cv-provider";
 import { useOnClickOutside } from "@/hooks/useOnClickOutside";
 import { jwtDecode } from "jwt-decode";
-import { CVEditorPopupsManager } from "@/components/forms/CVEditorPopups"; // Import component quản lý mới
+import { CVEditorPopupsManager } from "@/components/forms/CVEditorPopups";
 
 // --- INTERFACES & TYPES ---
 interface DecodedToken {
@@ -46,11 +45,22 @@ const sidebarSections = [
   { id: "skills", title: "Kỹ năng" },
 ];
 
-
-const PageCreateCVContent = () => {
+/**
+ * Component Update CV
+ * Flow:
+ * 1. Nhận cvID từ URL parameter
+ * 2. Lấy CV data từ database dựa vào cvID
+ * 3. Trích xuất cvTemplateID từ CV data
+ * 4. Load template dựa vào cvTemplateID (chỉ để render)
+ * 5. Load userData từ content.userData vào context (data thực tế của CV)
+ * 6. Render giao diện với template structure + CV userData
+ * 7. Title hiển thị và có thể edit được
+ */
+const PageUpdateCVContent = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const id = searchParams.get("id");
+  // Lấy cvID từ URL parameter
+  const cvId = searchParams.get("id"); 
   const { currentTemplate, userData, loadTemplate, updateUserData } = useCV();
 
   const [loading, setLoading] = useState(true);
@@ -59,9 +69,9 @@ const PageCreateCVContent = () => {
   const [allTemplates, setAllTemplates] = useState<CVTemplate[]>([]);
   const [showTemplatePopup, setShowTemplatePopup] = useState(false);
   const [showColorPopup, setShowColorPopup] = useState(false);
-  const [cvId, setCvId] = useState<string | null>(id);
   const [isDirty, setIsDirty] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [cvData, setCvData] = useState<CV | null>(null);
   const [cvTitle, setCvTitle] = useState<string>("");
   const [isEditingTitle, setIsEditingTitle] = useState(false);
 
@@ -71,49 +81,66 @@ const PageCreateCVContent = () => {
   useOnClickOutside(templateDropdownRef, () => setShowTemplatePopup(false));
   useOnClickOutside(colorDropdownRef, () => setShowColorPopup(false));
 
-  useEffect(() => {
-    getCVTemplates().then((data) => setAllTemplates(data));
-    const idFromUrl = id;
-
-    if (idFromUrl) {
-      setLoading(true);
-      getCVById(idFromUrl)
-        .then((templateData) => {
-          if (templateData) {
-            loadTemplate(templateData);
-            // Nếu đây là CV đã tồn tại, set title
-            if (templateData.title) {
-              setCvTitle(templateData.title);
-            }
-          }
-          setLoading(false);
-        })
-        .catch(() => {
-          console.log("đang tải template để tạo mới...");
-          setCvId(null);
-          getCVTemplateById(idFromUrl).then((templateData) => {
-            if (templateData) {
-              loadTemplate(templateData);
-              if (templateData.data?.userData) {
-                updateUserData(templateData.data.userData);
-              }
-              // Set title mặc định cho template mới
-              setCvTitle(`CV - ${templateData.title}`);
-            }
-            setLoading(false);
-          });
-        });
-    } else {
-      setLoading(false);
+  // Function để load CV data và template
+  const loadCVDataAndTemplate = async (cvId: string) => {
+    try {
+      // Bước 1: Lấy CV data từ database dựa vào cvID
+      const cvData = await getCVById(cvId);
+      if (!cvData) {
+        throw new Error("Không tìm thấy CV với ID này.");
+      }
+      
+      setCvData(cvData);
+      
+      // Bước 2: Set title của CV
+      setCvTitle(cvData.title || "Untitled CV");
+      
+      // Bước 3: Lấy cvTemplateID từ CV data
+      if (!cvData.cvTemplateId) {
+        throw new Error("CV không có template ID.");
+      }
+      
+      // Bước 4: Load template dựa vào cvTemplateID
+      const templateData = await getCVTemplateById(cvData.cvTemplateId);
+      if (!templateData) {
+        throw new Error("Không tìm thấy template CV.");
+      }
+      
+      // Bước 5: Load template vào context (chỉ để render, không dùng data của template)
+      loadTemplate(templateData);
+      
+      // Bước 6: Load userData từ content vào context (đây là data thực tế của CV)
+      if (cvData.content?.userData) {
+        updateUserData(cvData.content.userData);
+      } else {
+        console.warn("CV không có userData");
+      }
+      
+    } catch (error) {
+      console.error("Lỗi khi load CV data:", error);
+      alert(error instanceof Error ? error.message : "Không thể tải CV. Vui lòng thử lại.");
+      router.push("/myDocuments");
     }
-  }, [id, loadTemplate, updateUserData]);
+  };
+
+  useEffect(() => {
+    // Load tất cả templates để hiển thị trong dropdown
+    getCVTemplates().then((data) => setAllTemplates(data));
+    
+    if (cvId) {
+      setLoading(true);
+      // Load CV data và template dựa vào cvID
+      loadCVDataAndTemplate(cvId).finally(() => {
+        setLoading(false);
+      });
+    } else {
+      alert("Không tìm thấy ID CV. Vui lòng quay lại trang tài liệu.");
+      router.push("/myDocuments");
+    }
+  }, [cvId, loadTemplate, updateUserData, router]);
 
   const handleTemplateSelect = (selectedTemplate: CVTemplate) => {
-    router.push(
-      `/createCV?id=${selectedTemplate._id}`
-    );
-    // Set title mặc định cho template mới
-    setCvTitle(`CV - ${selectedTemplate.title}`);
+    router.push(`/updateCV?id=${cvId}&templateId=${selectedTemplate._id}`);
     setShowTemplatePopup(false);
   };
 
@@ -140,49 +167,30 @@ const PageCreateCVContent = () => {
 
   const handleSaveToDB = async (): Promise<boolean> => {
     const userId = getUserIdFromToken();
-    if (!userData || !currentTemplate) {
-      alert("Chưa có dữ liệu hoặc mẫu CV để lưu.");
+    if (!userData || !currentTemplate || !cvId) {
+      alert("Chưa có dữ liệu hoặc mẫu CV để cập nhật.");
       return false;
     }
     if (Object.keys(userData).length === 0) {
-      alert("Dữ liệu CV trống, không thể lưu.");
+      alert("Dữ liệu CV trống, không thể cập nhật.");
       return false;
     }
 
     setIsSaving(true);
     try {
-      if (cvId) {
-        const dataToUpdate: Partial<CV> = {
-          content: { userData },
-          title: cvTitle || `CV for ${userData.firstName || "Untitled"}`,
-          updatedAt: new Date().toISOString(),
-        };
-        await updateCV(cvId, dataToUpdate);
-      } else {
-        const dataToCreate: Omit<CV, "_id"> = {
-          userId: userId || "", 
-          title: cvTitle || `CV for ${userData.firstName} ${userData.lastName}`,
-          content: { userData },
-          isPublic: false,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          cvTemplateId: currentTemplate._id,
-          isSaved: true,
-          isFinalized: false,
-        };
-        console.log("Dữ liệu tạo mới CV:", dataToCreate);
-        const newCV = await createCV(dataToCreate);
-        if (newCV && newCV.id) {
-          setCvId(newCV.id);
-          router.replace(`/createCV?id=${newCV.id}`, { scroll: false });
-        }
-      }
-      alert("Lưu CV thành công!");
+      const dataToUpdate: Partial<CV> = {
+        content: { userData },
+        title: cvTitle, // Sử dụng title đã chỉnh sửa
+        updatedAt: new Date().toISOString(),
+      };
+      
+      await updateCV(cvId, dataToUpdate);
+      alert("Cập nhật CV thành công!");
       setIsDirty(false);
       return true;
     } catch (error) {
-      console.error("Lỗi khi lưu CV:", error);
-      alert("Có lỗi xảy ra khi lưu CV của bạn.");
+      console.error("Lỗi khi cập nhật CV:", error);
+      alert("Có lỗi xảy ra khi cập nhật CV của bạn.");
       return false;
     } finally {
       setIsSaving(false);
@@ -202,18 +210,19 @@ const PageCreateCVContent = () => {
 
   const renderCVPreview = () => {
     if (loading || !currentTemplate || !userData) {
-      return <p className="text-center">Đang tải Mẫu...</p>;
+      return <p className="text-center">Đang tải CV...</p>;
     }
     const TemplateComponent = templateComponentMap?.[currentTemplate.title];
     if (!TemplateComponent) {
       return <div>Không tìm thấy component cho "{currentTemplate.title}".</div>;
     }
+    // Sử dụng userData của CV (không phải template data)
     const componentData = {
-      ...currentTemplate.data,
-      userData: userData,
+      ...currentTemplate.data, // Chỉ lấy cấu trúc template
+      userData: userData, // Sử dụng userData thực tế của CV
     };
 
-     const containerWidth = 700;
+    const containerWidth = 700;
     const templateOriginalWidth = 794;
     const scaleFactor = containerWidth / templateOriginalWidth;
     return (
@@ -226,16 +235,17 @@ const PageCreateCVContent = () => {
             transform: `scale(${scaleFactor})`,
           }}
         >
-          <TemplateComponent data={componentData}  onSectionClick={handleSectionClick}/>
+          <TemplateComponent data={componentData} onSectionClick={handleSectionClick}/>
         </div>
       </div>
     );
   };
 
   const handleBackClick = () => {
-    setActivePopup("confirmLeave");
     if (isDirty) {
-      router.push(`/cvTemplates`);
+      setActivePopup("confirmLeave");
+    } else {
+      router.push("/myDocuments");
     }
   };
 
@@ -284,7 +294,7 @@ const PageCreateCVContent = () => {
                 onClick={handleTitleEdit}
                 title="Click để chỉnh sửa tiêu đề"
               >
-                {cvTitle || (currentTemplate ? currentTemplate.title : "Chỉnh Sửa CV")}
+                {cvTitle || "Cập nhật CV"}
               </h1>
             )}
           </div>
@@ -375,7 +385,7 @@ const PageCreateCVContent = () => {
             ) : (
               <CheckCircle2 size={18} />
             )}
-            {isSaving ? "Đang lưu..." : "Hoàn Thành"}{" "}
+            {isSaving ? "Đang cập nhật..." : "Cập nhật CV"}
           </button>
         </div>
       </header>
@@ -432,12 +442,12 @@ const PageCreateCVContent = () => {
         handleDataUpdate={handleDataUpdate}
         isSaving={isSaving}
         onLeaveWithoutSaving={() => {
-          router.push(`/cvTemplates`);
+          router.push("/myDocuments");
         }}
         onSaveAndLeave={async () => {
           const isSuccess = await handleSaveToDB();
           if (isSuccess) {
-            router.push(`/cvTemplates`);
+            router.push("/myDocuments");
           }
         }}
       />
@@ -445,4 +455,4 @@ const PageCreateCVContent = () => {
   );
 };
 
-export default PageCreateCVContent;
+export default PageUpdateCVContent; 
