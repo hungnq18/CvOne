@@ -195,8 +195,8 @@ const CVSection: React.FC = () => {
         </motion.h2>
 
         <motion.div
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-8 rounded-lg p-6 sm:p-8 shadow-sm border border-blue-100"
-        variants={containerVariants}
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-8 rounded-lg p-6 sm:p-8 shadow-sm border border-blue-100"
+          variants={containerVariants}
           initial="hidden"
           animate="visible"
         >
