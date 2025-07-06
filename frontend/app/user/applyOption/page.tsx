@@ -54,7 +54,7 @@ function ApplyOptionContent() {
                     <OptionCard
                         id="existing"
                         icon={<FileText size={40} />}
-                        title="Use Existing CV"
+                        title="Use AI for Existing CV"
                         description="Choose from your saved CVs."
                     />
                     <OptionCard
