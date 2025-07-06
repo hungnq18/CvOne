@@ -22,7 +22,7 @@ const MenuLink = styled(Link)`
   transition: color 0.2s ease;
 
   &.nav-link::after {
-    content: '';
+    content: "";
     position: absolute;
     width: 0;
     height: 2px;
@@ -98,24 +98,6 @@ const FlexRow = styled.div`
 const navigationItems = {
   en: {
     default: [
-      {
-        name: "Tools",
-        href: "/tools",
-        dropdownItems: [
-          { name: "Resume Builder", href: "/tools/resume-builder" },
-          { name: "CV Builder", href: "/tools/cv-builder" },
-          { name: "Cover Letter Builder", href: "/tools/cover-letter-builder" },
-        ],
-      },
-      {
-        name: "Resume",
-        href: "/resume",
-        dropdownItems: [
-          { name: "Resume Templates", href: "/resume/templates" },
-          { name: "Resume Examples", href: "/resume/examples" },
-          { name: "Resume Tips", href: "/resume/tips" },
-        ],
-      },
       {
         name: "CV",
         href: "/cvTemplates",
@@ -198,6 +180,10 @@ const navigationItems = {
         href: "/myJobs",
       },
       {
+        name: "Saved Jobs",
+        href: "/jobPage",
+      },
+      {
         name: "My Profile",
         href: "/user/profile",
       },
@@ -205,24 +191,6 @@ const navigationItems = {
   },
   vi: {
     default: [
-      {
-        name: "Công cụ",
-        href: "/tools",
-        dropdownItems: [
-          { name: "Tạo Sơ yếu lý lịch", href: "/tools/resume-builder" },
-          { name: "Tạo CV", href: "/tools/cv-builder" },
-          { name: "Tạo Thư ngỏ", href: "/tools/cover-letter-builder" },
-        ],
-      },
-      {
-        name: "Sơ yếu lý lịch",
-        href: "/resume",
-        dropdownItems: [
-          { name: "Mẫu Sơ yếu lý lịch", href: "/resume/templates" },
-          { name: "Ví dụ Sơ yếu lý lịch", href: "/resume/examples" },
-          { name: "Mẹo về Sơ yếu lý lịch", href: "/resume/tips" },
-        ],
-      },
       {
         name: "CV",
         href: "/cvTemplates",
@@ -344,10 +312,10 @@ export function Header() {
     role === "admin"
       ? navigationItems[language].admin
       : role === "hr"
-        ? navigationItems[language].hr
-        : role === "user"
-          ? navigationItems[language].user
-          : navigationItems[language].default;
+      ? navigationItems[language].hr
+      : role === "user"
+      ? navigationItems[language].user
+      : navigationItems[language].default;
 
   const handleLogout = () => {
     logout();
@@ -360,7 +328,13 @@ export function Header() {
       <Container>
         <FlexRow>
           <Link href="/" className="flex items-center mr-8">
-            <Image src={logo} alt="CV One Logo" width={100} height={35} className="h-auto" />
+            <Image
+              src={logo}
+              alt="CV One Logo"
+              width={100}
+              height={35}
+              className="h-auto"
+            />
           </Link>
 
           <nav className="hidden md:flex items-center space-x-4">
@@ -393,7 +367,9 @@ export function Header() {
                 {language === "en" ? "Login" : "Đăng nhập"}
               </StyledButton>
             )}
-            <PlainButton onClick={() => setLanguage(language === "en" ? "vi" : "en")}>
+            <PlainButton
+              onClick={() => setLanguage(language === "en" ? "vi" : "en")}
+            >
               {language === "en" ? "VI" : "EN"}
             </PlainButton>
           </div>
