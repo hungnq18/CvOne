@@ -27,7 +27,7 @@ const JobTabs: React.FC<JobTabsProps> = ({
             key: '1',
             label: (
                 <div className="flex items-center gap-2">
-                    <span>{t.tabs.saved} ({savedJobs.length})</span>
+                    <span>{t.tabs.saved}</span>
                 </div>
             ),
             children: null,
@@ -36,7 +36,7 @@ const JobTabs: React.FC<JobTabsProps> = ({
             key: '2',
             label: (
                 <div className="flex items-center gap-2">
-                    <span>{t.tabs.applied} ({appliedJobs.length})</span>
+                    <span>{t.tabs.applied}</span>
                 </div>
             ),
             children: null,
