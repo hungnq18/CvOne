@@ -176,11 +176,11 @@ const navigationItems = {
         href: "/clTemplate",
       },
       {
-        name: "My Jobs",
+        name: "Saved Jobs",
         href: "/myJobs",
       },
       {
-        name: "Saved Jobs",
+        name: "Jobs",
         href: "/jobPage",
       },
       {
@@ -265,8 +265,12 @@ const navigationItems = {
         href: "/clTemplate",
       },
       {
-        name: "Công việc của tôi",
-        href: "/user/jobs",
+        name: "Công việc đã lưu",
+        href: "/myJobs",
+      },
+      {
+        name: "Công việc",
+        href: "/jobPage",
       },
       {
         name: "Hồ sơ của tôi",
@@ -312,10 +316,10 @@ export function Header() {
     role === "admin"
       ? navigationItems[language].admin
       : role === "hr"
-      ? navigationItems[language].hr
-      : role === "user"
-      ? navigationItems[language].user
-      : navigationItems[language].default;
+        ? navigationItems[language].hr
+        : role === "user"
+          ? navigationItems[language].user
+          : navigationItems[language].default;
 
   const handleLogout = () => {
     logout();
