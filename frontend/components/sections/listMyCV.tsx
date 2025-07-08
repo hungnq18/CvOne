@@ -121,7 +121,7 @@ const CVList: React.FC<CVListProps> = ({ cvList, viewMode }) => {
             <Card
               hoverable
               className="min-h-[315px] flex items-center justify-center bg-blue-50 border border-blue-200"
-              bodyStyle={{ padding: "20px", textAlign: "center" }}
+              styles={{ body: { padding: "20px", textAlign: "center" } }}
             >
               <Button
                 type="primary"

@@ -84,9 +84,9 @@ export const API_ENDPOINTS = {
     UPDATE_APPLY_JOB_BY_USER: (id: string) => `/apply-job/${id}/user-update`,
   },
   SAVED_JOB: {
-    GET_SAVE_JOB: "/saved-job",
-    SAVE_JOB: (jobId: string) => `/saved-job/${jobId}`,
-    UN_SAVE_JOB: (jobId: string) => `/saved-job/${jobId}`,
+    GET_SAVE_JOB: "/saved-jobs",
+    SAVE_JOB: (jobId: string) => `/saved-jobs/${jobId}`,
+    UN_SAVE_JOB: (jobId: string) => `/saved-jobs/${jobId}`,
   },
   UPLOAD: {
     UPLOAD_FILE: "/upload",

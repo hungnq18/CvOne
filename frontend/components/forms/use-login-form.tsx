@@ -124,12 +124,17 @@ export function useLoginForm() {
         description: `Welcome back, ${formData.email}!`,
       });
 
-      if (decoded.role === "admin") {
-        window.location.href = "/admin"
+      // Lấy redirect từ URL nếu có
+      const params = new URLSearchParams(window.location.search);
+      const redirect = params.get("redirect");
+      if (redirect) {
+        window.location.href = redirect;
+      } else if (decoded.role === "admin") {
+        window.location.href = "/admin";
       } else if (decoded.role === "hr") {
-        window.location.href = "/hr/dashboard"
+        window.location.href = "/hr/dashboard";
       } else {
-        window.location.href = "/"
+        window.location.href = "/";
       }
 
     } catch (err: any) {
