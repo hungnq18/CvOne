@@ -3,8 +3,8 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { getLocalJobById, findRelatedLocalJobs, Job, saveJob } from '@/api/jobApi';
-import { Card, Tag, message, Popover, Modal, Select, Radio, Upload, Input, UploadFile } from 'antd';
-import { ArrowLeftOutlined, EnvironmentOutlined, DollarCircleOutlined, CalendarOutlined, ThunderboltOutlined, CheckCircleOutlined, ProfileOutlined, UserOutlined, MailOutlined, PhoneOutlined, FileAddOutlined, FolderOpenOutlined } from '@ant-design/icons';
+import { Card, Tag, message } from 'antd';
+import { ArrowLeftOutlined, EnvironmentOutlined, DollarCircleOutlined, CalendarOutlined, ThunderboltOutlined, CheckCircleOutlined, ProfileOutlined } from '@ant-design/icons';
 import '../../styles/job-detail-apply.css';
 import { getAllCVs, CV } from '@/api/cvapi';
 import { getCLs, CL } from '@/api/clApi';
@@ -26,29 +26,17 @@ export default function JobDetailClient({ id }: JobDetailClientProps) {
     const [split, setSplit] = useState(false);
     const splitTimeout = useRef<NodeJS.Timeout | null>(null);
     const [selectedCV, setSelectedCV] = useState<string | null>(null);
-    const [intro, setIntro] = useState('');
     const [uploading, setUploading] = useState(false);
-    const [fileList, setFileList] = useState<UploadFile<any>[]>([]);
     const [cvList, setCvList] = useState<CV[]>([]);
     const [clList, setClList] = useState<CL[]>([]);
     const [selectedCL, setSelectedCL] = useState<string | null>(null);
     const [cvUploadFile, setCvUploadFile] = useState<File | null>(null);
     const [cvListLoaded, setCvListLoaded] = useState(false);
     const [applyMode, setApplyMode] = useState<'library' | 'upload'>('library');
-    const [fullName, setFullName] = useState('');
-    const [email, setEmail] = useState('');
-    const [phone, setPhone] = useState('');
     const [formError, setFormError] = useState('');
     const [clMode, setClMode] = useState<'library' | 'upload'>('library');
     const [clUploadFile, setClUploadFile] = useState<File | null>(null);
     const [clUploadName, setClUploadName] = useState('');
-    const [showCVSelect, setShowCVSelect] = useState(false);
-    const [showCLSelect, setShowCLSelect] = useState(false);
-    // Dummy CVs for demo, replace with real data
-    const userCVs = [
-        { id: 'cv1', name: '[FU] CV Intern Java - Vuong Dai Duong' },
-        { id: 'cv2', name: 'testsssss' },
-    ];
 
     const translations = {
         vi: {
@@ -58,8 +46,8 @@ export default function JobDetailClient({ id }: JobDetailClientProps) {
             jobNotFoundDesc: 'Công việc bạn tìm kiếm không tồn tại.',
             loading: 'Đang tải chi tiết công việc...',
             apply: 'Ứng tuyển',
-            applyFast: 'Nộp nhanh',
-            applyDetail: 'Nộp chi tiết',
+            applyFast: 'Ứng tuyển ngay',
+            applyDetail: 'Tối ưu & Ứng tuyển',
             saveJob: 'Lưu việc',
             saving: 'Đang lưu...',
             jobOverview: 'Tổng quan công việc',
@@ -84,8 +72,8 @@ export default function JobDetailClient({ id }: JobDetailClientProps) {
             jobNotFoundDesc: 'The job you are looking for does not exist.',
             loading: 'Loading job details...',
             apply: 'Apply',
-            applyFast: 'Apply Fast',
-            applyDetail: 'Apply Detail',
+            applyFast: 'Apply Now',
+            applyDetail: 'Optimize & Apply',
             saveJob: 'Save job',
             saving: 'Saving...',
             jobOverview: 'Job Overview',
