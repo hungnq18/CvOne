@@ -2,10 +2,10 @@
 import ProfileProgress from '@/components/ui/CVProgress';
 import AppliedJobs from '@/components/ui/applyJob';
 import SuggestedJobs from '@/components/ui/SuggestedJobs';
-import FavoriteJobs from '@/components/ui/FavoriteJobs';
+import SaveJobsInUserDash from '@/components/ui/SaveJobsInUserDash';
 import CVList from '@/components/ui/cvList';
 import { CV } from '@/api/cvapi';
-import { ApplyJob, Job } from '@/api/jobApi';
+import { ApplyJob, Job, getAppliedJobsByUser, getSavedJobsByUser } from '@/api/jobApi';
 import db from '@/api/db.json';
 import { useEffect, useState } from 'react';
 import { getAllCVs } from '@/api/cvapi';
@@ -43,12 +43,15 @@ const allJobs: Job[] = Array.isArray((db as any).jobs)
 
 export default function Home() {
   const profileProgress = 75;
-  const appliedJobs: ApplyJob[] = db.appliedJobs;
   // Take a slice of the mapped jobs for the dashboard
   const suggestedJobs: Job[] = allJobs.slice(0, 2);
-  const favoriteJobs: Job[] = allJobs.slice(2, 4);
   const [cvList, setCvList] = useState<CV[]>([]);
   const [cvImage, setCvImage] = useState<string>('');
+  const [appliedJobs, setAppliedJobs] = useState<ApplyJob[]>([]);
+  const [appliedLoading, setAppliedLoading] = useState(true);
+  const [savedJobs, setSavedJobs] = useState<Job[]>([]);
+  const [savedLoading, setSavedLoading] = useState(true);
+
   useEffect(() => {
     async function fetchCVs() {
       try {
@@ -63,6 +66,36 @@ export default function Home() {
       }
     }
     fetchCVs();
+  }, []);
+
+  useEffect(() => {
+    async function fetchAppliedJobs() {
+      setAppliedLoading(true);
+      try {
+        const res = await getAppliedJobsByUser(1, 5); // Fetch first 5 applied jobs for dashboard
+        setAppliedJobs(res.data || []);
+      } catch (err) {
+        setAppliedJobs([]);
+      } finally {
+        setAppliedLoading(false);
+      }
+    }
+    fetchAppliedJobs();
+  }, []);
+
+  useEffect(() => {
+    async function fetchSavedJobs() {
+      setSavedLoading(true);
+      try {
+        const res = await getSavedJobsByUser(1, 5);
+        setSavedJobs((res.data || []).map((item: any) => (typeof item.jobId === 'object' ? item.jobId : null)).filter(Boolean));
+      } catch (err) {
+        setSavedJobs([]);
+      } finally {
+        setSavedLoading(false);
+      }
+    }
+    fetchSavedJobs();
   }, []);
 
   // Sort cvList by createdAt descending to get the latest CV
@@ -86,13 +119,13 @@ export default function Home() {
           {/* Cột bên phải: Các section khác */}
           <div className="lg:col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div className="sm:col-span-2">
-              <AppliedJobs jobs={appliedJobs} />
+              <AppliedJobs jobs={appliedLoading ? [] : (appliedJobs as any)} />
             </div>
             <div className="sm:col-span-2">
               <SuggestedJobs jobs={suggestedJobs} />
             </div>
             <div className="sm:col-span-2">
-              <FavoriteJobs jobs={favoriteJobs} />
+              <SaveJobsInUserDash jobs={savedLoading ? [] : savedJobs} />
             </div>
             <div className="sm:col-span-2">
               <CVList cvList={cvList} />

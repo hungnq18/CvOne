@@ -113,8 +113,8 @@ export default function MyJobsClient() {
                         <JobTabs
                             activeTab={activeTab}
                             onTabChange={onTabChange}
-                            savedJobs={savedJobs}
-                            appliedJobs={appliedJobs}
+                            savedJobs={[]}
+                            appliedJobs={[]}
                             translations={translations}
                         />
                         <div className="flex items-center space-x-4">

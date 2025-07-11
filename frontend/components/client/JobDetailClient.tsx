@@ -8,9 +8,8 @@ import { ArrowLeftOutlined, EnvironmentOutlined, DollarCircleOutlined, CalendarO
 import '../../styles/job-detail-apply.css';
 import { getAllCVs, CV } from '@/api/cvapi';
 import { getCLs, CL } from '@/api/clApi';
-import { UploadPDFInput } from '@/components/sections/pageUploadCV-section';
-import { UiverseFileUpload } from '@/components/ui/UiverseFileUpload';
-import { CustomRadioGroup } from '@/components/ui/CustomRadioGroup';
+import FastApplyModal from '@/components/modals/FastApplyModal';
+import { useLanguage } from '@/providers/global-provider';
 
 interface JobDetailClientProps {
     id: string;
@@ -51,24 +50,78 @@ export default function JobDetailClient({ id }: JobDetailClientProps) {
         { id: 'cv2', name: 'testsssss' },
     ];
 
+    const translations = {
+        vi: {
+            backToJobs: 'Quay lại danh sách việc',
+            backToAllJobs: 'Quay lại tất cả việc',
+            jobNotFound: 'Không tìm thấy công việc',
+            jobNotFoundDesc: 'Công việc bạn tìm kiếm không tồn tại.',
+            loading: 'Đang tải chi tiết công việc...',
+            apply: 'Ứng tuyển',
+            applyFast: 'Nộp nhanh',
+            applyDetail: 'Nộp chi tiết',
+            saveJob: 'Lưu việc',
+            saving: 'Đang lưu...',
+            jobOverview: 'Tổng quan công việc',
+            salary: 'Lương',
+            location: 'Địa điểm',
+            jobType: 'Loại việc',
+            jobDescription: 'Mô tả công việc',
+            responsibilities: 'Trách nhiệm',
+            qualifications: 'Yêu cầu & Kỹ năng',
+            qualificationsLabel: 'Yêu cầu:',
+            experience: 'Kinh nghiệm:',
+            skills: 'Kỹ năng:',
+            benefits: 'Phúc lợi',
+            relatedJobs: 'Việc liên quan',
+            status: 'Trạng thái:',
+            submittedOn: 'Ngày nộp:',
+        },
+        en: {
+            backToJobs: 'Back to Jobs',
+            backToAllJobs: 'Back to All Jobs',
+            jobNotFound: 'Job Not Found',
+            jobNotFoundDesc: 'The job you are looking for does not exist.',
+            loading: 'Loading job details...',
+            apply: 'Apply',
+            applyFast: 'Apply Fast',
+            applyDetail: 'Apply Detail',
+            saveJob: 'Save job',
+            saving: 'Saving...',
+            jobOverview: 'Job Overview',
+            salary: 'Salary',
+            location: 'Location',
+            jobType: 'Job Type',
+            jobDescription: 'Job Description',
+            responsibilities: 'Responsibilities',
+            qualifications: 'Qualifications & Skills',
+            qualificationsLabel: 'Qualifications:',
+            experience: 'Experience:',
+            skills: 'Skills:',
+            benefits: 'Benefits',
+            relatedJobs: 'Related Jobs',
+            status: 'Status:',
+            submittedOn: 'Submitted on:',
+        }
+    };
+    const { language } = useLanguage ? useLanguage() : { language: 'en' };
+    const lang: 'vi' | 'en' = language === 'vi' ? 'vi' : 'en';
+    const t = translations[lang];
+
     useEffect(() => {
         const fetchJobData = async () => {
             try {
                 setLoading(true);
                 const jobData = await getLocalJobById(id);
-
                 if (!jobData) {
                     setError('Job not found');
                     return;
                 }
-
                 setJob(jobData);
-
                 // Fetch related jobs
                 const related = await findRelatedLocalJobs(jobData, 3);
                 setRelatedJobs(related);
             } catch (err) {
-                console.error('Error fetching job:', err);
                 setError('Failed to load job details');
             } finally {
                 setLoading(false);
@@ -147,7 +200,7 @@ export default function JobDetailClient({ id }: JobDetailClientProps) {
             <div className="min-h-screen flex items-center justify-center bg-[#e0f2fe]">
                 <div className="text-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#e0f2fe] mx-auto"></div>
-                    <p className="mt-4 text-blue-500">Loading job details...</p>
+                    <p className="mt-4 text-blue-500">{t.loading}</p>
                 </div>
             </div>
         );
@@ -156,10 +209,10 @@ export default function JobDetailClient({ id }: JobDetailClientProps) {
     if (error || !job) {
         return (
             <div className="container mx-auto p-8 text-center bg-[#e0f2fe] min-h-screen">
-                <h1 className="text-2xl font-bold text-blue-500">Job Not Found</h1>
-                <p className="text-blue-400 mt-2">The job you are looking for does not exist.</p>
+                <h1 className="text-2xl font-bold text-blue-500">{t.jobNotFound}</h1>
+                <p className="text-blue-400 mt-2">{t.jobNotFoundDesc}</p>
                 <Link href="/jobPage" className="text-blue-500 hover:underline mt-6 inline-block">
-                    <ArrowLeftOutlined /> Back to Jobs
+                    <ArrowLeftOutlined /> {t.backToJobs}
                 </Link>
             </div>
         );
@@ -169,7 +222,7 @@ export default function JobDetailClient({ id }: JobDetailClientProps) {
         <div className="min-h-screen ">
             <div className="container mx-auto p-4 sm:p-6 lg:p-8">
                 <Link href="/jobPage" className="text-blue-500 hover:text-blue-700 mb-6 inline-flex items-center gap-2">
-                    <ArrowLeftOutlined /> Back to All Jobs
+                    <ArrowLeftOutlined /> {t.backToAllJobs}
                 </Link>
 
                 <div className="bg-blue-500 rounded-t-xl p-6 sm:p-8 mb-4 shadow-md">
@@ -188,22 +241,22 @@ export default function JobDetailClient({ id }: JobDetailClientProps) {
                     {/* Main column */}
                     <div className="lg:col-span-2 bg-white p-6 sm:p-8 rounded-xl shadow-xl">
                         <div className="mt-0 border-l-4 border-blue-500 p-4 mb-6 rounded-md bg-white">
-                            <h2 className="text-xl font-semibold text-blue-700 mb-2 flex items-center gap-2"><ProfileOutlined /> Job Description</h2>
+                            <h2 className="text-xl font-semibold text-blue-700 mb-2 flex items-center gap-2"><ProfileOutlined /> {t.jobDescription}</h2>
                             <p className="text-gray-700 whitespace-pre-line text-sm">{job.description}</p>
                         </div>
 
                         <div className="border-l-4 border-blue-500 p-4 mb-6 rounded-md bg-white">
-                            <h2 className="text-xl font-semibold text-blue-600 mb-2 flex items-center gap-2"><ThunderboltOutlined /> Responsibilities</h2>
+                            <h2 className="text-xl font-semibold text-blue-600 mb-2 flex items-center gap-2"><ThunderboltOutlined /> {t.responsibilities}</h2>
                             <p className="text-gray-700 whitespace-pre-line text-sm">{job.responsibilities}</p>
                         </div>
 
                         <div className="border-l-4 border-blue-500 p-4 rounded-md bg-white">
-                            <h2 className="text-xl font-semibold text-blue-700 mb-2 flex items-center gap-2"><CheckCircleOutlined /> Qualifications & Skills</h2>
+                            <h2 className="text-xl font-semibold text-blue-700 mb-2 flex items-center gap-2"><CheckCircleOutlined /> {t.qualifications}</h2>
                             <div className="space-y-4">
-                                <p className="text-gray-700 text-sm"><strong className="font-medium">Qualifications:</strong> {job.qualifications}</p>
-                                <p className="text-gray-700 text-sm"><strong className="font-medium">Experience:</strong> {job.experience}</p>
+                                <p className="text-gray-700 text-sm"><strong className="font-medium">{t.qualificationsLabel}</strong> {job.qualifications}</p>
+                                <p className="text-gray-700 text-sm"><strong className="font-medium">{t.experience}</strong> {job.experience}</p>
                                 <div>
-                                    <strong className="font-medium">Skills:</strong>
+                                    <strong className="font-medium">{t.skills}</strong>
                                     <div className="flex flex-wrap gap-2 mt-2">
                                         {job.skills.split(',').map((skill, index) => <Tag key={index} className="bg-blue-100 text-blue-700 border border-blue-200">{skill.trim()}</Tag>)}
                                     </div>
@@ -214,26 +267,26 @@ export default function JobDetailClient({ id }: JobDetailClientProps) {
                     {/* Sidebar */}
                     <div className="lg:col-span-1">
                         <div className="sticky top-24 space-y-6">
-                            <Card title={<span className="text-blue-700 font-semibold">Job Overview</span>} className="border-blue-200">
+                            <Card title={<span className="text-blue-700 font-semibold">{t.jobOverview}</span>} className="border-blue-200">
                                 <div className="space-y-4">
                                     <div className="flex items-start gap-3">
                                         <DollarCircleOutlined className="text-xl text-green-500 mt-1" />
                                         <div>
-                                            <p className="font-semibold">Salary</p>
+                                            <p className="font-semibold">{t.salary}</p>
                                             <p className="text-gray-700">{job.salaryRange}</p>
                                         </div>
                                     </div>
                                     <div className="flex items-start gap-3">
                                         <EnvironmentOutlined className="text-xl text-blue-500 mt-1" />
                                         <div>
-                                            <p className="font-semibold">Location</p>
+                                            <p className="font-semibold">{t.location}</p>
                                             <p className="text-gray-700">{job.location}, {job.country}</p>
                                         </div>
                                     </div>
                                     <div className="flex items-start gap-3">
                                         <CalendarOutlined className="text-xl text-blue-300 mt-1" />
                                         <div>
-                                            <p className="font-semibold">Job Type</p>
+                                            <p className="font-semibold">{t.jobType}</p>
                                             <p className="text-gray-700">{job.workType}</p>
                                         </div>
                                     </div>
@@ -267,7 +320,7 @@ export default function JobDetailClient({ id }: JobDetailClientProps) {
                                                 window.location.href = `/user/applyOption?jobId=${job._id}`;
                                             }}
                                         >
-                                            Apply
+                                            {t.apply}
                                         </button>
                                     )}
                                     {split && (
@@ -276,7 +329,7 @@ export default function JobDetailClient({ id }: JobDetailClientProps) {
                                                 className="apply-split-btn bg-indigo-600 text-white shadow-lg hover:bg-indigo-700 transition-all duration-200 font-semibold px-6 py-2 rounded-l-2xl text-center cursor-pointer w-full h-[44px]"
                                                 onClick={handleApplyFast}
                                             >
-                                                Apply Fast
+                                                {t.applyFast}
                                             </button>
                                             <button
                                                 className="apply-split-btn bg-indigo-600 text-white shadow-lg hover:bg-indigo-700 transition-all duration-200 font-semibold px-6 py-2 rounded-r-2xl text-center cursor-pointer w-full h-[44px]"
@@ -292,7 +345,7 @@ export default function JobDetailClient({ id }: JobDetailClientProps) {
                                                     window.location.href = `/user/applyOption?jobId=${job._id}`;
                                                 }}
                                             >
-                                                Apply Detail
+                                                {t.applyDetail}
                                             </button>
                                         </>
                                     )}
@@ -302,206 +355,59 @@ export default function JobDetailClient({ id }: JobDetailClientProps) {
                                     onClick={handleSaveJob}
                                     disabled={saving}
                                 >
-                                    {saving ? 'Saving...' : 'Save job'}
+                                    {saving ? t.saving : t.saveJob}
                                 </button>
-                                <Modal
+                                <FastApplyModal
                                     open={showFastModal}
-                                    onCancel={() => setShowFastModal(false)}
-                                    footer={null}
-                                    title={null}
-                                    width={700}
-                                    bodyStyle={{ padding: 0, borderRadius: 16, background: '#fff' }}
-                                >
-                                    <div style={{ borderRadius: 16, overflow: 'hidden', background: '#fff' }}>
-                                        <div className="p-6 pt-4">
-                                            <div className="font-bold text-lg mb-4 flex items-center text-green-700">
-                                                <FolderOpenOutlined className="mr-2 text-xl" />
-                                                Chọn CV để ứng tuyển
-                                            </div>
-                                            <div className="mb-8 p-5 rounded-2xl border border-blue-200 bg-white shadow-md hover:border-blue-400 transition">
-                                                <div className="font-bold text-blue-700 text-xl mb-3 flex items-center gap-2">
-                                                    <FolderOpenOutlined className="text-2xl" />
-                                                    Chọn CV để ứng tuyển
-                                                </div>
-                                                <CustomRadioGroup
-                                                    value={applyMode}
-                                                    onChange={val => setApplyMode(val as 'library' | 'upload')}
-                                                    name="cv-mode"
-                                                    options={[
-                                                        { label: 'Chọn CV trong thư viện của tôi', value: 'library' },
-                                                        { label: 'Tải lên CV từ máy tính', value: 'upload' },
-                                                    ]}
-                                                />
-                                                {applyMode === 'library' && (
-                                                    <div className="mt-3">
-                                                        {cvList.length === 0 ? (
-                                                            <span className="text-gray-500 text-sm">Bạn chưa có CV nào.</span>
-                                                        ) : (
-                                                            <>
-                                                                <div className="font-bold text-blue-700 mb-2">Danh sách CV của bạn</div>
-                                                                <div className={cvList.length > 5 ? 'max-h-80 overflow-y-auto pr-1 space-y-2' : 'space-y-2'}>
-                                                                    {cvList.map((cv, idx) => (
-                                                                        <div key={cv._id || String(idx)} className={`flex items-center justify-between p-3 rounded-lg border ${selectedCV === cv._id ? 'border-blue-700 bg-blue-100' : 'border-gray-200 bg-white'} transition-all`}>
-                                                                            <div className="flex items-center gap-2">
-                                                                                <svg className="w-5 h-5 text-blue-700" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 17v-2a2 2 0 012-2h2a2 2 0 012 2v2m-6 4h6a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                                                                                <span className="text-base font-bold text-gray-900">{cv.title || 'CV chưa đặt tên'}</span>
-                                                                            </div>
-                                                                            <div className="flex gap-2 items-center">
-                                                                                <span className="text-xs text-gray-500">{cv.updatedAt ? new Date(cv.updatedAt).toLocaleDateString() : '-'}</span>
-                                                                                <button
-                                                                                    className={`px-3 py-1 rounded ${selectedCV === cv._id ? 'bg-blue-700 text-white' : 'bg-gray-100 text-blue-700 hover:bg-blue-200'} font-medium text-sm transition`}
-                                                                                    onClick={() => setSelectedCV((cv._id || '') as string)}
-                                                                                    disabled={selectedCV === cv._id}
-                                                                                >
-                                                                                    {selectedCV === cv._id ? 'Đang chọn' : 'Chọn'}
-                                                                                </button>
-                                                                                <a
-                                                                                    href="/myDocuments"
-                                                                                    target="_blank"
-                                                                                    rel="noopener noreferrer"
-                                                                                    className="px-3 py-1 rounded bg-blue-100 text-blue-700 hover:bg-blue-200 font-medium text-sm transition"
-                                                                                >
-                                                                                    Xem chi tiết
-                                                                                </a>
-                                                                            </div>
-                                                                        </div>
-                                                                    ))}
-                                                                </div>
-                                                            </>
-                                                        )}
-                                                    </div>
-                                                )}
-                                                {applyMode === 'upload' && (
-                                                    <div className="mt-3">
-                                                        <UiverseFileUpload
-                                                            onFileChange={file => {
-                                                                setCvUploadFile(file);
-                                                                setSelectedCV('upload');
-                                                            }}
-                                                            accept=".pdf,.doc,.docx"
-                                                            disabled={uploading}
-                                                            fileName={cvUploadFile?.name}
-                                                        />
-                                                    </div>
-                                                )}
-                                            </div>
-                                            <div className="mb-8 p-5 rounded-2xl border border-blue-200 bg-white shadow-md hover:border-blue-400 transition">
-                                                <div className="font-bold text-blue-700 text-xl mb-3 flex items-center gap-2">
-                                                    <FolderOpenOutlined className="text-2xl" />
-                                                    Chọn thư ngỏ (Cover Letter)
-                                                </div>
-                                                <CustomRadioGroup
-                                                    value={clMode}
-                                                    onChange={val => setClMode(val as 'library' | 'upload')}
-                                                    name="cl-mode"
-                                                    options={[
-                                                        { label: 'Chọn thư ngỏ trong thư viện', value: 'library' },
-                                                        { label: 'Tải lên thư ngỏ từ máy tính', value: 'upload' },
-                                                    ]}
-                                                />
-                                                {clMode === 'library' && (
-                                                    <div className="mt-3">
-                                                        {clList.length === 0 ? (
-                                                            <span className="text-gray-500 text-sm">Bạn chưa có thư ngỏ nào.</span>
-                                                        ) : (
-                                                            <>
-                                                                <div className="font-bold text-blue-700 mb-2">Danh sách thư ngỏ của bạn</div>
-                                                                <div className={clList.length > 5 ? 'max-h-80 overflow-y-auto pr-1 space-y-2' : 'space-y-2'}>
-                                                                    {clList.map((cl, idx) => (
-                                                                        <div key={cl._id || String(idx)} className={`flex items-center justify-between p-3 rounded-lg border ${selectedCL === cl._id ? 'border-blue-700 bg-blue-100' : 'border-gray-200 bg-white'} transition-all`}>
-                                                                            <div className="flex items-center gap-2">
-                                                                                <svg className="w-5 h-5 text-blue-700" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M16 7a2 2 0 012 2v6a2 2 0 01-2 2H8a2 2 0 01-2-2V9a2 2 0 012-2h8zm0 0V5a2 2 0 00-2-2H10a2 2 0 00-2 2v2" /></svg>
-                                                                                <span className="text-base font-bold text-gray-900">{cl.title || 'Thư ngỏ chưa đặt tên'}</span>
-                                                                            </div>
-                                                                            <div className="flex gap-2 items-center">
-                                                                                <span className="text-xs text-gray-500">{cl.updatedAt ? new Date(cl.updatedAt).toLocaleDateString() : '-'}</span>
-                                                                                <button
-                                                                                    className={`px-3 py-1 rounded ${selectedCL === cl._id ? 'bg-blue-700 text-white' : 'bg-gray-100 text-blue-700 hover:bg-blue-200'} font-medium text-sm transition`}
-                                                                                    onClick={() => setSelectedCL((cl._id || '') as string)}
-                                                                                    disabled={selectedCL === cl._id}
-                                                                                >
-                                                                                    {selectedCL === cl._id ? 'Đang chọn' : 'Chọn'}
-                                                                                </button>
-                                                                                <a
-                                                                                    href="/myDocuments"
-                                                                                    target="_blank"
-                                                                                    rel="noopener noreferrer"
-                                                                                    className="px-3 py-1 rounded bg-blue-100 text-blue-700 hover:bg-blue-200 font-medium text-sm transition"
-                                                                                >
-                                                                                    Xem chi tiết
-                                                                                </a>
-                                                                            </div>
-                                                                        </div>
-                                                                    ))}
-                                                                </div>
-                                                            </>
-                                                        )}
-                                                    </div>
-                                                )}
-                                                {clMode === 'upload' && (
-                                                    <div className="mt-3">
-                                                        <UiverseFileUpload
-                                                            onFileChange={file => setClUploadFile(file)}
-                                                            accept=".pdf,.doc,.docx"
-                                                            disabled={uploading}
-                                                            fileName={clUploadFile?.name}
-                                                        />
-                                                        <Input
-                                                            className="mt-2"
-                                                            placeholder="Nhập tên thư ngỏ"
-                                                            value={clUploadName}
-                                                            onChange={e => setClUploadName(e.target.value)}
-                                                        />
-                                                        <span className="text-xs text-gray-500 mt-1 block">Hỗ trợ .doc, .docx, .pdf, dưới 5MB</span>
-                                                    </div>
-                                                )}
-                                            </div>
-                                            <div className="flex justify-end gap-3 mt-6">
-                                                <button
-                                                    className="px-5 py-2 rounded-lg border border-gray-200 bg-white text-black font-semibold hover:bg-gray-50"
-                                                    onClick={() => setShowFastModal(false)}
-                                                >
-                                                    Hủy
-                                                </button>
-                                                <button
-                                                    className="px-5 py-2 rounded-lg bg-green-400 text-white font-semibold hover:bg-green-500 shadow"
-                                                    onClick={() => {
-                                                        if (clMode === 'library') {
-                                                            if (!selectedCL) {
-                                                                setFormError('cl');
-                                                                return;
-                                                            }
-                                                        } else {
-                                                            if (!clUploadFile || !clUploadName) {
-                                                                setFormError('cl');
-                                                                return;
-                                                            }
-                                                        }
-                                                        if (applyMode === 'upload') {
-                                                            if (!fullName || !email || !phone) {
-                                                                setFormError('Vui lòng nhập đầy đủ thông tin bắt buộc.');
-                                                                return;
-                                                            }
-                                                            setFormError('');
-                                                            // handle submit upload
-                                                        } else {
-                                                            if (!selectedCV) {
-                                                                setFormError('Vui lòng chọn một CV.');
-                                                                return;
-                                                            }
-                                                            setFormError('');
-                                                            // handle submit library
-                                                        }
-                                                    }}
-                                                >
-                                                    Nộp hồ sơ ứng tuyển
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </Modal>
+                                    onClose={() => setShowFastModal(false)}
+                                    cvList={cvList}
+                                    clList={clList}
+                                    selectedCV={selectedCV}
+                                    setSelectedCV={setSelectedCV}
+                                    selectedCL={selectedCL}
+                                    setSelectedCL={setSelectedCL}
+                                    applyMode={applyMode}
+                                    setApplyMode={setApplyMode}
+                                    clMode={clMode}
+                                    setClMode={setClMode}
+                                    cvUploadFile={cvUploadFile}
+                                    setCvUploadFile={setCvUploadFile}
+                                    clUploadFile={clUploadFile}
+                                    setClUploadFile={setClUploadFile}
+                                    clUploadName={clUploadName}
+                                    setClUploadName={setClUploadName}
+                                    uploading={uploading}
+                                    formError={formError}
+                                    setFormError={setFormError}
+                                    onSubmit={async () => {
+                                        if (applyMode === 'library') {
+                                            if (!selectedCV) {
+                                                setFormError('Vui lòng chọn một CV.');
+                                                return;
+                                            }
+                                            // Có thể cho phép không có cover letter
+                                            setFormError('');
+                                            try {
+                                                // Gọi API tạo apply job
+                                                const { createApplyJob } = await import('@/api/apiApplyJob');
+                                                await createApplyJob({
+                                                    jobId: job?._id,
+                                                    cvId: selectedCV,
+                                                    coverletterId: selectedCL || undefined,
+                                                });
+                                                setShowFastModal(false);
+                                                message.success('Nộp đơn thành công!');
+                                            } catch (err: any) {
+                                                setFormError('Có lỗi xảy ra khi nộp đơn. Vui lòng thử lại.');
+                                            }
+                                        } else {
+                                            // Xử lý upload nếu cần
+                                            setFormError('Chức năng tải lên chưa được hỗ trợ.');
+                                        }
+                                    }}
+                                />
                             </div>
-                            <Card title={<span className="text-blue-600 font-semibold">Benefits</span>} className="border-blue-200">
+                            <Card title={<span className="text-blue-600 font-semibold">{t.benefits}</span>} className="border-blue-200">
                                 <ul className="list-disc list-inside space-y-1 text-gray-700">
                                     {job.benefits.map((benefit, index) => <li key={index}>{benefit}</li>)}
                                 </ul>
@@ -512,7 +418,7 @@ export default function JobDetailClient({ id }: JobDetailClientProps) {
                 {/* Related Jobs Section */}
                 {relatedJobs.length > 0 && (
                     <div className="mt-12">
-                        <h2 className="text-2xl font-bold text-blue-700 mb-6">Related Jobs</h2>
+                        <h2 className="text-2xl font-bold text-blue-700 mb-6">{t.relatedJobs}</h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {relatedJobs.map(relatedJob => (
                                 <Link href={`/jobPage/${relatedJob._id}`} key={relatedJob._id}>
