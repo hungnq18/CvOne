@@ -30,6 +30,13 @@ import { getApplyJobByHR } from '@/api/apiApplyJob';
 import CandidateDetailsDialog from '@/components/hr/CandidateDetailsDialog';
 import JobInfoDialog from '@/components/hr/JobInfoDialog';
 import StatusRadioTabs from '../../../components/hr/RadioTabsInManageApply';
+import { Modal } from 'antd';
+import { templateComponentMap } from '@/components/cvTemplate/index';
+import { getCVTemplates, CVTemplate } from '@/api/cvapi';
+import { getCLTemplates, CLTemplate } from '@/api/clApi';
+import { templates as clTemplateComponentMap, TemplateType } from '@/app/createCLTemplate/templates';
+import { updateStatusByHr } from '@/api/apiApplyJob';
+import React from 'react';
 
 // Định nghĩa interface cho Job (từ manageJob page)
 interface Job {
@@ -143,259 +150,6 @@ interface ApplyJob {
     submit_at: string;
 }
 
-// Dữ liệu fix cứng cho Jobs
-const mockJobs: Job[] = [
-    {
-        _id: "68559556c366e4dd961cc7e3",
-        "Job Title": "Digital Marketing Specialist",
-        Role: "Social Media Manager",
-        Experience: "5 to 15 Years",
-        Qualifications: "M.Tech",
-        "Salary Range": "$59K-$99K",
-        location: "Douglas",
-        Country: "Isle of Man",
-        "Work Type": "Intern",
-        "Job Posting Date": "4/24/2022",
-        "Job Description": "Social Media Managers oversee an organizations social media presence...",
-        Benefits: "Flexible Spending Accounts (FSAs), Relocation Assistance...",
-        skills: "Social media platforms (e.g., Facebook, Twitter, Instagram)...",
-        Responsibilities: "Manage and grow social media accounts...",
-        user_id: "68552606392287395a95a3db",
-        status: "Active",
-        applications: 15
-    },
-    {
-        _id: "68559556c366e4dd961cc7e4",
-        "Job Title": "Frontend Developer",
-        Role: "React Developer",
-        Experience: "3 to 8 Years",
-        Qualifications: "B.Tech",
-        "Salary Range": "$45K-$75K",
-        location: "Ho Chi Minh City",
-        Country: "Vietnam",
-        "Work Type": "Full-time",
-        "Job Posting Date": "1/15/2024",
-        "Job Description": "We are looking for a skilled Frontend Developer...",
-        Benefits: "Health Insurance, Remote Work, Flexible Hours...",
-        skills: "React, TypeScript, JavaScript, HTML, CSS, Git...",
-        Responsibilities: "Develop and maintain user-facing features...",
-        user_id: "68552606392287395a95a3dc",
-        status: "Active",
-        applications: 8
-    },
-    {
-        _id: "68559556c366e4dd961cc7e5",
-        "Job Title": "Backend Developer",
-        Role: "Node.js Developer",
-        Experience: "4 to 10 Years",
-        Qualifications: "M.Tech",
-        "Salary Range": "$55K-$85K",
-        location: "Ha Noi",
-        Country: "Vietnam",
-        "Work Type": "Full-time",
-        "Job Posting Date": "1/10/2024",
-        "Job Description": "Experienced Backend Developer needed for our growing platform...",
-        Benefits: "Competitive Salary, Health Benefits, Learning Budget...",
-        skills: "Node.js, Express, MongoDB, PostgreSQL, Docker, AWS...",
-        Responsibilities: "Design and implement server-side logic...",
-        user_id: "68552606392287395a95a3dd",
-        status: "Active",
-        applications: 12
-    }
-];
-
-// Dữ liệu fix cứng cho CVs
-const mockCVs: CV[] = [
-    {
-        _id: "665e920845c2e8c9a4a33333",
-        userId: "68552606392287395a95a3db",
-        title: "Software Developer CV",
-        content: {
-            userData: {
-                firstName: "Nguyen",
-                lastName: "Van A",
-                professional: "Software Developer",
-                city: "Hanoi",
-                country: "Vietnam",
-                province: "Hanoi",
-                phone: "+84 912 345 678",
-                email: "vana@example.com",
-                avatar: "https://studiochupanhdep.com/Upload/Images/Album/anh-cv-02.jpg",
-                summary: "A passionate developer with 5 years of experience in full-stack development.",
-                skills: [
-                    { name: "JavaScript", rating: 5 },
-                    { name: "React", rating: 4 },
-                    { name: "Node.js", rating: 4 }
-                ],
-                workHistory: [
-                    {
-                        title: "Frontend Developer",
-                        company: "ABC Corp",
-                        startDate: "2020-01-01",
-                        endDate: "2022-06-01",
-                        description: "Worked on UI/UX and SPA using React."
-                    }
-                ],
-                education: [
-                    {
-                        startDate: "2016-09-01",
-                        endDate: "2020-06-30",
-                        major: "Computer Science",
-                        degree: "Bachelor",
-                        institution: "FPT University"
-                    }
-                ]
-            }
-        },
-        isPublic: true,
-        createdAt: "2025-06-06T10:00:00Z",
-        updatedAt: "2025-06-06T10:30:00Z",
-        templateId: "modern-1",
-        isSaved: true,
-        isFinalized: true
-    },
-    {
-        _id: "665e920845c2e8c9a4a33334",
-        userId: "2",
-        title: "Backend Developer CV",
-        content: {
-            userData: {
-                firstName: "Tran",
-                lastName: "Thi B",
-                professional: "Backend Developer",
-                city: "Ho Chi Minh City",
-                country: "Vietnam",
-                province: "Ho Chi Minh",
-                phone: "+84 987 654 321",
-                email: "thib@example.com",
-                avatar: "/placeholder-user.jpg",
-                summary: "Experienced backend developer with expertise in Node.js and databases.",
-                skills: [
-                    { name: "Node.js", rating: 5 },
-                    { name: "MongoDB", rating: 4 },
-                    { name: "Express", rating: 4 }
-                ],
-                workHistory: [
-                    {
-                        title: "Backend Developer",
-                        company: "DataSoft",
-                        startDate: "2019-03-01",
-                        endDate: "2023-12-01",
-                        description: "Developed REST APIs and microservices."
-                    }
-                ],
-                education: [
-                    {
-                        startDate: "2015-09-01",
-                        endDate: "2019-06-30",
-                        major: "Software Engineering",
-                        degree: "Master",
-                        institution: "HCMUT"
-                    }
-                ]
-            }
-        },
-        isPublic: true,
-        createdAt: "2025-06-07T10:00:00Z",
-        updatedAt: "2025-06-07T10:30:00Z",
-        templateId: "modern-1",
-        isSaved: true,
-        isFinalized: true
-    }
-];
-
-// Dữ liệu fix cứng cho CoverLetters
-const mockCoverLetters: CoverLetter[] = [
-    {
-        _id: "665e921c45c2e8c9a4a44444",
-        userId: "68552606392287395a95a3db",
-        templateId: "68537ef398cb1d0aae6dae5f",
-        title: "Frontend Developer Cover Letter",
-        data: {
-            firstName: "Nguyen",
-            lastName: "Van A",
-            profession: "Frontend Developer",
-            city: "Hanoi",
-            state: "Hanoi",
-            phone: "+84 912 345 678",
-            email: "vana@example.com",
-            date: "June 12, 2025",
-            recipientFirstName: "Katherine",
-            recipientLastName: "Bloomstein",
-            companyName: "TechCorp",
-            recipientCity: "Ho Chi Minh City",
-            recipientState: "Vietnam",
-            recipientPhone: "123-456-7890",
-            recipientEmail: "hr@techcorp.com",
-            subject: "RE: Frontend Developer Position",
-            greeting: "Dear Ms. Bloomstein,",
-            opening: "I am writing to express my interest in the Frontend Developer position at TechCorp.",
-            body: "With 5 years of experience in React and modern web development, I am excited about the opportunity to contribute to your team.",
-            callToAction: "Thank you for considering my application.",
-            closing: "Sincerely,",
-            signature: "Nguyen Van A"
-        },
-        isSaved: true,
-        createdAt: "2025-06-19T14:31:17.426Z",
-        updatedAt: "2025-06-19T15:42:28.351Z"
-    },
-    {
-        _id: "665e921c45c2e8c9a4a44445",
-        userId: "68513189121f75f7bba16f8a",
-        templateId: "68537ef398cb1d0aae6dae5f",
-        title: "Backend Developer Cover Letter",
-        data: {
-            firstName: "Tran",
-            lastName: "Thi B",
-            profession: "Backend Developer",
-            city: "Ho Chi Minh City",
-            state: "Ho Chi Minh",
-            phone: "+84 987 654 321",
-            email: "thib@example.com",
-            date: "June 13, 2025",
-            recipientFirstName: "John",
-            recipientLastName: "Smith",
-            companyName: "DataSoft",
-            recipientCity: "Ho Chi Minh City",
-            recipientState: "Vietnam",
-            recipientPhone: "098-765-4321",
-            recipientEmail: "hr@datasoft.com",
-            subject: "RE: Backend Developer Position",
-            greeting: "Dear Mr. Smith,",
-            opening: "I am writing to express my interest in the Backend Developer position at DataSoft.",
-            body: "With extensive experience in Node.js and database design, I am excited about the opportunity to contribute to your team.",
-            callToAction: "Thank you for considering my application.",
-            closing: "Sincerely,",
-            signature: "Tran Thi B"
-        },
-        isSaved: true,
-        createdAt: "2025-06-19T14:31:17.426Z",
-        updatedAt: "2025-06-19T15:42:28.351Z"
-    }
-];
-
-// Dữ liệu fix cứng cho applications
-const mockApplyJobs: ApplyJob[] = [
-    {
-        _id: "6855a0dbc366e4dd961cc7eb",
-        job_id: "68559556c366e4dd961cc7e4", // Frontend Developer
-        user_id: "68552606392287395a95a3db",
-        cv_id: "665e920845c2e8c9a4a33333",
-        coverletter_id: "665e921c45c2e8c9a4a44444",
-        status: "pending",
-        submit_at: "2025-06-20T14:00:00.000Z"
-    },
-    {
-        _id: "6855a0dbc366e4dd961cc7ec",
-        job_id: "68559556c366e4dd961cc7e5", // Backend Developer
-        user_id: "2",
-        cv_id: "665e920845c2e8c9a4a33334",
-        coverletter_id: "665e921c45c2e8c9a4a44445",
-        status: "reviewed",
-        submit_at: "2025-06-18T10:00:00.000Z"
-    },
-]
-
 // Định nghĩa interface cho Application (kết hợp CV và Cover Letter)
 interface HydratedApplication {
     applyJob: ApplyJob,
@@ -404,6 +158,108 @@ interface HydratedApplication {
     coverLetter: CoverLetter
 }
 
+// Mini preview CV component
+const CVPreviewMini = ({ templateId, userData }: { templateId: string, userData: any }) => {
+    const [templates, setTemplates] = useState<CVTemplate[]>([]);
+    useEffect(() => { getCVTemplates().then(setTemplates); }, []);
+    if (!templateId || !userData) return null;
+    const template = templates.find(t => t._id === templateId);
+    const TemplateComponent = templateComponentMap?.[template?.title || ''];
+    if (!TemplateComponent) return <div>Không tìm thấy template CV</div>;
+    const containerWidth = 600;
+    const templateOriginalWidth = 794;
+    const scaleFactor = containerWidth / templateOriginalWidth;
+    const componentData = { ...template?.data, userData };
+    return (
+        <div className="flex justify-center">
+            <div
+                className="relative"
+                style={{
+                    width: '600px',
+                    height: '780px',
+                    background: 'white',
+                    userSelect: 'none',
+                    pointerEvents: 'none',
+                    overflow: 'hidden',
+                }}
+            >
+                <div
+                    style={{
+                        width: `${templateOriginalWidth}px`,
+                        height: `${templateOriginalWidth * (297 / 210)}px`,
+                        transform: `scale(${scaleFactor})`,
+                        transformOrigin: 'top left',
+                        background: 'white',
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        pointerEvents: 'none',
+                        userSelect: 'none',
+                    }}
+                >
+                    <TemplateComponent data={componentData} />
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// Component preview template CV giống CVProgress
+const CVTemplatePreview = ({ templateId, userData }: { templateId: string, userData: any }) => {
+    const [templates, setTemplates] = React.useState<CVTemplate[]>([]);
+    React.useEffect(() => {
+        getCVTemplates().then(setTemplates);
+    }, []);
+    const template = templates.find(t => t._id === templateId);
+    const TemplateComponent = templateComponentMap?.[template?.title || ''];
+    if (!TemplateComponent) return <div style={{ textAlign: 'center', color: '#888', padding: 40 }}>Không tìm thấy template CV.</div>;
+    const containerWidth = 600;
+    const templateOriginalWidth = 794;
+    const scaleFactor = containerWidth / templateOriginalWidth;
+    const componentData = { ...template?.data, userData };
+    // Tĩnh hoàn toàn: không select, không thao tác, không context menu
+    return (
+        <div className="flex justify-center">
+            <div
+                className="relative"
+                style={{
+                    width: '600px',
+                    height: '780px',
+                    background: 'white',
+                    borderRadius: 12,
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                    border: '1px solid #eee',
+                    overflow: 'hidden',
+                    userSelect: 'none',
+                    pointerEvents: 'none',
+                }}
+                onContextMenu={e => e.preventDefault()}
+                tabIndex={-1}
+                draggable={false}
+            >
+                <div
+                    style={{
+                        width: `${templateOriginalWidth}px`,
+                        height: `${templateOriginalWidth * (297 / 210)}px`,
+                        transform: `scale(${scaleFactor})`,
+                        transformOrigin: 'top left',
+                        background: 'white',
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        userSelect: 'none',
+                        pointerEvents: 'none',
+                    }}
+                    tabIndex={-1}
+                    draggable={false}
+                >
+                    <TemplateComponent data={componentData} />
+                </div>
+            </div>
+        </div>
+    );
+};
+
 export default function ManageApplyJobPage() {
     const [applications, setApplications] = useState<any[]>([]);
     const [searchTerm, setSearchTerm] = useState("")
@@ -411,6 +267,9 @@ export default function ManageApplyJobPage() {
     const [isViewDialogOpen, setIsViewDialogOpen] = useState(false)
     const [isJobDialogOpen, setIsJobDialogOpen] = useState(false)
     const [selectedApplication, setSelectedApplication] = useState<HydratedApplication | null>(null)
+    const [previewModal, setPreviewModal] = useState<{ open: boolean, type: 'cv' | 'cl' | null, cvData?: any, clData?: any }>({ open: false, type: null });
+    const [clTemplates, setClTemplates] = useState<CLTemplate[]>([]);
+    const [clTemplatesLoading, setClTemplatesLoading] = useState(false);
 
     // Thêm thanh tab lọc status
     const statusTabs = [
@@ -454,29 +313,29 @@ export default function ManageApplyJobPage() {
         });
     }, []);
 
-    // Add this function to handle status change
-    const handleStatusChange = async (applyJobId: string, newStatus: string) => {
+    useEffect(() => {
+        setClTemplatesLoading(true);
+        getCLTemplates().then((data) => {
+            setClTemplates(data);
+        }).finally(() => setClTemplatesLoading(false));
+    }, []);
+
+    // Thêm hàm cập nhật trạng thái ứng viên
+    const handleUpdateStatus = async (applyJobId: string, newStatus: "accepted" | "rejected" | "reviewed") => {
         try {
-            // Call the API to update status by HR
-            const res = await fetch(`/api/apply-job/${applyJobId}/status/by-hr`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ status: newStatus }),
+            await updateStatusByHr(applyJobId, newStatus);
+            // Sau khi cập nhật, reload lại danh sách
+            getApplyJobByHR().then((data: any) => {
+                let arr = Array.isArray(data) ? data : (data && data.data ? data.data : []);
+                setApplications(arr);
             });
-            if (res.ok) {
-                setApplications((prev: any[]) => prev.map(item => item._id === applyJobId ? { ...item, status: newStatus } : item));
-            } else {
-                alert('Failed to update status');
-            }
-        } catch (err) {
-            alert('Error updating status');
+        } catch (error) {
+            alert('Cập nhật trạng thái thất bại!');
         }
     };
 
-    // XÓA HOẶC BỎ QUA PHẦN hydratedApplications, mockJobs, mockCVs, mockCoverLetters
-
-    // Render trực tiếp từ dữ liệu API trả về
-    // Lọc lại filteredApplications chỉ lấy đúng statusFilter
+    // Remove handleStatusChange, getStatusActions, and all status update dropdown/buttons
+    // Only display status as a colored badge
     const getStatusColor = (status: string) => {
         switch (status.toLowerCase()) {
             case "pending":
@@ -494,94 +353,16 @@ export default function ManageApplyJobPage() {
         }
     }
 
-    const getStatusActions = (status: ApplyJob["status"]) => {
-        if (!selectedApplication) return null
-
-        const currentApplication = selectedApplication // Capture current value
-
-        switch (status) {
-            case "pending":
-                return (
-                    <>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleStatusChange(currentApplication.applyJob._id, "reviewed")}
-                            className="text-blue-600 border-blue-600 hover:bg-blue-50"
-                        >
-                            <Check className="h-4 w-4 mr-1" />
-                            Review
-                        </Button>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleStatusChange(currentApplication.applyJob._id, "rejected")}
-                            className="text-red-600 border-red-600 hover:bg-red-50"
-                        >
-                            <X className="h-4 w-4 mr-1" />
-                            Reject
-                        </Button>
-                    </>
-                )
-            case "reviewed":
-                return (
-                    <>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleStatusChange(currentApplication.applyJob._id, "interviewed")}
-                            className="text-purple-600 border-purple-600 hover:bg-purple-50"
-                        >
-                            Schedule Interview
-                        </Button>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleStatusChange(currentApplication.applyJob._id, "rejected")}
-                            className="text-red-600 border-red-600 hover:bg-red-50"
-                        >
-                            <X className="h-4 w-4 mr-1" />
-                            Reject
-                        </Button>
-                    </>
-                )
-            case "interviewed":
-                return (
-                    <>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleStatusChange(currentApplication.applyJob._id, "hired")}
-                            className="text-green-600 border-green-600 hover:bg-green-50"
-                        >
-                            <Check className="h-4 w-4 mr-1" />
-                            Hire
-                        </Button>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleStatusChange(currentApplication.applyJob._id, "rejected")}
-                            className="text-red-600 border-red-600 hover:bg-red-50"
-                        >
-                            <X className="h-4 w-4 mr-1" />
-                            Reject
-                        </Button>
-                    </>
-                )
-            default:
-                return null
-        }
-    }
-
     const handleViewCV = (cvId: string) => {
-        // Tạm thời mở trong tab mới, bạn có thể thay đổi link này
-        window.open(`/cv/${cvId}`, '_blank')
-    }
-
+        const app = searchedApplications.find((a: any) => (a.cvId?._id || a.cv_id) === cvId);
+        if (app?.cvId) {
+            setPreviewModal({ open: true, type: 'cv', cvData: app.cvId });
+        }
+    };
     const handleViewCoverLetter = (coverLetterId: string) => {
-        // Tạm thời mở trong tab mới, bạn có thể thay đổi link này
-        window.open(`/cover-letter/${coverLetterId}`, '_blank')
-    }
+        // Only open an empty modal for now
+        setPreviewModal({ open: true, type: 'cl' });
+    };
 
     return (
         <div className="p-6 space-y-6">
@@ -674,36 +455,40 @@ export default function ManageApplyJobPage() {
                                         </div>
                                     </TableCell>
                                     <TableCell>
-                                        {app.status === 'pending' ? (
-                                            <select
-                                                value={app.status}
-                                                onChange={async (e) => {
-                                                    const newStatus = e.target.value;
-                                                    try {
-                                                        const res = await fetch(`/api/apply-job/${app._id}`, {
-                                                            method: 'PATCH',
-                                                            headers: { 'Content-Type': 'application/json' },
-                                                            body: JSON.stringify({ status: newStatus }),
-                                                        });
-                                                        if (res.ok) {
-                                                            setApplications((prev: any[]) => prev.map(item => item._id === app._id ? { ...item, status: newStatus } : item));
-                                                        } else {
-                                                            alert('Failed to update status');
-                                                        }
-                                                    } catch (err) {
-                                                        alert('Error updating status');
-                                                    }
-                                                }}
-                                                className="border rounded px-2 py-1 text-sm"
-                                            >
-                                                <option value="pending" disabled>Pending</option>
-                                                <option value="reviewed">Reviewed</option>
-                                                <option value="rejected">Rejected</option>
-                                            </select>
-                                        ) : (
-                                            <span className={`px-2 py-1 rounded text-xs font-semibold ${getStatusColor(app.status)}`}>
-                                                {app.status.charAt(0).toUpperCase() + app.status.slice(1)}
-                                            </span>
+                                        <span className={`px-2 py-1 rounded text-xs font-semibold ${getStatusColor(app.status)}`}>
+                                            {app.status.charAt(0).toUpperCase() + app.status.slice(1)}
+                                        </span>
+                                        {app.status === 'pending' && (
+                                            <div className="flex gap-2 mt-2">
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    className="text-blue-600 border-blue-600 hover:bg-blue-50"
+                                                    onClick={() => handleUpdateStatus(app._id, 'reviewed')}
+                                                >
+                                                    <Check className="h-4 w-4 mr-1" /> Reviewed
+                                                </Button>
+                                            </div>
+                                        )}
+                                        {app.status === 'reviewed' && (
+                                            <div className="flex gap-2 mt-2">
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    className="text-green-600 border-green-600 hover:bg-green-50"
+                                                    onClick={() => handleUpdateStatus(app._id, 'accepted')}
+                                                >
+                                                    <Check className="h-4 w-4 mr-1" /> Approve
+                                                </Button>
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    className="text-red-600 border-red-600 hover:bg-red-50"
+                                                    onClick={() => handleUpdateStatus(app._id, 'rejected')}
+                                                >
+                                                    <X className="h-4 w-4 mr-1" /> Reject
+                                                </Button>
+                                            </div>
                                         )}
                                     </TableCell>
                                 </TableRow>
@@ -724,7 +509,7 @@ export default function ManageApplyJobPage() {
                 getStatusColor={getStatusColor}
                 handleViewCV={handleViewCV}
                 handleViewCoverLetter={handleViewCoverLetter}
-                getStatusActions={getStatusActions}
+                getStatusActions={() => null} // No status actions
             />
 
             {/* Job Info Dialog */}
@@ -736,6 +521,56 @@ export default function ManageApplyJobPage() {
                 }}
                 application={selectedApplication}
             />
+
+            <Modal
+                open={previewModal.open && previewModal.type === 'cv'}
+                onCancel={() => setPreviewModal({ open: false, type: null })}
+                footer={null}
+                width={650}
+                centered
+                title={'CV Preview'}
+                styles={{ body: { background: '#f9f9f9' } }}
+            >
+                {(() => { console.log('CV Preview Data:', previewModal.cvData); return null; })()}
+                {previewModal.cvData && previewModal.cvData.cvImage ? (
+                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
+                        <img
+                            src={previewModal.cvData.cvImage}
+                            alt="CV preview"
+                            style={{
+                                maxWidth: 600,
+                                maxHeight: 800,
+                                borderRadius: 12,
+                                boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                                background: '#fff',
+                                border: '1px solid #eee',
+                            }}
+                        />
+                    </div>
+                ) : (previewModal.cvData && (previewModal.cvData.templateId || previewModal.cvData.cvTemplateId) && previewModal.cvData.content?.userData ? (
+                    <CVTemplatePreview
+                        templateId={previewModal.cvData.templateId || previewModal.cvData.cvTemplateId}
+                        userData={previewModal.cvData.content.userData}
+                    />
+                ) : (
+                    <div style={{ textAlign: 'center', color: '#888', padding: 40 }}>
+                        Không tìm thấy dữ liệu CV.
+                    </div>
+                ))}
+            </Modal>
+
+            <Modal
+                open={previewModal.open && previewModal.type === 'cl'}
+                onCancel={() => setPreviewModal({ open: false, type: null })}
+                footer={null}
+                width={600}
+                centered
+                title={'Cover Letter Preview'}
+            >
+                <div style={{ textAlign: 'center', color: '#888', padding: 40 }}>
+                    Chức năng xem Cover Letter đang phát triển.
+                </div>
+            </Modal>
         </div>
     )
 }

@@ -42,15 +42,6 @@ export async function createApplyJob(data: any) {
   );
 }
 
-export async function UpdateApplyJobByHr(id: string, data: any) {
-  return fetchWithAuth(
-    API_ENDPOINTS.APPLYJOB.UPDATE(id),
-    {
-      method: 'PATCH',
-      body: JSON.stringify(data),
-    }
-  );
-}
 
 export async function getApplyJobByUser() {
   return fetchWithAuth(API_ENDPOINTS.APPLYJOB.GET_APPLY_JOB_BY_USER);
@@ -68,9 +59,9 @@ export async function getApplyJobDetail(id: string) {
   return fetchWithAuth(API_ENDPOINTS.APPLYJOB.GET_APPLY_JOB_DETAIL(id));
 }
 
-export async function updateStatusByHR(id: string, data: any) {
+export async function updateApplyJobByUser(id: string, data: any) {
   return fetchWithAuth(
-    API_ENDPOINTS.APPLYJOB.UPDATE_STATUS_BY_HR(id),
+    API_ENDPOINTS.APPLYJOB.UPDATE_APPLY_JOB_BY_USER(id),
     {
       method: 'PUT',
       body: JSON.stringify(data),
@@ -78,12 +69,13 @@ export async function updateStatusByHR(id: string, data: any) {
   );
 }
 
-export async function updateApplyJobByUser(id: string, data: any) {
+export async function updateStatusByHr(id: string, status: "accepted" | "rejected" | "reviewed") {
   return fetchWithAuth(
-    API_ENDPOINTS.APPLYJOB.UPDATE_APPLY_JOB_BY_USER(id),
+    API_ENDPOINTS.APPLYJOB.UPDATE_STATUS_BY_HR(id),
     {
-      method: 'PUT',
-      body: JSON.stringify(data),
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status }),
     }
   );
 }

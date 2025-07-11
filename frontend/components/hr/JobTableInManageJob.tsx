@@ -68,12 +68,26 @@ const JobTable: React.FC<JobTableProps> = ({ jobs, onEdit, onDelete, getStatusCo
                             </div>
                         </TableCell>
                         <TableCell>
-                            <Badge className={getWorkTypeColor(job["Work Type"])}>
+                            <span
+                                className={
+                                    getWorkTypeColor(job["Work Type"]) +
+                                    " transition-colors duration-150 px-2 py-1 rounded font-semibold cursor-pointer border border-transparent hover:border-gray-300 hover:bg-opacity-80 shadow-sm"
+                                }
+                                title={job["Work Type"]}
+                            >
                                 {job["Work Type"]}
-                            </Badge>
+                            </span>
                         </TableCell>
                         <TableCell>
-                            <Badge className={getStatusColor(job.status || "Active")}> {job.status || "Active"} </Badge>
+                            <span
+                                className={
+                                    getStatusColor(job.status || "Active") +
+                                    " transition-colors duration-150 px-2 py-1 rounded font-semibold cursor-pointer border border-transparent hover:border-gray-300 hover:bg-opacity-80 shadow-sm"
+                                }
+                                title={job.status || "Active"}
+                            >
+                                {job.status || "Active"}
+                            </span>
                         </TableCell>
                         <TableCell className="hidden md:table-cell">{job.applications || 0}</TableCell>
                         <TableCell className="hidden lg:table-cell">

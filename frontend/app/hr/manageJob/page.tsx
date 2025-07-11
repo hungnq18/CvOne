@@ -28,10 +28,10 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { getJobsByHR, Job as JobApi, updateJob, deleteJob } from '@/api/jobApi';
 import { getApplyJobByHR } from '@/api/apiApplyJob';
-import JobTableInmanageJob from '@/components/hr/JobTableInmanageJob';
+import JobTableInmanageJob from '@/components/hr/JobTableInManageJob';
 import JobEditModel from '@/components/modals/JobEditModel';
 import JobDeleteDialog from '@/components/hr/JobDeleteDialog';
-import SearchInmanageJob from '@/components/hr/searchInmanageJob';
+import SearchInmanageJob from '@/components/hr/searchInManageJob';
 
 // Định nghĩa interface cho Job
 interface Job {

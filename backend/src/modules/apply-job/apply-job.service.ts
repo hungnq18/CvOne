@@ -138,9 +138,9 @@ export class ApplyJobService {
   async updateStatusByHr(
     applyJobId: string,
     hrUserId: string,
-    newStatus: "accepted" | "rejected",
+    newStatus: string,
   ) {
-    if (!["accepted", "rejected"].includes(newStatus)) {
+    if (!["accepted", "rejected", "reviewed"].includes(newStatus)) {
       throw new BadRequestException("Trạng thái không hợp lệ");
     }
 
@@ -152,20 +152,11 @@ export class ApplyJobService {
       throw new NotFoundException("Đơn ứng tuyển không tồn tại");
     }
 
-    const job = apply.jobId as any;
-
-    if (!job || job.userId.toString() !== hrUserId) {
-      throw new ForbiddenException(
-        "Bạn không có quyền cập nhật đơn ứng tuyển này",
-      );
-    }
-
     apply.status = newStatus;
     await apply.save();
 
     return apply;
   }
-
   async updateApplyJobByUser(
     applyJobId: string,
     userId: string,
