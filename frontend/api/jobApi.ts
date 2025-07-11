@@ -107,6 +107,7 @@ export const updateJob = async (id: string, data: Partial<Job>): Promise<Job> =>
   return fetchWithAuth(API_ENDPOINTS.JOB.UPDATE(id), {
     method: "PUT",
     body: JSON.stringify(data),
+    headers: { 'Content-Type': 'application/json' },
   });
 };
 
@@ -118,6 +119,7 @@ export const updateJob = async (id: string, data: Partial<Job>): Promise<Job> =>
 export const deleteJob = async (id: string): Promise<void> => {
   return fetchWithAuth(API_ENDPOINTS.JOB.DELETE(id), {
     method: "DELETE",
+    headers: { 'Content-Type': 'application/json' },
   });
 };
 

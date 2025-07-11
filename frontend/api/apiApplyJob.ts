@@ -1,3 +1,4 @@
+import { UpdateApplyJobByHrDto } from './../../backend/src/modules/apply-job/dto/update-apply-job.dto';
 import { API_URL, API_ENDPOINTS } from './apiConfig';
 import { fetchWithAuth } from './apiClient';
 
@@ -41,11 +42,11 @@ export async function createApplyJob(data: any) {
   );
 }
 
-export async function updateApplyJob(id: string, data: any) {
+export async function UpdateApplyJobByHr(id: string, data: any) {
   return fetchWithAuth(
     API_ENDPOINTS.APPLYJOB.UPDATE(id),
     {
-      method: 'PUT',
+      method: 'PATCH',
       body: JSON.stringify(data),
     }
   );

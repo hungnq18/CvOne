@@ -1,8 +1,11 @@
+'use client';
+import { useEffect, useState } from "react"
 import { Eye, ShoppingCart, Package, Users, TrendingUp } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { RevenueChart } from "@/components/hr/revenue-chart"
 import { ProfitChart } from "@/components/hr/profit-chart"
-import db from "@/api/db.json"
+import { getApplyJobByHR, ApplyJob } from "@/api/apiApplyJob"
+import { useLanguage } from '@/providers/global-provider';
 
 const stats = [
     {
@@ -36,48 +39,111 @@ const stats = [
 ]
 
 export function DashboardContent() {
-    // Lấy dữ liệu appliedJobs từ db.json
-    const appliedJobs = db.appliedJobs || [];
+    const [appliedJobs, setAppliedJobs] = useState<ApplyJob[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const { language } = useLanguage ? useLanguage() : { language: 'vi' };
+
+    const t = {
+        vi: {
+            jobTitle: 'Tên công việc',
+            candidate: 'Ứng viên',
+            cv: 'CV',
+            coverLetter: 'Cover Letter',
+            status: 'Trạng thái',
+            submitTime: 'Thời gian nộp',
+            noData: 'Không có dữ liệu',
+            loading: 'Đang tải dữ liệu...',
+            error: 'Lỗi khi tải dữ liệu applied jobs',
+            pending: 'Chờ duyệt',
+            accepted: 'Đã nhận',
+            rejected: 'Từ chối',
+        },
+        en: {
+            jobTitle: 'Job Title',
+            candidate: 'Candidate',
+            cv: 'CV',
+            coverLetter: 'Cover Letter',
+            status: 'Status',
+            submitTime: 'Submitted At',
+            noData: 'No data',
+            loading: 'Loading data...',
+            error: 'Failed to load applied jobs',
+            pending: 'Pending',
+            accepted: 'Accepted',
+            rejected: 'Rejected',
+        }
+    }[language === 'en' ? 'en' : 'vi'];
+
+    useEffect(() => {
+        setLoading(true);
+        getApplyJobByHR()
+            .then((data) => {
+                setAppliedJobs(Array.isArray(data) ? data : (data.data || []));
+                setError(null);
+            })
+            .catch((err) => {
+                setError("Lỗi khi tải dữ liệu applied jobs");
+                setAppliedJobs([]);
+            })
+            .finally(() => setLoading(false));
+    }, []);
 
     return (
         <div className="flex-1 space-y-6 p-6 pt-0 bg-gray-50 w-full max-w-full">
             {/* Bảng danh sách các appliedJobs */}
             <div className="bg-white rounded-lg shadow p-6 mb-6 overflow-x-auto w-full">
-                <h2 className="text-xl font-bold mb-4">Danh sách Applied Jobs</h2>
-                <div className="overflow-x-auto w-full">
-                    <table className="min-w-[700px] w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
-                            <tr>
-                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Job ID</th>
-                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">User ID</th>
-                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">CV ID</th>
-                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Cover Letter ID</th>
-                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Submit At</th>
-                            </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                            {appliedJobs.length === 0 ? (
+                <h2 className="text-xl font-bold mb-4">{language === 'en' ? 'Applied Jobs List' : 'Danh sách Applied Jobs'}</h2>
+                {loading ? (
+                    <div className="text-center text-blue-500 py-8">{t.loading}</div>
+                ) : error ? (
+                    <div className="text-center text-red-500 py-8">{t.error}</div>
+                ) : (
+                    <div className="overflow-x-auto w-full">
+                        <table className="min-w-[700px] w-full divide-y divide-gray-200">
+                            <thead className="bg-gray-50">
                                 <tr>
-                                    <td colSpan={6} className="px-4 py-4 text-center text-gray-400">Không có dữ liệu</td>
+                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">{t.jobTitle}</th>
+                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">{t.candidate}</th>
+                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">{t.cv}</th>
+                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">{t.coverLetter}</th>
+                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">{t.status}</th>
+                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">{t.submitTime}</th>
                                 </tr>
-                            ) : (
-                                appliedJobs.map((job: any) => (
-                                    <tr key={job.id}>
-                                        <td className="px-4 py-2 whitespace-nowrap">{job.job_id}</td>
-                                        <td className="px-4 py-2 whitespace-nowrap">{job.user_id}</td>
-                                        <td className="px-4 py-2 whitespace-nowrap">{job.cv_id}</td>
-                                        <td className="px-4 py-2 whitespace-nowrap">{job.coverletter_id || '-'}</td>
-                                        <td className="px-4 py-2 whitespace-nowrap">
-                                            <span className={`px-2 py-1 rounded-full text-xs font-semibold ${job.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : job.status === 'accepted' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>{job.status}</span>
-                                        </td>
-                                        <td className="px-4 py-2 whitespace-nowrap">{new Date(job.submit_at).toLocaleString()}</td>
+                            </thead>
+                            <tbody className="bg-white divide-y divide-gray-200">
+                                {appliedJobs.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={6} className="px-4 py-4 text-center text-gray-400">{t.noData}</td>
                                     </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+                                ) : (
+                                    appliedJobs.map((job: any) => (
+                                        <tr key={job.id || job._id}>
+                                            <td className="px-4 py-2 whitespace-nowrap">
+                                                {job.jobId && job.jobId.title ? job.jobId.title : (job.job_id || (job.jobId && job.jobId._id) || '-')}
+                                            </td>
+                                            <td className="px-4 py-2 whitespace-nowrap">
+                                                {job.userId && job.userId.first_name ? `${job.userId.first_name} ${job.userId.last_name}` : (job.user_id || (job.userId && job.userId._id) || '-')}
+                                            </td>
+                                            <td className="px-4 py-2 whitespace-nowrap">{job.cvId ? (job.cvId.title || job.cvId._id) : (job.cv_id || '-')}</td>
+                                            <td className="px-4 py-2 whitespace-nowrap">{job.coverletterId ? (job.coverletterId.title || job.coverletterId._id) : (job.coverletter_id || '-')}</td>
+                                            <td className="px-4 py-2 whitespace-nowrap">
+                                                <span className={`px-2 py-1 rounded-full text-xs font-semibold ${job.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : job.status === 'accepted' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                                                    {job.status === 'pending' ? t.pending : job.status === 'accepted' ? t.accepted : job.status === 'rejected' ? t.rejected : job.status}
+                                                </span>
+                                            </td>
+                                            <td className="px-4 py-2 whitespace-nowrap">{
+                                                job.createdAt
+                                                    ? new Date(job.createdAt).toLocaleDateString(language === 'en' ? 'en-GB' : 'vi-VN')
+                                                    : (job.submit_at ? new Date(job.submit_at).toLocaleDateString(language === 'en' ? 'en-GB' : 'vi-VN') : '-')
+                                            }</td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
             </div>
 
             {/* Charts */}

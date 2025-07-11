@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Eye, Check, X, Search, Download, Mail, FileText, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -26,6 +26,10 @@ import {
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { getApplyJobByHR } from '@/api/apiApplyJob';
+import CandidateDetailsDialog from '@/components/hr/CandidateDetailsDialog';
+import JobInfoDialog from '@/components/hr/JobInfoDialog';
+import StatusRadioTabs from '../../../components/hr/RadioTabsInManageApply';
 
 // Định nghĩa interface cho Job (từ manageJob page)
 interface Job {
@@ -401,41 +405,78 @@ interface HydratedApplication {
 }
 
 export default function ManageApplyJobPage() {
-    const [applications, setApplications] = useState<ApplyJob[]>(mockApplyJobs)
+    const [applications, setApplications] = useState<any[]>([]);
     const [searchTerm, setSearchTerm] = useState("")
-    const [statusFilter, setStatusFilter] = useState("All")
+    const [statusFilter, setStatusFilter] = useState("all")
     const [isViewDialogOpen, setIsViewDialogOpen] = useState(false)
     const [isJobDialogOpen, setIsJobDialogOpen] = useState(false)
     const [selectedApplication, setSelectedApplication] = useState<HydratedApplication | null>(null)
 
-    const hydratedApplications: HydratedApplication[] = applications.map(applyJob => {
-        const job = mockJobs.find(j => j._id === applyJob.job_id);
-        const cv = mockCVs.find(c => c._id === applyJob.cv_id);
-        const coverLetter = mockCoverLetters.find(cl => cl._id === applyJob.coverletter_id);
+    // Thêm thanh tab lọc status
+    const statusTabs = [
+        { label: 'All', value: 'all' },
+        { label: 'Pending', value: 'pending' },
+        { label: 'Reviewed', value: 'reviewed' },
+        { label: 'Rejected', value: 'rejected' },
+    ];
 
-        // Handle cases where data might not be found, though with mock data it should be fine
-        if (!job || !cv || !coverLetter) {
-            return null;
+    // Đếm số lượng ứng viên theo từng status
+    const statusCounts = applications.reduce((acc: any, app: any) => {
+        acc[app.status] = (acc[app.status] || 0) + 1;
+        return acc;
+    }, {});
+
+    // Lọc lại filteredApplications theo statusFilter
+    const filteredApplications = statusFilter === 'all'
+        ? applications
+        : applications.filter((app: any) => app.status === statusFilter);
+
+    // Thêm lọc theo searchTerm (tìm theo tên, email, job title)
+    const searchedApplications = searchTerm.trim() === ''
+        ? filteredApplications
+        : filteredApplications.filter((app: any) => {
+            const name = (app.cvId?.content?.userData?.firstName || app.userId?.first_name || '') + ' ' + (app.cvId?.content?.userData?.lastName || app.userId?.last_name || '');
+            const email = app.cvId?.content?.userData?.email || app.userId?.email || '';
+            const jobTitle = app.jobId?.title || app.job_id || '';
+            const search = searchTerm.toLowerCase();
+            return (
+                name.toLowerCase().includes(search) ||
+                email.toLowerCase().includes(search) ||
+                jobTitle.toLowerCase().includes(search)
+            );
+        });
+
+    useEffect(() => {
+        getApplyJobByHR().then((data: any) => {
+            console.log('Dữ liệu apply-job/by-hr từ API:', data);
+            let arr = Array.isArray(data) ? data : (data && data.data ? data.data : []);
+            setApplications(arr);
+        });
+    }, []);
+
+    // Add this function to handle status change
+    const handleStatusChange = async (applyJobId: string, newStatus: string) => {
+        try {
+            // Call the API to update status by HR
+            const res = await fetch(`/api/apply-job/${applyJobId}/status/by-hr`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: newStatus }),
+            });
+            if (res.ok) {
+                setApplications((prev: any[]) => prev.map(item => item._id === applyJobId ? { ...item, status: newStatus } : item));
+            } else {
+                alert('Failed to update status');
+            }
+        } catch (err) {
+            alert('Error updating status');
         }
+    };
 
-        return { applyJob, job, cv, coverLetter };
-    }).filter((app): app is HydratedApplication => app !== null);
+    // XÓA HOẶC BỎ QUA PHẦN hydratedApplications, mockJobs, mockCVs, mockCoverLetters
 
-
-    const filteredApplications = hydratedApplications.filter(app =>
-        (app.cv.content.userData.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            app.cv.content.userData.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            app.cv.content.userData.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            app.job["Job Title"].toLowerCase().includes(searchTerm.toLowerCase())) &&
-        (statusFilter === "All" || app.applyJob.status === statusFilter)
-    )
-
-    const handleStatusChange = (applicationId: string, newStatus: ApplyJob["status"]) => {
-        setApplications(applications.map(app =>
-            app._id === applicationId ? { ...app, status: newStatus } : app
-        ))
-    }
-
+    // Render trực tiếp từ dữ liệu API trả về
+    // Lọc lại filteredApplications chỉ lấy đúng statusFilter
     const getStatusColor = (status: string) => {
         switch (status.toLowerCase()) {
             case "pending":
@@ -546,26 +587,7 @@ export default function ManageApplyJobPage() {
         <div className="p-6 space-y-6">
             <div className="flex justify-between items-center">
                 <h1 className="text-3xl font-bold">Manage Job Applications</h1>
-                <div className="flex items-center space-x-4">
-                    <div className="flex items-center space-x-2">
-                        <Label htmlFor="status-filter">Filter by Status:</Label>
-                        <Select value={statusFilter} onValueChange={setStatusFilter}>
-                            <SelectTrigger className="w-[180px]">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="All">All Status</SelectItem>
-                                <SelectItem value="Pending">Pending</SelectItem>
-                                <SelectItem value="Reviewed">Reviewed</SelectItem>
-                                <SelectItem value="Interviewed">Interviewed</SelectItem>
-                                <SelectItem value="Hired">Hired</SelectItem>
-                                <SelectItem value="Rejected">Rejected</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-                </div>
             </div>
-
             <Card>
                 <CardHeader>
                     <CardTitle>Job Applications with CV & Cover Letter</CardTitle>
@@ -581,6 +603,11 @@ export default function ManageApplyJobPage() {
                         </div>
                     </div>
                 </CardHeader>
+                {/* StatusRadioTabs UI đẹp */}
+                <StatusRadioTabs
+                    statusFilter={statusFilter}
+                    setStatusFilter={setStatusFilter}
+                />
                 <CardContent>
                     <Table>
                         <TableHeader>
@@ -591,38 +618,45 @@ export default function ManageApplyJobPage() {
                                 <TableHead>Applied Date</TableHead>
                                 <TableHead>Experience</TableHead>
                                 <TableHead>Documents</TableHead>
-                                <TableHead>Actions</TableHead>
+                                <TableHead>Status</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {filteredApplications.map((application) => (
-                                <TableRow key={application.applyJob._id}>
+                            {searchedApplications.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={7} className="text-center text-gray-400">No applications found for this status.</TableCell>
+                                </TableRow>
+                            ) : searchedApplications.map((app: any) => (
+                                <TableRow key={app._id}>
                                     <TableCell>
+                                        {/* Candidate info */}
                                         <div className="flex items-center space-x-3">
                                             <Avatar className="h-8 w-8">
-                                                <AvatarImage src={application.cv.content.userData.avatar} />
+                                                <AvatarImage src={app.cvId?.content?.userData?.avatar || app.cvId?.avatar || '/placeholder-user.jpg'} />
                                                 <AvatarFallback>
-                                                    {application.cv.content.userData.firstName[0]}{application.cv.content.userData.lastName[0]}
+                                                    {app.cvId?.content?.userData?.firstName?.[0] || ''}{app.cvId?.content?.userData?.lastName?.[0] || ''}
                                                 </AvatarFallback>
                                             </Avatar>
                                             <div>
                                                 <div className="font-medium">
-                                                    {application.cv.content.userData.firstName} {application.cv.content.userData.lastName}
+                                                    {app.cvId?.content?.userData?.firstName || app.userId?.first_name || '-'} {app.cvId?.content?.userData?.lastName || app.userId?.last_name || ''}
                                                 </div>
-                                                <div className="text-sm text-muted-foreground">{application.cv.content.userData.email}</div>
+                                                <div className="text-sm text-muted-foreground">{app.cvId?.content?.userData?.email || app.userId?.email || '-'}</div>
                                             </div>
                                         </div>
                                     </TableCell>
-                                    <TableCell className="font-medium">{application.job["Job Title"]}</TableCell>
-                                    <TableCell>{application.job.Role}</TableCell>
-                                    <TableCell>{new Date(application.applyJob.submit_at).toLocaleDateString()}</TableCell>
-                                    <TableCell>{application.cv.content.userData.professional}</TableCell>
+                                    <TableCell className="font-medium">{app.jobId?.title || app.job_id || '-'}</TableCell>
+                                    <TableCell>{app.jobId?.role || app.jobId?.Role || '-'}</TableCell>
+                                    <TableCell>{app.createdAt
+                                        ? new Date(app.createdAt).toLocaleDateString()
+                                        : (app.submit_at ? new Date(app.submit_at).toLocaleDateString() : '-')}</TableCell>
+                                    <TableCell>{app.cvId?.content?.userData?.professional || '-'}</TableCell>
                                     <TableCell>
                                         <div className="flex items-center space-x-2">
                                             <Button
                                                 variant="outline"
                                                 size="sm"
-                                                onClick={() => handleViewCV(application.cv._id)}
+                                                onClick={() => handleViewCV(app.cvId?._id || app.cv_id)}
                                                 className="text-blue-600 border-blue-600 hover:bg-blue-50"
                                             >
                                                 <FileText className="h-4 w-4 mr-1" />
@@ -631,7 +665,7 @@ export default function ManageApplyJobPage() {
                                             <Button
                                                 variant="outline"
                                                 size="sm"
-                                                onClick={() => handleViewCoverLetter(application.coverLetter._id)}
+                                                onClick={() => handleViewCoverLetter(app.coverletterId?._id || app.coverletter_id)}
                                                 className="text-green-600 border-green-600 hover:bg-green-50"
                                             >
                                                 <User className="h-4 w-4 mr-1" />
@@ -640,31 +674,37 @@ export default function ManageApplyJobPage() {
                                         </div>
                                     </TableCell>
                                     <TableCell>
-                                        <div className="flex items-center space-x-2">
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => {
-                                                    setSelectedApplication(application)
-                                                    setIsViewDialogOpen(true)
+                                        {app.status === 'pending' ? (
+                                            <select
+                                                value={app.status}
+                                                onChange={async (e) => {
+                                                    const newStatus = e.target.value;
+                                                    try {
+                                                        const res = await fetch(`/api/apply-job/${app._id}`, {
+                                                            method: 'PATCH',
+                                                            headers: { 'Content-Type': 'application/json' },
+                                                            body: JSON.stringify({ status: newStatus }),
+                                                        });
+                                                        if (res.ok) {
+                                                            setApplications((prev: any[]) => prev.map(item => item._id === app._id ? { ...item, status: newStatus } : item));
+                                                        } else {
+                                                            alert('Failed to update status');
+                                                        }
+                                                    } catch (err) {
+                                                        alert('Error updating status');
+                                                    }
                                                 }}
-
+                                                className="border rounded px-2 py-1 text-sm"
                                             >
-                                                <Eye className="h-4 w-4" />
-                                            </Button>
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => {
-                                                    setSelectedApplication(application)
-                                                    setIsJobDialogOpen(true)
-                                                }}
-                                                className="text-orange-600 border-orange-600 hover:bg-orange-50"
-                                            >
-                                                <FileText className="h-4 w-4 mr-1" />
-                                                View Job
-                                            </Button>
-                                        </div>
+                                                <option value="pending" disabled>Pending</option>
+                                                <option value="reviewed">Reviewed</option>
+                                                <option value="rejected">Rejected</option>
+                                            </select>
+                                        ) : (
+                                            <span className={`px-2 py-1 rounded text-xs font-semibold ${getStatusColor(app.status)}`}>
+                                                {app.status.charAt(0).toUpperCase() + app.status.slice(1)}
+                                            </span>
+                                        )}
                                     </TableCell>
                                 </TableRow>
                             ))}
@@ -673,226 +713,29 @@ export default function ManageApplyJobPage() {
                 </CardContent>
             </Card>
 
-            {/* Statistics Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-                <Card>
-                    <CardContent className="p-4">
-                        <div className="text-2xl font-bold">{applications.length}</div>
-                        <div className="text-sm text-muted-foreground">Total Applications</div>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardContent className="p-4">
-                        <div className="text-2xl font-bold text-yellow-600">
-                            {applications.filter(app => app.status === "pending").length}
-                        </div>
-                        <div className="text-sm text-muted-foreground">Pending Review</div>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardContent className="p-4">
-                        <div className="text-2xl font-bold text-blue-600">
-                            {applications.filter(app => app.status === "reviewed").length}
-                        </div>
-                        <div className="text-sm text-muted-foreground">Reviewed</div>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardContent className="p-4">
-                        <div className="text-2xl font-bold text-purple-600">
-                            {applications.filter(app => app.status === "interviewed").length}
-                        </div>
-                        <div className="text-sm text-muted-foreground">Interviewed</div>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardContent className="p-4">
-                        <div className="text-2xl font-bold text-green-600">
-                            {applications.filter(app => app.status === "hired").length}
-                        </div>
-                        <div className="text-sm text-muted-foreground">Hired</div>
-                    </CardContent>
-                </Card>
-            </div>
+            {/* Candidate Details Dialog */}
+            <CandidateDetailsDialog
+                open={isViewDialogOpen}
+                onOpenChange={(isOpen: boolean) => {
+                    if (!isOpen) setSelectedApplication(null);
+                    setIsViewDialogOpen(isOpen);
+                }}
+                application={selectedApplication}
+                getStatusColor={getStatusColor}
+                handleViewCV={handleViewCV}
+                handleViewCoverLetter={handleViewCoverLetter}
+                getStatusActions={getStatusActions}
+            />
 
-            {/* Application Details Dialog */}
-            <Dialog open={isViewDialogOpen} onOpenChange={(isOpen) => {
-                if (!isOpen) {
-                    setSelectedApplication(null)
-                }
-                setIsViewDialogOpen(isOpen)
-            }}>
-                <DialogContent className="max-w-2xl">
-                    <DialogHeader>
-                        <DialogTitle>Application Details</DialogTitle>
-                        <DialogDescription>
-                            View detailed information about this application.
-                        </DialogDescription>
-                    </DialogHeader>
-                    {selectedApplication && (
-                        <div className="space-y-4">
-                            <div className="flex items-center space-x-4">
-                                <Avatar className="h-16 w-16">
-                                    <AvatarImage src={selectedApplication.cv.content.userData.avatar} />
-                                    <AvatarFallback>
-                                        {selectedApplication.cv.content.userData.firstName[0]}{selectedApplication.cv.content.userData.lastName[0]}
-                                    </AvatarFallback>
-                                </Avatar>
-                                <div>
-                                    <h3 className="text-lg font-semibold">
-                                        {selectedApplication.cv.content.userData.firstName} {selectedApplication.cv.content.userData.lastName}
-                                    </h3>
-                                    <p className="text-muted-foreground">{selectedApplication.cv.content.userData.email}</p>
-                                    <p className="text-muted-foreground">{selectedApplication.cv.content.userData.phone}</p>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <Label className="font-medium">Job Title</Label>
-                                    <p>{selectedApplication.job["Job Title"]}</p>
-                                </div>
-                                <div>
-                                    <Label className="font-medium">Role</Label>
-                                    <p>{selectedApplication.job.Role}</p>
-                                </div>
-                                <div>
-                                    <Label className="font-medium">Profession</Label>
-                                    <p>{selectedApplication.cv.content.userData.professional}</p>
-                                </div>
-                                <div>
-                                    <Label className="font-medium">Location</Label>
-                                    <p>{selectedApplication.cv.content.userData.city}, {selectedApplication.cv.content.userData.country}</p>
-                                </div>
-                                <div>
-                                    <Label className="font-medium">Applied Date</Label>
-                                    <p>{new Date(selectedApplication.applyJob.submit_at).toLocaleDateString()}</p>
-                                </div>
-                                <div>
-                                    <Label className="font-medium">Status</Label>
-                                    <Badge className={getStatusColor(selectedApplication.applyJob.status)}>
-                                        {selectedApplication.applyJob.status.charAt(0).toUpperCase() + selectedApplication.applyJob.status.slice(1)}
-                                    </Badge>
-                                </div>
-                            </div>
-
-                            <div>
-                                <Label className="font-medium">Summary</Label>
-                                <p className="mt-2 text-sm text-muted-foreground">{selectedApplication.cv.content.userData.summary}</p>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <Label className="font-medium">CV Document</Label>
-                                    <div className="flex items-center space-x-2 mt-2">
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => handleViewCV(selectedApplication.cv._id)}
-                                            className="text-blue-600 border-blue-600 hover:bg-blue-50"
-                                        >
-                                            <FileText className="h-4 w-4 mr-1" />
-                                            View CV
-                                        </Button>
-                                        <span className="text-sm text-muted-foreground">{selectedApplication.cv.title}</span>
-                                    </div>
-                                </div>
-                                <div>
-                                    <Label className="font-medium">Cover Letter</Label>
-                                    <div className="flex items-center space-x-2 mt-2">
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => handleViewCoverLetter(selectedApplication.coverLetter._id)}
-                                            className="text-green-600 border-green-600 hover:bg-green-50"
-                                        >
-                                            <User className="h-4 w-4 mr-1" />
-                                            View CL
-                                        </Button>
-                                        <span className="text-sm text-muted-foreground">{selectedApplication.coverLetter.title}</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="flex items-center space-x-2 pt-4 border-t">
-                                {getStatusActions(selectedApplication.applyJob.status)}
-                            </div>
-                        </div>
-                    )}
-                </DialogContent>
-            </Dialog>
-
-            {/* Job Details Dialog */}
-            <Dialog open={isJobDialogOpen} onOpenChange={(isOpen) => {
-                if (!isOpen) {
-                    setSelectedApplication(null)
-                }
-                setIsJobDialogOpen(isOpen)
-            }}>
-                <DialogContent className="max-w-2xl">
-                    <DialogHeader>
-                        <DialogTitle>Job Details</DialogTitle>
-                        <DialogDescription>
-                            View detailed information about the job this candidate applied for.
-                        </DialogDescription>
-                    </DialogHeader>
-                    {selectedApplication && (
-                        <div className="space-y-4">
-                            <div className="border-b pb-4">
-                                <h3 className="text-xl font-bold">{selectedApplication.job["Job Title"]}</h3>
-                                <p className="text-lg text-muted-foreground">{selectedApplication.job.Role}</p>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <Label className="font-medium">Experience Required</Label>
-                                    <p>{selectedApplication.job.Experience}</p>
-                                </div>
-                                <div>
-                                    <Label className="font-medium">Qualifications</Label>
-                                    <p>{selectedApplication.job.Qualifications}</p>
-                                </div>
-                                <div>
-                                    <Label className="font-medium">Salary Range</Label>
-                                    <p>{selectedApplication.job["Salary Range"]}</p>
-                                </div>
-                                <div>
-                                    <Label className="font-medium">Work Type</Label>
-                                    <p>{selectedApplication.job["Work Type"]}</p>
-                                </div>
-                                <div>
-                                    <Label className="font-medium">Location</Label>
-                                    <p>{selectedApplication.job.location}, {selectedApplication.job.Country}</p>
-                                </div>
-                                <div>
-                                    <Label className="font-medium">Posted Date</Label>
-                                    <p>{selectedApplication.job["Job Posting Date"]}</p>
-                                </div>
-                            </div>
-
-                            <div>
-                                <Label className="font-medium">Job Description</Label>
-                                <p className="mt-2 text-sm text-muted-foreground">{selectedApplication.job["Job Description"]}</p>
-                            </div>
-
-                            <div>
-                                <Label className="font-medium">Responsibilities</Label>
-                                <p className="mt-2 text-sm text-muted-foreground">{selectedApplication.job.Responsibilities}</p>
-                            </div>
-
-                            <div>
-                                <Label className="font-medium">Required Skills</Label>
-                                <p className="mt-2 text-sm text-muted-foreground">{selectedApplication.job.skills}</p>
-                            </div>
-
-                            <div>
-                                <Label className="font-medium">Benefits</Label>
-                                <p className="mt-2 text-sm text-muted-foreground">{selectedApplication.job.Benefits}</p>
-                            </div>
-                        </div>
-                    )}
-                </DialogContent>
-            </Dialog>
+            {/* Job Info Dialog */}
+            <JobInfoDialog
+                open={isJobDialogOpen}
+                onOpenChange={(isOpen: boolean) => {
+                    if (!isOpen) setSelectedApplication(null);
+                    setIsJobDialogOpen(isOpen);
+                }}
+                application={selectedApplication}
+            />
         </div>
     )
 }
