@@ -42,6 +42,18 @@ const UpJdStep: React.FC<UpJdStepProps> = () => {
             </div>
           </div>
         </div>
+        {/* Nút phân tích và ô hiển thị kết quả */}
+        <div className="flex flex-col items-start space-y-4 mt-8">
+          <button
+            type="button"
+            className="max-w-200 bg-yellow-400 hover:bg-yellow-500 text-white font-bold py-3 px-6 rounded-lg shadow transition-colors"
+          >
+            Phân tích Mô tả công việc bằng AI
+          </button>
+          <div className="w-full max-w-2xl min-h-[50px] border border-gray-200 rounded-lg bg-gray-50 p-4 text-gray-700">
+            {/* Kết quả phân tích sẽ hiển thị ở đây */}
+          </div>
+        </div>
       </div>
     </div>
   );

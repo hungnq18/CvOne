@@ -58,6 +58,19 @@ export default function JobDescriptionPage() {
               </div>
             </div>
           </div>
+
+          {/* Nút phân tích bằng AI và ô output */}
+          <div className="flex flex-col items-start space-y-4 mt-4">
+            <button
+              type="button"
+              className="bg-yellow-400 hover:bg-yellow-500 text-white font-bold py-3 px-6 rounded-lg shadow transition-colors"
+            >
+              Phân tích bằng AI
+            </button>
+            <div className="w-full min-h-[0] border border-gray-200 rounded-lg bg-gray-50 p-1 text-gray-700">
+              {/* Kết quả AI sẽ hiển thị ở đây */}
+            </div>
+          </div>
         </div>
 
         {/* Navigation Buttons */}
