@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
-import { useEffect, useState, useRef, FC } from "react";
+import React, { useEffect, useState, useRef, FC } from "react";
 import {
   getCVTemplateById,
   getCVTemplates,
@@ -21,7 +21,7 @@ import {
   Loader2,
 } from "lucide-react";
 import Image from "next/image";
-import { CVProvider, useCV } from "@/providers/cv-provider";
+import { useCV } from "@/providers/cv-provider";
 import { useOnClickOutside } from "@/hooks/useOnClickOutside";
 import { jwtDecode } from "jwt-decode";
 import { CVEditorPopupsManager } from "@/components/forms/CVEditorPopups";
@@ -45,21 +45,10 @@ const sidebarSections = [
   { id: "skills", title: "Kỹ năng" },
 ];
 
-/**
- * Component Update CV
- * Flow:
- * 1. Nhận cvID từ URL parameter
- * 2. Lấy CV data từ database dựa vào cvID
- * 3. Trích xuất cvTemplateID từ CV data
- * 4. Load template dựa vào cvTemplateID (chỉ để render)
- * 5. Load userData từ content.userData vào context (data thực tế của CV)
- * 6. Render giao diện với template structure + CV userData
- * 7. Title hiển thị và có thể edit được
- */
+
 const PageUpdateCVContent = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
-  // Lấy cvID từ URL parameter
   const cvId = searchParams.get("id"); 
   const { currentTemplate, userData, loadTemplate, updateUserData } = useCV();
 
@@ -81,67 +70,66 @@ const PageUpdateCVContent = () => {
   useOnClickOutside(templateDropdownRef, () => setShowTemplatePopup(false));
   useOnClickOutside(colorDropdownRef, () => setShowColorPopup(false));
 
-  // Function để load CV data và template
-  const loadCVDataAndTemplate = async (cvId: string) => {
-    try {
-      // Bước 1: Lấy CV data từ database dựa vào cvID
-      const cvData = await getCVById(cvId);
-      if (!cvData) {
-        throw new Error("Không tìm thấy CV với ID này.");
-      }
-      
-      setCvData(cvData);
-      
-      // Bước 2: Set title của CV
-      setCvTitle(cvData.title || "Untitled CV");
-      
-      // Bước 3: Lấy cvTemplateID từ CV data
-      if (!cvData.cvTemplateId) {
-        throw new Error("CV không có template ID.");
-      }
-      
-      // Bước 4: Load template dựa vào cvTemplateID
-      const templateData = await getCVTemplateById(cvData.cvTemplateId);
-      if (!templateData) {
-        throw new Error("Không tìm thấy template CV.");
-      }
-      
-      // Bước 5: Load template vào context (chỉ để render, không dùng data của template)
-      loadTemplate(templateData);
-      
-      // Bước 6: Load userData từ content vào context (đây là data thực tế của CV)
-      if (cvData.content?.userData) {
-        updateUserData(cvData.content.userData);
-      } else {
-        console.warn("CV không có userData");
-      }
-      
-    } catch (error) {
-      console.error("Lỗi khi load CV data:", error);
-      alert(error instanceof Error ? error.message : "Không thể tải CV. Vui lòng thử lại.");
-      router.push("/myDocuments");
-    }
-  };
-
   useEffect(() => {
-    // Load tất cả templates để hiển thị trong dropdown
-    getCVTemplates().then((data) => setAllTemplates(data));
+    const loadCVDataAndTemplate = async (id: string) => {
+      try {
+        const cv = await getCVById(id);
+        if (!cv) throw new Error("Không tìm thấy CV với ID này.");
+        
+        setCvData(cv);
+        setCvTitle(cv.title || "Untitled CV");
+        
+        if (!cv.cvTemplateId) throw new Error("CV không có template ID.");
+        
+        const template = await getCVTemplateById(cv.cvTemplateId);
+        if (!template) throw new Error("Không tìm thấy template CV.");
+        
+        loadTemplate(template);
+        
+        if (cv.content?.userData) {
+          updateUserData(cv.content.userData);
+        }
+      } catch (error) {
+        console.error("Lỗi khi load CV data:", error);
+        alert(error instanceof Error ? error.message : "Không thể tải CV.");
+        router.push("/myDocuments");
+      }
+    };
+
+    getCVTemplates().then(setAllTemplates);
     
     if (cvId) {
       setLoading(true);
-      // Load CV data và template dựa vào cvID
-      loadCVDataAndTemplate(cvId).finally(() => {
-        setLoading(false);
-      });
+      loadCVDataAndTemplate(cvId).finally(() => setLoading(false));
     } else {
-      alert("Không tìm thấy ID CV. Vui lòng quay lại trang tài liệu.");
+      alert("Không tìm thấy ID CV.");
       router.push("/myDocuments");
     }
   }, [cvId, loadTemplate, updateUserData, router]);
 
-  const handleTemplateSelect = (selectedTemplate: CVTemplate) => {
-    router.push(`/updateCV?id=${cvId}&templateId=${selectedTemplate._id}`);
-    setShowTemplatePopup(false);
+  const handleTemplateSelect = async (selectedTemplate: CVTemplate) => {
+    setShowTemplatePopup(false); 
+
+    if (currentTemplate?._id === selectedTemplate._id) {
+      return;
+    }
+
+    try {
+      setLoading(true); 
+      const newTemplateData = await getCVTemplateById(selectedTemplate._id);
+      
+      if (newTemplateData) {
+        loadTemplate(newTemplateData);
+        setIsDirty(true); 
+      } else {
+        throw new Error("Không thể tải dữ liệu template mới.");
+      }
+    } catch (error) {
+      console.error("Lỗi khi đổi template:", error);
+      alert("Có lỗi xảy ra khi đổi template.");
+    } finally {
+      setLoading(false); 
+    }
   };
 
   const handleDataUpdate = (updatedData: any) => {
@@ -149,30 +137,9 @@ const PageUpdateCVContent = () => {
     setIsDirty(true);
   };
 
-  const getUserIdFromToken = (): string | null => {
-    if (typeof document === "undefined") return null;
-    const token = document.cookie
-      .split("; ")
-      .find((row) => row.startsWith("token="))
-      ?.split("=")[1];
-    if (!token) return null;
-    try {
-      const decoded = jwtDecode<DecodedToken>(token);
-      return decoded.sub;
-    } catch (error) {
-      console.error("Lỗi giải mã token:", error);
-      return null;
-    }
-  };
-
   const handleSaveToDB = async (): Promise<boolean> => {
-    const userId = getUserIdFromToken();
-    if (!userData || !currentTemplate || !cvId) {
-      alert("Chưa có dữ liệu hoặc mẫu CV để cập nhật.");
-      return false;
-    }
-    if (Object.keys(userData).length === 0) {
-      alert("Dữ liệu CV trống, không thể cập nhật.");
+    if (!userData || !cvId || !currentTemplate) { 
+      alert("Chưa có dữ liệu, ID CV hoặc mẫu CV để cập nhật.");
       return false;
     }
 
@@ -180,8 +147,9 @@ const PageUpdateCVContent = () => {
     try {
       const dataToUpdate: Partial<CV> = {
         content: { userData },
-        title: cvTitle, // Sử dụng title đã chỉnh sửa
+        title: cvTitle,
         updatedAt: new Date().toISOString(),
+        cvTemplateId: currentTemplate._id, 
       };
       
       await updateCV(cvId, dataToUpdate);
@@ -207,34 +175,120 @@ const PageUpdateCVContent = () => {
   const handleSectionClick = (sectionId: string) => {
     setActivePopup(sectionId);
   };
+  
+  // [SỬA LỖI] Đã loại bỏ CVProvider không cần thiết và gây lỗi.
+  const renderCVForPDF = () => {
+    if (!currentTemplate || !userData) return null;
+    const TemplateComponent = templateComponentMap?.[currentTemplate.title];
+    if (!TemplateComponent) return null;
+
+    const componentData = {
+      ...currentTemplate.data,
+      userData: userData,
+    };
+
+    const fontBase64 = "data:font/woff2;base64,d09GMgABAAAAA... (thay bằng chuỗi Base64 thật của font bạn dùng)";
+    const fontName = 'CVFont';
+
+    return (
+      <div>
+        <style>
+          {`
+            @font-face {
+                font-family: '${fontName}'; 
+                src: url(${fontBase64}) format('woff2');
+                font-weight: normal;
+                font-style: normal;
+            }
+          `}
+        </style>
+        <div style={{ fontFamily: `'${fontName}', sans-serif` }}>
+           <TemplateComponent data={componentData} isPdfMode={true} />
+        </div>
+      </div>
+    );
+  };
+
+  const handleDownloadPDF = async () => {
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'fixed';
+    iframe.style.width = '794px';
+    iframe.style.height = '1123px';
+    iframe.style.left = '-9999px';
+    document.body.appendChild(iframe);
+
+    const iframeDoc = iframe.contentWindow?.document;
+    if (!iframeDoc) {
+      alert("Không thể tạo môi trường để xuất PDF.");
+      document.body.removeChild(iframe);
+      return;
+    }
+    
+    const head = iframeDoc.head;
+    document.querySelectorAll('style, link[rel="stylesheet"]').forEach(node => {
+        head.appendChild(node.cloneNode(true));
+    });
+
+    const mountNode = iframeDoc.createElement('div');
+    iframeDoc.body.appendChild(mountNode);
+
+    let root: any = null;
+    
+    try {
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      const { createRoot } = await import('react-dom/client');
+      root = createRoot(mountNode);
+      root.render(renderCVForPDF());
+      
+      await new Promise(resolve => setTimeout(resolve, 500)); 
+
+      const html2pdf = (await import("html2pdf.js"))?.default || (await import("html2pdf.js"));
+      
+      await html2pdf()
+        .from(iframe.contentWindow.document.body)
+        .set({
+            margin: 0,
+            filename: `${cvTitle || "cv"}.pdf`,
+            image: { type: "jpeg", quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true },
+            jsPDF: { unit: "px", format: [794, 1123], orientation: "portrait" },
+        })
+        .save();
+
+    } catch (error) {
+      console.error("Lỗi khi tạo PDF:", error);
+      alert("Có lỗi xảy ra khi xuất file PDF.");
+    } finally {
+      if (root) {
+        root.unmount();
+      }
+      if (document.body.contains(iframe)) {
+          document.body.removeChild(iframe);
+      }
+    }
+  };
 
   const renderCVPreview = () => {
     if (loading || !currentTemplate || !userData) {
-      return <p className="text-center">Đang tải CV...</p>;
+      return <div className="flex justify-center items-center h-full"><Loader2 className="animate-spin" size={48}/></div>;
     }
     const TemplateComponent = templateComponentMap?.[currentTemplate.title];
     if (!TemplateComponent) {
       return <div>Không tìm thấy component cho "{currentTemplate.title}".</div>;
     }
-    // Sử dụng userData của CV (không phải template data)
-    const componentData = {
-      ...currentTemplate.data, // Chỉ lấy cấu trúc template
-      userData: userData, // Sử dụng userData thực tế của CV
-    };
-
+    const componentData = { ...currentTemplate.data, userData: userData };
     const containerWidth = 700;
     const templateOriginalWidth = 794;
     const scaleFactor = containerWidth / templateOriginalWidth;
     return (
       <div className=" max-w-[1050px] origin-top ">
-        <div
-          style={{
+        <div style={{
             width: `${templateOriginalWidth}px`,
             height: `${templateOriginalWidth * (297 / 210)}px`,
             transformOrigin: "top",
             transform: `scale(${scaleFactor})`,
-          }}
-        >
+          }}>
           <TemplateComponent data={componentData} onSectionClick={handleSectionClick}/>
         </div>
       </div>
@@ -249,18 +303,12 @@ const PageUpdateCVContent = () => {
     }
   };
 
-  const handleTitleEdit = () => {
-    setIsEditingTitle(true);
-  };
-
+  const handleTitleEdit = () => setIsEditingTitle(true);
   const handleTitleSave = () => {
     setIsEditingTitle(false);
     setIsDirty(true);
   };
-
-  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setCvTitle(e.target.value);
-  };
+  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => setCvTitle(e.target.value);
 
   return (
     <div className="h-screen w-full bg-slate-50 flex flex-col overflow-x-hidden">
@@ -281,10 +329,7 @@ const PageUpdateCVContent = () => {
                   className="text-2xl font-bold bg-transparent border-b-2 border-blue-500 focus:outline-none text-white"
                   autoFocus
                 />
-                <button
-                  onClick={handleTitleSave}
-                  className="text-blue-400 hover:text-blue-300"
-                >
+                <button onClick={handleTitleSave} className="text-blue-400 hover:text-blue-300">
                   <CheckCircle2 size={16} />
                 </button>
               </div>
@@ -307,10 +352,7 @@ const PageUpdateCVContent = () => {
                 MÀU SẮC
               </button>
               {showColorPopup && (
-                <div
-                  className="absolute top-full mt-3 bg-white rounded-md shadow-lg"
-                  style={{ left: "-7%" }}
-                >
+                <div className="absolute top-full mt-3 bg-white rounded-md shadow-lg" style={{ left: "-7%" }}>
                   <DropdownArrow />
                   <div className="flex gap-2 p-3">
                     <button className="w-6 h-6 rounded-full bg-red-500 hover:ring-2 ring-offset-2 ring-red-500"></button>
@@ -328,32 +370,19 @@ const PageUpdateCVContent = () => {
                 MẪU CV
               </button>
               {showTemplatePopup && (
-                <div
-                  className="absolute top-full mt-3 bg-white rounded-md shadow-lg z-20 p-4 w-[450px]"
-                  style={{ left: "-200%" }}
-                >
+                <div className="absolute top-full mt-3 bg-white rounded-md shadow-lg z-20 p-4 w-[450px]" style={{ left: "-200%" }}>
                   <DropdownArrow />
                   <div className="grid grid-cols-3 gap-4">
                     {allTemplates.map((item) => (
                       <button
                         key={item._id}
                         onClick={() => handleTemplateSelect(item)}
-                        className="relative rounded-md overflow-hidden border-2 transition-colors duration-200
-                                   hover:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
-                                   group"
+                        className="relative rounded-md overflow-hidden border-2 transition-colors duration-200 hover:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 group"
                       >
                         <div className="aspect-[210/297]">
-                          <Image
-                            src={item.imageUrl}
-                            alt={item.title}
-                            layout="fill"
-                            objectFit="cover"
-                            className="transition-transform duration-300 group-hover:scale-105"
-                          />
+                          <Image src={item.imageUrl} alt={item.title} layout="fill" objectFit="cover" className="transition-transform duration-300 group-hover:scale-105"/>
                         </div>
-                        <p className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs text-center py-1">
-                          {item.title}
-                        </p>
+                        <p className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs text-center py-1">{item.title}</p>
                         {currentTemplate?._id === item._id && (
                           <div className="absolute inset-0 bg-blue-500 bg-opacity-60 flex items-center justify-center">
                             <CheckCircle2 size={32} className="text-white" />
@@ -368,23 +397,11 @@ const PageUpdateCVContent = () => {
           </div>
         </div>
         <div className="flex items-center gap-4">
-          <button
-            onClick={handleBackClick}
-            disabled={isSaving}
-            className="bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 px-6 rounded-lg flex items-center gap-2 disabled:opacity-50"
-          >
+          <button onClick={handleBackClick} disabled={isSaving} className="bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 px-6 rounded-lg flex items-center gap-2 disabled:opacity-50">
             <ArrowLeft size={18} /> Quay Lại
           </button>
-          <button
-            onClick={handleFinish}
-            disabled={isSaving}
-            className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-lg flex items-center gap-2 disabled:opacity-50"
-          >
-            {isSaving ? (
-              <Loader2 className="animate-spin mr-2" size={18} />
-            ) : (
-              <CheckCircle2 size={18} />
-            )}
+          <button onClick={handleFinish} disabled={isSaving} className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-lg flex items-center gap-2 disabled:opacity-50">
+            {isSaving ? <Loader2 className="animate-spin mr-2" size={18} /> : <CheckCircle2 size={18} />}
             {isSaving ? "Đang cập nhật..." : "Cập nhật CV"}
           </button>
         </div>
@@ -392,23 +409,13 @@ const PageUpdateCVContent = () => {
 
       <main className="flex-grow flex overflow-hidden">
         <aside className="w-72 bg-white p-6 border-r border-slate-200 overflow-y-auto">
-          <h2 className="text-sm font-bold uppercase text-slate-500 mb-4">
-            CÁC MỤC CỦA CV
-          </h2>
+          <h2 className="text-sm font-bold uppercase text-slate-500 mb-4">CÁC MỤC CỦA CV</h2>
           <nav className="flex flex-col gap-1">
             {sidebarSections.map((section) => (
               <button
                 key={section.id}
-                onClick={() => {
-                  setActiveSection(section.id);
-                  setActivePopup(section.id);
-                }}
-                className={`w-full flex items-center gap-3 p-3 rounded-md font-medium text-left transition-colors
-                  ${
-                    activeSection === section.id
-                      ? "bg-blue-100 text-blue-700"
-                      : "text-slate-700 hover:bg-slate-100"
-                  }`}
+                onClick={() => { setActiveSection(section.id); setActivePopup(section.id); }}
+                className={`w-full flex items-center gap-3 p-3 rounded-md font-medium text-left transition-colors ${activeSection === section.id ? "bg-blue-100 text-blue-700" : "text-slate-700 hover:bg-slate-100"}`}
               >
                 {section.title}
               </button>
@@ -422,7 +429,7 @@ const PageUpdateCVContent = () => {
 
         <aside className="w-72 bg-white p-6 border-l border-slate-200 overflow-y-auto">
           <div className="flex flex-col gap-3">
-            <button className="w-full flex items-center gap-3 p-3 rounded-md text-slate-700 hover:bg-slate-100 font-medium">
+            <button onClick={handleDownloadPDF} className="w-full flex items-center gap-3 p-3 rounded-md text-slate-700 hover:bg-slate-100 font-medium">
               <FileDown size={20} /> Tải về
             </button>
             <button className="w-full flex items-center gap-3 p-3 rounded-md text-slate-700 hover:bg-slate-100 font-medium">
@@ -441,18 +448,13 @@ const PageUpdateCVContent = () => {
         userData={userData}
         handleDataUpdate={handleDataUpdate}
         isSaving={isSaving}
-        onLeaveWithoutSaving={() => {
-          router.push("/myDocuments");
-        }}
+        onLeaveWithoutSaving={() => router.push("/myDocuments")}
         onSaveAndLeave={async () => {
-          const isSuccess = await handleSaveToDB();
-          if (isSuccess) {
-            router.push("/myDocuments");
-          }
+          if (await handleSaveToDB()) router.push("/myDocuments");
         }}
       />
     </div>
   );
 };
 
-export default PageUpdateCVContent; 
+export default PageUpdateCVContent;
