@@ -8,6 +8,7 @@ interface HoverableWrapperProps {
   label: string;
   sectionId: string;
   onClick?: (sectionId: string) => void;
+  isPdfMode?: boolean;
 }
 
 interface SectionProps {
@@ -15,11 +16,13 @@ interface SectionProps {
   children: React.ReactNode;
   sectionId: string;
   onSectionClick?: (sectionId: string) => void;
+  isPdfMode?: boolean;
 }
 
 interface ModernCV1Props {
   data: any;
   onSectionClick?: (sectionId: string) => void;
+  isPdfMode?: boolean;
 }
 
 // --- COMPONENTS ---
@@ -30,17 +33,22 @@ const HoverableWrapper: React.FC<HoverableWrapperProps> = ({
   label,
   sectionId,
   onClick,
+  isPdfMode = false,
 }) => {
+  if (isPdfMode) {
+    return <>{children}</>;
+  }
+
   const labelsWithHoverEffect = [
     "Họ tên & Chức danh",
     "KINH NGHIỆM LÀM VIỆC",
-    "HỌC VẤN"
+    "HỌC VẤN",
   ];
 
   const labelsWithHoverGreenEffect = [
     "THÔNG TIN CÁ NHÂN",
     "MỤC TIÊU SỰ NGHIỆP",
-    "KỸ NĂNG"
+    "KỸ NĂNG",
   ];
 
   const shouldApplyHover = labelsWithHoverEffect.includes(label);
@@ -56,19 +64,20 @@ const HoverableWrapper: React.FC<HoverableWrapperProps> = ({
     transition-all 
     duration-300 
     ease-in-out
-    ${shouldApplyHover ? 'hover:scale-105 hover:bg-white hover:shadow-lg' : ''}
-    ${shouldAvatar ? 'hover:scale-105 hover:shadow-lg' : ''}
-    ${shouldApplyHoverGreen ? 'hover:scale-105 hover:bg-[#004d40] hover:shadow-lg' : ''}
+    ${shouldApplyHover ? "hover:scale-105 hover:bg-white hover:shadow-lg" : ""}
+    ${shouldAvatar ? "hover:scale-105 hover:shadow-lg" : ""}
+    ${
+      shouldApplyHoverGreen
+        ? "hover:scale-105 hover:bg-[#004d40] hover:shadow-lg"
+        : ""
+    }
 
   `;
   // Quyết định class bo tròn dựa trên label
   const borderRadiusClass = label === "Avatar" ? "rounded-full" : "rounded-lg";
 
   return (
-    <div
-      className={finalClassName}
-      onClick={() => onClick?.(sectionId)}
-    >
+    <div className={finalClassName} onClick={() => onClick?.(sectionId)}>
       {children}
       <div
         className={`absolute inset-0 ${borderRadiusClass} border-4 border-[#8BAAFC] opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none`}
@@ -122,6 +131,7 @@ const Section: React.FC<SectionProps> = ({
   children,
   sectionId,
   onSectionClick,
+  isPdfMode = false,
 }) => {
   return (
     <div className="mb-10">
@@ -129,6 +139,7 @@ const Section: React.FC<SectionProps> = ({
         label={title}
         sectionId={sectionId}
         onClick={onSectionClick}
+        isPdfMode={isPdfMode}
       >
         {/* Thêm padding vào đây để nội dung không bị sát lề khi wrapper chiếm 100% width */}
         <div className="px-8 lg:px-12 py-4">
@@ -145,7 +156,11 @@ const Section: React.FC<SectionProps> = ({
 };
 
 // --- MAIN COMPONENT ---
-const ModernCV1: React.FC<ModernCV1Props> = ({ data, onSectionClick }) => {
+const ModernCV1: React.FC<ModernCV1Props> = ({
+  data,
+  onSectionClick,
+  isPdfMode = false,
+}) => {
   const userData = data?.userData || {};
   const professionalTitle = userData.professional || "Chuyên gia";
 
@@ -169,15 +184,30 @@ const ModernCV1: React.FC<ModernCV1Props> = ({ data, onSectionClick }) => {
               label="Avatar"
               sectionId={sectionMap.info}
               onClick={onSectionClick}
+              isPdfMode={isPdfMode}
             >
               <div className="w-40 h-40 lg:w-48 lg:h-48 rounded-full overflow-hidden border-4 border-white/80">
-                <Image
-                  src={userData.avatar || "/avatar-female.png"}
-                  alt={`${userData.firstName || ""} ${userData.lastName || ""}`}
-                  width={300}
-                  height={375}
-                  className="w-full h-full object-cover"
-                />
+                {isPdfMode ? (
+                  <img
+                    src={userData.avatar || "/avatar-female.png"}
+                    alt={`${userData.firstName || ""} ${
+                      userData.lastName || ""
+                    }`}
+                    crossOrigin="anonymous" 
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  // Dùng <Image> của Next.js để tối ưu khi hiển thị trên web
+                  <Image
+                    src={userData.avatar || "/avatar-female.png"}
+                    alt={`${userData.firstName || ""} ${
+                      userData.lastName || ""
+                    }`}
+                    width={300}
+                    height={375}
+                    className="w-full h-full object-cover"
+                  />
+                )}
               </div>
             </HoverableWrapper>
           </div>
@@ -187,6 +217,7 @@ const ModernCV1: React.FC<ModernCV1Props> = ({ data, onSectionClick }) => {
           label="THÔNG TIN CÁ NHÂN"
           sectionId={sectionMap.contact}
           onClick={onSectionClick}
+          isPdfMode={isPdfMode}
         >
           <div className="px-8 lg:px-12">
             <h2 className="text-xl lg:text-2xl font-bold mb-6 pb-3 border-b border-white/50 pt-3">
@@ -221,6 +252,7 @@ const ModernCV1: React.FC<ModernCV1Props> = ({ data, onSectionClick }) => {
           label="MỤC TIÊU SỰ NGHIỆP"
           sectionId={sectionMap.summary}
           onClick={onSectionClick}
+          isPdfMode={isPdfMode}
         >
           <div className="px-8 lg:px-12">
             <h2 className="text-xl lg:text-2xl font-bold mb-6 pb-3 border-b border-white/50 pt-3">
@@ -237,6 +269,7 @@ const ModernCV1: React.FC<ModernCV1Props> = ({ data, onSectionClick }) => {
             label="KỸ NĂNG"
             sectionId={sectionMap.skills}
             onClick={onSectionClick}
+            isPdfMode={isPdfMode}
           >
             <div className="px-8 lg:px-12">
               <h2 className="text-xl lg:text-2xl font-bold mb-6 pb-3 border-b border-white/50  pt-3">
@@ -258,6 +291,7 @@ const ModernCV1: React.FC<ModernCV1Props> = ({ data, onSectionClick }) => {
           label="Họ tên & Chức danh"
           sectionId={sectionMap.info}
           onClick={onSectionClick}
+          isPdfMode={isPdfMode}
         >
           <div className="p-8 lg:p-12 lg:pt-14">
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-gray-800 uppercase">
@@ -276,6 +310,7 @@ const ModernCV1: React.FC<ModernCV1Props> = ({ data, onSectionClick }) => {
             title="KINH NGHIỆM LÀM VIỆC"
             sectionId={sectionMap.experience}
             onSectionClick={onSectionClick}
+            isPdfMode={isPdfMode}
           >
             {(userData.workHistory || []).map((job: any, i: number) => (
               <div key={i} className="mb-8 last:mb-0">
@@ -303,6 +338,7 @@ const ModernCV1: React.FC<ModernCV1Props> = ({ data, onSectionClick }) => {
             title="HỌC VẤN"
             sectionId={sectionMap.education}
             onSectionClick={onSectionClick}
+            isPdfMode={isPdfMode}
           >
             {(userData.education || []).map((edu: any, i: number) => (
               <div key={i} className="mb-8 last:mb-0">

@@ -1,13 +1,14 @@
 import Image from "next/image";
 import React from "react";
 
-// --- PROPS INTERFACES (Giữ nguyên) ---
+// --- PROPS INTERFACES ---
 interface HoverableWrapperProps {
   children: React.ReactNode;
   label: string;
   sectionId: string;
   onClick?: (sectionId: string) => void;
   className?: string;
+  isPdfMode?: boolean; // [SỬA LỖI PDF] Thêm isPdfMode
 }
 
 interface SectionWrapperProps {
@@ -15,11 +16,13 @@ interface SectionWrapperProps {
   children: React.ReactNode;
   sectionId: string;
   onSectionClick?: (sectionId: string) => void;
+  isPdfMode?: boolean; // [SỬA LỖI PDF] Thêm isPdfMode
 }
 
 interface CVTemplateProps {
   data: any;
   onSectionClick?: (sectionId: string) => void;
+  isPdfMode?: boolean;
 }
 
 // --- COMPONENTS ---
@@ -30,16 +33,21 @@ const HoverableWrapper: React.FC<HoverableWrapperProps> = ({
   sectionId,
   onClick,
   className,
+  isPdfMode = false, // [SỬA LỖI PDF] Nhận prop isPdfMode
 }) => {
-  const labelsWithHoverEffect = ["KINH NGHIỆM LÀM VIỆC", "HỌC VẤN"];
+  // [SỬA LỖI PDF] Nếu là chế độ PDF, không render hiệu ứng hover, chỉ trả về nội dung
+  if (isPdfMode) {
+    return <>{children}</>;
+  }
 
+  // --- Code hiển thị hiệu ứng hover cho web giữ nguyên ---
+  const labelsWithHoverEffect = ["KINH NGHIỆM LÀM VIỆC", "HỌC VẤN"];
   const labelsWithHoverGreenEffect = [
     "Họ tên & Chức danh",
     "THÔNG TIN CÁ NHÂN",
     "MỤC TIÊU SỰ NGHIỆP",
     "KỸ NĂNG",
   ];
-
   const shouldApplyHover = labelsWithHoverEffect.includes(label);
   const shouldAvatar = "Avatar".includes(label);
   const shouldApplyHoverGreen = labelsWithHoverGreenEffect.includes(label);
@@ -51,15 +59,10 @@ const HoverableWrapper: React.FC<HoverableWrapperProps> = ({
     transition-all 
     duration-300 
     ease-in-out
-    ${
-      shouldApplyHover ? "hover:scale-105 hover:bg-gray-50 hover:shadow-lg" : ""
-    }
+    ${shouldApplyHover ? "hover:scale-105 hover:bg-gray-50 hover:shadow-lg" : ""}
     ${shouldAvatar ? "hover:scale-105" : ""}
-    ${
-      shouldApplyHoverGreen
-        ? "hover:scale-105 hover:bg-gray-50 hover:shadow-lg"
-        : ""
-    }
+    ${shouldApplyHoverGreen ? "hover:scale-105 hover:bg-gray-50 hover:shadow-lg" : ""}
+    ${className || ""}
   `;
 
   return (
@@ -70,11 +73,7 @@ const HoverableWrapper: React.FC<HoverableWrapperProps> = ({
           <div className="absolute inset-0 rounded-full border-4 border-[#8BAAFC] opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none"></div>
           <div
             className="absolute -top-2 left-0 bg-[#8BAAFC] text-white text-sm font-bold tracking-wide px-3 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none"
-            style={{
-              borderRadius: "4px 10px 4px 10px",
-              marginTop: "-6%",
-              left: "-15%",
-            }}
+            style={{ borderRadius: "4px 10px 4px 10px", marginTop: "-6%", left: "-15%" }}
           >
             {label}
           </div>
@@ -82,22 +81,10 @@ const HoverableWrapper: React.FC<HoverableWrapperProps> = ({
       )}
       {shouldApplyHoverGreen && (
         <>
-          <div
-            className="absolute rounded-lg border-4 border-[#8BAAFC] opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none"
-            style={{
-              width: "100%",
-              height: "100%",
-              left: "0%",
-              top: "0%",
-            }}
-          ></div>
+          <div className="absolute rounded-lg inset-0 border-4 border-[#8BAAFC] opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none"></div>
           <div
             className="absolute top-0 -translate-y-1/2 bg-[#8BAAFC] text-white text-sm font-bold tracking-wide px-3 py-1 opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none"
-            style={{
-              borderRadius: "4px 10px 0 0",
-              marginTop: "-3.5%",
-              left: "1%",
-            }}
+            style={{ borderRadius: "4px 10px 0 0", marginTop: "-3.5%", left: "1%" }}
           >
             {label}
           </div>
@@ -108,11 +95,7 @@ const HoverableWrapper: React.FC<HoverableWrapperProps> = ({
           <div className="absolute inset-0 rounded-lg border-4 border-[#8BAAFC] opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none"></div>
           <div
             className="absolute top-0 left-4 -translate-y-1/2 bg-[#8BAAFC] text-white text-sm font-bold tracking-wide px-3 py-1 opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none"
-            style={{
-              borderRadius: "4px 10px 0 0",
-              marginTop: "-2%",
-              left: "1%",
-            }}
+            style={{ borderRadius: "4px 10px 0 0", marginTop: "-2%", left: "1%" }}
           >
             {label}
           </div>
@@ -121,9 +104,7 @@ const HoverableWrapper: React.FC<HoverableWrapperProps> = ({
     </div>
   );
 };
-/**
- * renderDescription: Giữ nguyên hàm helper để hiển thị mô tả công việc.
- */
+
 const renderDescription = (desc: string) => {
   if (!desc) return null;
   const lines = desc
@@ -139,15 +120,12 @@ const renderDescription = (desc: string) => {
   );
 };
 
-/**
- * SectionWrapper: Một component mới để bọc các section chính (Kinh nghiệm, Học vấn)
- * với tiêu đề và đường gạch chân, theo phong cách của ảnh.
- */
 const SectionWrapper: React.FC<SectionWrapperProps> = ({
   title,
   children,
   sectionId,
   onSectionClick,
+  isPdfMode = false, // [SỬA LỖI PDF] Nhận isPdfMode
 }) => {
   return (
     <div className="mb-10">
@@ -155,6 +133,7 @@ const SectionWrapper: React.FC<SectionWrapperProps> = ({
         label={title}
         sectionId={sectionId}
         onClick={onSectionClick}
+        isPdfMode={isPdfMode} // [SỬA LỖI PDF] Truyền isPdfMode xuống component con
       >
         <div className="p-4">
           <h2 className="text-2xl font-bold text-gray-800 uppercase tracking-wider mb-4 pb-2 border-b-2 border-gray-300">
@@ -167,10 +146,11 @@ const SectionWrapper: React.FC<SectionWrapperProps> = ({
   );
 };
 
-// --- MAIN COMPONENT (Giao diện mới - Đã sửa Full-Width) ---
+// --- MAIN COMPONENT ---
 const CVTemplateInspired: React.FC<CVTemplateProps> = ({
   data,
   onSectionClick,
+  isPdfMode = false,
 }) => {
   const userData = data?.userData || {};
 
@@ -193,30 +173,39 @@ const CVTemplateInspired: React.FC<CVTemplateProps> = ({
               sectionId={sectionMap.info}
               onClick={onSectionClick}
               className="w-full h-full"
+              isPdfMode={isPdfMode} // [SỬA LỖI PDF] Truyền isPdfMode
             >
               <div className="w-full h-full rounded-full overflow-hidden border-4 border-white/80">
                 <div className="w-full h-full relative aspect-square">
-                  <Image
-                    src={userData.avatar || "/avatar-female.png"}
-                    alt={`${userData.firstName || ""} ${
-                      userData.lastName || ""
-                    }`}
-                    fill
-                    style={{ objectFit: "cover" }}
-                    className="rounded-full"
-                  />
+                  {/* [SỬA LỖI PDF] Dùng <img> cho PDF và <Image> cho web */}
+                  {isPdfMode ? (
+                    <img
+                      src={userData.avatar || "/avatar-female.png"}
+                      alt={`${userData.firstName || ""} ${userData.lastName || ""}`}
+                      crossOrigin="anonymous"
+                      className="rounded-full w-full h-full object-cover"
+                    />
+                  ) : (
+                    <Image
+                      src={userData.avatar || "/avatar-female.png"}
+                      alt={`${userData.firstName || ""} ${userData.lastName || ""}`}
+                      fill
+                      style={{ objectFit: "cover" }}
+                      className="rounded-full"
+                    />
+                  )}
                 </div>
               </div>
             </HoverableWrapper>
           </div>
 
-          {/* Khối Tên & Chức danh - Thêm div w-full để chiếm hết không gian còn lại */}
           <div className="w-full">
             <HoverableWrapper
               label="Họ tên & Chức danh"
               sectionId={sectionMap.info}
               onClick={onSectionClick}
               className=" w-full"
+              isPdfMode={isPdfMode} // [SỬA LỖI PDF] Truyền isPdfMode
             >
               <h1 className="pt-12 pr-6 pl-6 text-4xl lg:text-5xl font-bold text-gray-900 uppercase">
                 {userData.firstName} {userData.lastName}
@@ -228,11 +217,11 @@ const CVTemplateInspired: React.FC<CVTemplateProps> = ({
           </div>
         </div>
 
-        {/* --- Kinh nghiệm làm việc --- */}
         <SectionWrapper
           title="KINH NGHIỆM LÀM VIỆC"
           sectionId={sectionMap.experience}
           onSectionClick={onSectionClick}
+          isPdfMode={isPdfMode} // [SỬA LỖI PDF] Truyền isPdfMode
         >
           {(userData.workHistory || []).map((job: any, i: number) => (
             <div key={i}>
@@ -245,19 +234,17 @@ const CVTemplateInspired: React.FC<CVTemplateProps> = ({
                     : `${job.endDate?.slice(5, 7)}/${job.endDate?.slice(0, 4)}`}
                 </span>
               </div>
-              <h4 className="font-semibold text-md text-gray-700 mb-1">
-                {job.company}
-              </h4>
+              <h4 className="font-semibold text-md text-gray-700 mb-1">{job.company}</h4>
               {renderDescription(job.description)}
             </div>
           ))}
         </SectionWrapper>
 
-        {/* --- Học vấn --- */}
         <SectionWrapper
           title="HỌC VẤN"
           sectionId={sectionMap.education}
           onSectionClick={onSectionClick}
+          isPdfMode={isPdfMode} // [SỬA LỖI PDF] Truyền isPdfMode
         >
           {(userData.education || []).map((edu: any, i: number) => (
             <div key={i}>
@@ -275,15 +262,14 @@ const CVTemplateInspired: React.FC<CVTemplateProps> = ({
         </SectionWrapper>
       </div>
 
-      {/* --- CỘT PHẢI (THÔNG TIN PHỤ) -- */}
       <div className="w-full lg:w-[35%] bg-gray-50 p-4 lg:p-8">
-        {/* --- Thông tin cá nhân --- */}
         <div className="mb-10 w-[calc(100%+48px)] -ml-6">
           <HoverableWrapper
             label="THÔNG TIN CÁ NHÂN"
             sectionId={sectionMap.contact}
             onClick={onSectionClick}
             className="p-4 relative"
+            isPdfMode={isPdfMode} // [SỬA LỖI PDF] Truyền isPdfMode
           >
             <h2 className="pt-4 pl-4 text-xl font-bold text-gray-800 uppercase tracking-wider mb-4 pb-2 border-b-2 border-gray-300">
               Thông tin cá nhân
@@ -299,30 +285,28 @@ const CVTemplateInspired: React.FC<CVTemplateProps> = ({
               </div>
               <div>
                 <strong className="font-semibold block">Địa chỉ:</strong>
-                <span>
-                  {userData.city}, {userData.country}
-                </span>
+                <span>{userData.city}, {userData.country}</span>
               </div>
             </div>
           </HoverableWrapper>
         </div>
 
-        {/* --- Mục tiêu sự nghiệp --- */}
         <div className="mb-10 w-[calc(100%+48px)] -ml-6">
           <HoverableWrapper
             label="MỤC TIÊU SỰ NGHIỆP"
             sectionId={sectionMap.summary}
             onClick={onSectionClick}
             className="p-4 relative"
+            isPdfMode={isPdfMode} // [SỬA LỖI PDF] Truyền isPdfMode
           >
             <h2 className="pt-4 pl-4 text-xl font-bold text-gray-800 uppercase tracking-wider mb-3 pb-2 border-b-2 border-gray-300">
               Mục tiêu sự nghiệp
             </h2>
-            <p  className="pl-4 pr-4 pb-4 text-gray-700 leading-relaxed">{userData.summary}</p>
+            <p className="pl-4 pr-4 pb-4 text-gray-700 leading-relaxed">{userData.summary}</p>
+
           </HoverableWrapper>
         </div>
 
-        {/* --- Kỹ năng --- */}
         {userData.skills?.length > 0 && (
           <div className="mb-10 w-[calc(100%+48px)] -ml-6">
             <HoverableWrapper
@@ -330,6 +314,7 @@ const CVTemplateInspired: React.FC<CVTemplateProps> = ({
               sectionId={sectionMap.skills}
               onClick={onSectionClick}
               className="p-4 relative"
+              isPdfMode={isPdfMode} // [SỬA LỖI PDF] Truyền isPdfMode
             >
               <h2 className="pl-4 pt-4 text-xl font-bold text-gray-800 uppercase tracking-wider mb-4 pb-2 border-b-2 border-gray-300">
                 Kỹ năng
