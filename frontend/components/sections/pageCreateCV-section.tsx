@@ -84,6 +84,10 @@ const PageCreateCVContent = () => {
             if (templateData.title) {
               setCvTitle(templateData.title);
             }
+            // Ưu tiên userData từ context, nếu không có thì mới lấy từ DB
+            if ((!userData || Object.keys(userData).length === 0) && templateData.content?.userData) {
+              updateUserData(templateData.content.userData);
+            }
           }
           setLoading(false);
         })
@@ -93,7 +97,8 @@ const PageCreateCVContent = () => {
           getCVTemplateById(idFromUrl).then((templateData) => {
             if (templateData) {
               loadTemplate(templateData);
-              if (templateData.data?.userData) {
+              // Ưu tiên userData từ context, nếu không có thì mới lấy từ DB
+              if ((!userData || Object.keys(userData).length === 0) && templateData.data?.userData) {
                 updateUserData(templateData.data.userData);
               }
               setCvTitle(`CV - ${templateData.title}`);
@@ -104,7 +109,7 @@ const PageCreateCVContent = () => {
     } else {
       setLoading(false);
     }
-  }, [id, loadTemplate, updateUserData]);
+  }, [id, loadTemplate, updateUserData, userData]);
 
   const handleTemplateSelect = (selectedTemplate: CVTemplate) => {
     router.push(

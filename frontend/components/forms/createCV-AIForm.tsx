@@ -33,6 +33,7 @@ export const InfoForm: FC<FormProps> = ({ data, onUpdate }) => {
         <label htmlFor="avatar" className="block text-gray-700 text-sm font-bold mb-2">Ảnh Đại Diện (URL)</label>
         <input type="text" id="avatar" placeholder={data.avatar || ""} onChange={handleChange} className="shadow-sm appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"/>
       </div>
+      
     </div>
   );
 };
@@ -67,7 +68,19 @@ export const SummaryForm: FC<FormProps> = ({ data, onUpdate }) => {
   return (
     <div>
       <label htmlFor="summary" className="block text-sm font-medium text-gray-700">Giới thiệu bản thân và mục tiêu nghề nghiệp</label>
-      <textarea id="summary" placeholder={data?.summary || "Giới thiệu bản thân và mục tiêu nghề nghiệp"} onChange={(e) => onUpdate({ ...data, summary: e.target.value })} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" rows={12}></textarea>
+      <textarea id="summary" placeholder={data?.summary || "Giới thiệu bản thân và mục tiêu nghề nghiệp"} onChange={(e) => onUpdate({ ...data, summary: e.target.value })} className="h-200 mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" rows={6}></textarea>
+    
+      <div className="flex flex-col items-start space-y-4 mt-8">
+        <button
+          type="button"
+          className="max-w-200 bg-yellow-400 hover:bg-yellow-500 text-white font-bold py-3 px-6 rounded-lg shadow transition-colors"
+        >
+          AI gợi ý dựa trên JD
+        </button>
+        <div className="w-full min-h-[50px] border border-gray-200 rounded-lg bg-gray-50 p-4 text-gray-700">
+       
+        </div>
+      </div>
     </div>
   );
 };
@@ -150,6 +163,18 @@ export const ExperienceForm: FC<FormProps> = ({ data, onUpdate }) => {
       <div className="flex justify-end gap-2 mt-4">
         <button onClick={() => setIsEditing(false)} className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md text-sm">Hủy</button>
         <button onClick={handleFormSubmit} className="bg-blue-500 text-white px-4 py-2 rounded-md text-sm">{editingIndex !== null ? "Lưu" : "Thêm"}</button>
+      </div>
+      {/* Nút AI gợi ý và ô hiển thị kết quả */}
+      <div className="flex flex-col items-start space-y-4 mt-8">
+        <button
+          type="button"
+          className="max-w-200 bg-yellow-400 hover:bg-yellow-500 text-white font-bold py-3 px-6 rounded-lg shadow transition-colors"
+        >
+          AI gợi ý dựa trên JD
+        </button>
+        <div className="w-full min-h-[50px] border border-gray-200 rounded-lg bg-gray-50 p-4 text-gray-700">
+          {/* Kết quả AI sẽ hiển thị ở đây */}
+        </div>
       </div>
     </div>
   ) : (
@@ -248,6 +273,18 @@ export const EducationForm: FC<FormProps> = ({ data, onUpdate }) => {
         <button onClick={() => setIsEditing(false)} className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md text-sm">Hủy</button>
         <button onClick={handleFormSubmit} className="bg-blue-500 text-white px-4 py-2 rounded-md text-sm">{editingIndex !== null ? "Lưu" : "Thêm"}</button>
       </div>
+      {/* Nút AI gợi ý và ô hiển thị kết quả */}
+      <div className="flex flex-col items-start space-y-4 mt-8">
+        <button
+          type="button"
+          className="max-w-200 bg-yellow-400 hover:bg-yellow-500 text-white font-bold py-3 px-6 rounded-lg shadow transition-colors"
+        >
+          AI gợi ý dựa trên JD
+        </button>
+        <div className="w-full min-h-[50px] border border-gray-200 rounded-lg bg-gray-50 p-4 text-gray-700">
+          {/* Kết quả AI sẽ hiển thị ở đây */}
+        </div>
+      </div>
     </div>
   ) : (
     <div className="space-y-4">
@@ -305,6 +342,18 @@ export const SkillsForm: FC<FormProps> = ({ data, onUpdate }) => {
       <div className="flex gap-2">
         <input type="text" value={newSkill} onChange={(e) => setNewSkill(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addSkill()} className="flex-grow shadow-sm border rounded w-full py-2 px-3" placeholder="Thêm kỹ năng mới"/>
         <button onClick={addSkill} className="bg-blue-500 text-white font-semibold px-4 rounded-md hover:bg-blue-600">Thêm</button>
+      </div>
+      {/* Nút AI gợi ý và ô hiển thị kết quả */}
+      <div className="flex flex-col items-start space-y-4 mt-8">
+        <button
+          type="button"
+          className="max-w-200 bg-yellow-400 hover:bg-yellow-500 text-white font-bold py-3 px-6 rounded-lg shadow transition-colors"
+        >
+          AI gợi ý dựa trên JD
+        </button>
+        <div className="w-full min-h-[50px] border border-gray-200 rounded-lg bg-gray-50 p-4 text-gray-700">
+          {/* Kết quả AI sẽ hiển thị ở đây */}
+        </div>
       </div>
     </div>
   );
