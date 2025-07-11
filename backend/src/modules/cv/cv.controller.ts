@@ -1,4 +1,8 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, Param, Patch, Post, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname } from 'path';
+import * as pdf from 'pdf-parse';
 import { User } from '../../common/decorators/user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CvTemplate } from '../cv-template/schemas/cv-template.schema';
@@ -6,7 +10,6 @@ import { CvAiService } from './cv-ai.service';
 import { CvService } from './cv.service';
 import { CreateCvDto } from './dto/create-cv.dto';
 import { GenerateCvDto } from './dto/generate-cv.dto';
-
 /**
  * Controller for handling CV (Curriculum Vitae) related requests
  * Most endpoints require authentication using JWT
@@ -29,6 +32,240 @@ export class CvController {
   @Get()
   getAll(@User('_id') userId: string) {
     return this.cvService.getAllCVs(userId);
+  }
+
+  /**
+   * Get all saved CVs for the current user
+   * @param userId - The ID of the authenticated user
+   */
+  @UseGuards(JwtAuthGuard)
+  @Get('saved')
+  async getSavedCVs(@User('_id') userId: string) {
+    return this.cvService.getSavedCVs(userId);
+  }
+
+  /**
+   * Get all available CV templates
+   * @returns Array of CV templates
+   * @public - No authentication required
+   */
+  @Get('templates')
+  async getAllTemplates(): Promise<CvTemplate[]> {
+    return this.cvService.getAllTemplates();
+  }
+
+  /**
+   * Get a specific CV template by ID
+   * @param id - The ID of the template to retrieve
+   * @returns Template object
+   * @public - No authentication required
+   */
+  @Get('templates/:id')
+  async getTemplateById(@Param('id') id: string): Promise<CvTemplate> {
+    return this.cvService.getTemplateById(id);
+  }
+
+  /**
+   * Phân tích Job Description (JD) bằng AI, trả về kết quả phân tích
+   */
+  @UseGuards(JwtAuthGuard)
+  @Post('analyze-jd')
+  async analyzeJobDescription(@Body('jobDescription') jobDescription: string) {
+    return this.cvAiService.analyzeJobDescription(jobDescription);
+  }
+
+  /**
+   * Sinh CV với AI dựa trên kết quả phân tích JD đã có
+   * @param userId - ID user
+   * @param jobAnalysis - Kết quả phân tích JD
+   * @param additionalRequirements - Yêu cầu bổ sung (nếu có)
+   */
+  @UseGuards(JwtAuthGuard)
+  @Post('generate-with-ai')
+  async generateCvWithAI(
+    @User('_id') userId: string,
+    @Body('jobAnalysis') jobAnalysis: any,
+    @Body('additionalRequirements') additionalRequirements?: string
+  ) {
+    return this.cvAiService.generateCvWithJobAnalysis(userId, jobAnalysis, additionalRequirements);
+  }
+
+  /**
+   * Generate and save CV with AI
+   * @param generateCvDto - Job description and generation parameters
+   * @param userId - The ID of the authenticated user
+   */
+  @UseGuards(JwtAuthGuard)
+  @Post('generate-and-save')
+  async generateAndSaveCv(@Body() generateCvDto: GenerateCvDto, @User('_id') userId: string) {
+    // Generate CV with AI
+    const aiResult = await this.cvAiService.generateCvWithAI(userId, generateCvDto);
+    
+    if (!aiResult.success) {
+      throw new Error('Failed to generate CV with AI');
+    }
+
+    // Create CV using the generated content
+    const createCvDto: CreateCvDto = {
+      cvTemplateId: aiResult.data.cvTemplateId,
+      title: aiResult.data.title,
+      content: aiResult.data.content,
+    };
+
+    // Save the generated CV
+    const savedCv = await this.cvService.createCV(createCvDto, userId);
+
+    return {
+      success: true,
+      message: 'CV generated and saved successfully',
+      cv: savedCv,
+      jobAnalysis: aiResult.data.jobAnalysis,
+    };
+  }
+
+  /**
+   * Check OpenAI API status
+   */
+  @UseGuards(JwtAuthGuard)
+  @Get('ai-status')
+  async checkAiStatus() {
+    return this.cvAiService.checkOpenAiStatus();
+  }
+
+  /**
+   * Gợi ý Professional Summary bằng AI
+   */
+  @UseGuards(JwtAuthGuard)
+  @Post('suggest/summary')
+  async suggestSummary(
+    @User() user: any,
+    @Body('jobAnalysis') jobAnalysis: any,
+    @Body('additionalRequirements') additionalRequirements?: string
+  ) {
+    return this.cvAiService.suggestProfessionalSummary(user, jobAnalysis, additionalRequirements);
+  }
+
+  /**
+   * Gợi ý Skills Section bằng AI
+   */
+  @UseGuards(JwtAuthGuard)
+  @Post('suggest/skills')
+  async suggestSkills(
+    @Body('jobAnalysis') jobAnalysis: any,
+    @Body('userSkills') userSkills?: Array<{ name: string; rating: number }>
+  ) {
+    return this.cvAiService.suggestSkillsSection(jobAnalysis, userSkills);
+  }
+
+  /**
+   * Gợi ý Work Experience bằng AI
+   */
+  @UseGuards(JwtAuthGuard)
+  @Post('suggest/work-experience')
+  async suggestWorkExperience(
+    @Body('jobAnalysis') jobAnalysis: any,
+    @Body('experienceLevel') experienceLevel: string
+  ) {
+    return this.cvAiService.suggestWorkExperience(jobAnalysis, experienceLevel);
+  }
+
+  /**
+   * Upload and analyze CV PDF using AI
+   * @param file - The uploaded PDF file
+   * @param userId - The ID of the authenticated user
+   * @returns Analysis results and suggestions
+   * @requires Authentication
+   */
+  @UseGuards(JwtAuthGuard)
+  @Post('upload-and-analyze')
+  @UseInterceptors(FileInterceptor('cvFile', {
+    limits: { fileSize: 10 * 1024 * 1024 },
+    fileFilter: (req, file, cb) => {
+      if (!file.mimetype || !file.mimetype.includes('pdf')) {
+        return cb(new BadRequestException('Only PDF files are allowed!'), false);
+      }
+      cb(null, true);
+    }
+  }))
+  async uploadAndAnalyzeCv(@UploadedFile() file: any) {
+    if (!file) {
+      throw new BadRequestException('No CV file uploaded or invalid file type.');
+    }
+    // 1. Trích xuất text từ PDF
+    const pdfData = await pdf(file.buffer);
+    const cvText = pdfData.text;
+    if (!cvText || cvText.trim().length === 0) {
+      throw new BadRequestException('Could not extract text from PDF.');
+    }
+    // 2. Gửi text cho AI phân tích
+    const analysisResult = await this.cvAiService.analyzeCvContent(cvText);
+    // 3. Trả về kết quả phân tích
+    return {
+      analysisResult,
+    };
+  }
+
+  /**
+   * Upload CV PDF, analyze it, and generate optimized PDF based on job description
+   * @param file - The uploaded CV PDF file
+   * @param jobDescription - Job description text
+   * @param userId - The ID of the authenticated user
+   * @returns Analysis results, suggestions, and optimized PDF
+   * @requires Authentication
+   */
+  @UseGuards(JwtAuthGuard)
+  @Post('upload-analyze-generate-pdf')
+  @UseInterceptors(
+    FileInterceptor('cvFile', {
+      storage: diskStorage({
+        destination: './uploads',
+        filename: (req, file, cb) => {
+          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+          const ext = extname(file.originalname);
+          cb(null, `cv-${uniqueSuffix}${ext}`);
+        },
+      }),
+      fileFilter: (req, file, cb) => {
+        if (!file.mimetype.match(/^application\/pdf$/)) {
+          return cb(
+            new BadRequestException('Only PDF files are allowed for CV upload!'),
+            false
+          );
+        }
+        cb(null, true);
+      },
+      limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit for CV files
+    })
+  )
+  async uploadAnalyzeAndGeneratePdf(
+    @UploadedFile() file: any,
+    @Body('jobDescription') jobDescription: string,
+    @User('_id') userId: string
+  ) {
+    if (!file) {
+      throw new BadRequestException('No CV file uploaded or invalid file type.');
+    }
+
+    if (!jobDescription || jobDescription.trim().length === 0) {
+      throw new BadRequestException('Job description is required.');
+    }
+
+    const filePath = file.path;
+    const result = await this.cvAiService.uploadAnalyzeAndGeneratePdf(
+      userId,
+      filePath,
+      jobDescription
+    );
+
+    if (!result.success) {
+      throw new BadRequestException(result.error || 'Failed to process CV');
+    }
+
+    return {
+      success: true,
+      message: 'CV analyzed and optimized PDF generated successfully',
+      data: result.data
+    };
   }
 
   /**
@@ -124,89 +361,5 @@ export class CvController {
   @Post(':id/unshare')
   async unshareCV(@Param('id') id: string, @User('_id') userId: string) {
     return this.cvService.unshareCV(id, userId);
-  }
-
-  /**
-   * Get all saved CVs for the current user
-   * @param userId - The ID of the authenticated user
-   */
-  @UseGuards(JwtAuthGuard)
-  @Get('saved')
-  async getSavedCVs(@User('_id') userId: string) {
-    return this.cvService.getSavedCVs(userId);
-  }
-
-  /**
-   * Get all available CV templates
-   * @returns Array of CV templates
-   * @public - No authentication required
-   */
-  @Get('templates')
-  async getAllTemplates(): Promise<CvTemplate[]> {
-    return this.cvService.getAllTemplates();
-  }
-
-  /**
-   * Get a specific CV template by ID
-   * @param id - The ID of the template to retrieve
-   * @returns Template object
-   * @public - No authentication required
-   */
-  @Get('templates/:id')
-  async getTemplateById(@Param('id') id: string): Promise<CvTemplate> {
-    return this.cvService.getTemplateById(id);
-  }
-
-  /**
-   * Generate CV with AI based on job description
-   * @param generateCvDto - Job description and generation parameters
-   * @param userId - The ID of the authenticated user
-   */
-  @UseGuards(JwtAuthGuard)
-  @Post('generate-with-ai')
-  async generateCvWithAI(@Body() generateCvDto: GenerateCvDto, @User('_id') userId: string) {
-    return this.cvAiService.generateCvWithAI(userId, generateCvDto);
-  }
-
-  /**
-   * Generate and save CV with AI
-   * @param generateCvDto - Job description and generation parameters
-   * @param userId - The ID of the authenticated user
-   */
-  @UseGuards(JwtAuthGuard)
-  @Post('generate-and-save')
-  async generateAndSaveCv(@Body() generateCvDto: GenerateCvDto, @User('_id') userId: string) {
-    // Generate CV with AI
-    const aiResult = await this.cvAiService.generateCvWithAI(userId, generateCvDto);
-    
-    if (!aiResult.success) {
-      throw new Error('Failed to generate CV with AI');
-    }
-
-    // Create CV using the generated content
-    const createCvDto: CreateCvDto = {
-      cvTemplateId: aiResult.data.cvTemplateId,
-      title: aiResult.data.title,
-      content: aiResult.data.content,
-    };
-
-    // Save the generated CV
-    const savedCv = await this.cvService.createCV(createCvDto, userId);
-
-    return {
-      success: true,
-      message: 'CV generated and saved successfully',
-      cv: savedCv,
-      jobAnalysis: aiResult.data.jobAnalysis,
-    };
-  }
-
-  /**
-   * Check OpenAI API status
-   */
-  @UseGuards(JwtAuthGuard)
-  @Get('ai-status')
-  async checkAiStatus() {
-    return this.cvAiService.checkOpenAiStatus();
   }
 } 

@@ -15,12 +15,13 @@ export class OpenAiService {
     @InjectModel(User.name) private userModel: Model<User>
   ) {
     const apiKey = this.configService.get<string>("OPENAI_API_KEY");
+    console.log('DEBUG OPENAI_API_KEY (ConfigService):', apiKey);
+    console.log('DEBUG OPENAI_API_KEY (process.env):', process.env.OPENAI_API_KEY);
     if (!apiKey) {
       this.logger.warn("OPENAI_API_KEY not found in environment variables");
     }
 
     this.openai = new OpenAI({
-      baseURL: "https://models.github.ai/inference",
       apiKey: apiKey,
     });
   }
@@ -70,7 +71,7 @@ Return only valid JSON without any additional text.
 `;
 
       const completion = await this.openai.chat.completions.create({
-        model: "gpt-3.5-turbo",
+        model: "gpt-4o",
         messages: [
           {
             role: "system",
@@ -150,7 +151,7 @@ Write only the summary without any additional text or formatting.
 `;
 
       const completion = await this.openai.chat.completions.create({
-        model: "gpt-3.5-turbo",
+        model: "gpt-4o",
         messages: [
           {
             role: "system",
@@ -242,7 +243,7 @@ Return only valid JSON.
 `;
 
       const completion = await this.openai.chat.completions.create({
-        model: "gpt-3.5-turbo",
+        model: "gpt-4o",
         messages: [
           {
             role: "system",
@@ -328,7 +329,7 @@ Return only valid JSON array.
 `;
 
       const completion = await this.openai.chat.completions.create({
-        model: "gpt-3.5-turbo",
+        model: "gpt-4o",
         messages: [
           {
             role: "system",
@@ -377,7 +378,7 @@ Return only valid JSON array.
   }> {
     try {
       const completion = await this.openai.chat.completions.create({
-        model: "gpt-3.5-turbo",
+        model: "gpt-4o",
         messages: [{ role: "user", content: "Hello" }],
         max_tokens: 10,
       });
@@ -481,5 +482,184 @@ Return only valid JSON array.
       name: skill.charAt(0).toUpperCase() + skill.slice(1),
       rating: Math.floor(Math.random() * 3) + 3,
     }));
+  }
+
+  /**
+   * Analyze CV content using OpenAI
+   */
+  async analyzeCvContent(cvText: string): Promise<{
+    personalInfo: {
+      name: string;
+      email: string;
+      phone: string;
+      location: string;
+    };
+    summary: string;
+    skills: Array<{ name: string; rating: number }>;
+    workExperience: Array<{
+      title: string;
+      company: string;
+      startDate: string;
+      endDate: string;
+      description: string;
+    }>;
+    education: Array<{
+      degree: string;
+      institution: string;
+      startDate: string;
+      endDate: string;
+    }>;
+    certifications: string[];
+    strengths: string[];
+    areasForImprovement: string[];
+  }> {
+    try {
+      const prompt = `
+Analyze the following CV content and extract structured information in JSON format:
+
+CV Content:
+${cvText}
+
+Please provide a detailed analysis in the following JSON structure:
+{
+  "personalInfo": {
+    "name": "Full Name",
+    "email": "email@example.com",
+    "phone": "phone number",
+    "location": "city, country"
+  },
+  "summary": "Professional summary extracted from CV",
+  "skills": [
+    {
+      "name": "Skill Name",
+      "rating": 4
+    }
+  ],
+  "workExperience": [
+    {
+      "title": "Job Title",
+      "company": "Company Name",
+      "startDate": "YYYY-MM-DD",
+      "endDate": "YYYY-MM-DD or Present",
+      "description": "Job description"
+    }
+  ],
+  "education": [
+    {
+      "degree": "Degree Name",
+      "institution": "Institution Name",
+      "startDate": "YYYY-MM-DD",
+      "endDate": "YYYY-MM-DD"
+    }
+  ],
+  "certifications": ["cert1", "cert2"],
+  "strengths": ["strength1", "strength2"],
+  "areasForImprovement": ["area1", "area2"]
+}
+
+Focus on:
+- Extract personal information accurately
+- Identify all skills mentioned with appropriate ratings (1-5)
+- Parse work experience with dates and descriptions
+- Extract education details
+- Identify certifications and achievements
+- Analyze strengths and areas for improvement
+- Ensure all dates are in YYYY-MM-DD format
+
+Return only valid JSON without any additional text.
+`;
+
+      const completion = await this.openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are a professional CV analyzer. Always respond with valid JSON format.",
+          },
+          {
+            role: "user",
+            content: prompt,
+          },
+        ],
+        temperature: 0.3,
+        max_tokens: 2000,
+      });
+
+      const response = completion.choices[0]?.message?.content;
+      if (!response) {
+        throw new Error("No response from OpenAI");
+      }
+
+      // Loại bỏ markdown nếu có
+      let cleanResponse = response.trim();
+      if (cleanResponse.startsWith('```json')) {
+        cleanResponse = cleanResponse.replace(/^```json/, '').replace(/```$/, '').trim();
+      } else if (cleanResponse.startsWith('```')) {
+        cleanResponse = cleanResponse.replace(/^```/, '').replace(/```$/, '').trim();
+      }
+
+      // Parse JSON response
+      const analysis = JSON.parse(cleanResponse);
+
+      this.logger.log("CV content analysis completed successfully");
+      return analysis;
+    } catch (error) {
+      this.logger.error(
+        `Error analyzing CV content: ${error.message}`,
+        error.stack
+      );
+
+      // Check if it's a quota exceeded error
+      if (error.message.includes("429") || error.message.includes("quota")) {
+        this.logger.warn("OpenAI quota exceeded, using fallback CV analysis");
+        return this.fallbackCvAnalysis(cvText);
+      }
+
+      // Fallback to basic analysis if OpenAI fails
+      return this.fallbackCvAnalysis(cvText);
+    }
+  }
+
+  /**
+   * Fallback CV analysis when OpenAI is not available
+   */
+  private fallbackCvAnalysis(cvText: string) {
+    const lines = cvText.split('\n').filter(line => line.trim());
+    
+    return {
+      personalInfo: {
+        name: "Extracted from CV",
+        email: "email@example.com",
+        phone: "phone number",
+        location: "location"
+      },
+      summary: "Professional summary extracted from CV content",
+      skills: [
+        { name: "Problem Solving", rating: 4 },
+        { name: "Communication", rating: 4 },
+        { name: "Teamwork", rating: 4 }
+      ],
+      workExperience: [
+        {
+          title: "Software Developer",
+          company: "Company Name",
+          startDate: "2020-01-01",
+          endDate: "Present",
+          description: "Developed and maintained applications"
+        }
+      ],
+      education: [
+        {
+          degree: "Bachelor's Degree",
+          institution: "University Name",
+          startDate: "2016-09-01",
+          endDate: "2020-06-30"
+        }
+      ],
+      certifications: ["Relevant Certification"],
+      strengths: ["Strong technical skills", "Good communication"],
+      areasForImprovement: ["Could add more specific achievements", "Consider adding more quantifiable results"]
+    };
   }
 }
