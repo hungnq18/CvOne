@@ -455,4 +455,49 @@ export class CvPdfService {
       return { success: false, error: error.message };
     }
   }
+
+  /**
+   * Create optimized CV PDF with original layout and return as buffer (no file output)
+   */
+  async createOptimizedCvPdfBufferWithOriginalLayout(
+    originalCvAnalysis: any,
+    optimizedCv: any,
+    jobDescription: string,
+    jobAnalysis: any
+  ): Promise<Buffer> {
+    return new Promise((resolve, reject) => {
+      const PDFDocument = require('pdfkit');
+      const { PassThrough } = require('stream');
+      const doc = new PDFDocument({
+        size: 'A4',
+        margins: { top: 50, bottom: 50, left: 50, right: 50 }
+      });
+      const bufferChunks: Buffer[] = [];
+      const passthrough = new PassThrough();
+      doc.pipe(passthrough);
+      passthrough.on('data', (chunk: Buffer) => bufferChunks.push(chunk));
+      passthrough.on('end', () => resolve(Buffer.concat(bufferChunks)));
+      passthrough.on('error', (err: any) => reject(err));
+
+      // Header with personal info (using optimized data but original layout)
+      this.addHeader(doc, {
+        name: `${optimizedCv.userData.firstName} ${optimizedCv.userData.lastName}`,
+        email: optimizedCv.userData.email,
+        phone: optimizedCv.userData.phone,
+        location: `${optimizedCv.userData.city}, ${optimizedCv.userData.country}`
+      });
+      // Professional Summary (optimized)
+      this.addSection(doc, 'Professional Summary', optimizedCv.userData.summary);
+      // Skills (optimized and prioritized)
+      const prioritizedSkills = this.prioritizeSkills(optimizedCv.userData.skills, jobAnalysis);
+      this.addSkillsSection(doc, prioritizedSkills);
+      // Work Experience (optimized)
+      this.addWorkExperienceSection(doc, optimizedCv.userData.workHistory);
+      // Education (optimized)
+      this.addEducationSection(doc, optimizedCv.userData.education);
+      // Job Requirements Match Analysis
+      this.addJobRequirementsMatch(doc, optimizedCv.userData, jobAnalysis);
+      doc.end();
+    });
+  }
 } 

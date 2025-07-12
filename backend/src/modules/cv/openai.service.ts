@@ -123,16 +123,16 @@ Return only valid JSON without any additional text.
   }
 
   /**
-   * Generate professional summary using OpenAI
+   * Generate multiple professional summaries using OpenAI
    */
   async generateProfessionalSummary(
     userProfile: any,
     jobAnalysis: any,
     additionalRequirements?: string
-  ): Promise<string> {
+  ): Promise<string[]> {
     try {
       const prompt = `
-Generate a compelling professional summary for a CV based on the following information:
+Generate 3 different compelling professional summaries for a CV based on the following information:
 
 User Profile:
 - Name: ${userProfile.first_name} ${userProfile.last_name}
@@ -147,15 +147,21 @@ Job Analysis:
 
 Additional Requirements: ${additionalRequirements || "None"}
 
-Create a professional summary that:
-1. Highlights relevant skills and experience
-2. Matches the job requirements
-3. Shows enthusiasm and potential
-4. Is 2-3 sentences long
-5. Uses professional language
-6. Focuses on value proposition
+Create 3 professional summaries that:
+1. Highlight relevant skills and experience
+2. Match the job requirements
+3. Show enthusiasm and potential
+4. Are 2-3 sentences long
+5. Use professional language
+6. Focus on value proposition
 
-Write only the summary without any additional text or formatting.
+Return only a JSON array of 3 summaries, e.g.:
+[
+  "Summary 1...",
+  "Summary 2...",
+  "Summary 3..."
+]
+Do not include any explanation or markdown, only valid JSON.
 `;
 
       const completion = await this.openai.chat.completions.create({
@@ -164,7 +170,7 @@ Write only the summary without any additional text or formatting.
           {
             role: "system",
             content:
-              "You are a professional CV writer. Create compelling and relevant professional summaries.",
+              "You are a professional CV writer. Create compelling and relevant professional summaries. Always return a JSON array of 3 summaries.",
           },
           {
             role: "user",
@@ -172,23 +178,34 @@ Write only the summary without any additional text or formatting.
           },
         ],
         temperature: 0.7,
-        max_tokens: 200,
+        max_tokens: 400,
       });
 
-      const summary = completion.choices[0]?.message?.content;
-      return summary || this.generateFallbackSummary(userProfile, jobAnalysis);
+      let response = completion.choices[0]?.message?.content;
+      if (!response) {
+        throw new Error("No response from OpenAI");
+      }
+      // Remove markdown if present
+      let cleanResponse = response.trim();
+      if (cleanResponse.startsWith('```json')) {
+        cleanResponse = cleanResponse.replace(/^```json/, '').replace(/```$/, '').trim();
+      } else if (cleanResponse.startsWith('```')) {
+        cleanResponse = cleanResponse.replace(/^```/, '').replace(/```$/, '').trim();
+      }
+      const summaries = JSON.parse(cleanResponse);
+      if (Array.isArray(summaries) && summaries.length === 3) {
+        return summaries;
+      }
+      // fallback: wrap single summary in array
+      return [cleanResponse];
     } catch (error) {
       this.logger.error(
         `Error generating professional summary: ${error.message}`,
         error.stack
       );
-
-      // Check if it's a quota exceeded error
-      if (error.message.includes("429") || error.message.includes("quota")) {
-        this.logger.warn("OpenAI quota exceeded, using fallback summary");
-      }
-
-      return this.generateFallbackSummary(userProfile, jobAnalysis);
+      // fallback: return 3 copies of fallback summary
+      const fallback = this.generateFallbackSummary(userProfile, jobAnalysis);
+      return [fallback, fallback, fallback];
     }
   }
 
@@ -297,18 +314,18 @@ Return only valid JSON.
   }
 
   /**
-   * Generate skills section with ratings using OpenAI
+   * Generate multiple skills section options with ratings using OpenAI
    */
   async generateSkillsSection(
     jobAnalysis: any,
     userSkills?: Array<{ name: string; rating: number }>
-  ): Promise<Array<{ name: string; rating: number }>> {
+  ): Promise<Array<Array<{ name: string; rating: number }>>> {
     try {
       const existingSkills =
         userSkills?.map((s) => s.name).join(", ") || "None";
 
       const prompt = `
-Generate a skills section for a CV based on the job analysis and existing user skills.
+Generate 3 different skills section options for a CV based on the job analysis and existing user skills.
 
 Job Analysis:
 - Required Skills: ${jobAnalysis.requiredSkills?.join(", ") || "Not specified"}
@@ -317,7 +334,7 @@ Job Analysis:
 
 Existing User Skills: ${existingSkills}
 
-Create a skills list in JSON format with ratings (1-5):
+Each option should be a skills list in JSON format with ratings (1-5):
 [
   {
     "name": "Skill Name",
@@ -326,14 +343,20 @@ Create a skills list in JSON format with ratings (1-5):
 ]
 
 Requirements:
-- Include both required skills and technologies from job analysis
+- Each option should include both required skills and technologies from job analysis
 - Add relevant soft skills (communication, teamwork, leadership, etc.)
 - Rate skills appropriately for the experience level
-- Include 8-12 skills total
+- Include 8-12 skills per option
 - Use proper capitalization for skill names
 - Ratings: 1=Beginner, 2=Elementary, 3=Intermediate, 4=Advanced, 5=Expert
 
-Return only valid JSON array.
+Return only a JSON array of 3 skills lists, e.g.:
+[
+  [ { "name": "Skill 1", "rating": 4 }, ... ],
+  [ { "name": "Skill 1", "rating": 4 }, ... ],
+  [ { "name": "Skill 1", "rating": 4 }, ... ]
+]
+Do not include any explanation or markdown, only valid JSON.
 `;
 
       const completion = await this.openai.chat.completions.create({
@@ -342,7 +365,7 @@ Return only valid JSON array.
           {
             role: "system",
             content:
-              "You are a professional CV writer. Create relevant skills sections with appropriate ratings.",
+              "You are a professional CV writer. Create relevant skills sections with appropriate ratings. Always return a JSON array of 3 skills lists.",
           },
           {
             role: "user",
@@ -350,28 +373,34 @@ Return only valid JSON array.
           },
         ],
         temperature: 0.4,
-        max_tokens: 400,
+        max_tokens: 1000,
       });
 
-      const response = completion.choices[0]?.message?.content;
+      let response = completion.choices[0]?.message?.content;
       if (!response) {
         throw new Error("No response from OpenAI");
       }
-
-      const skills = JSON.parse(response);
-      return skills;
+      // Remove markdown if present
+      let cleanResponse = response.trim();
+      if (cleanResponse.startsWith('```json')) {
+        cleanResponse = cleanResponse.replace(/^```json/, '').replace(/```$/, '').trim();
+      } else if (cleanResponse.startsWith('```')) {
+        cleanResponse = cleanResponse.replace(/^```/, '').replace(/```$/, '').trim();
+      }
+      const skillsLists = JSON.parse(cleanResponse);
+      if (Array.isArray(skillsLists) && skillsLists.length === 3) {
+        return skillsLists;
+      }
+      // fallback: wrap single list in array
+      return [skillsLists];
     } catch (error) {
       this.logger.error(
         `Error generating skills section: ${error.message}`,
         error.stack
       );
-
-      // Check if it's a quota exceeded error
-      if (error.message.includes("429") || error.message.includes("quota")) {
-        this.logger.warn("OpenAI quota exceeded, using fallback skills");
-      }
-
-      return this.generateFallbackSkills(jobAnalysis);
+      // fallback: return 3 copies of fallback skills
+      const fallback = this.generateFallbackSkills(jobAnalysis);
+      return [fallback, fallback, fallback];
     }
   }
 

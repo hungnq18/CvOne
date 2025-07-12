@@ -1,7 +1,6 @@
-import { BadRequestException, Body, Controller, Delete, Get, Param, Patch, Post, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, Param, Patch, Post, Res, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
-import { extname } from 'path';
+import * as multer from 'multer';
 import * as pdf from 'pdf-parse';
 import { User } from '../../common/decorators/user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -218,14 +217,7 @@ export class CvController {
   @Post('upload-analyze-generate-pdf')
   @UseInterceptors(
     FileInterceptor('cvFile', {
-      storage: diskStorage({
-        destination: './uploads',
-        filename: (req, file, cb) => {
-          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-          const ext = extname(file.originalname);
-          cb(null, `cv-${uniqueSuffix}${ext}`);
-        },
-      }),
+      storage: multer.memoryStorage(),
       fileFilter: (req, file, cb) => {
         if (!file.mimetype.match(/^application\/pdf$/)) {
           return cb(
@@ -235,44 +227,40 @@ export class CvController {
         }
         cb(null, true);
       },
-      limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit for CV files
+      limits: { fileSize: 10 * 1024 * 1024 },
     })
   )
   async uploadAnalyzeAndGeneratePdf(
     @UploadedFile() file: any,
     @Body('jobDescription') jobDescription: string,
     @User('_id') userId: string,
-    @Body('additionalRequirements') additionalRequirements?: string
+    @Body('additionalRequirements') additionalRequirements: string,
+    @Res() res: any
   ) {
     if (!file) {
       throw new BadRequestException('No CV file uploaded or invalid file type.');
     }
-
     if (!jobDescription || jobDescription.trim().length === 0) {
       throw new BadRequestException('Job description is required.');
     }
-
     if (!userId) {
       throw new BadRequestException('User ID is required.');
     }
-
-    const filePath = file.path;
-    const result = await this.cvAiService.uploadAnalyzeAndGeneratePdf(
+    // Xử lý file từ buffer, trả về PDF buffer
+    const result = await this.cvAiService.uploadAnalyzeAndGeneratePdfBufferFromBuffer(
       userId,
-      filePath,
+      file.buffer,
       jobDescription,
       additionalRequirements
     );
-
-    if (!result.success) {
+    if (!result.success || !result.pdfBuffer) {
       throw new BadRequestException(result.error || 'Failed to process CV');
     }
-
-    return {
-      success: true,
-      message: 'CV analyzed, optimized, and PDF generated successfully',
-      data: result.data
-    };
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': 'attachment; filename="optimized-cv.pdf"',
+    });
+    res.send(result.pdfBuffer);
   }
 
   /**

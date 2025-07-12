@@ -104,14 +104,16 @@ export class CvAiService {
    * Public: Gợi ý Professional Summary bằng AI
    */
   public async suggestProfessionalSummary(user: any, jobAnalysis: any, additionalRequirements?: string) {
-    return this.openAiService.generateProfessionalSummary(user, jobAnalysis, additionalRequirements);
+    // Now returns an array of summaries
+    return { summaries: await this.openAiService.generateProfessionalSummary(user, jobAnalysis, additionalRequirements) };
   }
 
   /**
    * Public: Gợi ý Skills Section bằng AI
    */
   public async suggestSkillsSection(jobAnalysis: any, userSkills?: Array<{ name: string; rating: number }>) {
-    return this.openAiService.generateSkillsSection(jobAnalysis, userSkills);
+    // Now returns an array of skills lists
+    return { skillsOptions: await this.openAiService.generateSkillsSection(jobAnalysis, userSkills) };
   }
 
   /**
@@ -371,6 +373,158 @@ export class CvAiService {
         this.logger.warn(`Failed to delete uploaded file: ${cleanupError.message}`);
       }
 
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
+
+  /**
+   * Upload CV PDF (buffer), analyze it, and generate optimized PDF based on job description
+   */
+  public async uploadAnalyzeAndGeneratePdfFromBuffer(
+    userId: string,
+    pdfBuffer: Buffer,
+    jobDescription: string,
+    additionalRequirements?: string
+  ): Promise<{
+    success: boolean;
+    data?: {
+      cvAnalysis: any;
+      jobAnalysis: any;
+      optimizedCv: any;
+      suggestions: any;
+      pdfPath: string;
+    };
+    error?: string;
+  }> {
+    try {
+      // 1. Extract text from PDF buffer
+      const pdfData = await pdf(pdfBuffer);
+      const cvText = pdfData.text;
+
+      if (!cvText || cvText.trim().length === 0) {
+        throw new Error("Could not extract text from PDF. Please ensure the PDF contains readable text.");
+      }
+
+      // 2. Analyze CV content using AI
+      const cvAnalysis = await this.openAiService.analyzeCvContent(cvText);
+
+      // 3. Analyze job description
+      const jobAnalysis = await this.openAiService.analyzeJobDescription(jobDescription);
+
+      // 4. Generate optimized CV with AI (NEW STEP)
+      const optimizedCv = await this.generateOptimizedCvWithAI(
+        cvAnalysis,
+        jobAnalysis,
+        additionalRequirements
+      );
+
+      // 5. Generate suggestions
+      const suggestions = await this.generateCvSuggestions(cvAnalysis);
+
+      // 6. Generate optimized PDF with original layout preserved
+      const outputFileName = `optimized-cv-${Date.now()}.pdf`;
+      const outputPath = path.join('./uploads', outputFileName);
+      
+      const pdfResult = await this.cvPdfService.createOptimizedCvPdfWithOriginalLayout(
+        cvAnalysis, // Original CV analysis for layout reference
+        optimizedCv, // Optimized CV content
+        jobDescription,
+        jobAnalysis,
+        outputPath
+      );
+
+      if (!pdfResult.success) {
+        throw new Error(pdfResult.error || 'Failed to generate PDF');
+      }
+
+      return {
+        success: true,
+        data: {
+          cvAnalysis,
+          jobAnalysis,
+          optimizedCv,
+          suggestions,
+          pdfPath: `/uploads/${outputFileName}`
+        }
+      };
+    } catch (error) {
+      this.logger.error(
+        `Error in uploadAnalyzeAndGeneratePdfFromBuffer: ${error.message}`,
+        error.stack
+      );
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
+
+  /**
+   * Upload CV PDF (buffer), analyze it, and generate optimized PDF as buffer (no file output)
+   */
+  public async uploadAnalyzeAndGeneratePdfBufferFromBuffer(
+    userId: string,
+    pdfBuffer: Buffer,
+    jobDescription: string,
+    additionalRequirements?: string
+  ): Promise<{
+    success: boolean;
+    pdfBuffer?: Buffer;
+    cvAnalysis?: any;
+    jobAnalysis?: any;
+    optimizedCv?: any;
+    suggestions?: any;
+    error?: string;
+  }> {
+    try {
+      // 1. Extract text from PDF buffer
+      const pdfData = await pdf(pdfBuffer);
+      const cvText = pdfData.text;
+
+      if (!cvText || cvText.trim().length === 0) {
+        throw new Error("Could not extract text from PDF. Please ensure the PDF contains readable text.");
+      }
+
+      // 2. Analyze CV content using AI
+      const cvAnalysis = await this.openAiService.analyzeCvContent(cvText);
+
+      // 3. Analyze job description
+      const jobAnalysis = await this.openAiService.analyzeJobDescription(jobDescription);
+
+      // 4. Generate optimized CV with AI
+      const optimizedCv = await this.generateOptimizedCvWithAI(
+        cvAnalysis,
+        jobAnalysis,
+        additionalRequirements
+      );
+
+      // 5. Generate suggestions
+      const suggestions = await this.generateCvSuggestions(cvAnalysis);
+
+      // 6. Generate optimized PDF as buffer
+      const pdfBufferOut = await this.cvPdfService.createOptimizedCvPdfBufferWithOriginalLayout(
+        cvAnalysis,
+        optimizedCv,
+        jobDescription,
+        jobAnalysis
+      );
+
+      return {
+        success: true,
+        pdfBuffer: pdfBufferOut,
+        cvAnalysis,
+        jobAnalysis,
+        optimizedCv,
+        suggestions
+      };
+    } catch (error) {
+      this.logger.error(
+        `Error in uploadAnalyzeAndGeneratePdfBufferFromBuffer: ${error.message}`,
+        error.stack
+      );
       return {
         success: false,
         error: error.message
