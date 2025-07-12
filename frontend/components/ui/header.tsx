@@ -124,28 +124,14 @@ const navigationItems = {
       {
         name: "CV",
         href: "/cvTemplates",
-        dropdownItems: [
-          { name: "CV Templates", href: "/cvTemplates" },
-          { name: "CV Examples", href: "/cv/examples" },
-          { name: "CV Tips", href: "/cv/tips" },
-        ],
       },
       {
         name: "Cover Letter",
         href: "/clTemplate",
-        dropdownItems: [
-          { name: "Cover Letter Templates", href: "/clTemplate" },
-          { name: "Cover Letter Examples", href: "/cover-letter/examples" },
-          { name: "Cover Letter Tips", href: "/cover-letter/tips" },
-        ],
       },
       {
         name: "Job",
         href: "/jobPage",
-        dropdownItems: [
-          { name: "Job List", href: "/jobPage" },
-          { name: "Job Tips", href: "/jobPage/tips" },
-        ],
       },
     ],
     admin: [

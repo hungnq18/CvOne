@@ -73,10 +73,42 @@ export const InfoPopup: FC<{
   onSave: (updatedData: any) => void;
 }> = ({ onClose, initialData, onSave }) => {
   const [formData, setFormData] = useState(initialData);
+  const [isUploading, setIsUploading] = useState(false);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
     setFormData((prevData: any) => ({ ...prevData, [id]: value }));
+  };
+
+  // Xử lý upload avatar lên Cloudinary
+  const handleAvatarUpload = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploading(true);
+    const formDataUpload = new FormData();
+    formDataUpload.append('file', file);
+    formDataUpload.append(
+      'upload_preset',
+      process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET!
+    );
+    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+    const uploadUrl = `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`;
+    try {
+      const response = await fetch(uploadUrl, {
+        method: 'POST',
+        body: formDataUpload,
+      });
+      if (!response.ok) {
+        throw new Error('Tải ảnh lên thất bại. Vui lòng kiểm tra lại cấu hình preset.');
+      }
+      const responseData = await response.json();
+      setFormData((prevData: any) => ({ ...prevData, avatar: responseData.secure_url }));
+    } catch (error) {
+      console.error(error);
+      alert(error instanceof Error ? error.message : "Có lỗi xảy ra khi tải ảnh lên.");
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleSaveChanges = () => {
@@ -90,6 +122,33 @@ export const InfoPopup: FC<{
       onClose={onClose}
       onSave={handleSaveChanges}
     >
+      {/* Avatar lên đầu popup */}
+      <div className="mb-4">
+        <label className="block text-gray-700 text-sm font-bold mb-2">Ảnh Đại Diện</label>
+        <div className="flex items-center gap-4 mt-1">
+          {formData.avatar && (
+            <img src={formData.avatar} alt="Avatar Preview" className="w-20 h-20 rounded-full object-cover border-2 border-gray-200"/>
+          )}
+          <div className="relative">
+            <input
+              type="file"
+              id="avatar-upload-popup"
+              accept="image/png, image/jpeg, image/jpg"
+              onChange={handleAvatarUpload}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              disabled={isUploading}
+            />
+            <button
+              type="button"
+              className="bg-blue-500 text-white font-bold py-2 px-4 rounded-md hover:bg-blue-600 disabled:bg-gray-400 transition-colors"
+              disabled={isUploading}
+              onClick={() => document.getElementById('avatar-upload-popup')?.click()}
+            >
+              {isUploading ? 'Đang tải...' : 'Chọn ảnh'}
+            </button>
+          </div>
+        </div>
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         <div>
           <label
@@ -133,21 +192,6 @@ export const InfoPopup: FC<{
           type="text"
           id="professional"
           value={formData.professional || ""}
-          onChange={handleChange}
-          className="shadow-sm appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-      </div>
-      <div className="mb-4">
-        <label
-          htmlFor="avatar"
-          className="block text-gray-700 text-sm font-bold mb-2"
-        >
-          Ảnh Đại Diện (URL)
-        </label>
-        <input
-          type="text"
-          id="avatar"
-          value={formData.avatar || ""}
           onChange={handleChange}
           className="shadow-sm appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
