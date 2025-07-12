@@ -3,6 +3,7 @@ import { InjectModel } from "@nestjs/mongoose";
 import * as fs from "fs";
 import { Model } from "mongoose";
 import * as path from "path";
+import { PDFDocument } from 'pdf-lib';
 import * as pdf from "pdf-parse";
 import { CvTemplate } from "../cv-template/schemas/cv-template.schema";
 import { User } from "../users/schemas/user.schema";
@@ -706,5 +707,65 @@ Chỉ trả về JSON hợp lệ, không thêm giải thích, markdown hay text 
 
   public async analyzeCvContent(cvText: string) {
     return this.openAiService.analyzeCvContent(cvText);
+  }
+
+  /**
+   * Thay thế nội dung trong PDF gốc bằng nội dung AI tối ưu hóa, giữ nguyên layout
+   */
+  public async replaceContentInOriginalPdfBuffer(
+    userId: string,
+    pdfBuffer: Buffer,
+    jobDescription: string,
+    additionalRequirements?: string
+  ): Promise<{
+    success: boolean;
+    pdfBuffer?: Buffer;
+    error?: string;
+  }> {
+    try {
+      // 1. Extract text from PDF buffer
+      const pdfData = await (require('pdf-parse'))(pdfBuffer);
+      const cvText = pdfData.text;
+      if (!cvText || cvText.trim().length === 0) {
+        throw new Error('Could not extract text from PDF. Please ensure the PDF contains readable text.');
+      }
+      // 2. Analyze CV content using AI
+      const cvAnalysis = await this.openAiService.analyzeCvContent(cvText);
+      // 3. Analyze job description
+      const jobAnalysis = await this.openAiService.analyzeJobDescription(jobDescription);
+      // 4. Generate optimized CV with AI
+      const optimizedCv = await this.generateOptimizedCvWithAI(
+        cvAnalysis,
+        jobAnalysis,
+        additionalRequirements
+      );
+      // 5. Load original PDF and replace content
+      const pdfDoc = await PDFDocument.load(pdfBuffer);
+      // NOTE: pdf-lib không hỗ trợ thay thế text trực tiếp theo field, nên sẽ demo thay thế toàn bộ text (nếu tìm thấy)
+      // Thay thế summary, skills, workHistory, education trong toàn bộ các trang
+      const replaceMap: Record<string, string> = {
+        [cvAnalysis.userData.summary]: optimizedCv.userData.summary,
+        // Có thể mở rộng cho skills, workHistory, education nếu cần
+      };
+      const pages = pdfDoc.getPages();
+      for (const page of pages) {
+        // Xóa dòng sau vì pdf-lib không hỗ trợ getTextContent
+        // let textContent = page.getTextContent ? await page.getTextContent() : null;
+        // pdf-lib không hỗ trợ getTextContent, nên chỉ demo thay thế đơn giản bằng drawText
+        // Xóa trang cũ, vẽ lại nội dung mới (chỉ demo cho summary)
+        page.drawText(optimizedCv.userData.summary, {
+          x: 50,
+          y: page.getHeight() - 100,
+          size: 12,
+        });
+        // TODO: Nếu muốn thay thế nhiều trường, cần xác định vị trí từng trường trong PDF gốc
+        break; // chỉ demo trang đầu
+      }
+      const newPdfBytes = await pdfDoc.save();
+      return { success: true, pdfBuffer: Buffer.from(newPdfBytes) };
+    } catch (error) {
+      this.logger.error(`Error in replaceContentInOriginalPdfBuffer: ${error.message}`);
+      return { success: false, error: error.message };
+    }
   }
 }

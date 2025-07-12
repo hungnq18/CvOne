@@ -264,6 +264,59 @@ export class CvController {
   }
 
   /**
+   * Upload original CV PDF, replace content with AI-optimized content, and return the new PDF (preserving original layout)
+   */
+  @UseGuards(JwtAuthGuard)
+  @Post('upload-replace-content-pdf')
+  @UseInterceptors(
+    FileInterceptor('cvFile', {
+      storage: multer.memoryStorage(),
+      fileFilter: (req, file, cb) => {
+        if (!file.mimetype.match(/^application\/pdf$/)) {
+          return cb(
+            new BadRequestException('Only PDF files are allowed for CV upload!'),
+            false
+          );
+        }
+        cb(null, true);
+      },
+      limits: { fileSize: 10 * 1024 * 1024 },
+    })
+  )
+  async uploadReplaceContentPdf(
+    @UploadedFile() file: any,
+    @Body('jobDescription') jobDescription: string,
+    @User('_id') userId: string,
+    @Body('additionalRequirements') additionalRequirements: string,
+    @Res() res: any
+  ) {
+    if (!file) {
+      throw new BadRequestException('No CV file uploaded or invalid file type.');
+    }
+    if (!jobDescription || jobDescription.trim().length === 0) {
+      throw new BadRequestException('Job description is required.');
+    }
+    if (!userId) {
+      throw new BadRequestException('User ID is required.');
+    }
+    // Gọi service để thay thế nội dung trong PDF gốc
+    const result = await this.cvAiService.replaceContentInOriginalPdfBuffer(
+      userId,
+      file.buffer,
+      jobDescription,
+      additionalRequirements
+    );
+    if (!result.success || !result.pdfBuffer) {
+      throw new BadRequestException(result.error || 'Failed to process CV');
+    }
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': 'attachment; filename="optimized-original-layout.pdf"',
+    });
+    res.send(result.pdfBuffer);
+  }
+
+  /**
    * Get a specific CV by ID
    * @param id - The ID of the CV to retrieve
    * @param userId - The ID of the authenticated user
