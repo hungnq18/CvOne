@@ -56,9 +56,9 @@ function CreateCVwithAI() {
     },
     {
       id: 4,
-      name: "Mục tiêu sự nghiệp",
+      name: "Kỹ năng",
       description:
-        "Một đoạn tóm tắt ngắn gọn về bản thân và định hướng công việc của bạn.",
+        "Các kỹ năng chuyên môn và kỹ năng mềm liên quan đến công việc.",
     },
     {
       id: 5,
@@ -74,9 +74,9 @@ function CreateCVwithAI() {
     },
     {
       id: 7,
-      name: "Kỹ năng",
+      name: "Mục tiêu sự nghiệp",
       description:
-        "Các kỹ năng chuyên môn và kỹ năng mềm liên quan đến công việc.",
+        "Một đoạn tóm tắt ngắn gọn về bản thân và định hướng công việc của bạn.",
     },
     {
       id: 8,
@@ -234,15 +234,23 @@ function CreateCVwithAI() {
           </div>
         );
       case 4:
-        return <SummaryForm data={safeUserData} onUpdate={updateUserData} />;
+        return <SkillsForm data={safeUserData} onUpdate={updateUserData} />;
       case 5:
         return <ExperienceForm data={safeUserData} onUpdate={updateUserData} />;
       case 6:
         return <EducationForm data={safeUserData} onUpdate={updateUserData} />;
       case 7:
-        return <SkillsForm data={safeUserData} onUpdate={updateUserData} />;
+        return <SummaryForm data={safeUserData} onUpdate={updateUserData} />;
       default:
-        return <> <h1>Tiếp Theo Bạn sẽ được đưa tới trang tạo CV để xem lại CV sau đó bạn có thể chọn lưu hoặc tải về</h1> </>;
+        return (
+          <>
+            {" "}
+            <h1>
+              Tiếp Theo Bạn sẽ được đưa tới trang tạo CV để xem lại CV sau đó
+              bạn có thể chọn lưu hoặc tải về
+            </h1>{" "}
+          </>
+        );
     }
   };
 
