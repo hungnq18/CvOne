@@ -209,6 +209,7 @@ export class CvController {
    * Upload CV PDF, analyze it, and generate optimized PDF based on job description
    * @param file - The uploaded CV PDF file
    * @param jobDescription - Job description text
+   * @param additionalRequirements - Additional requirements for optimization (optional)
    * @param userId - The ID of the authenticated user
    * @returns Analysis results, suggestions, and optimized PDF
    * @requires Authentication
@@ -240,7 +241,8 @@ export class CvController {
   async uploadAnalyzeAndGeneratePdf(
     @UploadedFile() file: any,
     @Body('jobDescription') jobDescription: string,
-    @User('_id') userId: string
+    @User('_id') userId: string,
+    @Body('additionalRequirements') additionalRequirements?: string
   ) {
     if (!file) {
       throw new BadRequestException('No CV file uploaded or invalid file type.');
@@ -250,11 +252,16 @@ export class CvController {
       throw new BadRequestException('Job description is required.');
     }
 
+    if (!userId) {
+      throw new BadRequestException('User ID is required.');
+    }
+
     const filePath = file.path;
     const result = await this.cvAiService.uploadAnalyzeAndGeneratePdf(
       userId,
       filePath,
-      jobDescription
+      jobDescription,
+      additionalRequirements
     );
 
     if (!result.success) {
@@ -263,7 +270,7 @@ export class CvController {
 
     return {
       success: true,
-      message: 'CV analyzed and optimized PDF generated successfully',
+      message: 'CV analyzed, optimized, and PDF generated successfully',
       data: result.data
     };
   }

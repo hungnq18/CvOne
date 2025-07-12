@@ -284,12 +284,14 @@ export class CvAiService {
   public async uploadAnalyzeAndGeneratePdf(
     userId: string,
     cvFilePath: string,
-    jobDescription: string
+    jobDescription: string,
+    additionalRequirements?: string
   ): Promise<{
     success: boolean;
     data?: {
       cvAnalysis: any;
       jobAnalysis: any;
+      optimizedCv: any;
       suggestions: any;
       pdfPath: string;
     };
@@ -311,15 +313,23 @@ export class CvAiService {
       // 3. Analyze job description
       const jobAnalysis = await this.openAiService.analyzeJobDescription(jobDescription);
 
-      // 4. Generate suggestions
+      // 4. Generate optimized CV with AI (NEW STEP)
+      const optimizedCv = await this.generateOptimizedCvWithAI(
+        cvAnalysis,
+        jobAnalysis,
+        additionalRequirements
+      );
+
+      // 5. Generate suggestions
       const suggestions = await this.generateCvSuggestions(cvAnalysis);
 
-      // 5. Generate optimized PDF
+      // 6. Generate optimized PDF with original layout preserved
       const outputFileName = `optimized-cv-${Date.now()}.pdf`;
       const outputPath = path.join('./uploads', outputFileName);
       
-      const pdfResult = await this.cvPdfService.createOptimizedCvPdf(
-        cvAnalysis,
+      const pdfResult = await this.cvPdfService.createOptimizedCvPdfWithOriginalLayout(
+        cvAnalysis, // Original CV analysis for layout reference
+        optimizedCv, // Optimized CV content
         jobDescription,
         jobAnalysis,
         outputPath
@@ -329,7 +339,7 @@ export class CvAiService {
         throw new Error(pdfResult.error || 'Failed to generate PDF');
       }
 
-      // 6. Clean up original uploaded file
+      // 7. Clean up original uploaded file
       try {
         fs.unlinkSync(cvFilePath);
       } catch (error) {
@@ -341,6 +351,7 @@ export class CvAiService {
         data: {
           cvAnalysis,
           jobAnalysis,
+          optimizedCv,
           suggestions,
           pdfPath: `/uploads/${outputFileName}`
         }
@@ -364,6 +375,93 @@ export class CvAiService {
         success: false,
         error: error.message
       };
+    }
+  }
+
+  /**
+   * Generate optimized CV with AI after analyzing user CV and job description
+   * Điều chỉnh CV người dùng để gây ấn tượng với nhà tuyển dụng
+   */
+  public async generateOptimizedCvWithAI(
+    userCvAnalysis: any,
+    jobAnalysis: any,
+    additionalRequirements?: string
+  ): Promise<any> {
+    try {
+      const prompt = `
+Bạn là chuyên gia viết CV. Dưới đây là phân tích CV gốc của ứng viên và phân tích mô tả công việc (JD):
+
+CV gốc của ứng viên (dạng JSON):
+${JSON.stringify(userCvAnalysis, null, 2)}
+
+Phân tích JD (dạng JSON):
+${JSON.stringify(jobAnalysis, null, 2)}
+
+Yêu cầu:
+- Dựa trên CV gốc và JD, hãy điều chỉnh lại toàn bộ nội dung CV để làm nổi bật các kỹ năng, kinh nghiệm, thành tựu phù hợp nhất với JD.
+- Nhấn mạnh các điểm mạnh, giảm thiểu điểm yếu, tăng sức thuyết phục với nhà tuyển dụng.
+- Có thể thay đổi, bổ sung, sắp xếp lại các phần (summary, skills, workHistory, education, ...), miễn sao gây ấn tượng tốt nhất với nhà tuyển dụng cho vị trí này.
+- Sử dụng ngôn ngữ chuyên nghiệp, súc tích, tập trung vào giá trị ứng viên mang lại cho công ty.
+- Trả về kết quả dưới dạng JSON đúng cấu trúc sau:
+{
+  "userData": {
+    "firstName": "",
+    "lastName": "",
+    "professional": "",
+    "city": "",
+    "country": "",
+    "province": "",
+    "phone": "",
+    "email": "",
+    "avatar": "",
+    "summary": "",
+    "skills": [ { "name": "", "rating": 4 } ],
+    "workHistory": [ { "title": "", "company": "", "startDate": "YYYY-MM-DD", "endDate": "YYYY-MM-DD", "description": "" } ],
+    "education": [ { "startDate": "YYYY-MM-DD", "endDate": "YYYY-MM-DD", "major": "", "degree": "", "institution": "" } ]
+  }
+}
+${additionalRequirements ? `\nYêu cầu bổ sung: ${additionalRequirements}` : ''}
+
+Chỉ trả về JSON hợp lệ, không thêm giải thích, markdown hay text thừa.
+`;
+
+      const openai = this.openAiService.getOpenAI();
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content:
+              "Bạn là chuyên gia tối ưu hóa CV để gây ấn tượng với nhà tuyển dụng. Luôn trả về JSON đúng schema.",
+          },
+          {
+            role: "user",
+            content: prompt,
+          },
+        ],
+        temperature: 0.5,
+        max_tokens: 2000,
+      });
+
+      let response = completion.choices[0]?.message?.content;
+      if (!response) {
+        throw new Error("No response from OpenAI");
+      }
+      // Loại bỏ markdown nếu có
+      let cleanResponse = response.trim();
+      if (cleanResponse.startsWith('```json')) {
+        cleanResponse = cleanResponse.replace(/^```json/, '').replace(/```$/, '').trim();
+      } else if (cleanResponse.startsWith('```')) {
+        cleanResponse = cleanResponse.replace(/^```/, '').replace(/```$/, '').trim();
+      }
+      const optimizedCv = JSON.parse(cleanResponse);
+      return optimizedCv;
+    } catch (error) {
+      this.logger.error(
+        `Error generating optimized CV with AI: ${error.message}`,
+        error.stack
+      );
+      throw error;
     }
   }
 

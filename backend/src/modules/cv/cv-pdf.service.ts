@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as fs from 'fs';
-import PDFDocument from 'pdfkit';
+const PDFDocument = require('pdfkit');
 
 @Injectable()
 export class CvPdfService {
@@ -387,5 +387,72 @@ export class CvPdfService {
     doc.fontSize(12)
        .font('Helvetica')
        .text(missingSkills.length > 0 ? missingSkills.join(', ') : 'None');
+  }
+
+  /**
+   * Create optimized CV PDF with original layout preserved
+   */
+  async createOptimizedCvPdfWithOriginalLayout(
+    originalCvAnalysis: any,
+    optimizedCv: any,
+    jobDescription: string,
+    jobAnalysis: any,
+    outputPath: string
+  ): Promise<{ success: boolean; filePath?: string; error?: string }> {
+    try {
+      const doc = new PDFDocument({
+        size: 'A4',
+        margins: {
+          top: 50,
+          bottom: 50,
+          left: 50,
+          right: 50
+        }
+      });
+
+      const stream = fs.createWriteStream(outputPath);
+      doc.pipe(stream);
+
+      // Header with personal info (using optimized data but original layout)
+      this.addHeader(doc, {
+        name: `${optimizedCv.userData.firstName} ${optimizedCv.userData.lastName}`,
+        email: optimizedCv.userData.email,
+        phone: optimizedCv.userData.phone,
+        location: `${optimizedCv.userData.city}, ${optimizedCv.userData.country}`
+      });
+      
+      // Professional Summary (optimized)
+      this.addSection(doc, 'Professional Summary', optimizedCv.userData.summary);
+      
+      // Skills (optimized and prioritized)
+      const prioritizedSkills = this.prioritizeSkills(optimizedCv.userData.skills, jobAnalysis);
+      this.addSkillsSection(doc, prioritizedSkills);
+      
+      // Work Experience (optimized)
+      this.addWorkExperienceSection(doc, optimizedCv.userData.workHistory);
+      
+      // Education (optimized)
+      this.addEducationSection(doc, optimizedCv.userData.education);
+
+      // Job Requirements Match Analysis
+      this.addJobRequirementsMatch(doc, optimizedCv.userData, jobAnalysis);
+
+      doc.end();
+
+      return new Promise((resolve, reject) => {
+        stream.on('finish', () => {
+          this.logger.log(`Optimized PDF with original layout generated successfully: ${outputPath}`);
+          resolve({ success: true, filePath: outputPath });
+        });
+        
+        stream.on('error', (error) => {
+          this.logger.error(`Error generating optimized PDF: ${error.message}`);
+          reject({ success: false, error: error.message });
+        });
+      });
+    } catch (error) {
+      this.logger.error(`Error in createOptimizedCvPdfWithOriginalLayout: ${error.message}`);
+      return { success: false, error: error.message };
+    }
   }
 } 

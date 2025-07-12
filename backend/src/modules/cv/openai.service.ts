@@ -92,8 +92,16 @@ Return only valid JSON without any additional text.
         throw new Error("No response from OpenAI");
       }
 
+      // Loại bỏ markdown nếu có
+      let cleanResponse = response.trim();
+      if (cleanResponse.startsWith('```json')) {
+        cleanResponse = cleanResponse.replace(/^```json/, '').replace(/```$/, '').trim();
+      } else if (cleanResponse.startsWith('```')) {
+        cleanResponse = cleanResponse.replace(/^```/, '').replace(/```$/, '').trim();
+      }
+
       // Parse JSON response
-      const analysis = JSON.parse(response);
+      const analysis = JSON.parse(cleanResponse);
 
       this.logger.log("Job description analysis completed successfully");
       return analysis;
@@ -418,6 +426,10 @@ Return only valid JSON array.
     }
   }
 
+  public getOpenAI() {
+    return this.openai;
+  }
+
   // Fallback methods for when OpenAI is not available
   private fallbackAnalysis(jobDescription: string) {
     const lowerDescription = jobDescription.toLowerCase();
@@ -488,30 +500,33 @@ Return only valid JSON array.
    * Analyze CV content using OpenAI
    */
   async analyzeCvContent(cvText: string): Promise<{
-    personalInfo: {
-      name: string;
-      email: string;
+    userData: {
+      firstName: string;
+      lastName: string;
+      professional: string;
+      city: string;
+      country: string;
+      province: string;
       phone: string;
-      location: string;
+      email: string;
+      avatar: string;
+      summary: string;
+      skills: Array<{ name: string; rating: number }>;
+      workHistory: Array<{
+        title: string;
+        company: string;
+        startDate: string;
+        endDate: string;
+        description: string;
+      }>;
+      education: Array<{
+        startDate: string;
+        endDate: string;
+        major: string;
+        degree: string;
+        institution: string;
+      }>;
     };
-    summary: string;
-    skills: Array<{ name: string; rating: number }>;
-    workExperience: Array<{
-      title: string;
-      company: string;
-      startDate: string;
-      endDate: string;
-      description: string;
-    }>;
-    education: Array<{
-      degree: string;
-      institution: string;
-      startDate: string;
-      endDate: string;
-    }>;
-    certifications: string[];
-    strengths: string[];
-    areasForImprovement: string[];
   }> {
     try {
       const prompt = `
@@ -522,49 +537,52 @@ ${cvText}
 
 Please provide a detailed analysis in the following JSON structure:
 {
-  "personalInfo": {
-    "name": "Full Name",
+  "userData": {
+    "firstName": "First Name",
+    "lastName": "Last Name", 
+    "professional": "Professional Title",
+    "city": "City",
+    "country": "Country",
+    "province": "Province/State",
+    "phone": "Phone Number",
     "email": "email@example.com",
-    "phone": "phone number",
-    "location": "city, country"
-  },
-  "summary": "Professional summary extracted from CV",
-  "skills": [
-    {
-      "name": "Skill Name",
-      "rating": 4
-    }
-  ],
-  "workExperience": [
-    {
-      "title": "Job Title",
-      "company": "Company Name",
-      "startDate": "YYYY-MM-DD",
-      "endDate": "YYYY-MM-DD or Present",
-      "description": "Job description"
-    }
-  ],
-  "education": [
-    {
-      "degree": "Degree Name",
-      "institution": "Institution Name",
-      "startDate": "YYYY-MM-DD",
-      "endDate": "YYYY-MM-DD"
-    }
-  ],
-  "certifications": ["cert1", "cert2"],
-  "strengths": ["strength1", "strength2"],
-  "areasForImprovement": ["area1", "area2"]
+    "avatar": "",
+    "summary": "Professional summary extracted from CV",
+    "skills": [
+      {
+        "name": "Skill Name",
+        "rating": 4
+      }
+    ],
+    "workHistory": [
+      {
+        "title": "Job Title",
+        "company": "Company Name",
+        "startDate": "YYYY-MM-DD",
+        "endDate": "YYYY-MM-DD or Present",
+        "description": "Job description"
+      }
+    ],
+    "education": [
+      {
+        "startDate": "YYYY-MM-DD",
+        "endDate": "YYYY-MM-DD",
+        "major": "Major/Field of Study",
+        "degree": "Degree Name",
+        "institution": "Institution Name"
+      }
+    ]
+  }
 }
 
 Focus on:
-- Extract personal information accurately
+- Extract personal information accurately (name, contact, location)
+- Identify professional title/role
 - Identify all skills mentioned with appropriate ratings (1-5)
 - Parse work experience with dates and descriptions
-- Extract education details
-- Identify certifications and achievements
-- Analyze strengths and areas for improvement
+- Extract education details with proper structure
 - Ensure all dates are in YYYY-MM-DD format
+- Set empty string for avatar if not found
 
 Return only valid JSON without any additional text.
 `;
@@ -575,7 +593,7 @@ Return only valid JSON without any additional text.
           {
             role: "system",
             content:
-              "You are a professional CV analyzer. Always respond with valid JSON format.",
+              "You are a professional CV analyzer. Always respond with valid JSON format matching the CV schema structure.",
           },
           {
             role: "user",
@@ -628,38 +646,41 @@ Return only valid JSON without any additional text.
     const lines = cvText.split('\n').filter(line => line.trim());
     
     return {
-      personalInfo: {
-        name: "Extracted from CV",
+      userData: {
+        firstName: "First",
+        lastName: "Name",
+        professional: "Software Developer",
+        city: "City",
+        country: "Country",
+        province: "Province",
+        phone: "Phone Number",
         email: "email@example.com",
-        phone: "phone number",
-        location: "location"
-      },
-      summary: "Professional summary extracted from CV content",
-      skills: [
-        { name: "Problem Solving", rating: 4 },
-        { name: "Communication", rating: 4 },
-        { name: "Teamwork", rating: 4 }
-      ],
-      workExperience: [
-        {
-          title: "Software Developer",
-          company: "Company Name",
-          startDate: "2020-01-01",
-          endDate: "Present",
-          description: "Developed and maintained applications"
-        }
-      ],
-      education: [
-        {
-          degree: "Bachelor's Degree",
-          institution: "University Name",
-          startDate: "2016-09-01",
-          endDate: "2020-06-30"
-        }
-      ],
-      certifications: ["Relevant Certification"],
-      strengths: ["Strong technical skills", "Good communication"],
-      areasForImprovement: ["Could add more specific achievements", "Consider adding more quantifiable results"]
+        avatar: "",
+        summary: "Professional summary extracted from CV content",
+        skills: [
+          { name: "Problem Solving", rating: 4 },
+          { name: "Communication", rating: 4 },
+          { name: "Teamwork", rating: 4 }
+        ],
+        workHistory: [
+          {
+            title: "Software Developer",
+            company: "Company Name",
+            startDate: "2020-01-01",
+            endDate: "Present",
+            description: "Developed and maintained applications"
+          }
+        ],
+        education: [
+          {
+            startDate: "2016-09-01",
+            endDate: "2020-06-30",
+            major: "Computer Science",
+            degree: "Bachelor's Degree",
+            institution: "University Name"
+          }
+        ]
+      }
     };
   }
 }
