@@ -77,7 +77,7 @@ export const API_ENDPOINTS = {
     DELETE: (id: string) => `/jobs/${id}`,
     COUNTBYPOSTINGDATE: (month: number, year: number) =>
       `/jobs/count-by-posting-date/${month}/${year}`,
-    GET_JOB_BY_HR: "jobs/by-hr",
+    GET_JOB_BY_HR: "/jobs/by-hr",
   },
   NOTIFICATION: {
     GET_NOTIFICATIONS: "/notifications",

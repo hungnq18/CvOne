@@ -1,10 +1,10 @@
 import React from 'react';
-import { Modal, Input } from 'antd';
+import { Modal, Input, message } from 'antd';
 import { UiverseFileUpload } from '@/components/ui/UiverseFileUpload';
 import { CustomRadioGroup } from '@/components/ui/CustomRadioGroup';
 import { FolderOpenOutlined } from '@ant-design/icons';
 import { useLanguage } from '@/providers/global-provider';
-// import '@/styles/FastApplyModal.uiverse.css';
+
 
 interface FastApplyModalProps {
     open: boolean;
@@ -102,7 +102,18 @@ const FastApplyModal: React.FC<FastApplyModalProps> = ({
                     </div>
                     <CustomRadioGroup
                         value={applyMode}
-                        onChange={val => setApplyMode(val as 'library' | 'upload')}
+                        onChange={val => {
+                            setApplyMode(val as 'library' | 'upload');
+                            // Khi chuyển sang library, không tự động chọn CV nào
+                            if (val === 'library') {
+                                setSelectedCV('');
+                            }
+                            // Khi chuyển sang upload, không tự động chọn
+                            if (val === 'upload') {
+                                setSelectedCV('');
+                                setCvUploadFile(null);
+                            }
+                        }}
                         name="cv-mode"
                         options={[
                             { label: t.chooseFromLibrary, value: 'library' },
@@ -183,7 +194,17 @@ const FastApplyModal: React.FC<FastApplyModalProps> = ({
                     </div>
                     <CustomRadioGroup
                         value={clMode}
-                        onChange={val => setClMode(val as 'library' | 'upload')}
+                        onChange={val => {
+                            setClMode(val as 'library' | 'upload');
+                            if (val === 'library') {
+                                setSelectedCL('');
+                            }
+                            if (val === 'upload') {
+                                setSelectedCL('');
+                                setClUploadFile(null);
+                                setClUploadName('');
+                            }
+                        }}
                         name="cl-mode"
                         options={[
                             { label: t.chooseCLFromLibrary, value: 'library' },
@@ -269,13 +290,41 @@ const FastApplyModal: React.FC<FastApplyModalProps> = ({
                     </button>
                     <button
                         className="flex-1 py-3 rounded-xl font-semibold text-white bg-[#2563eb] hover:bg-[#1e40af] text-lg transition shadow-md"
-                        onClick={onSubmit}
+                        onClick={() => {
+                            // Validate CV
+                            if (applyMode === 'library' && (!selectedCV || selectedCV === '')) {
+                                const msg = t.selectCV + ' - ' + t.chooseFromLibrary;
+                                setFormError(msg);
+                                message.error(msg);
+                                return;
+                            }
+                            if (applyMode === 'upload' && !cvUploadFile) {
+                                const msg = t.selectCV + ' - ' + t.uploadFromComputer;
+                                setFormError(msg);
+                                message.error(msg);
+                                return;
+                            }
+                            // Validate CL
+                            if (clMode === 'library' && (!selectedCL || selectedCL === '')) {
+                                const msg = t.selectCL + ' - ' + t.chooseCLFromLibrary;
+                                setFormError(msg);
+                                message.error(msg);
+                                return;
+                            }
+                            if (clMode === 'upload' && !clUploadFile) {
+                                const msg = t.selectCL + ' - ' + t.uploadCLFromComputer;
+                                setFormError(msg);
+                                message.error(msg);
+                                return;
+                            }
+                            setFormError('');
+                            onSubmit();
+                        }}
                         disabled={uploading}
                     >
                         {t.submit}
                     </button>
                 </div>
-                {formError && <div className="text-red-500 text-sm mt-2">{formError}</div>}
             </div>
             <style jsx>{`
                 .cancel-btn:hover {
@@ -392,6 +441,13 @@ const FastApplyModal: React.FC<FastApplyModalProps> = ({
                   }
                 }
             `}</style>
+            <style jsx global>{`
+  .ant-message .ant-message-notice-content {
+    font-size: 1.25rem;
+    padding: 16px 32px;
+    border-radius: 12px;
+  }
+`}</style>
         </Modal>
     );
 };

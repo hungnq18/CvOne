@@ -63,14 +63,8 @@ export default function RootLayout({
                         children
                       ) : (
                         <div className="flex flex-col min-h-screen">
-                          {role === 'hr' ? (
-                            <>{children}</>
-                          ) : (
-                            <>
-                              <Header />
-                              <main className="flex-1 min-h-0">{children}</main>
-                            </>
-                          )}
+                          <Header />
+                          <main className="flex-1 min-h-0">{children}</main>
                           <div className="relative z-10">
                             <FooterWrapper />
                           </div>
