@@ -23,8 +23,7 @@ function UploadCVPage() {
   const templateId = searchParams.get("id");
   const router = useRouter();
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const handleFileUpload = (file: File) => {
     if (!file) return;
 
     if (file.type !== "application/pdf") {

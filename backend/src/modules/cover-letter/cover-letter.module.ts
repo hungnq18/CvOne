@@ -1,11 +1,10 @@
 import { Module } from "@nestjs/common";
 import { MongooseModule } from "@nestjs/mongoose";
-import { CoverLetterService } from "./cover-letter.service";
-import { CoverLetterController } from "./cover-letter.controller";
-import { CoverLetter, CoverLetterSchema } from "./schemas/cover-letter.schema";
-import { CvAiService } from "../cv/cv-ai.service";
-import { OpenAiService } from "../cv/openai.service";
 import { CvModule } from "../cv/cv.module";
+import { CoverLetterAiService } from "./cover-letter-ai.service";
+import { CoverLetterController } from "./cover-letter.controller";
+import { CoverLetterService } from "./cover-letter.service";
+import { CoverLetter, CoverLetterSchema } from "./schemas/cover-letter.schema";
 
 @Module({
   imports: [
@@ -15,6 +14,7 @@ import { CvModule } from "../cv/cv.module";
     CvModule,
   ],
   controllers: [CoverLetterController],
-  providers: [CoverLetterService],
+  providers: [CoverLetterService, CoverLetterAiService],
+  exports: [CoverLetterService, CoverLetterAiService],
 })
 export class CoverLetterModule {}

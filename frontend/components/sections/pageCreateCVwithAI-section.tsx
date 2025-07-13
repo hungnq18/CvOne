@@ -1,15 +1,8 @@
 "use client";
 
-import React, {
-  useState,
-  useEffect,
-  useRef,
-} from "react";
-import {
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
-import {  useCV } from "@/providers/cv-provider";
+import React, { useState, useEffect, useRef } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useCV } from "@/providers/cv-provider";
 import { templateComponentMap } from "@/components/cvTemplate/index";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
@@ -31,7 +24,6 @@ import {
   Step,
 } from "@/components/forms/createCV-AIForm";
 import UpJdStep from "@/components/sections/up_JDforCV-AI";
-
 
 // --- INTERFACES & TYPES ---
 interface DecodedToken {
@@ -60,31 +52,31 @@ function CreateCVwithAI() {
     },
     {
       id: 3,
-      name: "Mục tiêu sự nghiệp",
-      description:
-        "Một đoạn tóm tắt ngắn gọn về bản thân và định hướng công việc của bạn.",
+      name: "Thêm thông tin công việc",
     },
     {
       id: 4,
-      name: "Kinh nghiệm làm việc",
-      description:
-        "Liệt kê các vị trí và công việc bạn đã đảm nhiệm trong quá khứ.",
-    },
-    {
-      id: 5,
-      name: "Học vấn",
-      description:
-        "Thông tin về quá trình học tập, trường lớp và bằng cấp của bạn.",
-    },
-    {
-      id: 6,
       name: "Kỹ năng",
       description:
         "Các kỹ năng chuyên môn và kỹ năng mềm liên quan đến công việc.",
     },
     {
+      id: 5,
+      name: "Kinh nghiệm làm việc",
+      description:
+        "Liệt kê các vị trí và công việc bạn đã đảm nhiệm trong quá khứ.",
+    },
+    {
+      id: 6,
+      name: "Học vấn",
+      description:
+        "Thông tin về quá trình học tập, trường lớp và bằng cấp của bạn.",
+    },
+    {
       id: 7,
-      name: "Thêm thông tin công việc",
+      name: "Mục tiêu sự nghiệp",
+      description:
+        "Một đoạn tóm tắt ngắn gọn về bản thân và định hướng công việc của bạn.",
     },
     {
       id: 8,
@@ -119,7 +111,6 @@ function CreateCVwithAI() {
     }
   }, [templateId, loadTemplate, updateUserData]);
 
-  
   const renderCVPreview = () => {
     if (!currentTemplate || !userData) {
       return <p className="text-center">Đang tải Mẫu...</p>;
@@ -195,21 +186,21 @@ function CreateCVwithAI() {
       return false;
     }
     try {
-        const dataToCreate: Omit<CV, "_id"> = {
-          userId: userId || "", 
-          title: `CV for ${userData.firstName} ${userData.lastName}`,
-          content: { userData },
-          isPublic: false,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          cvTemplateId: currentTemplate._id,
-          isSaved: true,
-          isFinalized: false,
-        };
-        const newCV = await createCV(dataToCreate);
-        if (newCV && newCV.id) {
-          router.replace(`/myDocuments`, { scroll: false });
-        }
+      const dataToCreate: Omit<CV, "_id"> = {
+        userId: userId || "",
+        title: `CV for ${userData.firstName} ${userData.lastName}`,
+        content: { userData },
+        isPublic: false,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        cvTemplateId: currentTemplate._id,
+        isSaved: true,
+        isFinalized: false,
+      };
+      const newCV = await createCV(dataToCreate);
+      if (newCV && newCV.id) {
+        router.replace(`/myDocuments`, { scroll: false });
+      }
       alert("Lưu CV thành công!");
       return true;
     } catch (error) {
@@ -221,7 +212,13 @@ function CreateCVwithAI() {
     }
   };
 
-
+  const handleFinishAndGoToCreateCV = () => {
+    if (currentTemplate && currentTemplate._id) {
+      router.push(`/createCV?id=${currentTemplate._id}`);
+    } else {
+      alert("Không tìm thấy template để tạo CV.");
+    }
+  };
 
   const renderCurrentStepForm = () => {
     const safeUserData = userData || {};
@@ -231,17 +228,29 @@ function CreateCVwithAI() {
       case 2:
         return <ContactForm data={safeUserData} onUpdate={updateUserData} />;
       case 3:
-        return <SummaryForm data={safeUserData} onUpdate={updateUserData} />;
+        return (
+          <div>
+            <UpJdStep />
+          </div>
+        );
       case 4:
-        return <ExperienceForm data={safeUserData} onUpdate={updateUserData} />;
-      case 5:
-        return <EducationForm data={safeUserData} onUpdate={updateUserData} />;
-      case 6:
         return <SkillsForm data={safeUserData} onUpdate={updateUserData} />;
+      case 5:
+        return <ExperienceForm data={safeUserData} onUpdate={updateUserData} />;
+      case 6:
+        return <EducationForm data={safeUserData} onUpdate={updateUserData} />;
       case 7:
-        return <div><UpJdStep/></div>;
+        return <SummaryForm data={safeUserData} onUpdate={updateUserData} />;
       default:
-        return null;
+        return (
+          <>
+            {" "}
+            <h1>
+              Tiếp Theo Bạn sẽ được đưa tới trang tạo CV để xem lại CV sau đó
+              bạn có thể chọn lưu hoặc tải về
+            </h1>{" "}
+          </>
+        );
     }
   };
 
@@ -293,7 +302,7 @@ function CreateCVwithAI() {
             {currentStep === steps.length ? (
               <button
                 type="button"
-                onClick={handleSaveToDB}
+                onClick={handleFinishAndGoToCreateCV}
                 className="flex items-center gap-2 rounded-md bg-yellow-500 px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm hover:bg-yellow-400"
               >
                 Hoàn tất

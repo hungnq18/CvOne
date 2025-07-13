@@ -1,28 +1,26 @@
 import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Param,
-  Patch,
-  Delete,
-  Query,
-  Request,
-  UseGuards,
+    Body,
+    Controller,
+    Delete,
+    Get,
+    Param,
+    Patch,
+    Post,
+    Request,
+    UseGuards
 } from "@nestjs/common";
+import * as path from "path";
+import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
+import { CoverLetterAiService } from "./cover-letter-ai.service";
 import { CoverLetterService } from "./cover-letter.service";
 import { CreateCoverLetterDto } from "./dto/create-cover-letter.dto";
-import { UpdateCoverLetterDto } from "./dto/update-cover-letter.dto";
-import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
-import { CvAiService } from "../cv/cv-ai.service";
-import { OpenAiService } from "../cv/openai.service";
 import { CreateGenerateCoverLetterDto } from "./dto/create-generate-cl-ai.dto";
-import * as path from "path";
+import { UpdateCoverLetterDto } from "./dto/update-cover-letter.dto";
 @Controller("cover-letters")
 export class CoverLetterController {
   constructor(
     private readonly coverLetterService: CoverLetterService,
-    private openAiService: OpenAiService
+    private coverLetterAiService: CoverLetterAiService
   ) {}
 
   @UseGuards(JwtAuthGuard)
@@ -59,7 +57,7 @@ export class CoverLetterController {
   @UseGuards(JwtAuthGuard)
   @Post("generate/ai")
   async generateByAi(@Body() dto: CreateGenerateCoverLetterDto) {
-    return this.openAiService.generateCoverLetterByAi(dto);
+    return this.coverLetterAiService.generateCoverLetterByAi(dto);
   }
 
   // @UseGuards(JwtAuthGuard)
@@ -84,7 +82,7 @@ export class CoverLetterController {
       body.jobDescriptionFileName
     );
 
-    return this.openAiService.extractCoverLetterFromPdf(
+    return this.coverLetterAiService.extractCoverLetterFromPdf(
       coverLetterPath,
       jdPath,
       body.templateId
