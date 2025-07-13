@@ -248,16 +248,17 @@ export async function suggestWorkExperience(jobAnalysis: any, experienceLevel: s
 /**
  * Upload and analyze CV PDF (AI returns JSON)
  * @param file - The PDF file
- * @param additionalNotes - Optional notes
+ * @param jobDescription - Job description string
  * @returns Promise with analysis result
  */
-export async function uploadAndAnalyzeCV(file: File, additionalNotes?: string) {
+export async function uploadAndAnalyzeCV(file: File, jobDescription: string) {
   const formData = new FormData();
   formData.append("cvFile", file);
-  if (additionalNotes) formData.append("additionalNotes", additionalNotes);
+  formData.append("jobDescription", jobDescription);
   return fetchWithAuth(API_ENDPOINTS.CV.UPLOAD_AND_ANALYZE, {
     method: "POST",
     body: formData
+    // KHÔNG thêm headers Content-Type ở đây!
   });
 }
 
