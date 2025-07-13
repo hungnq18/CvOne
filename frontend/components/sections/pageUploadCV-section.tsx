@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import React from "react";
+import React, { useMemo } from "react";
 import { pdfjs, Document, Page } from "react-pdf";
 import { useCV } from "@/providers/cv-provider";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -22,6 +22,12 @@ function UploadCVPage() {
   const searchParams = useSearchParams();
   const templateId = searchParams.get("id");
   const router = useRouter();
+
+  // Memoize the file object to prevent unnecessary re-renders
+  const memoizedFile = useMemo(() => {
+    if (!pdfFile) return null;
+    return { data: new Uint8Array(pdfFile) };
+  }, [pdfFile]);
 
   const handleFileUpload = (file: File) => {
     if (!file) return;
@@ -137,7 +143,7 @@ function UploadCVPage() {
             </h3>
             {pdfFile && (
               <Document
-                file={{ data: new Uint8Array(pdfFile) }}
+                file={memoizedFile}
                 loading="Đang tải PDF..."
                 onLoadSuccess={onDocumentLoadSuccess}
                 onLoadError={(error) => {
