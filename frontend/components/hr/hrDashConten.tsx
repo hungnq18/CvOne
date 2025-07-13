@@ -100,48 +100,53 @@ export function DashboardContent() {
                     <div className="text-center text-red-500 py-8">{t.error}</div>
                 ) : (
                     <div className="overflow-x-auto w-full">
-                        <table className="min-w-[700px] w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50">
-                                <tr>
-                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">{t.jobTitle}</th>
-                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">{t.candidate}</th>
-                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">{t.cv}</th>
-                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">{t.coverLetter}</th>
-                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">{t.status}</th>
-                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">{t.submitTime}</th>
-                                </tr>
-                            </thead>
-                            <tbody className="bg-white divide-y divide-gray-200">
-                                {appliedJobs.length === 0 ? (
-                                    <tr>
-                                        <td colSpan={6} className="px-4 py-4 text-center text-gray-400">{t.noData}</td>
-                                    </tr>
-                                ) : (
-                                    appliedJobs.map((job: any) => (
-                                        <tr key={job.id || job._id}>
-                                            <td className="px-4 py-2 whitespace-nowrap">
-                                                {job.jobId && job.jobId.title ? job.jobId.title : (job.job_id || (job.jobId && job.jobId._id) || '-')}
-                                            </td>
-                                            <td className="px-4 py-2 whitespace-nowrap">
-                                                {job.userId && job.userId.first_name ? `${job.userId.first_name} ${job.userId.last_name}` : (job.user_id || (job.userId && job.userId._id) || '-')}
-                                            </td>
-                                            <td className="px-4 py-2 whitespace-nowrap">{job.cvId ? (job.cvId.title || job.cvId._id) : (job.cv_id || '-')}</td>
-                                            <td className="px-4 py-2 whitespace-nowrap">{job.coverletterId ? (job.coverletterId.title || job.coverletterId._id) : (job.coverletter_id || '-')}</td>
-                                            <td className="px-4 py-2 whitespace-nowrap">
-                                                <span className={`px-2 py-1 rounded-full text-xs font-semibold ${job.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : job.status === 'accepted' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                                                    {job.status === 'pending' ? t.pending : job.status === 'accepted' ? t.accepted : job.status === 'rejected' ? t.rejected : job.status}
-                                                </span>
-                                            </td>
-                                            <td className="px-4 py-2 whitespace-nowrap">{
-                                                job.createdAt
-                                                    ? new Date(job.createdAt).toLocaleDateString(language === 'en' ? 'en-GB' : 'vi-VN')
-                                                    : (job.submit_at ? new Date(job.submit_at).toLocaleDateString(language === 'en' ? 'en-GB' : 'vi-VN') : '-')
-                                            }</td>
+                        {(() => {
+                            const filteredJobs = appliedJobs.filter((job: any) => job.status === 'pending');
+                            return (
+                                <table className="min-w-[700px] w-full divide-y divide-gray-200">
+                                    <thead className="bg-gray-50">
+                                        <tr>
+                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">{t.jobTitle}</th>
+                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">{t.candidate}</th>
+                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">{t.cv}</th>
+                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">{t.coverLetter}</th>
+                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">{t.status}</th>
+                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">{t.submitTime}</th>
                                         </tr>
-                                    ))
-                                )}
-                            </tbody>
-                        </table>
+                                    </thead>
+                                    <tbody className="bg-white divide-y divide-gray-200">
+                                        {filteredJobs.length === 0 ? (
+                                            <tr>
+                                                <td colSpan={6} className="px-4 py-4 text-center text-gray-400">{t.noData}</td>
+                                            </tr>
+                                        ) : (
+                                            filteredJobs.map((job: any) => (
+                                                <tr key={job.id || job._id}>
+                                                    <td className="px-4 py-2 whitespace-nowrap">
+                                                        {job.jobId && job.jobId.title ? job.jobId.title : (job.job_id || (job.jobId && job.jobId._id) || '-')}
+                                                    </td>
+                                                    <td className="px-4 py-2 whitespace-nowrap">
+                                                        {job.userId && job.userId.first_name ? `${job.userId.first_name} ${job.userId.last_name}` : (job.user_id || (job.userId && job.userId._id) || '-')}
+                                                    </td>
+                                                    <td className="px-4 py-2 whitespace-nowrap">{job.cvId ? (job.cvId.title || job.cvId._id) : (job.cv_id || '-')}</td>
+                                                    <td className="px-4 py-2 whitespace-nowrap">{job.coverletterId ? (job.coverletterId.title || job.coverletterId._id) : (job.coverletter_id || '-')}</td>
+                                                    <td className="px-4 py-2 whitespace-nowrap">
+                                                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${job.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : job.status === 'accepted' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                                                            {job.status === 'pending' ? t.pending : job.status === 'accepted' ? t.accepted : job.status === 'rejected' ? t.rejected : job.status}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-4 py-2 whitespace-nowrap">{
+                                                        job.createdAt
+                                                            ? new Date(job.createdAt).toLocaleDateString(language === 'en' ? 'en-GB' : 'vi-VN')
+                                                            : (job.submit_at ? new Date(job.submit_at).toLocaleDateString(language === 'en' ? 'en-GB' : 'vi-VN') : '-')
+                                                    }</td>
+                                                </tr>
+                                            ))
+                                        )}
+                                    </tbody>
+                                </table>
+                            );
+                        })()}
                     </div>
                 )}
             </div>
