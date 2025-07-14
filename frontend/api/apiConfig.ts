@@ -49,6 +49,7 @@ export const API_ENDPOINTS = {
     SUGGEST_WORK_EXPERIENCE: "/cv/suggest/work-experience",
     UPLOAD_AND_ANALYZE: "/cv/upload-and-analyze",
     UPLOAD_ANALYZE_GENERATE_PDF: "/cv/upload-analyze-generate-pdf",
+    UPLOAD_ANALYZE_OVERLAY_PDF: "/cv/upload-analyze-overlay-pdf",
     AI_STATUS: "/cv/ai-status"
   },
   CL: {

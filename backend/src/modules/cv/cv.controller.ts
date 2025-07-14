@@ -2,6 +2,9 @@ import { BadRequestException, Body, Controller, Delete, Get, Param, Patch, Post,
 import { FileInterceptor } from '@nestjs/platform-express';
 import * as multer from 'multer';
 import * as pdf from 'pdf-parse';
+// @ts-ignore: No type declarations for pdfjs-dist
+import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.js';
+import * as puppeteer from 'puppeteer';
 import { User } from '../../common/decorators/user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CvTemplate } from '../cv-template/schemas/cv-template.schema';
@@ -187,13 +190,17 @@ export class CvController {
     }
   }))
   async uploadAndAnalyzeCv(@UploadedFile() file: any) {
+    console.log('DEBUG upload-and-analyze: file:', file);
     if (!file) {
+      console.log('DEBUG upload-and-analyze: No file uploaded');
       throw new BadRequestException('No CV file uploaded or invalid file type.');
     }
     // 1. Trích xuất text từ PDF
     const pdfData = await pdf(file.buffer);
     const cvText = pdfData.text;
+    console.log('DEBUG upload-and-analyze: cvText:', cvText?.slice(0, 200));
     if (!cvText || cvText.trim().length === 0) {
+      console.log('DEBUG upload-and-analyze: Could not extract text from PDF');
       throw new BadRequestException('Could not extract text from PDF.');
     }
     // 2. Gửi text cho AI phân tích
@@ -205,63 +212,122 @@ export class CvController {
   }
 
   /**
-   * Upload CV PDF, analyze it, and generate optimized PDF based on job description
-   * @param file - The uploaded CV PDF file
-   * @param jobDescription - Job description text
-   * @param additionalRequirements - Additional requirements for optimization (optional)
-   * @param userId - The ID of the authenticated user
-   * @returns Analysis results, suggestions, and optimized PDF
+   * Upload CV PDF, analyze with AI, and return JSON HTML with rewritten CV content
+   * @param file - The uploaded PDF file
+   * @param jobDescription - Job description for optimization
+   * @param additionalRequirements - Additional requirements (optional)
+   * @returns JSON object with HTML content and analysis
    * @requires Authentication
    */
   @UseGuards(JwtAuthGuard)
-  @Post('upload-analyze-generate-pdf')
-  @UseInterceptors(
-    FileInterceptor('cvFile', {
-      storage: multer.memoryStorage(),
-      fileFilter: (req, file, cb) => {
-        if (!file.mimetype.match(/^application\/pdf$/)) {
-          return cb(
-            new BadRequestException('Only PDF files are allowed for CV upload!'),
-            false
-          );
-        }
-        cb(null, true);
-      },
-      limits: { fileSize: 10 * 1024 * 1024 },
-    })
-  )
-  async uploadAnalyzeAndGeneratePdf(
+  @Post('upload-analyze-overlay-pdf')
+  @UseInterceptors(FileInterceptor('cvFile', {
+    limits: { fileSize: 10 * 1024 * 1024 },
+    fileFilter: (req, file, cb) => {
+      if (!file.mimetype || !file.mimetype.includes('pdf')) {
+        return cb(new BadRequestException('Only PDF files are allowed!'), false);
+      }
+      cb(null, true);
+    }
+  }))
+  async uploadAnalyzeAndOverlayPdf(
     @UploadedFile() file: any,
     @Body('jobDescription') jobDescription: string,
-    @User('_id') userId: string,
     @Body('additionalRequirements') additionalRequirements: string,
+    @Body('mapping') mapping: string, // nhận mapping từ frontend
     @Res() res: any
   ) {
+    console.log('DEBUG upload-analyze-overlay-pdf: file:', file);
+    console.log('DEBUG upload-analyze-overlay-pdf: jobDescription:', jobDescription);
+    console.log('DEBUG upload-analyze-overlay-pdf: mapping:', mapping);
     if (!file) {
+      console.log('DEBUG upload-analyze-overlay-pdf: No file uploaded');
       throw new BadRequestException('No CV file uploaded or invalid file type.');
     }
     if (!jobDescription || jobDescription.trim().length === 0) {
+      console.log('DEBUG upload-analyze-overlay-pdf: Missing jobDescription');
       throw new BadRequestException('Job description is required.');
     }
-    if (!userId) {
-      throw new BadRequestException('User ID is required.');
+    // Parse mapping nếu có
+    let mappingObj = undefined;
+    if (mapping) {
+      try {
+        mappingObj = JSON.parse(mapping);
+      } catch (e) {
+        console.log('DEBUG upload-analyze-overlay-pdf: Invalid mapping format', mapping);
+        throw new BadRequestException('Invalid mapping format');
+      }
     }
-    // Xử lý file từ buffer, trả về PDF buffer
-    const result = await this.cvAiService.uploadAnalyzeAndGeneratePdfBufferFromBuffer(
-      userId,
-      file.buffer,
-      jobDescription,
-      additionalRequirements
-    );
-    if (!result.success || !result.pdfBuffer) {
-      throw new BadRequestException(result.error || 'Failed to process CV');
+    // Nếu không có mapping, truyền undefined để service tự extract mapping từ PDF
+    if (!mappingObj || Object.keys(mappingObj).length === 0) {
+      mappingObj = undefined;
     }
-    res.set({
-      'Content-Type': 'application/pdf',
-      'Content-Disposition': 'attachment; filename="optimized-cv.pdf"',
-    });
-    res.send(result.pdfBuffer);
+    try {
+      // Gọi service để tạo HTML giữ layout gốc với nội dung tối ưu hóa
+      const result = await this.cvAiService.uploadAnalyzeAndOverlayHtml(
+        file.buffer
+      );
+      if (!result.success || !result.html) {
+        throw new BadRequestException(result.error || 'Failed to process CV');
+      }
+      res.set({
+        'Content-Type': 'application/json',
+      });
+      res.send({
+        html: result.html,
+        mapping: result.mapping
+      });
+    } catch (error) {
+      console.log('DEBUG upload-analyze-overlay-pdf: Exception', error);
+      throw new BadRequestException(`Failed to process CV: ${error.message}`);
+    }
   }
+
+  // Thêm hàm sinh mapping tự động từ buffer (dùng lại logic của autoMappingPdf)
+  // private async autoGenerateMappingFromBuffer(buffer: Buffer): Promise<any> {
+  //   const pdfjsLib = require('pdfjs-dist/legacy/build/pdf.js');
+  //   const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(buffer) });
+  //   const pdf = await loadingTask.promise;
+  //   const mapping: any = {};
+  //   const keywords = {
+  //     summary: ['summary', 'tóm tắt', 'objective', 'professional summary', 'profile'],
+  //     skills: ['skill', 'kỹ năng', 'competencies', 'technical skills'],
+  //     experience: ['experience', 'kinh nghiệm', 'work experience', 'employment'],
+  //     education: ['education', 'học vấn', 'academic', 'degree', 'bằng cấp']
+  //   };
+  //   for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+  //     const page = await pdf.getPage(pageNum);
+  //     const textContent = await page.getTextContent();
+  //     (textContent.items as any[]).forEach(item => {
+  //       let x = Number(item.transform[4]);
+  //       let y = Number(item.transform[5]);
+  //       let fontSize = Number(item.height);
+  //       let width = Number(item.width);
+  //       let height = Number(item.height);
+  //       if (!Number.isFinite(x)) x = 0;
+  //       if (!Number.isFinite(y)) y = 0;
+  //       if (!Number.isFinite(fontSize)) fontSize = 12;
+  //       if (!Number.isFinite(width)) width = 100;
+  //       if (!Number.isFinite(height)) height = 20;
+  //       if (typeof item.str === 'string') {
+  //         const str = item.str.toLowerCase();
+  //         for (const [field, keys] of Object.entries(keywords)) {
+  //           if (keys.some(k => str.includes(k))) {
+  //             // Nếu đã có mapping, chọn block có width*height lớn hơn hoặc y lớn hơn (gần đầu trang hơn)
+  //             if (
+  //               !mapping[field] ||
+  //               (height * width > mapping[field].height * mapping[field].width) ||
+  //               (y > mapping[field].y)
+  //             ) {
+  //               mapping[field] = { x, y, page: pageNum - 1, width, height, fontSize };
+  //             }
+  //           }
+  //         }
+  //       }
+  //     });
+  //   }
+  //   return mapping;
+  // }
 
   /**
    * Upload original CV PDF, replace content with AI-optimized content, and return the new PDF (preserving original layout)
@@ -314,6 +380,58 @@ export class CvController {
       'Content-Disposition': 'attachment; filename="optimized-original-layout.pdf"',
     });
     res.send(result.pdfBuffer);
+  }
+
+  /**
+   * Auto-mapping: Nhận file PDF, trả về danh sách đoạn text và vị trí để AI hoặc frontend phân loại
+   */
+  @UseGuards(JwtAuthGuard)
+  @Post('auto-mapping-pdf')
+  @UseInterceptors(FileInterceptor('cvFile', {
+    limits: { fileSize: 10 * 1024 * 1024 },
+    fileFilter: (req, file, cb) => {
+      if (!file.mimetype || !file.mimetype.includes('pdf')) {
+        return cb(new BadRequestException('Only PDF files are allowed!'), false);
+      }
+      cb(null, true);
+    }
+  }))
+  async autoMappingPdf(
+    @UploadedFile() file: any,
+    @Res() res: any
+  ) {
+    if (!file) {
+      throw new BadRequestException('No CV file uploaded or invalid file type.');
+    }
+    try {
+      const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(file.buffer) });
+      const pdf = await loadingTask.promise;
+      const results: any[] = [];
+      for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+        const page = await pdf.getPage(pageNum);
+        const textContent = await page.getTextContent();
+        (textContent.items as any[]).forEach(item => {
+          // Đảm bảo các giá trị là số hợp lệ, nếu không thì gán mặc định
+          const x = typeof item.transform[4] === 'number' && !isNaN(item.transform[4]) ? item.transform[4] : 0;
+          const y = typeof item.transform[5] === 'number' && !isNaN(item.transform[5]) ? item.transform[5] : 0;
+          const fontSize = typeof item.height === 'number' && !isNaN(item.height) ? item.height : 12;
+          const width = typeof item.width === 'number' && !isNaN(item.width) ? item.width : 100;
+          const height = typeof item.height === 'number' && !isNaN(item.height) ? item.height : 20;
+          results.push({
+            text: item.str,
+            page: pageNum - 1,
+            x,
+            y,
+            fontSize,
+            width,
+            height
+          });
+        });
+      }
+      res.json({ success: true, mappingCandidates: results });
+    } catch (error) {
+      throw new BadRequestException(`Failed to extract mapping: ${error.message}`);
+    }
   }
 
   /**
@@ -409,5 +527,58 @@ export class CvController {
   @Post(':id/unshare')
   async unshareCV(@Param('id') id: string, @User('_id') userId: string) {
     return this.cvService.unshareCV(id, userId);
+  }
+
+  @Post('html-to-pdf')
+  async htmlToPdf(@Body('html') html: string, @Res() res: any) {
+    if (!html || html.trim().length === 0) {
+      throw new BadRequestException('HTML content is required.');
+    }
+    try {
+      const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox'] });
+      const page = await browser.newPage();
+      await page.setContent(html, { waitUntil: 'networkidle0' });
+      const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true });
+      await browser.close();
+
+      res.set({
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': 'attachment; filename="final-cv.pdf"',
+      });
+      res.send(pdfBuffer);
+    } catch (error) {
+      throw new BadRequestException('Failed to generate PDF: ' + error.message);
+    }
+  }
+
+  @Post('overlay-optimize-cv')
+  @UseInterceptors(FileInterceptor('cvFile', {
+    limits: { fileSize: 10 * 1024 * 1024 },
+    fileFilter: (req, file, cb) => {
+      if (!file.mimetype || !file.mimetype.includes('pdf')) {
+        return cb(new BadRequestException('Only PDF files are allowed!'), false);
+      }
+      cb(null, true);
+    }
+  }))
+  async overlayOptimizeCv(
+    @UploadedFile() file: any,
+    @Body('jobDescription') jobDescription: string,
+    @Res() res: any
+  ) {
+    if (!file) {
+      throw new BadRequestException('No CV file uploaded or invalid file type.');
+    }
+    try {
+      const result = await this.cvAiService.optimizePdfCvWithHtmlAI(file.buffer, jobDescription);
+      if (!result.success || !result.pdfPath) {
+        throw new BadRequestException(result.error || 'Failed to optimize CV');
+      }
+      res.send({
+        pdfUrl: `/uploads/${require('path').basename(result.pdfPath)}`
+      });
+    } catch (error) {
+      throw new BadRequestException(`Failed to optimize CV: ${error.message}`);
+    }
   }
 } 

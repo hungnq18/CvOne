@@ -11,8 +11,9 @@
  * - Sharing CV
  */
 
-import { fetchWithAuth } from "./apiClient";
-import { API_ENDPOINTS } from "./apiConfig";
+import Cookies from 'js-cookie';
+import { fetchWithAuth } from './apiClient';
+import { API_ENDPOINTS, API_URL } from './apiConfig';
 
 export type CVTemplate = {
   _id: string;
@@ -285,4 +286,51 @@ export async function uploadAnalyzeGeneratePDF(file: File, jobDescription: strin
  */
 export async function checkAIStatus() {
   return fetchWithAuth(API_ENDPOINTS.CV.AI_STATUS);
+}
+
+/**
+ * Upload CV PDF, analyze with AI, and return JSON HTML with rewritten CV content
+ * @param file - The CV PDF file
+ * @param jobDescription - Job description for optimization
+ * @param additionalRequirements - Additional requirements (optional)
+ * @returns JSON object with HTML content and analysis
+ */
+export async function uploadAnalyzeAndOverlayPdf(
+  file: File,
+  jobDescription: string,
+  additionalRequirements?: string,
+  mapping?: any // thêm tham số mapping
+): Promise<Blob> {
+  const formData = new FormData();
+  formData.append('cvFile', file);
+  formData.append('jobDescription', jobDescription);
+  if (additionalRequirements) {
+    formData.append('additionalRequirements', additionalRequirements);
+  }
+  if (mapping) {
+    formData.append('mapping', JSON.stringify(mapping));
+  }
+
+  // Get token from cookies
+  const token = Cookies.get("token");
+  const headers: Record<string, string> = {};
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  // Sử dụng endpoint mới
+  const fullUrl = `${API_URL}/cv/overlay-optimize-cv`;
+
+  const response = await fetch(fullUrl, {
+    method: 'POST',
+    headers,
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const errorData = await response.text();
+    throw new Error(errorData || "Request failed");
+  }
+
+  return response.blob();
 }

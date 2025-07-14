@@ -556,6 +556,7 @@ Do not include any explanation or markdown, only valid JSON.
         institution: string;
       }>;
     };
+    mapping?: Record<string, { page: number; x: number; y: number; width: number; height: number }>;
   }> {
     try {
       const prompt = `
@@ -601,6 +602,10 @@ Please provide a detailed analysis in the following JSON structure:
         "institution": "Institution Name"
       }
     ]
+  },
+  "mapping": {
+    // mapping các trường chính (nếu xác định được):
+    // ví dụ: "name": { "page": 0, "x": 100, "y": 200, "width": 150, "height": 20 }
   }
 }
 
@@ -612,6 +617,7 @@ Focus on:
 - Extract education details with proper structure
 - Ensure all dates are in YYYY-MM-DD format
 - Set empty string for avatar if not found
+- Nếu có thể, hãy dự đoán vị trí (page, x, y, width, height) của các trường chính trong CV (mapping), nếu không xác định được thì để trống object mapping.
 
 Return only valid JSON without any additional text.
 `;
