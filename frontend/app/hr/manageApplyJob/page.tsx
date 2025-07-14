@@ -15,15 +15,6 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table"
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { getApplyJobByHR } from '@/api/apiApplyJob';
@@ -104,7 +95,6 @@ interface CV {
     isFinalized: boolean
 }
 
-// Định nghĩa interface cho Cover Letter
 interface CoverLetter {
     _id: string
     userId: string
@@ -146,7 +136,7 @@ interface ApplyJob {
     user_id: string;
     cv_id: string;
     coverletter_id: string;
-    status: "pending" | "reviewed" | "interviewed" | "hired" | "rejected";
+    status: "pending" | "reviewed" | "approved" | "rejected";
     submit_at: string;
 }
 
@@ -271,23 +261,9 @@ export default function ManageApplyJobPage() {
     const [clTemplates, setClTemplates] = useState<CLTemplate[]>([]);
     const [clTemplatesLoading, setClTemplatesLoading] = useState(false);
 
-    // Thêm thanh tab lọc status
-    const statusTabs = [
-        { label: 'All', value: 'all' },
-        { label: 'Pending', value: 'pending' },
-        { label: 'Reviewed', value: 'reviewed' },
-        { label: 'Rejected', value: 'rejected' },
-    ];
-
-    // Đếm số lượng ứng viên theo từng status
-    const statusCounts = applications.reduce((acc: any, app: any) => {
-        acc[app.status] = (acc[app.status] || 0) + 1;
-        return acc;
-    }, {});
-
     // Lọc lại filteredApplications theo statusFilter
     const filteredApplications = statusFilter === 'all'
-        ? applications
+        ? applications.filter((app: any) => ['pending', 'reviewed', 'rejected'].includes(app.status))
         : applications.filter((app: any) => app.status === statusFilter);
 
     // Thêm lọc theo searchTerm (tìm theo tên, email, job title)
@@ -321,7 +297,7 @@ export default function ManageApplyJobPage() {
     }, []);
 
     // Thêm hàm cập nhật trạng thái ứng viên
-    const handleUpdateStatus = async (applyJobId: string, newStatus: "accepted" | "rejected" | "reviewed") => {
+    const handleUpdateStatus = async (applyJobId: string, newStatus: "approved" | "rejected" | "reviewed") => {
         try {
             await updateStatusByHr(applyJobId, newStatus);
             // Sau khi cập nhật, reload lại danh sách
@@ -476,7 +452,7 @@ export default function ManageApplyJobPage() {
                                                     size="sm"
                                                     variant="outline"
                                                     className="text-green-600 border-green-600 hover:bg-green-50"
-                                                    onClick={() => handleUpdateStatus(app._id, 'accepted')}
+                                                    onClick={() => handleUpdateStatus(app._id, 'approved')}
                                                 >
                                                     <Check className="h-4 w-4 mr-1" /> Approve
                                                 </Button>
@@ -528,7 +504,6 @@ export default function ManageApplyJobPage() {
                 footer={null}
                 width={650}
                 centered
-                title={'CV Preview'}
                 styles={{ body: { background: '#f9f9f9' } }}
             >
                 {(() => { console.log('CV Preview Data:', previewModal.cvData); return null; })()}
@@ -536,7 +511,6 @@ export default function ManageApplyJobPage() {
                     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
                         <img
                             src={previewModal.cvData.cvImage}
-                            alt="CV preview"
                             style={{
                                 maxWidth: 600,
                                 maxHeight: 800,

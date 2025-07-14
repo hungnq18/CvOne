@@ -69,7 +69,7 @@ export async function updateApplyJobByUser(id: string, data: any) {
   );
 }
 
-export async function updateStatusByHr(id: string, status: "accepted" | "rejected" | "reviewed") {
+export async function updateStatusByHr(id: string, status: "approved" | "rejected" | "reviewed") {
   return fetchWithAuth(
     API_ENDPOINTS.APPLYJOB.UPDATE_STATUS_BY_HR(id),
     {

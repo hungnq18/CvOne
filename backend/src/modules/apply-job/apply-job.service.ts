@@ -14,7 +14,7 @@ export class ApplyJobService {
   constructor(
     @InjectModel(ApplyJob.name)
     private readonly applyJobModel: Model<ApplyJobDocument>,
-  ) {}
+  ) { }
 
   async apply(dto: CreateApplyJobDto, userId: string) {
     if (!dto.cvId && !dto.coverletterId) {
@@ -140,7 +140,7 @@ export class ApplyJobService {
     hrUserId: string,
     newStatus: string,
   ) {
-    if (!["accepted", "rejected", "reviewed"].includes(newStatus)) {
+    if (!["approved", "rejected", "reviewed"].includes(newStatus)) {
       throw new BadRequestException("Trạng thái không hợp lệ");
     }
 
@@ -199,8 +199,8 @@ export class ApplyJobService {
     year: number,
     userId: string,
   ): Promise<number> {
-    const startDate = new Date(year, month - 1, 1); // ngày đầu tháng
-    const endDate = new Date(year, month, 1); // ngày đầu tháng kế tiếp
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 1);
     return this.applyJobModel.countDocuments({
       userId: new Types.ObjectId(userId),
       createdAt: {
