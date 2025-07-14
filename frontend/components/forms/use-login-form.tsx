@@ -128,13 +128,13 @@ export function useLoginForm() {
       const params = new URLSearchParams(window.location.search);
       const redirect = params.get("redirect");
       if (redirect) {
-        window.location.href = redirect;
+        router.replace(redirect);
       } else if (decoded.role === "admin") {
-        window.location.href = "/admin";
+        router.replace("/admin");
       } else if (decoded.role === "hr") {
-        window.location.href = "/hr/dashboard";
+        router.replace("/hr/dashboard");
       } else {
-        window.location.href = "/";
+        router.replace("/");
       }
 
     } catch (err: any) {

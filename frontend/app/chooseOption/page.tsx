@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense } from 'react';
+import { useState, Suspense, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft, ArrowRight, Bot, FileUp, Smile } from 'lucide-react';
 
@@ -9,6 +9,12 @@ function ChooseOptionContent() {
     const searchParams = useSearchParams();
     const templateId = searchParams.get('templateId');
     const [selectedOption, setSelectedOption] = useState('manual');
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+    useEffect(() => {
+        const token = document.cookie.split('; ').find(row => row.startsWith('token='));
+        setIsLoggedIn(!!token);
+    }, []);
 
     const handleContinue = () => {
         if (!templateId) {
@@ -17,13 +23,23 @@ function ChooseOptionContent() {
         }
 
         const params = new URLSearchParams({ templateId });
+        const destination = `/personal-info?${params.toString()}`; // for 'ai'
+        const uploadDestination = `/uploadCLTemplate?${params.toString()}`;
 
         if (selectedOption === 'manual') {
             router.push(`/createCLTemplate?${params.toString()}`);
         } else if (selectedOption === 'ai') {
-            router.push(`/personal-info?${params.toString()}`);
+            if (isLoggedIn) {
+                router.push(destination);
+            } else {
+                router.push(`/login?redirect=${destination}`);
+            }
         } else if (selectedOption === 'upload') {
-            router.push(`/uploadCLTemplate?${params.toString()}`);
+            if (isLoggedIn) {
+                router.push(uploadDestination);
+            } else {
+                router.push(`/login?redirect=${uploadDestination}`);
+            }
         }
     };
 
