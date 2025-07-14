@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import React, { useState, useEffect, useRef } from 'react';
 import { Eye, Check, X, Search, Download, Mail, FileText, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -27,7 +27,9 @@ import { getCVTemplates, CVTemplate } from '@/api/cvapi';
 import { getCLTemplates, CLTemplate } from '@/api/clApi';
 import { templates as clTemplateComponentMap, TemplateType } from '@/app/createCLTemplate/templates';
 import { updateStatusByHr } from '@/api/apiApplyJob';
-import React from 'react';
+import DeleteButton from '@/components/ui/DeleteButton';
+import HrAction from '@/components/ui/hrActions';
+import styles from '@/styles/hrActions.module.css';
 
 // Định nghĩa interface cho Job (từ manageJob page)
 interface Job {
@@ -250,6 +252,64 @@ const CVTemplatePreview = ({ templateId, userData }: { templateId: string, userD
     );
 };
 
+// Thêm component ActionMenu nội bộ file
+const ActionMenu = ({ app, statusFilter, handleUpdateStatus }: any) => {
+    const [open, setOpen] = useState(false);
+    const ref = useRef<HTMLDivElement>(null);
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (ref.current && !ref.current.contains(event.target as Node)) setOpen(false);
+        }
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+    return (
+        <div style={{ position: 'relative', display: 'inline-block' }} ref={ref}>
+            <div className={styles.background}>
+                <button className={styles.menu__icon} onClick={() => setOpen((v) => !v)}>
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+            {open && (
+                <div style={{ position: 'absolute', top: 70, left: 0, zIndex: 10, minWidth: 120 }}>
+                    <div className={styles.card}>
+                        {statusFilter === 'all' ? null : (
+                            <>
+                                {app.status === 'pending' && (
+                                    <ul className={styles.list}>
+                                        <li className={styles.element} onClick={() => handleUpdateStatus(app._id, 'reviewed')}>
+                                            <Check className="h-4 w-4 mr-1" /> Reviewed
+                                        </li>
+                                    </ul>
+                                )}
+                                {app.status === 'reviewed' && (
+                                    <ul className={styles.list}>
+                                        <li className={styles.element} onClick={() => handleUpdateStatus(app._id, 'approved')}>
+                                            <Check className="h-4 w-4 mr-1" /> Approve
+                                        </li>
+                                        <li className={styles.element} onClick={() => handleUpdateStatus(app._id, 'rejected')}>
+                                            <X className="h-4 w-4 mr-1" /> Reject
+                                        </li>
+                                    </ul>
+                                )}
+                                {app.status === 'rejected' && statusFilter !== 'all' && (
+                                    <ul className={styles.list}>
+                                        <li className={styles.element} onClick={() => handleUpdateStatus(app._id, 'rejected')}>
+                                            <DeleteButton />
+                                        </li>
+                                    </ul>
+                                )}
+                            </>
+                        )}
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
 export default function ManageApplyJobPage() {
     const [applications, setApplications] = useState<any[]>([]);
     const [searchTerm, setSearchTerm] = useState("")
@@ -263,7 +323,7 @@ export default function ManageApplyJobPage() {
 
     // Lọc lại filteredApplications theo statusFilter
     const filteredApplications = statusFilter === 'all'
-        ? applications.filter((app: any) => ['pending', 'reviewed', 'rejected'].includes(app.status))
+        ? applications.filter((app: any) => ['pending', 'reviewed'].includes(app.status))
         : applications.filter((app: any) => app.status === statusFilter);
 
     // Thêm lọc theo searchTerm (tìm theo tên, email, job title)
@@ -375,7 +435,7 @@ export default function ManageApplyJobPage() {
                                 <TableHead>Applied Date</TableHead>
                                 <TableHead>Experience</TableHead>
                                 <TableHead>Documents</TableHead>
-                                <TableHead>Status</TableHead>
+                                <TableHead>{statusFilter === 'all' ? 'Status' : 'Action'}</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -409,62 +469,58 @@ export default function ManageApplyJobPage() {
                                         : (app.submit_at ? new Date(app.submit_at).toLocaleDateString() : '-')}</TableCell>
                                     <TableCell>{app.cvId?.content?.userData?.professional || '-'}</TableCell>
                                     <TableCell>
-                                        <div className="flex items-center space-x-2">
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => handleViewCV(app.cvId?._id || app.cv_id)}
-                                                className="text-blue-600 border-blue-600 hover:bg-blue-50"
-                                            >
-                                                <FileText className="h-4 w-4 mr-1" />
-                                                View CV
-                                            </Button>
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => handleViewCoverLetter(app.coverletterId?._id || app.coverletter_id)}
-                                                className="text-green-600 border-green-600 hover:bg-green-50"
-                                            >
-                                                <User className="h-4 w-4 mr-1" />
-                                                View CL
-                                            </Button>
-                                        </div>
+                                        <HrAction
+                                            onViewCV={() => handleViewCV(app.cvId?._id || app.cv_id)}
+                                            onDownloadCV={() => { /* TODO: download CV */ }}
+                                            onViewCL={() => handleViewCoverLetter(app.coverletterId?._id || app.coverletter_id)}
+                                            onDownloadCL={() => { /* TODO: download CL */ }}
+                                        />
                                     </TableCell>
                                     <TableCell>
-                                        <span className={`px-2 py-1 rounded text-xs font-semibold ${getStatusColor(app.status)}`}>
-                                            {app.status.charAt(0).toUpperCase() + app.status.slice(1)}
-                                        </span>
-                                        {app.status === 'pending' && (
-                                            <div className="flex gap-2 mt-2">
-                                                <Button
-                                                    size="sm"
-                                                    variant="outline"
-                                                    className="text-blue-600 border-blue-600 hover:bg-blue-50"
-                                                    onClick={() => handleUpdateStatus(app._id, 'reviewed')}
-                                                >
-                                                    <Check className="h-4 w-4 mr-1" /> Reviewed
-                                                </Button>
-                                            </div>
-                                        )}
-                                        {app.status === 'reviewed' && (
-                                            <div className="flex gap-2 mt-2">
-                                                <Button
-                                                    size="sm"
-                                                    variant="outline"
-                                                    className="text-green-600 border-green-600 hover:bg-green-50"
-                                                    onClick={() => handleUpdateStatus(app._id, 'approved')}
-                                                >
-                                                    <Check className="h-4 w-4 mr-1" /> Approve
-                                                </Button>
-                                                <Button
-                                                    size="sm"
-                                                    variant="outline"
-                                                    className="text-red-600 border-red-600 hover:bg-red-50"
-                                                    onClick={() => handleUpdateStatus(app._id, 'rejected')}
-                                                >
-                                                    <X className="h-4 w-4 mr-1" /> Reject
-                                                </Button>
-                                            </div>
+                                        {statusFilter === 'all' ? (
+                                            <span className={`px-2 py-1 rounded text-xs font-semibold ${getStatusColor(app.status)}`}>
+                                                {app.status.charAt(0).toUpperCase() + app.status.slice(1)}
+                                            </span>
+                                        ) : (
+                                            <>
+                                                {app.status === 'pending' && (
+                                                    <div className="flex gap-2">
+                                                        <Button
+                                                            size="sm"
+                                                            variant="outline"
+                                                            className="text-blue-600 border-blue-600 hover:bg-blue-50"
+                                                            onClick={() => handleUpdateStatus(app._id, 'reviewed')}
+                                                        >
+                                                            <Check className="h-4 w-4 mr-1" /> Reviewed
+                                                        </Button>
+                                                    </div>
+                                                )}
+                                                {app.status === 'reviewed' && (
+                                                    <div className="flex gap-2">
+                                                        <Button
+                                                            size="sm"
+                                                            variant="outline"
+                                                            className="text-green-600 border-green-600 hover:bg-green-50"
+                                                            onClick={() => handleUpdateStatus(app._id, 'approved')}
+                                                        >
+                                                            <Check className="h-4 w-4 mr-1" /> Approve
+                                                        </Button>
+                                                        <Button
+                                                            size="sm"
+                                                            variant="outline"
+                                                            className="text-red-600 border-red-600 hover:bg-red-50"
+                                                            onClick={() => handleUpdateStatus(app._id, 'rejected')}
+                                                        >
+                                                            <X className="h-4 w-4 mr-1" /> Reject
+                                                        </Button>
+                                                    </div>
+                                                )}
+                                                {app.status === 'rejected' && statusFilter !== 'all' && (
+                                                    <div className="flex items-center gap-2">
+                                                        <DeleteButton onClick={() => handleUpdateStatus(app._id, 'rejected')} />
+                                                    </div>
+                                                )}
+                                            </>
                                         )}
                                     </TableCell>
                                 </TableRow>
@@ -506,7 +562,6 @@ export default function ManageApplyJobPage() {
                 centered
                 styles={{ body: { background: '#f9f9f9' } }}
             >
-                {(() => { console.log('CV Preview Data:', previewModal.cvData); return null; })()}
                 {previewModal.cvData && previewModal.cvData.cvImage ? (
                     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
                         <img

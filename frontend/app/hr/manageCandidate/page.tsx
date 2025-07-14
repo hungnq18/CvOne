@@ -28,6 +28,7 @@ import { getCLTemplates, CLTemplate } from '@/api/clApi';
 import { templates as clTemplateComponentMap, TemplateType } from '@/app/createCLTemplate/templates';
 import { updateStatusByHr } from '@/api/apiApplyJob';
 import React from 'react';
+import '../../../styles/manageCandidate.css';
 
 // Định nghĩa interface cho Job (từ manageJob page)
 interface Job {
@@ -250,6 +251,60 @@ const CVTemplatePreview = ({ templateId, userData }: { templateId: string, userD
     );
 };
 
+const DeleteButton = ({ onClick }: { onClick?: () => void }) => (
+    <button
+        className="group relative flex h-10 w-10 flex-col items-center justify-center overflow-hidden rounded-xl border-2 border-red-800 bg-red-400 hover:bg-red-600"
+        onClick={onClick}
+        type="button"
+    >
+        <svg
+            viewBox="0 0 1.625 1.625"
+            className="absolute -top-7 fill-white delay-100 group-hover:top-6 group-hover:animate-[spin_1.4s] group-hover:duration-1000"
+            height="12"
+            width="12"
+        >
+            <path d="M.471 1.024v-.52a.1.1 0 0 0-.098.098v.618c0 .054.044.098.098.098h.487a.1.1 0 0 0 .098-.099h-.39c-.107 0-.195 0-.195-.195"></path>
+            <path d="M1.219.601h-.163A.1.1 0 0 1 .959.504V.341A.033.033 0 0 0 .926.309h-.26a.1.1 0 0 0-.098.098v.618c0 .054.044.098.098.098h.487a.1.1 0 0 0 .098-.099v-.39a.033.033 0 0 0-.032-.033"></path>
+            <path d="m1.245.465-.15-.15a.02.02 0 0 0-.016-.006.023.023 0 0 0-.023.022v.108c0 .036.029.065.065.065h.107a.023.023 0 0 0 .023-.023.02.02 0 0 0-.007-.016"></path>
+        </svg>
+        <svg
+            width="13"
+            fill="none"
+            viewBox="0 0 39 7"
+            className="origin-right duration-500 group-hover:rotate-90"
+        >
+            <line strokeWidth="4" stroke="white" y2="5" x2="39" y1="5"></line>
+            <line
+                strokeWidth="3"
+                stroke="white"
+                y2="1.5"
+                x2="26.0357"
+                y1="1.5"
+                x1="12"
+            ></line>
+        </svg>
+        <svg width="13" fill="none" viewBox="0 0 33 39">
+            <mask fill="white" id="path-1-inside-1_8_19">
+                <path d="M0 0H33V35C33 37.2091 31.2091 39 29 39H4C1.79086 39 0 37.2091 0 35V0Z"></path>
+            </mask>
+            <path
+                mask="url(#path-1-inside-1_8_19)"
+                fill="white"
+                d="M0 0H33H0ZM37 35C37 39.4183 33.4183 43 29 43H4C-0.418278 43 -4 39.4183 -4 35H4H29H37ZM4 43C-0.418278 43 -4 39.4183 -4 35V0H4V35V43ZM37 0V35C37 39.4183 33.4183 43 29 43V35V0H37Z"
+            ></path>
+            <path strokeWidth="4" stroke="white" d="M12 6L12 29"></path>
+            <path strokeWidth="4" stroke="white" d="M21 6V29"></path>
+        </svg>
+    </button>
+);
+
+const DownloadButton = ({ onClick }: { onClick?: () => void }) => (
+    <button className="Btn" onClick={onClick} type="button">
+        <svg className="svgIcon" viewBox="0 0 384 512" height="1em" xmlns="http://www.w3.org/2000/svg"><path d="M169.4 470.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 370.8 224 64c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 306.7L54.6 265.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z"></path></svg>
+        <span className="icon2"></span>
+    </button>
+);
+
 export default function ManageApplyJobPage() {
     const [applications, setApplications] = useState<any[]>([]);
     const [searchTerm, setSearchTerm] = useState("")
@@ -357,7 +412,6 @@ export default function ManageApplyJobPage() {
                             <TableHead>Location</TableHead>
                             <TableHead>Experience</TableHead>
                             <TableHead>Applied Jobs</TableHead>
-                            <TableHead>Status</TableHead>
                             <TableHead>Last Active</TableHead>
                             <TableHead>Actions</TableHead>
                         </TableRow>
@@ -365,7 +419,7 @@ export default function ManageApplyJobPage() {
                     <TableBody>
                         {searchedApplications.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={8} className="text-center text-gray-400">No applications found for this status.</TableCell>
+                                <TableCell colSpan={7} className="text-center text-gray-400">No applications found for this status.</TableCell>
                             </TableRow>
                         ) : searchedApplications.map((app: any) => (
                             <TableRow key={app._id}>
@@ -400,12 +454,6 @@ export default function ManageApplyJobPage() {
                                 <TableCell>
                                     {app.jobId?.title || app.job_id || '-'}
                                 </TableCell>
-                                {/* Status */}
-                                <TableCell>
-                                    <span className={`px-2 py-1 rounded text-xs font-semibold ${getStatusColor(app.status)}`}>
-                                        {app.status.charAt(0).toUpperCase() + app.status.slice(1)}
-                                    </span>
-                                </TableCell>
                                 {/* Last Active */}
                                 <TableCell>
                                     {app.updatedAt
@@ -421,20 +469,32 @@ export default function ManageApplyJobPage() {
                                             variant="outline"
                                             size="sm"
                                             onClick={() => handleViewCV(app.cvId?._id || app.cv_id)}
-                                            className="text-blue-600 border-blue-600 hover:bg-blue-50"
+                                            style={{
+                                                background: '#f5f5f5',
+                                                color: '#1e40af',
+                                                border: '1px solid #d1d5db',
+                                                fontWeight: 500
+                                            }}
                                         >
-                                            <FileText className="h-4 w-4 mr-1" />
+                                            <FileText className="mr-1" style={{ color: '#1e40af' }} />
                                             View CV
                                         </Button>
                                         <Button
                                             variant="outline"
                                             size="sm"
                                             onClick={() => handleViewCoverLetter(app.coverletterId?._id || app.coverletter_id)}
-                                            className="text-green-600 border-green-600 hover:bg-green-50"
+                                            style={{
+                                                background: '#f5f5f5',
+                                                color: '#047857',
+                                                border: '1px solid #d1d5db',
+                                                fontWeight: 500
+                                            }}
                                         >
-                                            <User className="h-4 w-4 mr-1" />
+                                            <User className="mr-1" style={{ color: '#047857' }} />
                                             View CL
                                         </Button>
+                                        <DownloadButton />
+                                        <DeleteButton />
                                     </div>
                                 </TableCell>
                             </TableRow>
