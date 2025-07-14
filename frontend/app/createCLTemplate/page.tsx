@@ -733,8 +733,8 @@ const CoverLetterBuilderContent = () => {
                 </div>
 
                 {/* Main Content (Letter Preview) */}
-                <div className="flex-1 py-8 px-4">
-                    <div className="max-w-2xl mx-auto bg-white shadow-lg">
+                <div className="flex-1 py-8 px-4 bg-gray-50 flex items-center justify-center">
+                    <div className="transform scale-75 origin-top">
                         {TemplateComponent && <TemplateComponent letterData={displayLetterData} onSectionClick={openModal} />}
                     </div>
                 </div>
