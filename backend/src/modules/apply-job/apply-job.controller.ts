@@ -86,7 +86,7 @@ export class ApplyJobController {
   @Patch(":id/status/by-hr")
   updateStatusByHr(
     @Param("id") id: string,
-    @Body("status") status: "accepted" | "rejected",
+    @Body("status") status: string,
     @Request() req
   ) {
     const hrUserId = req.user.user._id;
