@@ -46,7 +46,7 @@ const Cascade: React.FC<CascadeProps> = ({ letterData, onSectionClick, isPreview
             <div className="text-base text-gray-600 space-y-1 mt-4">
               <p>{letterData.phone}</p>
               <p>{letterData.email}</p>
-              <p>{`${letterData.city}, ${letterData.state}`}</p>
+              <p>{`${letterData.city} ${letterData.state}`}</p>
             </div>
           </HoverableSection>
 
@@ -58,7 +58,7 @@ const Cascade: React.FC<CascadeProps> = ({ letterData, onSectionClick, isPreview
             <div className="text-base leading-relaxed">
               <p>{letterData.companyName}</p>
               <p className="font-semibold">{`${letterData.recipientFirstName} ${letterData.recipientLastName}`}</p>
-              <p>{`${letterData.recipientCity}, ${letterData.recipientState}`}</p>
+              <p>{`${letterData.recipientCity} ${letterData.recipientState}`}</p>
             </div>
           </HoverableSection>
 

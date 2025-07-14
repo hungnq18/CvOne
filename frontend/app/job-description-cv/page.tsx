@@ -3,25 +3,151 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
+import { useCV } from "@/providers/cv-provider";
+import { analyzeJD } from "@/api/cvapi";
 
 export default function JobDescriptionPage() {
   const router = useRouter();
-  const [jobDescription, setJobDescription] = useState<string>("");
+  const { jobDescription, setJobDescription } = useCV();
 
   const searchParams = useSearchParams();
   const templateId = searchParams.get("id");
+
+  // State for AI analysis
+  const [analysisResult, setAnalysisResult] = useState<string>("");
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisError, setAnalysisError] = useState<string>("");
 
   const handleBack = () => {
     router.back();
   };
 
   const handleContinue = () => {
-    if (jobDescription.length !== 0) {
-      localStorage.setItem("jobDescriptionCV", jobDescription);
-    }
     router.push(`/chooseUploadCreateCV?id=${templateId}`);
   };
 
+  const formatAnalysisResult = (result: any): string => {
+    try {
+      // Nếu result là string, trả về luôn
+      if (typeof result === 'string') {
+        return result;
+      }
+
+      // Nếu có analysis field, sử dụng nó
+      if (result.analysis) {
+        return result.analysis;
+      }
+
+      // Nếu có message field, sử dụng nó
+      if (result.message) {
+        return result.message;
+      }
+
+      // Xử lý JSON object và chuyển thành đoạn văn tiếng Việt
+      let analysis = "📋 **KẾT QUẢ PHÂN TÍCH CÔNG VIỆC**\n\n";
+
+      // Thông tin về cấp độ kinh nghiệm
+      if (result.experienceLevel) {
+        const levelMap: { [key: string]: string } = {
+          'senior': 'Cấp cao (Senior)',
+          'mid-level': 'Cấp trung (Mid-level)',
+          'junior': 'Cấp cơ sở (Junior)',
+          'entry-level': 'Cấp mới bắt đầu (Entry-level)'
+        };
+        const level = levelMap[result.experienceLevel] || result.experienceLevel;
+        analysis += `🎯 **Cấp độ kinh nghiệm:** ${level}\n\n`;
+      }
+
+      // Kỹ năng yêu cầu
+      if (result.requiredSkills && result.requiredSkills.length > 0) {
+        analysis += `💼 **Kỹ năng yêu cầu:**\n`;
+        result.requiredSkills.forEach((skill: string, index: number) => {
+          analysis += `   ${index + 1}. ${skill}\n`;
+        });
+        analysis += '\n';
+      }
+
+      // Công nghệ sử dụng
+      if (result.technologies && result.technologies.length > 0) {
+        analysis += `🛠️ **Công nghệ sử dụng:**\n`;
+        result.technologies.forEach((tech: string, index: number) => {
+          analysis += `   ${index + 1}. ${tech}\n`;
+        });
+        analysis += '\n';
+      }
+
+      // Trách nhiệm chính
+      if (result.keyResponsibilities && result.keyResponsibilities.length > 0) {
+        analysis += `📝 **Trách nhiệm chính:**\n`;
+        result.keyResponsibilities.forEach((resp: string, index: number) => {
+          analysis += `   ${index + 1}. ${resp}\n`;
+        });
+        analysis += '\n';
+      }
+
+      // Kỹ năng mềm
+      if (result.softSkills && result.softSkills.length > 0) {
+        analysis += `🤝 **Kỹ năng mềm:**\n`;
+        result.softSkills.forEach((skill: string, index: number) => {
+          analysis += `   ${index + 1}. ${skill}\n`;
+        });
+        analysis += '\n';
+      }
+
+      // Ngành nghề
+      if (result.industry) {
+        analysis += `🏢 **Ngành nghề:** ${result.industry}\n\n`;
+      }
+
+      // Yêu cầu học vấn
+      if (result.education) {
+        analysis += `🎓 **Yêu cầu học vấn:** ${result.education}\n\n`;
+      }
+
+      // Chứng chỉ (nếu có)
+      if (result.certifications && result.certifications.length > 0) {
+        analysis += `🏆 **Chứng chỉ khuyến nghị:**\n`;
+        result.certifications.forEach((cert: string, index: number) => {
+          analysis += `   ${index + 1}. ${cert}\n`;
+        });
+        analysis += '\n';
+      }
+
+      // Thêm gợi ý tổng quan
+      analysis += `💡 **GỢI Ý CHO CV:**\n`;
+      analysis += `• Tập trung vào các kỹ năng và công nghệ được yêu cầu\n`;
+      analysis += `• Nhấn mạnh kinh nghiệm phù hợp với cấp độ ${result.experienceLevel || 'công việc'}\n`;
+      analysis += `• Đưa ra các ví dụ cụ thể về trách nhiệm đã thực hiện\n`;
+      analysis += `• Thể hiện kỹ năng mềm thông qua các dự án nhóm\n`;
+
+      return analysis;
+    } catch (error) {
+      console.error('Error formatting analysis result:', error);
+      return JSON.stringify(result, null, 2);
+    }
+  };
+
+  const handleAnalyzeAI = async () => {
+    if (!jobDescription.trim()) {
+      setAnalysisError("Vui lòng nhập mô tả công việc trước khi phân tích");
+      return;
+    }
+
+    setIsAnalyzing(true);
+    setAnalysisError("");
+    setAnalysisResult("");
+
+    try {
+      const result = await analyzeJD(jobDescription);
+      const formattedResult = formatAnalysisResult(result);
+      setAnalysisResult(formattedResult);
+    } catch (error) {
+      console.error("Error analyzing job description:", error);
+      setAnalysisError("Có lỗi xảy ra khi phân tích. Vui lòng thử lại.");
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
   const maxLength = 5000;
   const currentLength = jobDescription.length;
 
@@ -63,13 +189,33 @@ export default function JobDescriptionPage() {
           <div className="flex flex-col items-start space-y-4 mt-4">
             <button
               type="button"
-              className="bg-yellow-400 hover:bg-yellow-500 text-white font-bold py-3 px-6 rounded-lg shadow transition-colors"
+              onClick={handleAnalyzeAI}
+              disabled={isAnalyzing}
+              className={`font-bold py-3 px-6 rounded-lg shadow transition-colors ${
+                isAnalyzing
+                  ? "bg-gray-400 text-white cursor-not-allowed"
+                  : "bg-yellow-400 hover:bg-yellow-500 text-white"
+              }`}
             >
-              Phân tích bằng AI
+              {isAnalyzing ? "Đang phân tích..." : "Phân tích bằng AI"}
             </button>
-            <div className="w-full min-h-[0] border border-gray-200 rounded-lg bg-gray-50 p-1 text-gray-700">
-              {/* Kết quả AI sẽ hiển thị ở đây */}
-            </div>
+            
+            {/* Error message */}
+            {analysisError && (
+              <div className="w-full p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                {analysisError}
+              </div>
+            )}
+            
+            {/* Analysis result */}
+            {analysisResult && (
+              <div className="w-full min-h-[200px] border border-gray-200 rounded-lg bg-gray-50 p-4">
+                <h3 className="text-lg font-semibold text-gray-800 mb-3">Kết quả phân tích AI:</h3>
+                <div className="text-gray-700 whitespace-pre-wrap text-sm leading-relaxed">
+                  {analysisResult}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

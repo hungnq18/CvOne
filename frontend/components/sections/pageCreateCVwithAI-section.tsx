@@ -11,6 +11,7 @@ import {
   CVTemplate,
   createCV,
   CV,
+  analyzeJD,
 } from "@/api/cvapi";
 import { useOnClickOutside } from "@/hooks/useOnClickOutside";
 import { jwtDecode } from "jwt-decode";
@@ -89,7 +90,7 @@ function CreateCVwithAI() {
   const templateId = searchParams.get("id");
   const [cvId, setCvId] = useState<string | null>(templateId);
   const [currentStep, setCurrentStep] = useState(1);
-  const { userData, updateUserData, currentTemplate, loadTemplate } = useCV();
+  const { userData, updateUserData, currentTemplate, loadTemplate, jobDescription, setJobAnalysis } = useCV();
   const router = useRouter();
   const [allTemplates, setAllTemplates] = useState<CVTemplate[]>([]);
   const [showTemplatePopup, setShowTemplatePopup] = useState(false);
@@ -151,7 +152,7 @@ function CreateCVwithAI() {
     setShowTemplatePopup(false);
   };
 
-  const handleNextStep = () => {
+  const handleNextStep = async () => {
     if (currentStep < steps.length) setCurrentStep(currentStep + 1);
   };
 

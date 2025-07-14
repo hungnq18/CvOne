@@ -29,11 +29,22 @@ export class UploadController {
           const uniqueSuffix =
             Date.now() + "-" + Math.round(Math.random() * 1e9);
           const ext = extname(file.originalname);
-          cb(null, `image-${uniqueSuffix}${ext}`);
+          const baseName = file.mimetype.startsWith("image/")
+            ? "image"
+            : "file"; // 👈
+          cb(null, `${baseName}-${uniqueSuffix}${ext}`);
         },
       }),
       fileFilter: (req, file, cb) => {
-        if (!file.mimetype.match(/^image\/(jpeg|png|webp|jpg)$/)) {
+        const allowedTypes = [
+          "image/jpeg",
+          "image/png",
+          "image/webp",
+          "image/jpg",
+          "application/pdf", // 👈 hỗ trợ PDF
+        ];
+
+        if (!allowedTypes.includes(file.mimetype)) {
           return cb(
             new BadRequestException("Only image and PDF files are allowed!"),
             false

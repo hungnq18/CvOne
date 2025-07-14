@@ -105,7 +105,7 @@ const CoverLetterBuilderContent = () => {
                     state: coverLetterData.state || '',
                     phone: coverLetterData.phone || '',
                     email: coverLetterData.email || '',
-                    date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+                    date: new Date().toISOString().split('T')[0],
                     recipientFirstName: coverLetterData.recipientFirstName || '',
                     recipientLastName: coverLetterData.recipientLastName || '',
                     companyName: coverLetterData.targetCompany || coverLetterData.companyName || '',
@@ -161,9 +161,9 @@ const CoverLetterBuilderContent = () => {
                         method: 'POST',
                         body: JSON.stringify({ coverLetterFileName: clFilename, jobDescriptionFileName: jdFilename, templateId }),
                     });
-
+                    console.log(extractedData);
                     if (extractedData) {
-                        setLetterData(prevData => ({ ...prevData, ...extractedData }));
+                        setLetterData(prevData => ({ ...prevData, ...extractedData.data }));
                         toast.success("Data extracted successfully!");
                     }
                 } catch (error) {
@@ -184,7 +184,11 @@ const CoverLetterBuilderContent = () => {
                 try {
                     const clData = await getCLById(clId);
                     if (clData) {
-                        setLetterData(clData.data);
+                        const fetchedData = {
+                            ...clData.data,
+                            date: clData.data.date ? new Date(clData.data.date).toISOString().split('T')[0] : '',
+                        };
+                        setLetterData(fetchedData);
                         setClTitle(clData.title || '');
                         const template = clData.templateId as CLTemplate;
                         setSelectedTemplateData(template);
@@ -493,7 +497,7 @@ const CoverLetterBuilderContent = () => {
                             Date
                         </label>
                         <input
-                            type="text"
+                            type="date"
                             value={tempData.date || ""}
                             onChange={(e) => handleInputChange("date", e.target.value)}
                             className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -664,6 +668,27 @@ const CoverLetterBuilderContent = () => {
         }
     };
 
+    const formatDateForDisplay = (dateString: string): string => {
+        if (!dateString) return '';
+        try {
+            // The input date is YYYY-MM-DD, which is interpreted as midnight UTC.
+            // To prevent off-by-one day errors in different timezones, we can treat it as a local date.
+            const date = new Date(`${dateString}T00:00:00`);
+            return date.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+            });
+        } catch (e) {
+            return dateString; // Fallback if formatting fails
+        }
+    };
+
+    const displayLetterData = {
+        ...letterData,
+        date: formatDateForDisplay(letterData.date),
+    };
+
     if (isExtracting) {
         return (
             <div className="fixed inset-0 flex flex-col items-center justify-center bg-white z-50">
@@ -710,7 +735,7 @@ const CoverLetterBuilderContent = () => {
                 {/* Main Content (Letter Preview) */}
                 <div className="flex-1 py-8 px-4">
                     <div className="max-w-2xl mx-auto bg-white shadow-lg">
-                        {TemplateComponent && <TemplateComponent letterData={letterData} onSectionClick={openModal} />}
+                        {TemplateComponent && <TemplateComponent letterData={displayLetterData} onSectionClick={openModal} />}
                     </div>
                 </div>
 

@@ -175,7 +175,7 @@ const ModernCV1: React.FC<ModernCV1Props> = ({
   };
 
   return (
-    <div className="bg-white font-sans text-gray-800 flex flex-col lg:flex-row min-h-screen pt-5">
+    <div className="bg-white font-sans text-gray-800 flex flex-col lg:flex-row min-h-screen">
       {/* --- CỘT TRÁI (MÀU XANH) --- */}
       <div className="w-full lg:w-[38%] bg-[#004d40] text-white flex flex-col gap-8 py-8 lg:py-12">
         <div className="px-8 lg:px-12">
@@ -297,7 +297,7 @@ const ModernCV1: React.FC<ModernCV1Props> = ({
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-gray-800 uppercase">
               {userData.firstName} {userData.lastName}
             </h1>
-            <div className="mt-3 inline-block">
+            <div className="mt-3 inline-block h-max-100 mt-8">
               <span className="bg-[#4db6ac] text-white text-xl lg:text-2xl font-bold tracking-wider px-5 py-2">
                 {professionalTitle.toUpperCase()}
               </span>
