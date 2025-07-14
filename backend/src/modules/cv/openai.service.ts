@@ -1,12 +1,9 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import OpenAI from "openai";
-import { CreateGenerateCoverLetterDto } from "../cover-letter/dto/create-generate-cl-ai.dto";
 import { InjectModel } from "@nestjs/mongoose";
-import { User } from "../users/schemas/user.schema";
 import { Model } from "mongoose";
-import * as fs from "fs";
-import * as pdfParse from "pdf-parse";
+import OpenAI from "openai";
+import { User } from "../users/schemas/user.schema";
 
 @Injectable()
 export class OpenAiService {
@@ -18,12 +15,13 @@ export class OpenAiService {
     @InjectModel(User.name) private userModel: Model<User>
   ) {
     const apiKey = this.configService.get<string>("OPENAI_API_KEY");
+    console.log('DEBUG OPENAI_API_KEY (ConfigService):', apiKey);
+    console.log('DEBUG OPENAI_API_KEY (process.env):', process.env.OPENAI_API_KEY);
     if (!apiKey) {
       this.logger.warn("OPENAI_API_KEY not found in environment variables");
     }
 
     this.openai = new OpenAI({
-      baseURL: "https://models.github.ai/inference",
       apiKey: apiKey,
     });
   }
@@ -73,7 +71,7 @@ Return only valid JSON without any additional text.
 `;
 
       const completion = await this.openai.chat.completions.create({
-        model: "gpt-3.5-turbo",
+        model: "gpt-4o",
         messages: [
           {
             role: "system",
@@ -94,8 +92,16 @@ Return only valid JSON without any additional text.
         throw new Error("No response from OpenAI");
       }
 
+      // Loại bỏ markdown nếu có
+      let cleanResponse = response.trim();
+      if (cleanResponse.startsWith('```json')) {
+        cleanResponse = cleanResponse.replace(/^```json/, '').replace(/```$/, '').trim();
+      } else if (cleanResponse.startsWith('```')) {
+        cleanResponse = cleanResponse.replace(/^```/, '').replace(/```$/, '').trim();
+      }
+
       // Parse JSON response
-      const analysis = JSON.parse(response);
+      const analysis = JSON.parse(cleanResponse);
 
       this.logger.log("Job description analysis completed successfully");
       return analysis;
@@ -117,16 +123,16 @@ Return only valid JSON without any additional text.
   }
 
   /**
-   * Generate professional summary using OpenAI
+   * Generate multiple professional summaries using OpenAI
    */
   async generateProfessionalSummary(
     userProfile: any,
     jobAnalysis: any,
     additionalRequirements?: string
-  ): Promise<string> {
+  ): Promise<string[]> {
     try {
       const prompt = `
-Generate a compelling professional summary for a CV based on the following information:
+Generate 3 different compelling professional summaries for a CV based on the following information:
 
 User Profile:
 - Name: ${userProfile.first_name} ${userProfile.last_name}
@@ -134,31 +140,37 @@ User Profile:
 - Country: ${userProfile.country || "Not specified"}
 
 Job Analysis:
-- Required Skills: ${jobAnalysis.requiredSkills?.join(", ") || "Not specified"}
-- Experience Level: ${jobAnalysis.experienceLevel || "Not specified"}
-- Industry: ${jobAnalysis.industry || "Not specified"}
-- Technologies: ${jobAnalysis.technologies?.join(", ") || "Not specified"}
+- Required Skills: ${(jobAnalysis?.requiredSkills || []).join(", ") || "Not specified"}
+- Experience Level: ${jobAnalysis?.experienceLevel || "Not specified"}
+- Industry: ${jobAnalysis?.industry || "Not specified"}
+- Technologies: ${(jobAnalysis?.technologies || []).join(", ") || "Not specified"}
 
 Additional Requirements: ${additionalRequirements || "None"}
 
-Create a professional summary that:
-1. Highlights relevant skills and experience
-2. Matches the job requirements
-3. Shows enthusiasm and potential
-4. Is 2-3 sentences long
-5. Uses professional language
-6. Focuses on value proposition
+Create 3 professional summaries that:
+1. Highlight relevant skills and experience
+2. Match the job requirements
+3. Show enthusiasm and potential
+4. Are 2-3 sentences long
+5. Use professional language
+6. Focus on value proposition
 
-Write only the summary without any additional text or formatting.
+Return only a JSON array of 3 summaries, e.g.:
+[
+  "Summary 1...",
+  "Summary 2...",
+  "Summary 3..."
+]
+Do not include any explanation or markdown, only valid JSON.
 `;
 
       const completion = await this.openai.chat.completions.create({
-        model: "gpt-3.5-turbo",
+        model: "gpt-4o",
         messages: [
           {
             role: "system",
             content:
-              "You are a professional CV writer. Create compelling and relevant professional summaries.",
+              "You are a professional CV writer. Create compelling and relevant professional summaries. Always return a JSON array of 3 summaries.",
           },
           {
             role: "user",
@@ -166,23 +178,34 @@ Write only the summary without any additional text or formatting.
           },
         ],
         temperature: 0.7,
-        max_tokens: 200,
+        max_tokens: 400,
       });
 
-      const summary = completion.choices[0]?.message?.content;
-      return summary || this.generateFallbackSummary(userProfile, jobAnalysis);
+      let response = completion.choices[0]?.message?.content;
+      if (!response) {
+        throw new Error("No response from OpenAI");
+      }
+      // Remove markdown if present
+      let cleanResponse = response.trim();
+      if (cleanResponse.startsWith('```json')) {
+        cleanResponse = cleanResponse.replace(/^```json/, '').replace(/```$/, '').trim();
+      } else if (cleanResponse.startsWith('```')) {
+        cleanResponse = cleanResponse.replace(/^```/, '').replace(/```$/, '').trim();
+      }
+      const summaries = JSON.parse(cleanResponse);
+      if (Array.isArray(summaries) && summaries.length === 3) {
+        return summaries;
+      }
+      // fallback: wrap single summary in array
+      return [cleanResponse];
     } catch (error) {
       this.logger.error(
         `Error generating professional summary: ${error.message}`,
         error.stack
       );
-
-      // Check if it's a quota exceeded error
-      if (error.message.includes("429") || error.message.includes("quota")) {
-        this.logger.warn("OpenAI quota exceeded, using fallback summary");
-      }
-
-      return this.generateFallbackSummary(userProfile, jobAnalysis);
+      // fallback: return 3 copies of fallback summary
+      const fallback = this.generateFallbackSummary(userProfile, jobAnalysis || {});
+      return [fallback, fallback, fallback];
     }
   }
 
@@ -245,7 +268,7 @@ Return only valid JSON.
 `;
 
       const completion = await this.openai.chat.completions.create({
-        model: "gpt-3.5-turbo",
+        model: "gpt-4o",
         messages: [
           {
             role: "system",
@@ -286,23 +309,23 @@ Return only valid JSON.
         );
       }
 
-      return this.generateFallbackWorkExperience(jobAnalysis, experienceLevel);
+      return this.generateFallbackWorkExperience(jobAnalysis || {}, experienceLevel);
     }
   }
 
   /**
-   * Generate skills section with ratings using OpenAI
+   * Generate multiple skills section options with ratings using OpenAI
    */
   async generateSkillsSection(
     jobAnalysis: any,
     userSkills?: Array<{ name: string; rating: number }>
-  ): Promise<Array<{ name: string; rating: number }>> {
+  ): Promise<Array<Array<{ name: string; rating: number }>>> {
     try {
       const existingSkills =
         userSkills?.map((s) => s.name).join(", ") || "None";
 
       const prompt = `
-Generate a skills section for a CV based on the job analysis and existing user skills.
+Generate 3 different skills section options for a CV based on the job analysis and existing user skills.
 
 Job Analysis:
 - Required Skills: ${jobAnalysis.requiredSkills?.join(", ") || "Not specified"}
@@ -311,7 +334,7 @@ Job Analysis:
 
 Existing User Skills: ${existingSkills}
 
-Create a skills list in JSON format with ratings (1-5):
+Each option should be a skills list in JSON format with ratings (1-5):
 [
   {
     "name": "Skill Name",
@@ -320,23 +343,29 @@ Create a skills list in JSON format with ratings (1-5):
 ]
 
 Requirements:
-- Include both required skills and technologies from job analysis
+- Each option should include both required skills and technologies from job analysis
 - Add relevant soft skills (communication, teamwork, leadership, etc.)
 - Rate skills appropriately for the experience level
-- Include 8-12 skills total
+- Include 8-12 skills per option
 - Use proper capitalization for skill names
 - Ratings: 1=Beginner, 2=Elementary, 3=Intermediate, 4=Advanced, 5=Expert
 
-Return only valid JSON array.
+Return only a JSON array of 3 skills lists, e.g.:
+[
+  [ { "name": "Skill 1", "rating": 4 }, ... ],
+  [ { "name": "Skill 1", "rating": 4 }, ... ],
+  [ { "name": "Skill 1", "rating": 4 }, ... ]
+]
+Do not include any explanation or markdown, only valid JSON.
 `;
 
       const completion = await this.openai.chat.completions.create({
-        model: "gpt-3.5-turbo",
+        model: "gpt-4o",
         messages: [
           {
             role: "system",
             content:
-              "You are a professional CV writer. Create relevant skills sections with appropriate ratings.",
+              "You are a professional CV writer. Create relevant skills sections with appropriate ratings. Always return a JSON array of 3 skills lists.",
           },
           {
             role: "user",
@@ -344,28 +373,34 @@ Return only valid JSON array.
           },
         ],
         temperature: 0.4,
-        max_tokens: 400,
+        max_tokens: 1000,
       });
 
-      const response = completion.choices[0]?.message?.content;
+      let response = completion.choices[0]?.message?.content;
       if (!response) {
         throw new Error("No response from OpenAI");
       }
-
-      const skills = JSON.parse(response);
-      return skills;
+      // Remove markdown if present
+      let cleanResponse = response.trim();
+      if (cleanResponse.startsWith('```json')) {
+        cleanResponse = cleanResponse.replace(/^```json/, '').replace(/```$/, '').trim();
+      } else if (cleanResponse.startsWith('```')) {
+        cleanResponse = cleanResponse.replace(/^```/, '').replace(/```$/, '').trim();
+      }
+      const skillsLists = JSON.parse(cleanResponse);
+      if (Array.isArray(skillsLists) && skillsLists.length === 3) {
+        return skillsLists;
+      }
+      // fallback: wrap single list in array
+      return [skillsLists];
     } catch (error) {
       this.logger.error(
         `Error generating skills section: ${error.message}`,
         error.stack
       );
-
-      // Check if it's a quota exceeded error
-      if (error.message.includes("429") || error.message.includes("quota")) {
-        this.logger.warn("OpenAI quota exceeded, using fallback skills");
-      }
-
-      return this.generateFallbackSkills(jobAnalysis);
+      // fallback: return 3 copies of fallback skills
+      const fallback = this.generateFallbackSkills(jobAnalysis || {});
+      return [fallback, fallback, fallback];
     }
   }
 
@@ -380,7 +415,7 @@ Return only valid JSON array.
   }> {
     try {
       const completion = await this.openai.chat.completions.create({
-        model: "gpt-3.5-turbo",
+        model: "gpt-4o",
         messages: [{ role: "user", content: "Hello" }],
         max_tokens: 10,
       });
@@ -420,6 +455,10 @@ Return only valid JSON array.
     }
   }
 
+  public getOpenAI() {
+    return this.openai;
+  }
+
   // Fallback methods for when OpenAI is not available
   private fallbackAnalysis(jobDescription: string) {
     const lowerDescription = jobDescription.toLowerCase();
@@ -441,7 +480,10 @@ Return only valid JSON array.
   }
 
   private generateFallbackSummary(userProfile: any, jobAnalysis: any): string {
-    return `Experienced ${jobAnalysis.experienceLevel} professional with expertise in ${jobAnalysis.requiredSkills?.slice(0, 3).join(", ") || "software development"}.
+    const experienceLevel = jobAnalysis?.experienceLevel || "professional";
+    const skills = jobAnalysis?.requiredSkills?.slice(0, 3).join(", ") || "software development";
+    
+    return `Experienced ${experienceLevel} professional with expertise in ${skills}.
     Passionate about delivering high-quality solutions and collaborating with cross-functional teams.
     Strong problem-solving skills and commitment to continuous learning and professional development.`;
   }
@@ -475,8 +517,8 @@ Return only valid JSON array.
     jobAnalysis: any
   ): Array<{ name: string; rating: number }> {
     const allSkills = [
-      ...(jobAnalysis.requiredSkills || []),
-      ...(jobAnalysis.technologies || []),
+      ...(jobAnalysis?.requiredSkills || []),
+      ...(jobAnalysis?.technologies || []),
     ];
     const uniqueSkills = [...new Set(allSkills)];
 
@@ -486,202 +528,191 @@ Return only valid JSON array.
     }));
   }
 
-  async generateCoverLetterByAi(createClAi: CreateGenerateCoverLetterDto) {
+  /**
+   * Analyze CV content using OpenAI
+   */
+  async analyzeCvContent(cvText: string): Promise<{
+    userData: {
+      firstName: string;
+      lastName: string;
+      professional: string;
+      city: string;
+      country: string;
+      province: string;
+      phone: string;
+      email: string;
+      avatar: string;
+      summary: string;
+      skills: Array<{ name: string; rating: number }>;
+      workHistory: Array<{
+        title: string;
+        company: string;
+        startDate: string;
+        endDate: string;
+        description: string;
+      }>;
+      education: Array<{
+        startDate: string;
+        endDate: string;
+        major: string;
+        degree: string;
+        institution: string;
+      }>;
+    };
+  }> {
     try {
-      const {
-        jobDescription,
-        strengths,
-        workStyle,
-        firstName,
-        lastName,
-        profession,
-        city,
-        state,
-        phone,
-        email,
-        date,
-        recipientFirstName,
-        recipientLastName,
-        recipientCity,
-        recipientState,
-        recipientPhone,
-        recipientEmail,
-        templateId,
-      } = createClAi;
       const prompt = `
-You are a career writing assistant. Based on the following information, generate a personalized cover letter section.
+Analyze the following CV content and extract structured information in JSON format:
 
-Job Description:
-${jobDescription}
+CV Content:
+${cvText}
 
-Candidate’s Strengths:
-${strengths.join(", ")}
-
-Candidate’s Work Style:
-${workStyle}
-
-Generate a JSON object with the following structure:
+Please provide a detailed analysis in the following JSON structure:
 {
-  "subject": "A concise subject line related to the job position",
-  "opening": "An engaging opening paragraph introducing the applicant’s interest and highlighting relevant strengths",
-  "body": "A body paragraph showing how the applicant’s skills, strengths, and work style match the job requirements",
-  "callToAction": "A polite call to action to express interest in an interview or further discussion"
+  "userData": {
+    "firstName": "First Name",
+    "lastName": "Last Name", 
+    "professional": "Professional Title",
+    "city": "City",
+    "country": "Country",
+    "province": "Province/State",
+    "phone": "Phone Number",
+    "email": "email@example.com",
+    "avatar": "",
+    "summary": "Professional summary extracted from CV",
+    "skills": [
+      {
+        "name": "Skill Name",
+        "rating": 4
+      }
+    ],
+    "workHistory": [
+      {
+        "title": "Job Title",
+        "company": "Company Name",
+        "startDate": "YYYY-MM-DD",
+        "endDate": "YYYY-MM-DD or Present",
+        "description": "Job description"
+      }
+    ],
+    "education": [
+      {
+        "startDate": "YYYY-MM-DD",
+        "endDate": "YYYY-MM-DD",
+        "major": "Major/Field of Study",
+        "degree": "Degree Name",
+        "institution": "Institution Name"
+      }
+    ]
+  }
 }
 
-Guidelines:
-- Tailor the content based on job description and the candidate’s strengths & work style
-- Use a professional, confident, and enthusiastic tone
-- Do NOT include generic phrases
-- Do NOT include greeting, closing, signature, or contact details
-- Only return a **valid JSON object** — do not include markdown or any extra explanation
+Focus on:
+- Extract personal information accurately (name, contact, location)
+- Identify professional title/role
+- Identify all skills mentioned with appropriate ratings (1-5)
+- Parse work experience with dates and descriptions
+- Extract education details with proper structure
+- Ensure all dates are in YYYY-MM-DD format
+- Set empty string for avatar if not found
+
+Return only valid JSON without any additional text.
 `;
 
       const completion = await this.openai.chat.completions.create({
-        model: "openai/gpt-4.1",
+        model: "gpt-4o",
         messages: [
           {
             role: "system",
             content:
-              "You are a professional cover letter writer. Generate only the requested fields in JSON format.",
+              "You are a professional CV analyzer. Always respond with valid JSON format matching the CV schema structure.",
           },
           {
             role: "user",
             content: prompt,
           },
         ],
+        temperature: 0.3,
+        max_tokens: 2000,
       });
+
       const response = completion.choices[0]?.message?.content;
       if (!response) {
         throw new Error("No response from OpenAI");
       }
-      const parsed = JSON.parse(response);
 
-      const coverLetter = {
-        templateId: templateId,
-        title: "Generated Cover Letter",
-        data: {
-          firstName,
-          lastName,
-          profession,
-          city,
-          state,
-          phone,
-          email,
-          date,
-          recipientFirstName,
-          recipientLastName,
-          recipientCity,
-          recipientState,
-          recipientPhone,
-          recipientEmail,
+      // Loại bỏ markdown nếu có
+      let cleanResponse = response.trim();
+      if (cleanResponse.startsWith('```json')) {
+        cleanResponse = cleanResponse.replace(/^```json/, '').replace(/```$/, '').trim();
+      } else if (cleanResponse.startsWith('```')) {
+        cleanResponse = cleanResponse.replace(/^```/, '').replace(/```$/, '').trim();
+      }
 
-          subject: parsed.subject,
-          greeting: `Dear ${recipientFirstName} ${recipientLastName},`,
-          opening: parsed.opening,
-          body: parsed.body,
-          callToAction: parsed.callToAction,
-          closing: "Sincerely,",
-          signature: `${firstName} ${lastName}`,
-        },
-      };
+      // Parse JSON response
+      const analysis = JSON.parse(cleanResponse);
 
-      return coverLetter;
+      this.logger.log("CV content analysis completed successfully");
+      return analysis;
     } catch (error) {
-      console.error("Cover letter generation failed:", error);
-      throw new Error("Failed to generate cover letter: " + error.message);
+      this.logger.error(
+        `Error analyzing CV content: ${error.message}`,
+        error.stack
+      );
+
+      // Check if it's a quota exceeded error
+      if (error.message.includes("429") || error.message.includes("quota")) {
+        this.logger.warn("OpenAI quota exceeded, using fallback CV analysis");
+        return this.fallbackCvAnalysis(cvText);
+      }
+
+      // Fallback to basic analysis if OpenAI fails
+      return this.fallbackCvAnalysis(cvText);
     }
   }
 
-  async extractCoverLetterFromPdf(
-    coverLetterPath: string,
-    jdPath: string,
-    templateId: string
-  ) {
-    // 1. Validate file existence
-    if (!fs.existsSync(coverLetterPath)) {
-      throw new Error("Cover letter PDF file does not exist");
-    }
-    if (!fs.existsSync(jdPath)) {
-      throw new Error("Job description PDF file does not exist");
-    }
-
-    // 2. Read and extract text from both PDFs
-    const coverLetterBuffer = fs.readFileSync(coverLetterPath);
-    const jdBuffer = fs.readFileSync(jdPath);
-
-    const coverLetterText = (await pdfParse(coverLetterBuffer)).text;
-    const jobDescriptionText = (await pdfParse(jdBuffer)).text;
-
-    const prompt = `
-You are an expert at analyzing cover letters. Below is the content of a cover letter extracted from a PDF and a job description.
-
-Your task is to extract and enhance the following specific fields from the cover letter to better match the job description. Ensure the extracted content is relevant, professional, and tailored to the job requirements while preserving the applicant’s tone and personal details.
-
----
-
-**Cover Letter Content**:
-${coverLetterText}
-
-**Job Description**:
-${jobDescriptionText}
-
----
-
-**Return a valid JSON object with ONLY the following fields**:
-
-{
-  "firstName": "",       // First name of the applicant
-  "lastName": "",        // Last name of the applicant
-  "email": "",           // Email address
-  "phone": "",           // Phone number
-  "subject": "",         // Subject or position applied for
-  "greeting": "",        // e.g. "Dear Hiring Manager"
-  "opening": "",         // Opening paragraph showing interest and motivation
-  "body": "",            // Main body elaborating on experience and skills
-  "callToAction": "",    // A polite request for an interview or next step
-  "closing": "",         // e.g. "Sincerely"
-  "signature": ""        // Applicant's full name or sign-off
-}
-
-**IMPORTANT**:
-- Return only this JSON structure.
-- Do NOT include any explanation, extra text, or additional fields.
-- Ensure all fields are filled if possible; infer when necessary from context.
-- Be concise and relevant.
-`;
-
-    // 3. Call OpenAI
-    const completion = await this.openai.chat.completions.create({
-      model: "openai/gpt-4.1",
-      messages: [
-        {
-          role: "system",
-          content:
-            "You are a professional cover letter writer. Respond only with valid JSON.",
-        },
-        {
-          role: "user",
-          content: prompt,
-        },
-      ],
-    });
-
-    const response = completion.choices[0]?.message?.content;
-    if (!response) {
-      throw new Error("No response from OpenAI");
-    }
-
-    let parsed;
-    try {
-      parsed = JSON.parse(response);
-    } catch (err) {
-      throw new Error("Invalid JSON returned from OpenAI: " + err.message);
-    }
-
+  /**
+   * Fallback CV analysis when OpenAI is not available
+   */
+  private fallbackCvAnalysis(cvText: string) {
+    const lines = cvText.split('\n').filter(line => line.trim());
+    
     return {
-      templateId,
-      title: "Extracted from PDF",
-      data: parsed,
+      userData: {
+        firstName: "First",
+        lastName: "Name",
+        professional: "Software Developer",
+        city: "City",
+        country: "Country",
+        province: "Province",
+        phone: "Phone Number",
+        email: "email@example.com",
+        avatar: "",
+        summary: "Professional summary extracted from CV content",
+        skills: [
+          { name: "Problem Solving", rating: 4 },
+          { name: "Communication", rating: 4 },
+          { name: "Teamwork", rating: 4 }
+        ],
+        workHistory: [
+          {
+            title: "Software Developer",
+            company: "Company Name",
+            startDate: "2020-01-01",
+            endDate: "Present",
+            description: "Developed and maintained applications"
+          }
+        ],
+        education: [
+          {
+            startDate: "2016-09-01",
+            endDate: "2020-06-30",
+            major: "Computer Science",
+            degree: "Bachelor's Degree",
+            institution: "University Name"
+          }
+        ]
+      }
     };
   }
 }

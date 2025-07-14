@@ -1,10 +1,11 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Table } from 'antd';
 import { FaFileAlt } from 'react-icons/fa';
-import { CV } from '@/api/cvapi';
+import { CV, CVTemplate, getCVTemplates } from '@/api/cvapi';
 import { useLanguage } from '@/providers/global-provider';
+import { templateComponentMap } from '@/components/cvTemplate/index';
 
 const translations = {
     vi: {
@@ -31,12 +32,47 @@ const CVList: React.FC<CVListProps> = ({ cvList }) => {
     const { language } = useLanguage();
     const t = translations[language];
 
+    const [templates, setTemplates] = useState<CVTemplate[]>([]);
+    useEffect(() => {
+        getCVTemplates().then(setTemplates);
+    }, []);
+
+    const containerWidth = 120; // even larger thumbnail size
+    const templateOriginalWidth = 794;
+    const scaleFactor = containerWidth / templateOriginalWidth;
+
     const columns = [
         {
             title: t.image,
-            dataIndex: 'image',
+            dataIndex: '_id',
             key: 'image',
-            render: (text: string) => <img src={text} alt="CV preview" className="w-12 h-auto rounded" />,
+            render: (_: any, cv: CV) => {
+                const template = templates.find((t) => t._id === cv.cvTemplateId);
+                const TemplateComponent = templateComponentMap?.[template?.title || ''];
+                if (!TemplateComponent || !cv.content?.userData) return <span className="text-gray-400">No preview</span>;
+                const componentData = {
+                    ...template?.data,
+                    userData: cv.content.userData,
+                };
+                return (
+                    <div className="relative w-32 h-44 bg-gray-100 border rounded overflow-hidden">
+                        <div
+                            style={{
+                                width: `${templateOriginalWidth}px`,
+                                height: `${templateOriginalWidth * (297 / 210)}px`,
+                                transform: `scale(${scaleFactor})`,
+                                transformOrigin: 'top left',
+                                background: 'white',
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                            }}
+                        >
+                            <TemplateComponent data={componentData} />
+                        </div>
+                    </div>
+                );
+            },
         },
         {
             title: t.name,
@@ -46,8 +82,9 @@ const CVList: React.FC<CVListProps> = ({ cvList }) => {
         },
         {
             title: t.creation,
-            dataIndex: 'create_at',
-            key: 'create_at',
+            dataIndex: 'createdAt',
+            key: 'createdAt',
+            render: (date: string) => date ? new Date(date).toLocaleDateString('vi-VN') : 'N/A',
         },
     ];
 

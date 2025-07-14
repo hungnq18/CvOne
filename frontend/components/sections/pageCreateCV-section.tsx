@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
-import { useEffect, useState, useRef, FC } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   getCVTemplateById,
   getCVTemplates,
@@ -17,15 +17,14 @@ import {
   Printer,
   Mail,
   ArrowLeft,
-  X,
   CheckCircle2,
   Loader2,
 } from "lucide-react";
 import Image from "next/image";
-import { CVProvider, useCV } from "@/providers/cv-provider";
+import { useCV } from "@/providers/cv-provider";
 import { useOnClickOutside } from "@/hooks/useOnClickOutside";
 import { jwtDecode } from "jwt-decode";
-import { CVEditorPopupsManager } from "@/components/forms/CVEditorPopups"; // Import component quản lý mới
+import { CVEditorPopupsManager } from "@/components/forms/CVEditorPopups";
 
 // --- INTERFACES & TYPES ---
 interface DecodedToken {
@@ -62,9 +61,12 @@ const PageCreateCVContent = () => {
   const [cvId, setCvId] = useState<string | null>(id);
   const [isDirty, setIsDirty] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [cvTitle, setCvTitle] = useState<string>("");
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
 
   const templateDropdownRef = useRef(null);
   const colorDropdownRef = useRef(null);
+  const previewRef = useRef<HTMLDivElement>(null);
 
   useOnClickOutside(templateDropdownRef, () => setShowTemplatePopup(false));
   useOnClickOutside(colorDropdownRef, () => setShowColorPopup(false));
@@ -77,18 +79,29 @@ const PageCreateCVContent = () => {
       setLoading(true);
       getCVById(idFromUrl)
         .then((templateData) => {
-          if (templateData) loadTemplate(templateData);
+          if (templateData) {
+            loadTemplate(templateData);
+            if (templateData.title) {
+              setCvTitle(templateData.title);
+            }
+            // Ưu tiên userData từ context, nếu không có thì mới lấy từ DB
+            if ((!userData || Object.keys(userData).length === 0) && templateData.content?.userData) {
+              updateUserData(templateData.content.userData);
+            }
+          }
           setLoading(false);
         })
         .catch(() => {
-          console.log("đang tải template để tạo mới...");
+          console.log("Đang tải template để tạo mới...");
           setCvId(null);
           getCVTemplateById(idFromUrl).then((templateData) => {
             if (templateData) {
               loadTemplate(templateData);
-              if (templateData.data?.userData) {
+              // Ưu tiên userData từ context, nếu không có thì mới lấy từ DB
+              if ((!userData || Object.keys(userData).length === 0) && templateData.data?.userData) {
                 updateUserData(templateData.data.userData);
               }
+              setCvTitle(`CV - ${templateData.title}`);
             }
             setLoading(false);
           });
@@ -96,12 +109,13 @@ const PageCreateCVContent = () => {
     } else {
       setLoading(false);
     }
-  }, [id, loadTemplate, updateUserData]);
+  }, [id, loadTemplate, updateUserData, userData]);
 
   const handleTemplateSelect = (selectedTemplate: CVTemplate) => {
     router.push(
       `/createCV?id=${selectedTemplate._id}`
     );
+    setCvTitle(`CV - ${selectedTemplate.title}`);
     setShowTemplatePopup(false);
   };
 
@@ -142,14 +156,14 @@ const PageCreateCVContent = () => {
       if (cvId) {
         const dataToUpdate: Partial<CV> = {
           content: { userData },
-          title: `CV for ${userData.firstName || "Untitled"}`,
+          title: cvTitle || `CV for ${userData.firstName || "Untitled"}`,
           updatedAt: new Date().toISOString(),
         };
         await updateCV(cvId, dataToUpdate);
       } else {
         const dataToCreate: Omit<CV, "_id"> = {
           userId: userId || "", 
-          title: `CV for ${userData.firstName} ${userData.lastName}`,
+          title: cvTitle || `CV for ${userData.firstName} ${userData.lastName}`,
           content: { userData },
           isPublic: false,
           createdAt: new Date().toISOString(),
@@ -158,7 +172,6 @@ const PageCreateCVContent = () => {
           isSaved: true,
           isFinalized: false,
         };
-        console.log("Dữ liệu tạo mới CV:", dataToCreate);
         const newCV = await createCV(dataToCreate);
         if (newCV && newCV.id) {
           setCvId(newCV.id);
@@ -188,6 +201,109 @@ const PageCreateCVContent = () => {
     setActivePopup(sectionId);
   };
 
+  const renderCVForPDF = () => {
+    if (!currentTemplate || !userData) return null;
+    const TemplateComponent = templateComponentMap?.[currentTemplate.title];
+    if (!TemplateComponent) return null;
+
+    const componentData = {
+      ...currentTemplate.data,
+      userData: userData,
+    };
+
+    // LƯU Ý: Bạn vẫn cần lấy chuỗi Base64 của font chữ mà bạn đang dùng và thay vào đây.
+    const fontBase64 = "data:font/woff2;base64,d09GMgABAAAAA... (thay bằng chuỗi Base64 thật của font bạn dùng)";
+    const fontName = 'CVFont';
+
+    return (
+      <div>
+        <style>
+            {`
+            @font-face {
+                font-family: '${fontName}'; 
+                src: url(${fontBase64}) format('woff2');
+                font-weight: normal;
+                font-style: normal;
+            }
+            `}
+        </style>
+        
+        <div style={{ fontFamily: `'${fontName}', sans-serif` }}>
+             <TemplateComponent data={componentData} isPdfMode={true} />
+        </div>
+      </div>
+    );
+  };
+
+  // HÀM TẠO PDF PHIÊN BẢN CUỐI CÙNG, SỬ DỤNG IFRAME
+  const handleDownloadPDF = async () => {
+    // 1. Tạo một iframe ẩn để tạo môi trường render biệt lập
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'fixed';
+    iframe.style.width = '794px';
+    iframe.style.height = '1123px'; // Tỷ lệ A4
+    iframe.style.left = '-9999px'; // Đẩy ra ngoài màn hình
+    document.body.appendChild(iframe);
+
+    const iframeDoc = iframe.contentWindow?.document;
+    if (!iframeDoc) {
+      alert("Không thể tạo môi trường để xuất PDF.");
+      document.body.removeChild(iframe);
+      return;
+    }
+    
+    // 2. Sao chép tất cả các file CSS từ trang chính vào iframe
+    const head = iframeDoc.head;
+    document.querySelectorAll('style, link[rel="stylesheet"]').forEach(node => {
+        head.appendChild(node.cloneNode(true));
+    });
+
+    // 3. Tạo một div root bên trong iframe để React render vào
+    const mountNode = iframeDoc.createElement('div');
+    iframeDoc.body.appendChild(mountNode);
+
+    let root: any = null;
+    
+    try {
+      // Đợi một chút để CSS trong iframe được áp dụng
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      // 4. Render component vào root của iframe bằng API của React 18
+      const { createRoot } = await import('react-dom/client');
+      root = createRoot(mountNode);
+      root.render(renderCVForPDF());
+      
+      // Đợi thêm một chút cho React render và các tài nguyên (ảnh) tải xong
+      await new Promise(resolve => setTimeout(resolve, 500)); 
+
+      const html2pdf = (await import("html2pdf.js"))?.default || (await import("html2pdf.js"));
+      
+      // 5. Xuất PDF từ body của iframe
+      await html2pdf()
+        .from(iframe.contentWindow.document.body)
+        .set({
+            margin: 0,
+            filename: `${cvTitle || "cv"}.pdf`,
+            image: { type: "jpeg", quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true },
+            jsPDF: { unit: "px", format: [794, 1123], orientation: "portrait" },
+        })
+        .save();
+
+    } catch (error) {
+      console.error("Lỗi khi tạo PDF:", error);
+      alert("Đã có lỗi xảy ra khi xuất file PDF.");
+    } finally {
+      // 6. Luôn dọn dẹp iframe sau khi xong việc để tránh rò rỉ bộ nhớ
+      if (root) {
+        root.unmount();
+      }
+      if (document.body.contains(iframe)) {
+          document.body.removeChild(iframe);
+      }
+    }
+  };
+
   const renderCVPreview = () => {
     if (loading || !currentTemplate || !userData) {
       return <p className="text-center">Đang tải Mẫu...</p>;
@@ -201,11 +317,11 @@ const PageCreateCVContent = () => {
       userData: userData,
     };
 
-     const containerWidth = 700;
+    const containerWidth = 700;
     const templateOriginalWidth = 794;
     const scaleFactor = containerWidth / templateOriginalWidth;
     return (
-      <div className=" max-w-[1050px] origin-top ">
+      <div className="max-w-[1050px] origin-top" ref={previewRef}>
         <div
           style={{
             width: `${templateOriginalWidth}px`,
@@ -214,17 +330,31 @@ const PageCreateCVContent = () => {
             transform: `scale(${scaleFactor})`,
           }}
         >
-          <TemplateComponent data={componentData}  onSectionClick={handleSectionClick}/>
+          <TemplateComponent data={componentData} onSectionClick={handleSectionClick} />
         </div>
       </div>
     );
   };
 
   const handleBackClick = () => {
-    setActivePopup("confirmLeave");
     if (isDirty) {
-      router.push(`/cvTemplates`);
+        setActivePopup("confirmLeave");
+    } else {
+        router.push(`/cvTemplates`);
     }
+  };
+
+  const handleTitleEdit = () => {
+    setIsEditingTitle(true);
+  };
+
+  const handleTitleSave = () => {
+    setIsEditingTitle(false);
+    setIsDirty(true);
+  };
+
+  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setCvTitle(e.target.value);
   };
 
   return (
@@ -234,9 +364,35 @@ const PageCreateCVContent = () => {
         style={{ backgroundColor: "#0b1b34" }}
       >
         <div className="flex items-center gap-6">
-          <h1 className="text-2xl font-bold">
-            {currentTemplate ? currentTemplate.title : "Chỉnh Sửa CV"}
-          </h1>
+          <div className="flex items-center gap-2">
+            {isEditingTitle ? (
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={cvTitle}
+                  onChange={handleTitleChange}
+                  onBlur={handleTitleSave}
+                  onKeyPress={(e) => e.key === 'Enter' && handleTitleSave()}
+                  className="text-2xl font-bold bg-transparent border-b-2 border-blue-500 focus:outline-none text-white"
+                  autoFocus
+                />
+                <button
+                  onClick={handleTitleSave}
+                  className="text-blue-400 hover:text-blue-300"
+                >
+                  <CheckCircle2 size={16} />
+                </button>
+              </div>
+            ) : (
+              <h1 
+                className="text-2xl font-bold cursor-pointer hover:text-blue-300 transition-colors"
+                onClick={handleTitleEdit}
+                title="Click để chỉnh sửa tiêu đề"
+              >
+                {cvTitle || (currentTemplate ? currentTemplate.title : "Chỉnh Sửa CV")}
+              </h1>
+            )}
+          </div>
           <div className="flex items-center gap-4">
             <div className="relative" ref={colorDropdownRef}>
               <button
@@ -361,7 +517,10 @@ const PageCreateCVContent = () => {
 
         <aside className="w-72 bg-white p-6 border-l border-slate-200 overflow-y-auto">
           <div className="flex flex-col gap-3">
-            <button className="w-full flex items-center gap-3 p-3 rounded-md text-slate-700 hover:bg-slate-100 font-medium">
+            <button
+              className="w-full flex items-center gap-3 p-3 rounded-md text-slate-700 hover:bg-slate-100 font-medium"
+              onClick={handleDownloadPDF}
+            >
               <FileDown size={20} /> Tải về
             </button>
             <button className="w-full flex items-center gap-3 p-3 rounded-md text-slate-700 hover:bg-slate-100 font-medium">
