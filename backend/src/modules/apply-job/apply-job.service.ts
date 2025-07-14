@@ -151,7 +151,6 @@ export class ApplyJobService {
     if (!apply) {
       throw new NotFoundException("Đơn ứng tuyển không tồn tại");
     }
-
     apply.status = newStatus;
     await apply.save();
 
