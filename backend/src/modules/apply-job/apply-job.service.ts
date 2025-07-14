@@ -13,13 +13,13 @@ import { CreateApplyJobDto } from "./dto/create-apply-job.dto";
 export class ApplyJobService {
   constructor(
     @InjectModel(ApplyJob.name)
-    private readonly applyJobModel: Model<ApplyJobDocument>,
+    private readonly applyJobModel: Model<ApplyJobDocument>
   ) {}
 
   async apply(dto: CreateApplyJobDto, userId: string) {
     if (!dto.cvId && !dto.coverletterId) {
       throw new BadRequestException(
-        "Bạn phải gửi ít nhất một trong CV hoặc Cover Letter",
+        "Bạn phải gửi ít nhất một trong CV hoặc Cover Letter"
       );
     }
 
@@ -138,7 +138,7 @@ export class ApplyJobService {
   async updateStatusByHr(
     applyJobId: string,
     hrUserId: string,
-    newStatus: string,
+    newStatus: string
   ) {
     if (!["accepted", "rejected", "reviewed"].includes(newStatus)) {
       throw new BadRequestException("Trạng thái không hợp lệ");
@@ -162,7 +162,7 @@ export class ApplyJobService {
     updates: {
       cvId?: string;
       coverletterId?: string;
-    },
+    }
   ) {
     const applyJob = await this.applyJobModel.findById(applyJobId);
 
@@ -177,7 +177,7 @@ export class ApplyJobService {
     const forbiddenStatuses = ["accepted", "reviewed", "rejected"];
     if (forbiddenStatuses.includes(applyJob.status)) {
       throw new ForbiddenException(
-        `Đơn ứng tuyển đã ở trạng thái "${applyJob.status}" và không thể chỉnh sửa`,
+        `Đơn ứng tuyển đã ở trạng thái "${applyJob.status}" và không thể chỉnh sửa`
       );
     }
 
@@ -196,7 +196,7 @@ export class ApplyJobService {
   async countByCreateAt(
     month: number,
     year: number,
-    userId: string,
+    userId: string
   ): Promise<number> {
     const startDate = new Date(year, month - 1, 1); // ngày đầu tháng
     const endDate = new Date(year, month, 1); // ngày đầu tháng kế tiếp
@@ -207,5 +207,9 @@ export class ApplyJobService {
         $lt: endDate,
       },
     });
+  }
+
+  async deleteApplyJob(applyJobId: string) {
+    return this.applyJobModel.findByIdAndDelete(applyJobId);
   }
 }
