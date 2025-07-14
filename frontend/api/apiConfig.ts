@@ -36,7 +36,20 @@ export const API_ENDPOINTS = {
     UPDATE: (id: string) => `/cv/${id}`,
     DELETE: (id: string) => `/cv/${id}`,
     SHARE: (id: string) => `/cv/${id}/share`,
-    TEMPLATES: "/cv-templates",
+    UNSHARE: (id: string) => `/cv/${id}/unshare`,
+    SAVE: (id: string) => `/cv/${id}/save`,
+    UNSAVE: (id: string) => `/cv/${id}/unsave`,
+    GET_SAVED: "/cv/saved",
+    TEMPLATES: "/cv/templates",
+    ANALYZE_JD: "/cv/analyze-jd",
+    GENERATE_WITH_AI: "/cv/generate-with-ai",
+    GENERATE_AND_SAVE: "/cv/generate-and-save",
+    SUGGEST_SUMMARY: "/cv/suggest/summary",
+    SUGGEST_SKILLS: "/cv/suggest/skills",
+    SUGGEST_WORK_EXPERIENCE: "/cv/suggest/work-experience",
+    UPLOAD_AND_ANALYZE: "/cv/upload-and-analyze",
+    UPLOAD_ANALYZE_GENERATE_PDF: "/cv/upload-analyze-generate-pdf",
+    AI_STATUS: "/cv/ai-status"
   },
   CL: {
     TEMPLATES: "/cl-templates",
@@ -64,7 +77,7 @@ export const API_ENDPOINTS = {
     DELETE: (id: string) => `/jobs/${id}`,
     COUNTBYPOSTINGDATE: (month: number, year: number) =>
       `/jobs/count-by-posting-date/${month}/${year}`,
-    GET_JOB_BY_HR: "jobs/by-hr",
+    GET_JOB_BY_HR: "/jobs/by-hr",
   },
   NOTIFICATION: {
     GET_NOTIFICATIONS: "/notifications",
@@ -84,9 +97,9 @@ export const API_ENDPOINTS = {
     UPDATE_APPLY_JOB_BY_USER: (id: string) => `/apply-job/${id}/user-update`,
   },
   SAVED_JOB: {
-    GET_SAVE_JOB: "/saved-job",
-    SAVE_JOB: (jobId: string) => `/saved-job/${jobId}`,
-    UN_SAVE_JOB: (jobId: string) => `/saved-job/${jobId}`,
+    GET_SAVE_JOB: "/saved-jobs",
+    SAVE_JOB: (jobId: string) => `/saved-jobs/${jobId}`,
+    UN_SAVE_JOB: (jobId: string) => `/saved-jobs/${jobId}`,
   },
   UPLOAD: {
     UPLOAD_FILE: "/upload",

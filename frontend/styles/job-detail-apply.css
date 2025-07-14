@@ -1,0 +1,237 @@
+.job-apply-hover-group {
+  width: 100%;
+  height: 44px;
+  overflow: hidden;
+  position: relative;
+}
+
+.job-apply-btn {
+  background: #2563eb;
+  color: #fff;
+  box-shadow: 0 2px 8px 0 rgba(37,99,235,0.15);
+  font-weight: 600;
+  padding: 0 1.5rem;
+  border-radius: 1rem 1rem 1rem 1rem;
+  text-align: center;
+  cursor: pointer;
+  width: 100%;
+  display: block;
+  height: 44px;
+  line-height: 28px;
+  transition: background 0.2s, box-shadow 0.2s, transform 0.2s;
+}
+.job-apply-btn:hover {
+  background: #1d4ed8;
+  box-shadow: 0 4px 16px 0 rgba(37,99,235,0.25);
+  filter: brightness(1.08);
+  transform: scale(1.03);
+}
+
+.job-apply-btns-animated {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  gap: 8px;
+  justify-content: center;
+  align-items: center;
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 44px;
+}
+
+.job-apply-fast-btn,
+.job-apply-detail-btn {
+  width: 50%;
+  opacity: 0;
+  transform: scaleX(0);
+  background: #2563eb;
+  color: #fff;
+  font-weight: 600;
+  border-radius: 1rem;
+  box-shadow: 0 2px 8px 0 rgba(37,99,235,0.15);
+  padding: 0 1.5rem;
+  height: 44px;
+  border: none;
+  cursor: pointer;
+  transition: width 0.12s cubic-bezier(0.4,0,0.2,1), opacity 0.12s, transform 0.12s cubic-bezier(0.4,0,0.2,1);
+  pointer-events: none;
+  position: relative;
+  z-index: 1;
+}
+
+.job-apply-fast-btn {
+  margin-right: 4px;
+}
+.job-apply-detail-btn {
+  margin-left: 4px;
+}
+
+.job-apply-hover-group:hover .job-apply-btns-animated .job-apply-fast-btn,
+.job-apply-hover-group:hover .job-apply-btns-animated .job-apply-detail-btn {
+  opacity: 1;
+  transform: scaleX(1);
+  pointer-events: auto;
+}
+
+.job-apply-fast-btn:hover,
+.job-apply-detail-btn:hover {
+  background: #1d4ed8;
+  box-shadow: 0 4px 16px 0 rgba(37,99,235,0.25);
+  filter: brightness(1.08);
+  transform: scale(1.03);
+}
+
+.apply-animated-hover-group {
+  position: relative;
+  width: 100%;
+  height: 44px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.apply-animated-btn {
+  background: #2563eb;
+  color: #d8e5f9;
+  box-shadow: 0 2px 8px 0 rgba(37,99,235,0.15);
+  font-weight: 500;
+  padding: 0 1.5rem;
+  border-radius: 1.5rem;
+  text-align: center;
+  cursor: pointer;
+  width: 16rem;
+  display: block;
+  height: 44px;
+  line-height: 28px;
+  font-size: 1.1rem;
+  transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
+}
+.apply-animated-btn:hover {
+  background: #2564da;
+  color: #a8c1f0;
+  box-shadow: 0 4px 16px 0 #225bc3;
+  scale: 1.065;
+  translate: 0 -7px;
+  border-radius: 23px 23px 16px 16px;
+}
+
+.apply-animated-btn-fast {
+  background: #225bc3;
+  color: #d8e5f9;
+  font-weight: 500;
+  border-radius: 23px 23px 0 0;
+  padding: 0 1.5rem;
+  text-align: center;
+  cursor: pointer;
+  width: 16rem;
+  height: 44px;
+  line-height: 28px;
+  font-size: 1.1rem;
+  box-shadow: 0 2px 8px 0 #193f80;
+  transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
+  z-index: 2;
+}
+.apply-animated-btn-fast:hover {
+  background: #2564da;
+  color: #a8c1f0;
+  scale: 1.065;
+  translate: 0 -7px;
+  border-radius: 23px 23px 0 0;
+}
+
+.apply-animated-btn-detail {
+  background: #5350c6;
+  color: #d8e5f9;
+  font-weight: 500;
+  border-radius: 0 0 23px 23px;
+  padding: 0 1.5rem;
+  text-align: center;
+  cursor: pointer;
+  width: 16rem;
+  height: 44px;
+  line-height: 28px;
+  font-size: 1.1rem;
+  box-shadow: 0 2px 8px 0 #193f80;
+  transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
+  z-index: 1;
+}
+.apply-animated-btn-detail:hover {
+  background: #6c63e6;
+  color: #b3aaee;
+  scale: 1.065;
+  translate: 0 7px;
+  border-radius: 0 0 23px 23px;
+}
+
+.job-apply-animating-btn {
+  background: #2563eb;
+  color: #fff;
+  font-weight: 600;
+  border-radius: 1rem;
+  box-shadow: 0 2px 8px 0 rgba(37,99,235,0.15);
+  padding: 0 1.5rem;
+  height: 44px;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  transition: box-shadow 0.4s cubic-bezier(0.4,0,0.2,1), filter 0.4s, transform 0.4s cubic-bezier(0.4,0,0.2,1);
+}
+.job-apply-hover-group:hover .job-apply-animating-btn {
+  box-shadow: 0 8px 32px 0 rgba(37,99,235,0.22);
+  filter: brightness(1.12);
+  transform: scaleX(1.08) scaleY(1.08);
+}
+
+.apply-split-group {
+  position: relative;
+  width: 100%;
+  height: 44px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  transition: gap 0.4s cubic-bezier(0.4,0,0.2,1);
+  overflow: hidden;
+}
+.apply-split-group.apply-split-split,
+.apply-split-group:hover {
+  gap: 12px;
+}
+.apply-split-main {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+  width: 100%;
+  height: 44px;
+  opacity: 1;
+  pointer-events: auto;
+  transition: opacity 0.35s cubic-bezier(0.4,0,0.2,1), visibility 0.35s cubic-bezier(0.4,0,0.2,1);
+}
+.apply-split-group.apply-split-split .apply-split-main,
+.apply-split-group:hover .apply-split-main {
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+}
+.apply-split-btn {
+  opacity: 0;
+  transform: scale(0.95);
+  transition: opacity 0.4s cubic-bezier(0.4,0,0.2,1), transform 0.4s cubic-bezier(0.4,0,0.2,1), box-shadow 0.18s, background 0.18s;
+  z-index: 1;
+  width: 100%;
+  height: 44px;
+  font-weight: 600;
+  box-shadow: 0 2px 8px 0 rgba(37,99,235,0.15);
+}
+.apply-split-group.apply-split-split .apply-split-btn,
+.apply-split-group:hover .apply-split-btn {
+  opacity: 1;
+  transform: scale(1);
+}
+.apply-split-btn:hover {
+  box-shadow: 0 4px 16px 0 rgba(37,99,235,0.25);
+  filter: brightness(1.08);
+  transform: scale(1.03);
+} 

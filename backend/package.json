@@ -6,8 +6,9 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "build": "nest build",
+    "build": "nest build && npm run copy-fonts",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+    "copy-fonts": "xcopy src\\assets\\fonts dist\\modules\\assets\\fonts /E /I /Y",
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
@@ -18,6 +19,7 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json"
+    
   },
   "dependencies": {
     "@nestjs-modules/mailer": "^2.0.2",
@@ -47,6 +49,8 @@
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "pdf-parse": "^1.1.1",
+    "pdf2json": "^3.1.6",
+    "pdfkit": "^0.17.1",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "socket.io": "^4.8.1"
@@ -62,6 +66,7 @@
     "@types/express": "^5.0.3",
     "@types/jest": "^29.5.14",
     "@types/node": "^22.10.7",
+    "@types/pdfkit": "^0.17.0",
     "@types/supertest": "^6.0.2",
     "eslint": "^9.18.0",
     "eslint-config-prettier": "^10.0.1",
