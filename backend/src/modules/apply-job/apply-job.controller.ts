@@ -8,6 +8,7 @@ import {
   Request,
   Param,
   Patch,
+  Delete,
 } from "@nestjs/common";
 import { ApplyJobService } from "./apply-job.service";
 import { CreateApplyJobDto } from "./dto/create-apply-job.dto";
@@ -114,5 +115,12 @@ export class ApplyJobController {
   ) {
     const userId = req.user.user._id;
     return this.applyJobService.countByCreateAt(month, year, userId);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("hr")
+  @Delete(":id")
+  async delete(@Param("id") id: string) {
+    return this.applyJobService.deleteApplyJob(id);
   }
 }
