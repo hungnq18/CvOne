@@ -69,13 +69,22 @@ export async function updateApplyJobByUser(id: string, data: any) {
   );
 }
 
-export async function updateStatusByHr(id: string, status: "accepted" | "rejected" | "reviewed") {
+export async function updateStatusByHr(id: string, status: "approved" | "rejected" | "reviewed") {
   return fetchWithAuth(
     API_ENDPOINTS.APPLYJOB.UPDATE_STATUS_BY_HR(id),
     {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status }),
+    }
+  );
+}
+
+export async function deleteApplyJobByHR(id: string) {
+  return fetchWithAuth(
+    API_ENDPOINTS.APPLYJOB.DELETE_APPLY_JOB_BY_HR(id),
+    {
+      method: 'DELETE',
     }
   );
 }
