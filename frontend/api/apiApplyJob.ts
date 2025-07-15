@@ -79,3 +79,12 @@ export async function updateStatusByHr(id: string, status: "approved" | "rejecte
     }
   );
 }
+
+export async function deleteApplyJobByHR(id: string) {
+  return fetchWithAuth(
+    API_ENDPOINTS.APPLYJOB.DELETE_APPLY_JOB_BY_HR(id),
+    {
+      method: 'DELETE',
+    }
+  );
+}

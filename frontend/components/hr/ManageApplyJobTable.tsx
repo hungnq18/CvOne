@@ -25,6 +25,7 @@ interface ManageApplyJobTableProps {
     handleViewCV: (cvId: string) => void;
     handleViewCoverLetter: (coverLetterId: string) => void;
     handleUpdateStatus: (applyJobId: string, newStatus: "approved" | "rejected" | "reviewed") => void;
+    handleDeleteApplyJob?: (applyJobId: string) => void;
 }
 
 const ManageApplyJobTable: React.FC<ManageApplyJobTableProps> = ({
@@ -36,6 +37,7 @@ const ManageApplyJobTable: React.FC<ManageApplyJobTableProps> = ({
     handleViewCV,
     handleViewCoverLetter,
     handleUpdateStatus,
+    handleDeleteApplyJob,
 }) => {
     // Lọc lại filteredApplications theo statusFilter
     const filteredApplications =
@@ -241,8 +243,8 @@ const ManageApplyJobTable: React.FC<ManageApplyJobTableProps> = ({
                                             onDownloadCL={() => { }}
                                             status={app.status}
                                             onDelete={
-                                                app.status === "rejected"
-                                                    ? () => handleUpdateStatus(app._id, "rejected")
+                                                app.status === "rejected" && handleDeleteApplyJob
+                                                    ? () => handleDeleteApplyJob(app._id)
                                                     : undefined
                                             }
                                         />

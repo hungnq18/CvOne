@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { getApplyJobByHR, updateStatusByHr } from "@/api/apiApplyJob";
+import { getApplyJobByHR, updateStatusByHr, deleteApplyJobByHR } from "@/api/apiApplyJob";
 import CandidateDetailsDialog from "@/components/hr/CandidateDetailsDialog";
 import JobInfoDialog from "@/components/hr/JobInfoDialog";
 import ManageApplyJobTable from "@/components/hr/ManageApplyJobTable";
@@ -46,6 +46,22 @@ export default function ManageApplyJobClient() {
         }
     };
 
+    const handleDeleteApplyJob = async (applyJobId: string) => {
+        try {
+            await deleteApplyJobByHR(applyJobId);
+            getApplyJobByHR().then((data: any) => {
+                let arr = Array.isArray(data)
+                    ? data
+                    : data && data.data
+                        ? data.data
+                        : [];
+                setApplications(arr);
+            });
+        } catch (error) {
+            alert("Xóa ứng viên thất bại!");
+        }
+    };
+
     const handleViewCV = (cvId: string) => {
         const app = applications.find(
             (a: any) => (a.cvId?._id || a.cv_id) === cvId
@@ -72,6 +88,7 @@ export default function ManageApplyJobClient() {
                 handleViewCV={handleViewCV}
                 handleViewCoverLetter={handleViewCoverLetter}
                 handleUpdateStatus={handleUpdateStatus}
+                handleDeleteApplyJob={handleDeleteApplyJob}
             />
             <CandidateDetailsDialog
                 open={isViewDialogOpen}
