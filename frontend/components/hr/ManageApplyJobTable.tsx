@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,6 +15,9 @@ import { Search, Check, X } from "lucide-react";
 import HrAction from "@/components/ui/hrActions";
 import StatusRadioTabs from "@/components/hr/RadioTabsInManageApply";
 import DeleteButton from "@/components/ui/DeleteButton";
+import { templateComponentMap } from "@/components/cvTemplate/index";
+import html2pdf from "html2pdf.js";
+import { getCVTemplates, CVTemplate } from "@/api/cvapi";
 
 interface ManageApplyJobTableProps {
     applications: any[];
@@ -39,6 +42,11 @@ const ManageApplyJobTable: React.FC<ManageApplyJobTableProps> = ({
     handleUpdateStatus,
     handleDeleteApplyJob,
 }) => {
+    const [allTemplates, setAllTemplates] = useState<CVTemplate[]>([]);
+    useEffect(() => {
+        getCVTemplates().then(setAllTemplates);
+    }, []);
+
     // Lọc lại filteredApplications theo statusFilter
     const filteredApplications =
         statusFilter === "all"
@@ -78,6 +86,85 @@ const ManageApplyJobTable: React.FC<ManageApplyJobTableProps> = ({
                 return "bg-red-100 text-red-800";
             default:
                 return "bg-gray-100 text-gray-800";
+        }
+    };
+
+    const handleDownloadCV = async (cvData: any) => {
+        if (!window.confirm("Bạn có chắc chắn muốn tải CV này về máy?")) {
+            return;
+        }
+        if (!cvData || !cvData.content?.userData || !(cvData.cvTemplateId || cvData.templateId)) {
+            alert("Không đủ dữ liệu để xuất PDF");
+            return;
+        }
+        const templateId = cvData.cvTemplateId || cvData.templateId;
+        console.log("cvData", cvData);
+        console.log("allTemplates", allTemplates);
+        const template = allTemplates.find((t) => t._id === templateId);
+        console.log("template found", template);
+        if (!template) {
+            alert("Không tìm thấy template phù hợp để xuất PDF");
+            return;
+        }
+        const TemplateComponent = templateComponentMap[template.title];
+        console.log("template title", template.title);
+        console.log("TemplateComponent", TemplateComponent);
+        if (!TemplateComponent) {
+            alert("Không tìm thấy component template để xuất PDF");
+            return;
+        }
+        const templateData = { ...template.data, userData: cvData.content.userData };
+        // 1. Tạo iframe ẩn
+        const iframe = document.createElement('iframe');
+        iframe.style.position = 'fixed';
+        iframe.style.width = '794px';
+        iframe.style.height = '1123px';
+        iframe.style.left = '-9999px';
+        document.body.appendChild(iframe);
+        const iframeDoc = iframe.contentWindow?.document;
+        if (!iframeDoc) {
+            alert("Không thể tạo môi trường để xuất PDF.");
+            document.body.removeChild(iframe);
+            return;
+        }
+        // 2. Copy CSS
+        const head = iframeDoc.head;
+        document.querySelectorAll('style, link[rel="stylesheet"]').forEach(node => {
+            head.appendChild(node.cloneNode(true));
+        });
+        // 3. Tạo mount node
+        const mountNode = iframeDoc.createElement('div');
+        iframeDoc.body.appendChild(mountNode);
+        let root = null;
+        try {
+            await new Promise(resolve => setTimeout(resolve, 300));
+            const { createRoot } = await import('react-dom/client');
+            root = createRoot(mountNode);
+            root.render(
+                <div>
+                    {/* Có thể thêm font-base64 nếu muốn như ở pageCreateCV-section */}
+                    <div style={{ fontFamily: 'sans-serif' }}>
+                        <TemplateComponent data={templateData} isPdfMode={true} />
+                    </div>
+                </div>
+            );
+            await new Promise(resolve => setTimeout(resolve, 500));
+            await html2pdf()
+                .from(iframe.contentWindow.document.body)
+                .set({
+                    margin: 0,
+                    filename: `${cvData.title || "cv"}.pdf`,
+                    image: { type: "jpeg", quality: 0.98 },
+                    html2canvas: { scale: 2, useCORS: true },
+                    jsPDF: { unit: "px", format: [794, 1123], orientation: "portrait" },
+                })
+                .save();
+        } catch (error) {
+            console.error("Lỗi khi tạo PDF:", error);
+            alert("Đã có lỗi xảy ra khi xuất file PDF.");
+        } finally {
+            if (root) root.unmount();
+            if (document.body.contains(iframe)) document.body.removeChild(iframe);
         }
     };
 
@@ -238,7 +325,7 @@ const ManageApplyJobTable: React.FC<ManageApplyJobTableProps> = ({
                                     <TableCell>
                                         <HrAction
                                             onViewCV={() => handleViewCV(app.cvId?._id || app.cv_id)}
-                                            onDownloadCV={() => { }}
+                                            onDownloadCV={() => handleDownloadCV(app.cvId)}
                                             onViewCL={() => handleViewCoverLetter(app.coverletterId?._id || app.coverletter_id)}
                                             onDownloadCL={() => { }}
                                             status={app.status}

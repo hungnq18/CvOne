@@ -31,12 +31,11 @@ const CVTemplatePreview: React.FC<CVTemplatePreviewProps> = ({ templateId, userD
                 className="relative"
                 style={{
                     width: "600px",
-                    height: "780px",
+                    height: "900px",
                     background: "white",
                     borderRadius: 12,
                     boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
                     border: "1px solid #eee",
-                    overflow: "hidden",
                     userSelect: "none",
                     pointerEvents: "none",
                 }}

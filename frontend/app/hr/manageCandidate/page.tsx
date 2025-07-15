@@ -15,12 +15,8 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { getApplyJobByHR } from '@/api/apiApplyJob';
 import CandidateDetailsDialog from '@/components/hr/CandidateDetailsDialog';
-import JobInfoDialog from '@/components/hr/JobInfoDialog';
-import StatusRadioTabs from '../../../components/hr/RadioTabsInManageApply';
 import { Modal } from 'antd';
 import { templateComponentMap } from '@/components/cvTemplate/index';
 import { getCVTemplates, CVTemplate } from '@/api/cvapi';
@@ -516,16 +512,6 @@ export default function ManageApplyJobPage() {
                 handleViewCV={handleViewCV}
                 handleViewCoverLetter={handleViewCoverLetter}
                 getStatusActions={() => null} // No status actions
-            />
-
-            {/* Job Info Dialog */}
-            <JobInfoDialog
-                open={isJobDialogOpen}
-                onOpenChange={(isOpen: boolean) => {
-                    if (!isOpen) setSelectedApplication(null);
-                    setIsJobDialogOpen(isOpen);
-                }}
-                application={selectedApplication}
             />
 
             <Modal

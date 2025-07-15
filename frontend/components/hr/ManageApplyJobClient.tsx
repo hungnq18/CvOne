@@ -1,8 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { getApplyJobByHR, updateStatusByHr, deleteApplyJobByHR } from "@/api/apiApplyJob";
-import CandidateDetailsDialog from "@/components/hr/CandidateDetailsDialog";
-import JobInfoDialog from "@/components/hr/JobInfoDialog";
 import ManageApplyJobTable from "@/components/hr/ManageApplyJobTable";
 import PreviewCVCLModal from "@/components/hr/PreviewCVCLModal";
 
@@ -10,9 +8,6 @@ export default function ManageApplyJobClient() {
     const [applications, setApplications] = useState<any[]>([]);
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState("all");
-    const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
-    const [isJobDialogOpen, setIsJobDialogOpen] = useState(false);
-    const [selectedApplication, setSelectedApplication] = useState<any>(null);
     const [previewModal, setPreviewModal] = useState<{
         open: boolean;
         type: "cv" | "cl" | null;
@@ -89,26 +84,6 @@ export default function ManageApplyJobClient() {
                 handleViewCoverLetter={handleViewCoverLetter}
                 handleUpdateStatus={handleUpdateStatus}
                 handleDeleteApplyJob={handleDeleteApplyJob}
-            />
-            <CandidateDetailsDialog
-                open={isViewDialogOpen}
-                onOpenChange={(isOpen: boolean) => {
-                    if (!isOpen) setSelectedApplication(null);
-                    setIsViewDialogOpen(isOpen);
-                }}
-                application={selectedApplication}
-                handleViewCV={handleViewCV}
-                handleViewCoverLetter={handleViewCoverLetter}
-                getStatusColor={() => ""}
-                getStatusActions={() => null}
-            />
-            <JobInfoDialog
-                open={isJobDialogOpen}
-                onOpenChange={(isOpen: boolean) => {
-                    if (!isOpen) setSelectedApplication(null);
-                    setIsJobDialogOpen(isOpen);
-                }}
-                application={selectedApplication}
             />
             <PreviewCVCLModal
                 open={previewModal.open}

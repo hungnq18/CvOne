@@ -19,8 +19,8 @@ interface JobDetailClientProps {
 }
 
 export default function JobDetailClient({ id }: JobDetailClientProps) {
-  const router = useRouter();
-  const { setJobDescription , jobDescription } = useCV();
+    const router = useRouter();
+    const { setJobDescription, jobDescription } = useCV();
 
     const [job, setJob] = useState<Job | null>(null);
     const [relatedJobs, setRelatedJobs] = useState<Job[]>([]);
