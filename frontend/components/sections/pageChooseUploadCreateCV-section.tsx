@@ -36,12 +36,11 @@ export default function PageChooseUploadCreateCVSection() {
       const file = uint8ArrayToFile(pdfFile);
       console.log('  size:', file.size); // nên ~191*1024
       const result = await uploadAndAnalyzeCV(file, jobDescription);
-      // API trả về userData trong result.analysisResult.userData
       const userData = result?.analysisResult?.userData;
       if (userData) {
         updateUserData(userData);
       }
-      router.push(`/createCV?id=${templateId}`);
+      router.push(`/createCV-AIManual?id=${templateId}`);
     } catch (error) {
       if (error instanceof Error && error.message.includes('413')) {
         alert("File PDF quá lớn. Vui lòng chọn file nhỏ hơn 10MB hoặc nén file trước khi tải lên.");
