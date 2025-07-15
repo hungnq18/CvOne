@@ -108,26 +108,21 @@ const CardMyCV: React.FC<{}> = ({ }) => {
             items-start"
                 initial
               >
-                <div
-                  className="bg-white overflow-hidden
-            w-[350px] h-[260px] flex gap-4 items-start"
-                >
-                  {/* Preview CV */}
-                  <div className="relative shrink-0 w-[180px] aspect-[210/297] bg-gray-100 border rounded-md overflow-hidden">
-                    <div
-                      className="absolute bg-white"
-                      style={{
-                        position: "absolute",
-                        width: `${templateOriginalWidth}px`,
-                        height: `${templateOriginalWidth * (297 / 210)}px`,
-                        transformOrigin: "top left",
-                        transform: `scale(${scaleFactor})`,
-                        backgroundColor: "white",
-                      }}
-                    >
-                      <div className="pointer-events-none ">
-                        <TemplateComponent data={componentData} />
-                      </div>
+                {/* Preview CV */}
+                <div className="relative shrink-0 w-[180px] aspect-[210/350] bg-gray-100 border rounded-md overflow-hidden">
+                  <div
+                    className="absolute bg-white"
+                    style={{
+                      position: "absolute",
+                      width: `${templateOriginalWidth}px`,
+                      height: `${templateOriginalWidth * (350 / 210)}px`,
+                      transformOrigin: "top left",
+                      transform: `scale(${scaleFactor})`,
+                      backgroundColor: "white",
+                    }}
+                  >
+                    <div className="pointer-events-none ">
+                      <TemplateComponent data={componentData} />
                     </div>
                   </div>
 

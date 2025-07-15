@@ -34,8 +34,8 @@ const Crisp: React.FC<CrispProps> = ({ letterData, onSectionClick, isPreview = f
   const mainBody = hasPS ? letterData.body.split('P.S.')[0].trim() : letterData.body;
   const psContent = hasPS ? `P.S. ${letterData.body.split('P.S.').slice(1).join('P.S.').trim()}` : '';
 
-  const containerClassName = `bg-white w-full font-sans text-sm ${
-    isPreview ? 'h-full' : 'shadow-lg min-h-[1123px] max-w-4xl mx-auto'
+  const containerClassName = `bg-white font-sans text-sm ${
+    isPreview ? 'w-full h-full' : 'shadow-lg w-[21cm] h-[29.7cm] mx-auto'
   }`;
 
   return (

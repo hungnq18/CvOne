@@ -306,10 +306,10 @@ export default function LoginPage() {
             <RegisterLink>
               <Link href="/fogetPassword">{t.fogetPassword}</Link>
             </RegisterLink>
-            <Divider>
+            {/* <Divider>
               <span>{t.or}</span>
             </Divider>
-
+            
             <GoogleButton
               type="button"
               onClick={handleGoogleLogin}
@@ -318,7 +318,7 @@ export default function LoginPage() {
             >
               <FcGoogle size={20} />
               {t.googleButton}
-            </GoogleButton>
+            </GoogleButton> */}
 
           </LoginForm>
         </FormSide>
