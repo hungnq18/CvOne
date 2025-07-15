@@ -948,7 +948,7 @@ interface CVEditorPopupsProps {
   onSaveAndLeave: () => void;
 }
 
-export const CVEditorPopupsManager: FC<CVEditorPopupsProps> = ({
+export const CVAIEditorPopupsManager: FC<CVEditorPopupsProps> = ({
   activePopup,
   onClose,
   userData,

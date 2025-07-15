@@ -24,7 +24,7 @@ import Image from "next/image";
 import { useCV } from "@/providers/cv-provider";
 import { useOnClickOutside } from "@/hooks/useOnClickOutside";
 import { jwtDecode } from "jwt-decode";
-import { CVEditorPopupsManager } from "@/components/forms/CV-AIEditorPopup";
+import { CVAIEditorPopupsManager } from "@/components/forms/CV-AIEditorPopup";
 
 // --- INTERFACES & TYPES ---
 interface DecodedToken {
@@ -533,7 +533,7 @@ const PageCreateCVAIContent = () => {
         </aside>
       </main>
 
-      <CVEditorPopupsManager
+      <CVAIEditorPopupsManager
         activePopup={activePopup}
         onClose={() => setActivePopup(null)}
         userData={userData}

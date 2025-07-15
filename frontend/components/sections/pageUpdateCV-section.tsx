@@ -25,6 +25,7 @@ import { useCV } from "@/providers/cv-provider";
 import { useOnClickOutside } from "@/hooks/useOnClickOutside";
 import { jwtDecode } from "jwt-decode";
 import { CVEditorPopupsManager } from "@/components/forms/CVEditorPopups";
+import { CVAIEditorPopupsManager } from "@/components/forms/CV-AIEditorPopup";
 
 // --- INTERFACES & TYPES ---
 interface DecodedToken {
@@ -63,6 +64,7 @@ const PageUpdateCVContent = () => {
   const [cvData, setCvData] = useState<CV | null>(null);
   const [cvTitle, setCvTitle] = useState<string>("");
   const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [jobDescription, setJobDescription] = useState<string>("");
 
   const templateDropdownRef = useRef(null);
   const colorDropdownRef = useRef(null);
@@ -71,6 +73,11 @@ const PageUpdateCVContent = () => {
   useOnClickOutside(colorDropdownRef, () => setShowColorPopup(false));
 
   useEffect(() => {
+    if (!jobDescription || jobDescription === "") {
+      const jd = localStorage.getItem('jobDescription');
+      if (jd) setJobDescription(jd);
+    }
+    console.log("jd" + jobDescription)
     const loadCVDataAndTemplate = async (id: string) => {
       try {
         const cv = await getCVById(id);
@@ -442,17 +449,32 @@ const PageUpdateCVContent = () => {
         </aside>
       </main>
 
-      <CVEditorPopupsManager
-        activePopup={activePopup}
-        onClose={() => setActivePopup(null)}
-        userData={userData}
-        handleDataUpdate={handleDataUpdate}
-        isSaving={isSaving}
-        onLeaveWithoutSaving={() => router.push("/myDocuments")}
-        onSaveAndLeave={async () => {
-          if (await handleSaveToDB()) router.push("/myDocuments");
-        }}
-      />
+      {/* Chọn popup manager dựa vào jobDescription */}
+      {jobDescription && jobDescription !== "" ? (
+        <CVAIEditorPopupsManager
+          activePopup={activePopup}
+          onClose={() => setActivePopup(null)}
+          userData={userData}
+          handleDataUpdate={handleDataUpdate}
+          isSaving={isSaving}
+          onLeaveWithoutSaving={() => router.push("/myDocuments")}
+          onSaveAndLeave={async () => {
+            if (await handleSaveToDB()) router.push("/myDocuments");
+          }}
+        />
+      ) : (
+        <CVEditorPopupsManager
+          activePopup={activePopup}
+          onClose={() => setActivePopup(null)}
+          userData={userData}
+          handleDataUpdate={handleDataUpdate}
+          isSaving={isSaving}
+          onLeaveWithoutSaving={() => router.push("/myDocuments")}
+          onSaveAndLeave={async () => {
+            if (await handleSaveToDB()) router.push("/myDocuments");
+          }}
+        />
+      )}
     </div>
   );
 };
