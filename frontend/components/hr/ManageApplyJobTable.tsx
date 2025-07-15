@@ -43,9 +43,14 @@ const ManageApplyJobTable: React.FC<ManageApplyJobTableProps> = ({
     handleDeleteApplyJob,
 }) => {
     const [allTemplates, setAllTemplates] = useState<CVTemplate[]>([]);
+    const [workType, setWorkType] = useState('All');
+    const [showWorkTypeDropdown, setShowWorkTypeDropdown] = useState(false);
     useEffect(() => {
         getCVTemplates().then(setAllTemplates);
     }, []);
+
+    // Lấy danh sách work type duy nhất từ dữ liệu job
+    const workTypes = Array.from(new Set(applications.map(app => app.jobId?.workType || app.jobId?.["Work Type"]).filter(Boolean)));
 
     // Lọc lại filteredApplications theo statusFilter
     const filteredApplications =
@@ -53,24 +58,20 @@ const ManageApplyJobTable: React.FC<ManageApplyJobTableProps> = ({
             ? applications.filter((app: any) => ["pending", "reviewed"].includes(app.status))
             : applications.filter((app: any) => app.status === statusFilter);
 
-    // Thêm lọc theo searchTerm (tìm theo tên, email, job title)
-    const searchedApplications =
-        searchTerm.trim() === ""
-            ? filteredApplications
-            : filteredApplications.filter((app: any) => {
-                const name =
-                    (app.cvId?.content?.userData?.firstName || app.userId?.first_name || "") +
-                    " " +
-                    (app.cvId?.content?.userData?.lastName || app.userId?.last_name || "");
-                const email = app.cvId?.content?.userData?.email || app.userId?.email || "";
-                const jobTitle = app.jobId?.title || app.job_id || "";
-                const search = searchTerm.toLowerCase();
-                return (
-                    name.toLowerCase().includes(search) ||
-                    email.toLowerCase().includes(search) ||
-                    jobTitle.toLowerCase().includes(search)
-                );
-            });
+    // Luôn filter theo work type và searchTerm
+    const searchedApplications = filteredApplications.filter((app: any) => {
+        const name =
+            (app.cvId?.content?.userData?.firstName || app.userId?.first_name || "") +
+            " " +
+            (app.cvId?.content?.userData?.lastName || app.userId?.last_name || "");
+        const jobWorkTypeRaw = app.jobId?.workType || app.jobId?.["Work Type"] || '';
+        const jobWorkType = String(jobWorkTypeRaw).trim().toLowerCase();
+        const workTypeFilter = String(workType).trim().toLowerCase();
+        const search = searchTerm.toLowerCase();
+        const matchName = name.toLowerCase().includes(search);
+        const matchWorkType = workType === 'All' || jobWorkType === workTypeFilter;
+        return matchName && matchWorkType;
+    });
 
     const getStatusColor = (status: string) => {
         switch (status.toLowerCase()) {
@@ -172,7 +173,7 @@ const ManageApplyJobTable: React.FC<ManageApplyJobTableProps> = ({
         <Card>
             <CardHeader>
                 <CardTitle>Job Applications with CV & Cover Letter</CardTitle>
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-2" style={{ marginTop: 20 }}>
                     <div className="relative">
                         <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                         <Input
@@ -181,6 +182,44 @@ const ManageApplyJobTable: React.FC<ManageApplyJobTableProps> = ({
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="pl-8"
                         />
+                    </div>
+                    {/* Dropdown Work Type custom */}
+                    <div className="relative inline-block">
+                        <button
+                            id="dropdownDefaultButton"
+                            type="button"
+                            className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+                            onClick={() => setShowWorkTypeDropdown((v: boolean) => !v)}
+                        >
+                            {workType === 'All' ? 'All Work Types' : workType}
+                            <svg className="w-2.5 h-2.5 ms-3" aria-hidden="true" fill="none" viewBox="0 0 10 6">
+                                <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m1 1 4 4 4-4" />
+                            </svg>
+                        </button>
+                        {showWorkTypeDropdown && (
+                            <div className="z-10 absolute bg-white divide-y divide-gray-100 rounded-lg shadow-sm w-44 dark:bg-gray-700 mt-2">
+                                <ul className="py-2 text-sm text-gray-700 dark:text-gray-200">
+                                    <li>
+                                        <button
+                                            className="block w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white"
+                                            onClick={() => { setWorkType('All'); setShowWorkTypeDropdown(false); }}
+                                        >
+                                            All Work Types
+                                        </button>
+                                    </li>
+                                    {workTypes.map(type => (
+                                        <li key={type}>
+                                            <button
+                                                className="block w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white"
+                                                onClick={() => { setWorkType(type); setShowWorkTypeDropdown(false); }}
+                                            >
+                                                {type}
+                                            </button>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
                     </div>
                 </div>
             </CardHeader>
