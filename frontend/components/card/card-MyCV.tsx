@@ -113,13 +113,13 @@ const CardMyCV: React.FC<{}> = ({}) => {
             w-[350px] h-[260px] flex gap-4 items-start"
               >
                 {/* Preview CV */}
-                <div className="relative shrink-0 w-[180px] aspect-[210/297] bg-gray-100 border rounded-md overflow-hidden">
+                <div className="relative shrink-0 w-[180px] aspect-[210/350] bg-gray-100 border rounded-md overflow-hidden">
                   <div
                     className="absolute bg-white"
                     style={{
                       position: "absolute",
                       width: `${templateOriginalWidth}px`,
-                      height: `${templateOriginalWidth * (297 / 210)}px`,
+                      height: `${templateOriginalWidth * (350 / 210)}px`,
                       transformOrigin: "top left",
                       transform: `scale(${scaleFactor})`,
                       backgroundColor: "white",

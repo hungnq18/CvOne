@@ -16,7 +16,7 @@ export class CoverLetterAiService {
       this.logger.warn("OPENAI_API_KEY not found in environment variables");
     }
     this.openai = new OpenAI({
-      apiKey: apiKey,
+      apiKey: apiKey
     });
   }
 
@@ -68,7 +68,7 @@ Guidelines:
 - Do NOT include generic phrases
 - Do NOT include greeting, closing, signature, or contact details
 - Only return a **valid JSON object** — do not include markdown or any extra explanation
-`;   
+`;
 
       const completion = await this.openai.chat.completions.create({
         model: "gpt-4o",
@@ -218,4 +218,4 @@ ${jobDescriptionText}
       data: parsed,
     };
   }
-} 
+}

@@ -11,6 +11,7 @@ function ApplyOptionContent() {
     const [selectedOption, setSelectedOption] = useState('existing');
 
     const handleContinue = () => {
+        
         if (!jobId) {
             router.back();
             return;

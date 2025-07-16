@@ -3,12 +3,15 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { getAllCVs, CV } from '@/api/cvapi';
+import { useCV } from '@/providers/cv-provider';
 
 export default function ApplyWithExistingCVPage() {
     const [cvList, setCvList] = useState<CV[]>([]);
     const [loading, setLoading] = useState(true);
+    const { jobDescription } = useCV();
 
     useEffect(() => {
+        console.log('jobDescription:', jobDescription);
         async function fetchCVs() {
             setLoading(true);
             try {
@@ -23,7 +26,7 @@ export default function ApplyWithExistingCVPage() {
             }
         }
         fetchCVs();
-    }, []);
+    }, [jobDescription]);
 
     return (
         <div className="min-h-screen flex flex-col items-center justify-center bg-white py-10">
@@ -42,7 +45,7 @@ export default function ApplyWithExistingCVPage() {
                             </div>
                             <div className="flex gap-3">
                                 <Link href="/myDocuments" className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 text-sm font-medium">View Detail</Link>
-                                <Link href={`/createCV-AI?cvId=${cv._id}`} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm font-medium">Edit with AI</Link>
+                                <Link href={`/updateCV?id=${cv._id}`} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm font-medium">Edit with AI</Link>
                             </div>
                         </div>
                     ))}

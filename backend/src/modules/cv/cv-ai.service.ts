@@ -459,7 +459,7 @@ export class CvAiService {
       // 6. Generate optimized PDF with original layout preserved
       const outputFileName = `optimized-cv-${Date.now()}.pdf`;
       const outputPath = path.join('./uploads', outputFileName);
-      
+
       const pdfResult = await this.cvPdfService.createOptimizedCvPdfWithOriginalLayout(
         cvAnalysis, // Original CV analysis for layout reference
         optimizedCv, // Optimized CV content
@@ -558,7 +558,7 @@ export class CvAiService {
       // 6. Generate optimized PDF with original layout preserved
       const outputFileName = `optimized-cv-${Date.now()}.pdf`;
       const outputPath = path.join('./uploads', outputFileName);
-      
+
       const pdfResult = await this.cvPdfService.createOptimizedCvPdfWithOriginalLayout(
         cvAnalysis, // Original CV analysis for layout reference
         optimizedCv, // Optimized CV content
@@ -799,17 +799,17 @@ Chỉ trả về JSON hợp lệ, không thêm giải thích, markdown hay text 
     // Analyze work experience
     if (cvAnalysis.workExperience && cvAnalysis.workExperience.length > 0) {
       suggestions.strengths.push(`Good work experience with ${cvAnalysis.workExperience.length} positions`);
-      
+
       // Check for gaps in employment
-      const sortedExperience = cvAnalysis.workExperience.sort((a, b) => 
+      const sortedExperience = cvAnalysis.workExperience.sort((a, b) =>
         new Date(b.startDate).getTime() - new Date(a.startDate).getTime()
       );
-      
+
       if (sortedExperience.length > 1) {
         const latestEndDate = new Date(sortedExperience[0].endDate);
         const now = new Date();
         const monthsSinceLastJob = (now.getTime() - latestEndDate.getTime()) / (1000 * 60 * 60 * 24 * 30);
-        
+
         if (monthsSinceLastJob > 6) {
           suggestions.areasForImprovement.push("Consider addressing employment gap in your CV");
         }

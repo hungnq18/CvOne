@@ -6,8 +6,20 @@ export async function fetchWithAuth(url: string, options: RequestInit = {}) {
   // Get token from cookies
   const token = Cookies.get("token");
 
+  // Đảm bảo Content-Type: application/json nếu có body là JSON
+  let contentTypeHeader = {};
+  if (
+    options.body &&
+    typeof options.body === 'string' &&
+    (!options.headers || !('Content-Type' in options.headers)) &&
+    ["POST", "PUT", "PATCH"].includes((options.method || '').toUpperCase())
+  ) {
+    contentTypeHeader = { 'Content-Type': 'application/json' };
+  }
+
   const headers = {
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...contentTypeHeader,
     ...options.headers,
   };
 

@@ -215,7 +215,7 @@ function CreateCVwithAI() {
 
   const handleFinishAndGoToCreateCV = () => {
     if (currentTemplate && currentTemplate._id) {
-      router.push(`/createCV?id=${currentTemplate._id}`);
+      router.push(`/createCV-AIManual?id=${currentTemplate._id}`);
     } else {
       alert("Không tìm thấy template để tạo CV.");
     }

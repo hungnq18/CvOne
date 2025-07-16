@@ -1,5 +1,5 @@
 export const API_URL = "http://localhost:8000/api";
-// export const API_URL = "http://localhost:3001";
+
 
 // API Endpoints
 export const API_ENDPOINTS = {
@@ -97,6 +97,7 @@ export const API_ENDPOINTS = {
     GET_APPLY_JOB_DETAIL: (id: string) => `/apply-job/${id}`,
     UPDATE_STATUS_BY_HR: (id: string) => `/apply-job/${id}/status/by-hr`,
     UPDATE_APPLY_JOB_BY_USER: (id: string) => `/apply-job/${id}/user-update`,
+    DELETE_APPLY_JOB_BY_HR: (id: string) => `/apply-job/${id}`,
   },
   SAVED_JOB: {
     GET_SAVE_JOB: "/saved-jobs",

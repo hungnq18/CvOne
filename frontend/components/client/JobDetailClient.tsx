@@ -10,12 +10,18 @@ import { getAllCVs, CV } from '@/api/cvapi';
 import { getCLs, CL } from '@/api/clApi';
 import FastApplyModal from '@/components/modals/FastApplyModal';
 import { useLanguage } from '@/providers/global-provider';
+import { useRouter } from "next/navigation";
+import { useCV } from "@/providers/cv-provider";
+
 
 interface JobDetailClientProps {
     id: string;
 }
 
 export default function JobDetailClient({ id }: JobDetailClientProps) {
+    const router = useRouter();
+    const { setJobDescription, jobDescription } = useCV();
+
     const [job, setJob] = useState<Job | null>(null);
     const [relatedJobs, setRelatedJobs] = useState<Job[]>([]);
     const [loading, setLoading] = useState(true);
@@ -47,7 +53,7 @@ export default function JobDetailClient({ id }: JobDetailClientProps) {
             loading: 'Đang tải chi tiết công việc...',
             apply: 'Ứng tuyển',
             applyFast: 'Ứng tuyển ngay',
-            applyDetail: 'Tối ưu & Ứng tuyển',
+            applyDetail: 'Tạo mới và Ứng tuyển',
             saveJob: 'Lưu việc',
             saving: 'Đang lưu...',
             jobOverview: 'Tổng quan công việc',
@@ -73,7 +79,7 @@ export default function JobDetailClient({ id }: JobDetailClientProps) {
             loading: 'Loading job details...',
             apply: 'Apply',
             applyFast: 'Apply Now',
-            applyDetail: 'Optimize & Apply',
+            applyDetail: 'Apply New',
             saveJob: 'Save job',
             saving: 'Saving...',
             jobOverview: 'Job Overview',
@@ -316,15 +322,25 @@ export default function JobDetailClient({ id }: JobDetailClientProps) {
                                             <button
                                                 className="apply-split-btn bg-indigo-600 text-white shadow-lg hover:bg-indigo-700 transition-all duration-200 font-semibold px-6 py-2 rounded-r-2xl text-center cursor-pointer w-full h-[44px]"
                                                 onClick={() => {
+                                                    const jdString =
+                                                        `description: ${job.description || ""}\n` +
+                                                        `role: ${job.role || ""}\n` +
+                                                        `workType: ${job.workType || ""}\n` +
+                                                        `experience: ${job.experience || ""}\n` +
+                                                        `qualifications: ${job.qualifications || ""}\n` +
+                                                        `skills: ${job.skills || ""}\n` +
+                                                        `responsibilities: ${job.responsibilities || ""}`;
+                                                    setJobDescription(jdString);
+                                                    localStorage.setItem('jobDescription', jdString);
                                                     const token = document.cookie
-                                                        .split('; ')
-                                                        .find((row) => row.startsWith('token='))
-                                                        ?.split('=')[1];
+                                                        .split("; ")
+                                                        .find((row) => row.startsWith("token="))
+                                                        ?.split("=")[1];
                                                     if (!token) {
-                                                        window.location.href = `/login?redirect=/jobPage/${id}`;
+                                                        router.push(`/login?redirect=/jobPage/${id}`);
                                                         return;
                                                     }
-                                                    window.location.href = `/user/applyOption?jobId=${job._id}`;
+                                                    router.push(`/user/applyOption?jobId=${job._id}`);
                                                 }}
                                             >
                                                 {t.applyDetail}

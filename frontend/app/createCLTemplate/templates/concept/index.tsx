@@ -29,8 +29,8 @@ interface ConceptProps {
 }
 
 const Concept: React.FC<ConceptProps> = ({ letterData, onSectionClick, isPreview = false }) => {
-  const containerClassName = `bg-white w-full font-sans text-sm ${
-    isPreview ? 'h-full' : 'shadow-lg min-h-[1123px] max-w-4xl mx-auto'
+  const containerClassName = `bg-white font-sans text-sm ${
+    isPreview ? 'w-full h-full' : 'shadow-lg w-[21cm] h-[29.7cm] mx-auto'
   }`;
 
   return (
