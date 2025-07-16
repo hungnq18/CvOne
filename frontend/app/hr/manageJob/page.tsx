@@ -167,7 +167,6 @@ export default function ManageJobPage() {
         })
         setIsAddDialogOpen(false)
     }
-
     const handleEditJob = async () => {
         if (selectedJob) {
             try {
