@@ -15,13 +15,17 @@ export class OpenAiService {
     @InjectModel(User.name) private userModel: Model<User>
   ) {
     const apiKey = this.configService.get<string>("OPENAI_API_KEY");
-    console.log('DEBUG OPENAI_API_KEY (ConfigService):', apiKey);
-    console.log('DEBUG OPENAI_API_KEY (process.env):', process.env.OPENAI_API_KEY);
+    console.log("DEBUG OPENAI_API_KEY (ConfigService):", apiKey);
+    console.log(
+      "DEBUG OPENAI_API_KEY (process.env):",
+      process.env.OPENAI_API_KEY
+    );
     if (!apiKey) {
       this.logger.warn("OPENAI_API_KEY not found in environment variables");
     }
 
     this.openai = new OpenAI({
+      baseURL: "https://models.github.ai/inference",
       apiKey: apiKey,
     });
   }
@@ -71,7 +75,7 @@ Return only valid JSON without any additional text.
 `;
 
       const completion = await this.openai.chat.completions.create({
-        model: "gpt-4o",
+        model: "openai/gpt-4.1",
         messages: [
           {
             role: "system",
@@ -83,8 +87,8 @@ Return only valid JSON without any additional text.
             content: prompt,
           },
         ],
-        temperature: 0.3,
-        max_tokens: 1000,
+        // temperature: 0.3,
+        // max_tokens: 1000,
       });
 
       const response = completion.choices[0]?.message?.content;
@@ -94,10 +98,16 @@ Return only valid JSON without any additional text.
 
       // Loại bỏ markdown nếu có
       let cleanResponse = response.trim();
-      if (cleanResponse.startsWith('```json')) {
-        cleanResponse = cleanResponse.replace(/^```json/, '').replace(/```$/, '').trim();
-      } else if (cleanResponse.startsWith('```')) {
-        cleanResponse = cleanResponse.replace(/^```/, '').replace(/```$/, '').trim();
+      if (cleanResponse.startsWith("```json")) {
+        cleanResponse = cleanResponse
+          .replace(/^```json/, "")
+          .replace(/```$/, "")
+          .trim();
+      } else if (cleanResponse.startsWith("```")) {
+        cleanResponse = cleanResponse
+          .replace(/^```/, "")
+          .replace(/```$/, "")
+          .trim();
       }
 
       // Parse JSON response
@@ -165,7 +175,7 @@ Do not include any explanation or markdown, only valid JSON.
 `;
 
       const completion = await this.openai.chat.completions.create({
-        model: "gpt-4o",
+        model: "openai/gpt-4.1",
         messages: [
           {
             role: "system",
@@ -177,8 +187,8 @@ Do not include any explanation or markdown, only valid JSON.
             content: prompt,
           },
         ],
-        temperature: 0.7,
-        max_tokens: 400,
+        // temperature: 0.7,
+        // max_tokens: 400,
       });
 
       let response = completion.choices[0]?.message?.content;
@@ -187,10 +197,16 @@ Do not include any explanation or markdown, only valid JSON.
       }
       // Remove markdown if present
       let cleanResponse = response.trim();
-      if (cleanResponse.startsWith('```json')) {
-        cleanResponse = cleanResponse.replace(/^```json/, '').replace(/```$/, '').trim();
-      } else if (cleanResponse.startsWith('```')) {
-        cleanResponse = cleanResponse.replace(/^```/, '').replace(/```$/, '').trim();
+      if (cleanResponse.startsWith("```json")) {
+        cleanResponse = cleanResponse
+          .replace(/^```json/, "")
+          .replace(/```$/, "")
+          .trim();
+      } else if (cleanResponse.startsWith("```")) {
+        cleanResponse = cleanResponse
+          .replace(/^```/, "")
+          .replace(/```$/, "")
+          .trim();
       }
       const summaries = JSON.parse(cleanResponse);
       if (Array.isArray(summaries) && summaries.length === 3) {
@@ -204,7 +220,10 @@ Do not include any explanation or markdown, only valid JSON.
         error.stack
       );
       // fallback: return 3 copies of fallback summary
-      const fallback = this.generateFallbackSummary(userProfile, jobAnalysis || {});
+      const fallback = this.generateFallbackSummary(
+        userProfile,
+        jobAnalysis || {}
+      );
       return [fallback, fallback, fallback];
     }
   }
@@ -268,7 +287,7 @@ Return only valid JSON.
 `;
 
       const completion = await this.openai.chat.completions.create({
-        model: "gpt-4o",
+        model: "openai/gpt-4.1",
         messages: [
           {
             role: "system",
@@ -280,8 +299,8 @@ Return only valid JSON.
             content: prompt,
           },
         ],
-        temperature: 0.6,
-        max_tokens: 300,
+        // temperature: 0.6,
+        // max_tokens: 300,
       });
 
       const response = completion.choices[0]?.message?.content;
@@ -309,7 +328,10 @@ Return only valid JSON.
         );
       }
 
-      return this.generateFallbackWorkExperience(jobAnalysis || {}, experienceLevel);
+      return this.generateFallbackWorkExperience(
+        jobAnalysis || {},
+        experienceLevel
+      );
     }
   }
 
@@ -360,7 +382,7 @@ Do not include any explanation or markdown, only valid JSON.
 `;
 
       const completion = await this.openai.chat.completions.create({
-        model: "gpt-4o",
+        model: "openai/gpt-4.1",
         messages: [
           {
             role: "system",
@@ -372,8 +394,8 @@ Do not include any explanation or markdown, only valid JSON.
             content: prompt,
           },
         ],
-        temperature: 0.4,
-        max_tokens: 1000,
+        // temperature: 0.4,
+        // max_tokens: 1000,
       });
 
       let response = completion.choices[0]?.message?.content;
@@ -382,33 +404,41 @@ Do not include any explanation or markdown, only valid JSON.
       }
       // Remove markdown if present
       let cleanResponse = response.trim();
-      if (cleanResponse.startsWith('```json')) {
-        cleanResponse = cleanResponse.replace(/^```json/, '').replace(/```$/, '').trim();
-      } else if (cleanResponse.startsWith('```')) {
-        cleanResponse = cleanResponse.replace(/^```/, '').replace(/```$/, '').trim();
+      if (cleanResponse.startsWith("```json")) {
+        cleanResponse = cleanResponse
+          .replace(/^```json/, "")
+          .replace(/```$/, "")
+          .trim();
+      } else if (cleanResponse.startsWith("```")) {
+        cleanResponse = cleanResponse
+          .replace(/^```/, "")
+          .replace(/```$/, "")
+          .trim();
       }
       const skillsLists = JSON.parse(cleanResponse);
       // Lọc lại chỉ giữ các kỹ năng có trong JD
       const validSkills = [
         ...(jobAnalysis.requiredSkills || []),
         ...(jobAnalysis.technologies || []),
-        ...(jobAnalysis.softSkills || [])
-      ].map(s => s.toLowerCase());
+        ...(jobAnalysis.softSkills || []),
+      ].map((s) => s.toLowerCase());
       function filterSkills(list) {
         // Lọc và gán lại rating nếu có trong userSkills
-        return list.filter(skillObj =>
-          validSkills.includes(skillObj.name.toLowerCase())
-        ).map(skillObj => {
-          if (userSkills) {
-            const found = userSkills.find(
-              s => s.name.toLowerCase() === skillObj.name.toLowerCase()
-            );
-            if (found) {
-              return { ...skillObj, rating: found.rating };
+        return list
+          .filter((skillObj) =>
+            validSkills.includes(skillObj.name.toLowerCase())
+          )
+          .map((skillObj) => {
+            if (userSkills) {
+              const found = userSkills.find(
+                (s) => s.name.toLowerCase() === skillObj.name.toLowerCase()
+              );
+              if (found) {
+                return { ...skillObj, rating: found.rating };
+              }
             }
-          }
-          return skillObj;
-        });
+            return skillObj;
+          });
       }
       if (Array.isArray(skillsLists) && skillsLists.length === 3) {
         return skillsLists.map(filterSkills);
@@ -437,7 +467,7 @@ Do not include any explanation or markdown, only valid JSON.
   }> {
     try {
       const completion = await this.openai.chat.completions.create({
-        model: "gpt-4o",
+        model: "openai/gpt-4.1",
         messages: [{ role: "user", content: "Hello" }],
         max_tokens: 10,
       });
@@ -503,8 +533,10 @@ Do not include any explanation or markdown, only valid JSON.
 
   private generateFallbackSummary(userProfile: any, jobAnalysis: any): string {
     const experienceLevel = jobAnalysis?.experienceLevel || "professional";
-    const skills = jobAnalysis?.requiredSkills?.slice(0, 3).join(", ") || "software development";
-    
+    const skills =
+      jobAnalysis?.requiredSkills?.slice(0, 3).join(", ") ||
+      "software development";
+
     return `Experienced ${experienceLevel} professional with expertise in ${skills}.
     Passionate about delivering high-quality solutions and collaborating with cross-functional teams.
     Strong problem-solving skills and commitment to continuous learning and professional development.`;
@@ -581,7 +613,10 @@ Do not include any explanation or markdown, only valid JSON.
         institution: string;
       }>;
     };
-    mapping?: Record<string, { page: number; x: number; y: number; width: number; height: number }>;
+    mapping?: Record<
+      string,
+      { page: number; x: number; y: number; width: number; height: number }
+    >;
   }> {
     try {
       const prompt = `
@@ -648,7 +683,7 @@ Return only valid JSON without any additional text.
 `;
 
       const completion = await this.openai.chat.completions.create({
-        model: "gpt-4o",
+        model: "openai/gpt-4.1",
         messages: [
           {
             role: "system",
@@ -660,8 +695,8 @@ Return only valid JSON without any additional text.
             content: prompt,
           },
         ],
-        temperature: 0.3,
-        max_tokens: 2000,
+        // temperature: 0.3,
+        // max_tokens: 2000,
       });
 
       const response = completion.choices[0]?.message?.content;
@@ -671,10 +706,16 @@ Return only valid JSON without any additional text.
 
       // Loại bỏ markdown nếu có
       let cleanResponse = response.trim();
-      if (cleanResponse.startsWith('```json')) {
-        cleanResponse = cleanResponse.replace(/^```json/, '').replace(/```$/, '').trim();
-      } else if (cleanResponse.startsWith('```')) {
-        cleanResponse = cleanResponse.replace(/^```/, '').replace(/```$/, '').trim();
+      if (cleanResponse.startsWith("```json")) {
+        cleanResponse = cleanResponse
+          .replace(/^```json/, "")
+          .replace(/```$/, "")
+          .trim();
+      } else if (cleanResponse.startsWith("```")) {
+        cleanResponse = cleanResponse
+          .replace(/^```/, "")
+          .replace(/```$/, "")
+          .trim();
       }
 
       // Parse JSON response
@@ -702,13 +743,18 @@ Return only valid JSON without any additional text.
   /**
    * Rewrite a work experience description to be more professional and impressive
    */
-  async rewriteWorkDescription(description: string, language?: string): Promise<string> {
+  async rewriteWorkDescription(
+    description: string,
+    language?: string
+  ): Promise<string> {
     try {
-      let languageNote = '';
-      if (language === 'vi') {
-        languageNote = '\nLưu ý: Viết lại mô tả này bằng tiếng Việt chuyên nghiệp, tự nhiên, súc tích.';
-      } else if (language === 'en') {
-        languageNote = '\nNote: Rewrite this description in professional, natural, concise English.';
+      let languageNote = "";
+      if (language === "vi") {
+        languageNote =
+          "\nLưu ý: Viết lại mô tả này bằng tiếng Việt chuyên nghiệp, tự nhiên, súc tích.";
+      } else if (language === "en") {
+        languageNote =
+          "\nNote: Rewrite this description in professional, natural, concise English.";
       }
       const prompt = `
 Rewrite the following work experience description to be more professional, impressive, and concise. Use action verbs, highlight achievements, and make it suitable for a CV.${languageNote}
@@ -721,19 +767,20 @@ ${description}
 Return only the rewritten description, no explanation, no markdown.
 `;
       const completion = await this.openai.chat.completions.create({
-        model: "gpt-4o",
+        model: "openai/gpt-4.1",
         messages: [
           {
             role: "system",
-            content: "You are a professional CV writer. Rewrite work experience descriptions to be impressive and concise.",
+            content:
+              "You are a professional CV writer. Rewrite work experience descriptions to be impressive and concise.",
           },
           {
             role: "user",
             content: prompt,
           },
         ],
-        temperature: 0.5,
-        max_tokens: 300,
+        // temperature: 0.5,
+        // max_tokens: 300,
       });
       let response = completion.choices[0]?.message?.content;
       if (!response) {
@@ -741,8 +788,11 @@ Return only the rewritten description, no explanation, no markdown.
       }
       // Remove markdown if present
       let cleanResponse = response.trim();
-      if (cleanResponse.startsWith('```')) {
-        cleanResponse = cleanResponse.replace(/^```[a-z]*\n?/i, '').replace(/```$/, '').trim();
+      if (cleanResponse.startsWith("```")) {
+        cleanResponse = cleanResponse
+          .replace(/^```[a-z]*\n?/i, "")
+          .replace(/```$/, "")
+          .trim();
       }
       return cleanResponse;
     } catch (error) {
@@ -758,8 +808,8 @@ Return only the rewritten description, no explanation, no markdown.
    * Fallback CV analysis when OpenAI is not available
    */
   private fallbackCvAnalysis(cvText: string) {
-    const lines = cvText.split('\n').filter(line => line.trim());
-    
+    const lines = cvText.split("\n").filter((line) => line.trim());
+
     return {
       userData: {
         firstName: "First",
@@ -775,7 +825,7 @@ Return only the rewritten description, no explanation, no markdown.
         skills: [
           { name: "Problem Solving", rating: 4 },
           { name: "Communication", rating: 4 },
-          { name: "Teamwork", rating: 4 }
+          { name: "Teamwork", rating: 4 },
         ],
         workHistory: [
           {
@@ -783,8 +833,8 @@ Return only the rewritten description, no explanation, no markdown.
             company: "Company Name",
             startDate: "2020-01-01",
             endDate: "Present",
-            description: "Developed and maintained applications"
-          }
+            description: "Developed and maintained applications",
+          },
         ],
         education: [
           {
@@ -792,10 +842,10 @@ Return only the rewritten description, no explanation, no markdown.
             endDate: "2020-06-30",
             major: "Computer Science",
             degree: "Bachelor's Degree",
-            institution: "University Name"
-          }
-        ]
-      }
+            institution: "University Name",
+          },
+        ],
+      },
     };
   }
 }
