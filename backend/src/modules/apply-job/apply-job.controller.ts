@@ -57,10 +57,37 @@ export class ApplyJobController {
     return this.applyJobService.getByHr(userId, +page, +limit);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("hr")
   @Get("by-job")
-  async getByJob(@Query("jobId") jobId: string) {
-    return this.applyJobService.getByJob(jobId);
+  async getByJob(
+    @Query("jobId") jobId: string,
+    @Query("status") status: string,
+    @Query("page") page = 1,
+    @Query("limit") limit = 10,
+    @Request() req
+  ) {
+    const userId = req.user.user._id;
+    return this.applyJobService.getByJob(userId, jobId, status, +page, +limit);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("hr")
+  @Get("count-apply-job")
+  async getCountApplyJob(@Request() req) {
+    const userId = req.user.user._id;
+    return this.applyJobService.getCountApplyJob(userId);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("hr")
+  @Get("count-apply-job-by-status/:status")
+  async getCountApplyJobByStatus(
+    @Request() req,
+    @Param("status") status: string
+  ) {
+    const userId = req.user.user._id;
+    return this.applyJobService.getCountApplyJobByStatus(status, userId);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)

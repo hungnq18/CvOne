@@ -66,6 +66,13 @@ export class JobsController {
     return this.jobsService.delete(id);
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Get("count-jobs")
+  async getCountJobs(@Request() req) {
+    const userId = req.user.user._id;
+    return this.jobsService.getCountJobs(userId);
+  }
+
   // @UseGuards(JwtAuthGuard)
   @Get(":id")
   getJobById(@Param("id") id: string) {
