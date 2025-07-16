@@ -217,6 +217,7 @@ export const ExperienceForm: FC<FormProps> = ({ data, onUpdate }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [currentItem, setCurrentItem] = useState<any>(null);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [loadingAI, setLoadingAI] = useState(false); // Thêm state loading cho AI
 
   const experiences = data?.workHistory || [];
 
@@ -245,6 +246,23 @@ export const ExperienceForm: FC<FormProps> = ({ data, onUpdate }) => {
 
   const handleFormChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setCurrentItem({ ...currentItem, [e.target.name]: e.target.value });
+  };
+
+  // Hàm gọi AI để rewrite mô tả công việc
+  const handleAIRewrite = async () => {
+    if (!currentItem?.description) return;
+    setLoadingAI(true);
+    try {
+      const { rewriteWorkDescription } = await import("@/api/cvapi");
+      const res = await rewriteWorkDescription(currentItem.description, "vi");
+      // Nếu API trả về object có trường rewrittenDescription thì lấy, nếu không thì lấy res trực tiếp
+      const rewritten = res?.rewrittenDescription || res;
+      setCurrentItem({ ...currentItem, description: rewritten });
+    } catch (err) {
+      alert("Không thể lấy gợi ý từ AI. Vui lòng thử lại.");
+    } finally {
+      setLoadingAI(false);
+    }
   };
 
   const handleFormSubmit = () => {
@@ -285,7 +303,22 @@ export const ExperienceForm: FC<FormProps> = ({ data, onUpdate }) => {
       </div>
       <div>
         <label className="block text-sm font-medium text-gray-700">Mô tả công việc</label>
-        <textarea name="description" value={currentItem.description} onChange={handleFormChange} rows={4} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"></textarea>
+        <div className="flex gap-2 items-start">
+          <textarea name="description" value={currentItem.description} onChange={handleFormChange} rows={4} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"></textarea>
+          <button
+            type="button"
+            className="mt-1 ml-2 px-3 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:bg-gray-400 flex items-center gap-1"
+            onClick={handleAIRewrite}
+            disabled={loadingAI || !currentItem?.description}
+            title="Gợi ý AI cho mô tả công việc"
+          >
+            {loadingAI ? (
+              <span className="animate-spin mr-1">⏳</span>
+            ) : (
+              <span>Sửa lại với AI</span>
+            )}
+          </button>
+        </div>
       </div>
       <div className="flex justify-end gap-2 mt-4">
         <button onClick={() => setIsEditing(false)} className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md text-sm">Hủy</button>
