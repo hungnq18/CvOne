@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Search, Plus, Edit, Trash2, Eye, MoreHorizontal, Download, FileText } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -12,65 +12,27 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-
-// Mock data for Cover Letter templates
-const mockCLTemplates = [
-  {
-    id: 1,
-    name: "Professional Business",
-    industry: "Business",
-    status: "Active",
-    downloads: 850,
-    createdDate: "2024-01-15",
-    description: "Perfect for business and corporate positions",
-  },
-  {
-    id: 2,
-    name: "Tech Startup",
-    industry: "Technology",
-    status: "Active",
-    downloads: 1200,
-    createdDate: "2024-02-20",
-    description: "Ideal for tech companies and startups",
-  },
-  {
-    id: 3,
-    name: "Creative Agency",
-    industry: "Creative",
-    status: "Draft",
-    downloads: 0,
-    createdDate: "2024-03-10",
-    description: "For creative and design positions",
-  },
-  {
-    id: 4,
-    name: "Healthcare Professional",
-    industry: "Healthcare",
-    status: "Active",
-    downloads: 650,
-    createdDate: "2024-01-05",
-    description: "Specialized for healthcare industry",
-  },
-  {
-    id: 5,
-    name: "Education Sector",
-    industry: "Education",
-    status: "Active",
-    downloads: 420,
-    createdDate: "2024-02-15",
-    description: "For teaching and education roles",
-  },
-]
+import { getCLTemplates, CLTemplate } from "@/api/clApi"
 
 export function ManageCLTemplates() {
-  const [templates, setTemplates] = useState(mockCLTemplates)
+  const [templates, setTemplates] = useState<CLTemplate[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
 
-  const filteredTemplates = templates.filter(
-    (template) =>
-      template.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      template.industry.toLowerCase().includes(searchTerm.toLowerCase()),
+  useEffect(() => {
+    const fetchTemplates = async () => {
+      try {
+        const data = await getCLTemplates()
+        setTemplates(data)
+      } catch (error) {
+        console.error("Failed to fetch CL templates:", error)
+      }
+    }
+    fetchTemplates()
+  }, [])
+
+  const filteredTemplates = templates.filter((template) =>
+    template.title.toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
   const getIndustryColor = (industry: string) => {
@@ -191,37 +153,35 @@ export function ManageCLTemplates() {
                 <TableHead>Industry</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Downloads</TableHead>
-                <TableHead>Created Date</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredTemplates.map((template) => (
-                <TableRow key={template.id}>
+                <TableRow key={template._id}>
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <div className="h-10 w-10 bg-blue-50 rounded-lg flex items-center justify-center">
                         <FileText className="h-5 w-5 text-blue-600" />
                       </div>
                       <div>
-                        <div className="font-medium">{template.name}</div>
-                        <div className="text-sm text-muted-foreground">{template.description}</div>
+                        <div className="font-medium">{template.title}</div>
+                        <div className="text-sm text-muted-foreground">{template._id}</div>
                       </div>
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge className={getIndustryColor(template.industry)}>{template.industry}</Badge>
+                    <Badge className={getIndustryColor("Business")}>Business</Badge>
                   </TableCell>
                   <TableCell>
-                    <Badge className={getStatusColor(template.status)}>{template.status}</Badge>
+                    <Badge className={getStatusColor("Active")}>Active</Badge>
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">
                       <Download className="h-4 w-4 text-muted-foreground" />
-                      {template.downloads.toLocaleString()}
+                      N/A
                     </div>
                   </TableCell>
-                  <TableCell>{template.createdDate}</TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>

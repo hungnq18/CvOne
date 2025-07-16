@@ -8,14 +8,16 @@ import { InjectModel } from "@nestjs/mongoose";
 import { Model, Types } from "mongoose";
 import { ApplyJob, ApplyJobDocument } from "./schemas/apply-job.schema";
 import { CreateApplyJobDto } from "./dto/create-apply-job.dto";
+import { Job, JobDocument } from "../jobs/schemas/job.schema";
+import { JobsService } from "../jobs/jobs.service";
 
 @Injectable()
 export class ApplyJobService {
   constructor(
     @InjectModel(ApplyJob.name)
     private readonly applyJobModel: Model<ApplyJobDocument>,
-  ) { }
-
+    private readonly jobService: JobsService
+  ) {}
 
   async apply(dto: CreateApplyJobDto, userId: string) {
     if (!dto.cvId && !dto.coverletterId) {
@@ -104,10 +106,39 @@ export class ApplyJobService {
       .populate("userId");
   }
 
-  async getByJob(jobId: string) {
-    return this.applyJobModel
-      .find({ jobId })
-      .populate("userId cvId coverletterId");
+  async getByJob(
+    userId: string,
+    jobId: string,
+    status: string,
+    page: number,
+    limit: number
+  ) {
+    const skip = (page - 1) * limit;
+
+    if (!jobId || !status) {
+      throw new BadRequestException("Thiếu jobId hoặc status");
+    }
+
+    const allMatching = await this.applyJobModel
+      .find({ status })
+      .populate({
+        path: "jobId",
+        match: { user_id: userId, _id: jobId }, // convert string → ObjectId
+        select: "user_id",
+      })
+      .populate("userId cvId coverletterId")
+      .lean();
+
+    const filtered = allMatching.filter((apply) => apply.jobId !== null);
+    const paginated = filtered.slice(skip, skip + limit);
+
+    return {
+      data: paginated,
+      total: filtered.length,
+      page,
+      limit,
+      totalPages: Math.ceil(filtered.length / limit),
+    };
   }
 
   async getApplyJobDetailByHr(applyJobId: string, hrUserId: string) {
@@ -212,5 +243,35 @@ export class ApplyJobService {
 
   async deleteApplyJob(applyJobId: string) {
     return this.applyJobModel.findByIdAndDelete(applyJobId);
+  }
+
+  async getCountApplyJob(userId: string) {
+    const applyJobs = await this.applyJobModel
+      .find()
+      .populate({
+        path: "jobId",
+        match: { user_id: userId },
+        select: "_id",
+      })
+      .exec();
+
+    const count = applyJobs.filter((aj) => aj.jobId !== null).length;
+
+    return count;
+  }
+
+  async getCountApplyJobByStatus(status: string, userId: string) {
+    const applyJobs = await this.applyJobModel
+      .find({ status })
+      .populate({
+        path: "jobId",
+        match: { user_id: userId },
+        select: "_id",
+      })
+      .exec();
+
+    const count = applyJobs.filter((aj) => aj.jobId !== null).length;
+
+    return count;
   }
 }

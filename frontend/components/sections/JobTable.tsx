@@ -7,8 +7,7 @@ import { Job, translations } from '@/app/myJobs/page';
 import { useLanguage } from '@/providers/global-provider';
 import '@/styles/jobButtons.css';
 import { useRouter } from 'next/navigation';
-import { fetchWithAuth } from '@/api/apiClient';
-import { API_ENDPOINTS } from '@/api/apiConfig';
+import { unSaveJob } from '@/api/jobApi';
 
 interface JobTableProps {
     jobs: Job[];
@@ -27,7 +26,7 @@ const JobTable: React.FC<JobTableProps> = ({ jobs, translations, onRemove, pagin
         console.log('Deleting saved-job with id:', jobId);
         if (!jobId) return;
         try {
-            await fetchWithAuth(API_ENDPOINTS.SAVED_JOB.UN_SAVE_JOB(jobId), { method: 'DELETE' });
+            await unSaveJob(jobId);
             if (onRemove) onRemove(jobId);
         } catch (err) {
             console.error('Failed to remove saved job', err);
@@ -77,12 +76,7 @@ const JobTable: React.FC<JobTableProps> = ({ jobs, translations, onRemove, pagin
             dataIndex: 'salaryRange',
             key: 'salaryRange',
         },
-        // {
-        //     title: t.table.postingDate,
-        //     dataIndex: 'postingDate',
-        //     key: 'postingDate',
-        //     render: (date: Date) => date.toLocaleDateString(),
-        // },
+
         {
             title: t.table.skills,
             key: 'skills',
@@ -123,7 +117,7 @@ const JobTable: React.FC<JobTableProps> = ({ jobs, translations, onRemove, pagin
                     <button
                         className="job-button delete-button"
                         onClick={() => {
-                            handleDelete((record as any).savedId || record._id);
+                            handleDelete((record as any)._id);
                         }}
                     >
                         <span className="text">{t.actions.remove}</span>

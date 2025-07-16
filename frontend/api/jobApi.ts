@@ -1,13 +1,4 @@
-/**
- * Job API Module
- *
- * This module provides functions for managing Job data:
- * - Getting all jobs
- * - Getting job by ID
- * - Creating a new job
- * - Updating a job
- * - Deleting a job
- */
+
 
 import { fetchWithAuth, fetchWithoutAuth } from "./apiClient";
 import { API_ENDPOINTS } from "./apiConfig";
@@ -57,9 +48,7 @@ export interface ApplyJob {
  */
 export const getJobs = async (page: number = 1, limit: number = 100): Promise<Job[]> => {
   try {
-    console.log('Fetching jobs with params:', { page, limit });
     const response = await fetchWithoutAuth(`${API_ENDPOINTS.JOB.GET_ALL}?page=${page}&limit=${limit}`);
-    console.log('Jobs response:', response);
     // Backend returns { data: jobs[], page, limit }
     return response?.data || [];
   } catch (error) {
@@ -75,9 +64,7 @@ export const getJobs = async (page: number = 1, limit: number = 100): Promise<Jo
  */
 export const getJobById = async (id: string): Promise<Job | undefined> => {
   try {
-    console.log('Fetching job by ID:', id);
     const response = await fetchWithAuth(API_ENDPOINTS.JOB.GET_BY_ID(id));
-    console.log('Job by ID response:', response);
     return response;
   } catch (error) {
     console.error('Error fetching job by ID:', error);
@@ -167,20 +154,20 @@ export const findRelatedLocalJobs = async (currentJob: Job, count: number): Prom
     const currentRole = currentJob.role;
 
     return allJobs
-        .filter(job => {
-            // Exclude the current job itself
-            if (job._id === currentJob._id) return false;
+      .filter(job => {
+        // Exclude the current job itself
+        if (job._id === currentJob._id) return false;
 
-            // Check for matching role
-            const hasSameRole = job.role === currentRole;
+        // Check for matching role
+        const hasSameRole = job.role === currentRole;
 
-            // Check for at least one matching skill
-            const jobSkills = (job.skills || '').toLowerCase().split(',').map(s => s.trim());
-            const hasSharedSkill = currentSkills.some(skill => skill && jobSkills.includes(skill));
-            
-            return hasSameRole || hasSharedSkill;
-        })
-        .slice(0, count);
+        // Check for at least one matching skill
+        const jobSkills = (job.skills || '').toLowerCase().split(',').map(s => s.trim());
+        const hasSharedSkill = currentSkills.some(skill => skill && jobSkills.includes(skill));
+
+        return hasSameRole || hasSharedSkill;
+      })
+      .slice(0, count);
   } catch (error) {
     console.error('Error finding related jobs:', error);
     return [];
@@ -196,6 +183,22 @@ export const saveJob = async (jobId: string): Promise<any> => {
   try {
     return await fetchWithAuth(API_ENDPOINTS.SAVED_JOB.SAVE_JOB(jobId), {
       method: "POST",
+    });
+  } catch (error) {
+    throw error;
+  }
+};
+
+/**
+ * Unsave (remove) a saved job for the current user
+ * @param jobId - The saved job ID to remove
+ * @returns Promise with API response
+ */
+export const unSaveJob = async (jobId: string): Promise<any> => {
+  try {
+    const endpoint = API_ENDPOINTS.SAVED_JOB.UN_SAVE_JOB(jobId);
+    return await fetchWithAuth(endpoint, {
+      method: "DELETE",
     });
   } catch (error) {
     throw error;

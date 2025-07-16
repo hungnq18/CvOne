@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Search, Plus, Edit, Trash2, Eye, MoreHorizontal, Download } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -12,56 +12,27 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-
-// Mock data for CV templates
-const mockCVTemplates = [
-  {
-    id: 1,
-    name: "Modern Professional",
-    category: "Professional",
-    status: "Active",
-    downloads: 1250,
-    createdDate: "2024-01-15",
-    thumbnail: "/placeholder.svg?height=200&width=150",
-  },
-  {
-    id: 2,
-    name: "Creative Designer",
-    category: "Creative",
-    status: "Active",
-    downloads: 890,
-    createdDate: "2024-02-20",
-    thumbnail: "/placeholder.svg?height=200&width=150",
-  },
-  {
-    id: 3,
-    name: "Simple Clean",
-    category: "Minimalist",
-    status: "Draft",
-    downloads: 0,
-    createdDate: "2024-03-10",
-    thumbnail: "/placeholder.svg?height=200&width=150",
-  },
-  {
-    id: 4,
-    name: "Executive Style",
-    category: "Professional",
-    status: "Active",
-    downloads: 2100,
-    createdDate: "2024-01-05",
-    thumbnail: "/placeholder.svg?height=200&width=150",
-  },
-]
+import { getCVTemplates, CVTemplate } from "@/api/cvapi"
 
 export function ManageCVTemplates() {
-  const [templates, setTemplates] = useState(mockCVTemplates)
+  const [templates, setTemplates] = useState<CVTemplate[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
 
-  const filteredTemplates = templates.filter(
-    (template) =>
-      template.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      template.category.toLowerCase().includes(searchTerm.toLowerCase()),
+  useEffect(() => {
+    const fetchTemplates = async () => {
+      try {
+        const data = await getCVTemplates()
+        setTemplates(data)
+      } catch (error) {
+        console.error("Failed to fetch CV templates:", error)
+      }
+    }
+    fetchTemplates()
+  }, [])
+
+  const filteredTemplates = templates.filter((template) =>
+    template.title.toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
   const getCategoryColor = (category: string) => {
@@ -168,41 +139,39 @@ export function ManageCVTemplates() {
                 <TableHead>Category</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Downloads</TableHead>
-                <TableHead>Created Date</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredTemplates.map((template) => (
-                <TableRow key={template.id}>
+                <TableRow key={template._id}>
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <div className="h-12 w-9 bg-gray-100 rounded border flex items-center justify-center">
                         <img
-                          src={template.thumbnail || "/placeholder.svg"}
-                          alt={template.name}
+                          src={template.imageUrl || "/placeholder.svg"}
+                          alt={template.title}
                           className="h-full w-full object-cover rounded"
                         />
                       </div>
                       <div>
-                        <div className="font-medium">{template.name}</div>
-                        <div className="text-sm text-muted-foreground">ID: {template.id}</div>
+                        <div className="font-medium">{template.title}</div>
+                        <div className="text-sm text-muted-foreground">ID: {template._id}</div>
                       </div>
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge className={getCategoryColor(template.category)}>{template.category}</Badge>
+                    <Badge className={getCategoryColor("Professional")}>Professional</Badge>
                   </TableCell>
                   <TableCell>
-                    <Badge className={getStatusColor(template.status)}>{template.status}</Badge>
+                    <Badge className={getStatusColor("Active")}>Active</Badge>
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">
                       <Download className="h-4 w-4 text-muted-foreground" />
-                      {template.downloads.toLocaleString()}
+                      N/A
                     </div>
                   </TableCell>
-                  <TableCell>{template.createdDate}</TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>

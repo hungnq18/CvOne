@@ -16,14 +16,17 @@ export class CoverLetterAiService {
       this.logger.warn("OPENAI_API_KEY not found in environment variables");
     }
     this.openai = new OpenAI({
-      apiKey: apiKey
+      baseURL: "https://models.github.ai/inference",
+      apiKey: apiKey,
     });
   }
 
-  async generateCoverLetterByAi(createClAi: CreateGenerateCoverLetterDto) {
+  async generateCoverLetterByAi(
+    createClAi: CreateGenerateCoverLetterDto,
+    jdPath: string
+  ) {
     try {
       const {
-        jobDescription,
         strengths,
         workStyle,
         firstName,
@@ -34,44 +37,65 @@ export class CoverLetterAiService {
         phone,
         email,
         date,
+        templateId,
         recipientFirstName,
         recipientLastName,
         recipientCity,
         recipientState,
         recipientPhone,
         recipientEmail,
-        templateId,
       } = createClAi;
+
+      const jdBuffer = fs.readFileSync(jdPath);
+      const jobDescriptionText = (await pdfParse(jdBuffer)).text;
+
       const prompt = `
-You are a career writing assistant. Based on the following information, generate a personalized cover letter section.
+You are a professional assistant specialized in writing job application cover letters.
+
+Your task is to:
+1. Analyze the job description below.
+2. Detect whether it is written in **Vietnamese** or **English**.
+3. Generate a cover letter body using the **same language** as the job description.
+4. Use the candidate's information to personalize the response.
+
+---
 
 Job Description:
-${jobDescription}
+${jobDescriptionText}
 
-Candidate's Strengths:
-${strengths.join(", ")}
+---
 
-Candidate's Work Style:
-${workStyle}
+Candidate Information:
+- First Name: ${firstName}
+- Last Name: ${lastName}
+- Profession: ${profession}
+- City: ${city}
+- State: ${state}
+- Phone: ${phone}
+- Email: ${email}
+- Date: ${date}
+- Strengths: ${(strengths || []).join(", ")}
+- Work Style: ${workStyle}
 
-Generate a JSON object with the following structure:
+---
+
+Return a valid JSON object with this structure:
+
 {
-  "subject": "A concise subject line related to the job position",
-  "opening": "An engaging opening paragraph introducing the applicant's interest and highlighting relevant strengths",
-  "body": "A body paragraph showing how the applicant's skills, strengths, and work style match the job requirements",
-  "callToAction": "A polite call to action to express interest in an interview or further discussion"
+  "subject": "",           // A concise subject related to the job
+  "opening": "",           // Introduction paragraph showing interest
+  "body": "",              // Main paragraph explaining qualifications
+  "callToAction": ""       // Polite invitation to interview
 }
 
-Guidelines:
-- Tailor the content based on job description and the candidate's strengths & work style
-- Use a professional, confident, and enthusiastic tone
-- Do NOT include generic phrases
-- Do NOT include greeting, closing, signature, or contact details
-- Only return a **valid JSON object** — do not include markdown or any extra explanation
+Rules:
+- Always match the language of the job description.
+- Do NOT include greeting, recipient information, closing, or signature.
+- Do NOT add any explanation, markdown, or extra text — return only valid JSON.
 `;
 
       const completion = await this.openai.chat.completions.create({
-        model: "gpt-4o",
+        model: "openai/gpt-4.1",
         messages: [
           {
             role: "system",
@@ -84,11 +108,13 @@ Guidelines:
           },
         ],
       });
+
       const response = completion.choices[0]?.message?.content;
       if (!response) {
         throw new Error("No response from OpenAI");
       }
-      const parsed = JSON.parse(response);
+
+      const { subject, opening, body, callToAction } = JSON.parse(response);
 
       const coverLetter = {
         templateId: templateId,
@@ -109,11 +135,11 @@ Guidelines:
           recipientPhone,
           recipientEmail,
 
-          subject: parsed.subject,
+          subject,
           greeting: `Dear ${recipientFirstName} ${recipientLastName},`,
-          opening: parsed.opening,
-          body: parsed.body,
-          callToAction: parsed.callToAction,
+          opening,
+          body,
+          callToAction,
           closing: "Sincerely,",
           signature: `${firstName} ${lastName}`,
         },
@@ -147,9 +173,7 @@ Guidelines:
     const jobDescriptionText = (await pdfParse(jdBuffer)).text;
 
     const prompt = `
-You are an expert at analyzing cover letters. Below is the content of a cover letter extracted from a PDF and a job description.
-
-Your task is to extract and enhance the following specific fields from the cover letter to better match the job description. Ensure the extracted content is relevant, professional, and tailored to the job requirements while preserving the applicant's tone and personal details.
+You are an expert at analyzing cover letters. Your task is to extract key fields from the following cover letter and enhance them to better match the job description.
 
 ---
 
@@ -161,32 +185,37 @@ ${jobDescriptionText}
 
 ---
 
-**Return a valid JSON object with ONLY the following fields**:
+Instructions:
+1. Detect the language of the job description (Vietnamese or English).
+2. Based on the detected language, return the JSON fields **in the same language** (either Vietnamese or English).
+3. Keep the tone professional, concise, and relevant to the job description.
+4. If any field is missing, infer the best possible value from the context.
+
+Return a valid JSON object with **only** the following structure:
 
 {
-  "firstName": "",       // First name of the applicant
-  "lastName": "",        // Last name of the applicant
+  "firstName": "",       // Applicant's first name
+  "lastName": "",        // Applicant's last name
   "email": "",           // Email address
   "phone": "",           // Phone number
   "subject": "",         // Subject or position applied for
-  "greeting": "",        // e.g. "Dear Hiring Manager"
-  "opening": "",         // Opening paragraph showing interest and motivation
-  "body": "",            // Main body elaborating on experience and skills
-  "callToAction": "",    // A polite request for an interview or next step
-  "closing": "",         // e.g. "Sincerely"
+  "greeting": "",        // e.g. "Dear Hiring Manager" or "Kính gửi"
+  "opening": "",         // Opening paragraph with motivation and interest
+  "body": "",            // Main paragraph elaborating experience and skills
+  "callToAction": "",    // Request for interview or next step
+  "closing": "",         // Closing phrase (e.g. "Sincerely", "Trân trọng")
   "signature": ""        // Applicant's full name or sign-off
 }
 
-**IMPORTANT**:
-- Return only this JSON structure.
-- Do NOT include any explanation, extra text, or additional fields.
-- Ensure all fields are filled if possible; infer when necessary from context.
-- Be concise and relevant.
+IMPORTANT:
+- Only return the JSON object, no additional explanation or markdown.
+- Write all content in the **same language as the job description**.
+- Use natural, human-like language appropriate for a formal cover letter.
 `;
 
     // 3. Call OpenAI
     const completion = await this.openai.chat.completions.create({
-      model: "gpt-4o",
+      model: "openai/gpt-4.1",
       messages: [
         {
           role: "system",
