@@ -1,4 +1,4 @@
-import React from 'react';
+
 import MyJobsClient from '../../components/client/MyJobsClient';
 
 export interface Job {
