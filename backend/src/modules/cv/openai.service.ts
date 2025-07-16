@@ -388,11 +388,33 @@ Do not include any explanation or markdown, only valid JSON.
         cleanResponse = cleanResponse.replace(/^```/, '').replace(/```$/, '').trim();
       }
       const skillsLists = JSON.parse(cleanResponse);
+      // Lọc lại chỉ giữ các kỹ năng có trong JD
+      const validSkills = [
+        ...(jobAnalysis.requiredSkills || []),
+        ...(jobAnalysis.technologies || []),
+        ...(jobAnalysis.softSkills || [])
+      ].map(s => s.toLowerCase());
+      function filterSkills(list) {
+        // Lọc và gán lại rating nếu có trong userSkills
+        return list.filter(skillObj =>
+          validSkills.includes(skillObj.name.toLowerCase())
+        ).map(skillObj => {
+          if (userSkills) {
+            const found = userSkills.find(
+              s => s.name.toLowerCase() === skillObj.name.toLowerCase()
+            );
+            if (found) {
+              return { ...skillObj, rating: found.rating };
+            }
+          }
+          return skillObj;
+        });
+      }
       if (Array.isArray(skillsLists) && skillsLists.length === 3) {
-        return skillsLists;
+        return skillsLists.map(filterSkills);
       }
       // fallback: wrap single list in array
-      return [skillsLists];
+      return [filterSkills(skillsLists)];
     } catch (error) {
       this.logger.error(
         `Error generating skills section: ${error.message}`,
@@ -559,6 +581,7 @@ Do not include any explanation or markdown, only valid JSON.
         institution: string;
       }>;
     };
+    mapping?: Record<string, { page: number; x: number; y: number; width: number; height: number }>;
   }> {
     try {
       const prompt = `
@@ -604,6 +627,10 @@ Please provide a detailed analysis in the following JSON structure:
         "institution": "Institution Name"
       }
     ]
+  },
+  "mapping": {
+    // mapping các trường chính (nếu xác định được):
+    // ví dụ: "name": { "page": 0, "x": 100, "y": 200, "width": 150, "height": 20 }
   }
 }
 
@@ -615,6 +642,7 @@ Focus on:
 - Extract education details with proper structure
 - Ensure all dates are in YYYY-MM-DD format
 - Set empty string for avatar if not found
+- Nếu có thể, hãy dự đoán vị trí (page, x, y, width, height) của các trường chính trong CV (mapping), nếu không xác định được thì để trống object mapping.
 
 Return only valid JSON without any additional text.
 `;
@@ -668,6 +696,61 @@ Return only valid JSON without any additional text.
 
       // Fallback to basic analysis if OpenAI fails
       return this.fallbackCvAnalysis(cvText);
+    }
+  }
+
+  /**
+   * Rewrite a work experience description to be more professional and impressive
+   */
+  async rewriteWorkDescription(description: string, language?: string): Promise<string> {
+    try {
+      let languageNote = '';
+      if (language === 'vi') {
+        languageNote = '\nLưu ý: Viết lại mô tả này bằng tiếng Việt chuyên nghiệp, tự nhiên, súc tích.';
+      } else if (language === 'en') {
+        languageNote = '\nNote: Rewrite this description in professional, natural, concise English.';
+      }
+      const prompt = `
+Rewrite the following work experience description to be more professional, impressive, and concise. Use action verbs, highlight achievements, and make it suitable for a CV.${languageNote}
+
+Original description:
+"""
+${description}
+"""
+
+Return only the rewritten description, no explanation, no markdown.
+`;
+      const completion = await this.openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: "You are a professional CV writer. Rewrite work experience descriptions to be impressive and concise.",
+          },
+          {
+            role: "user",
+            content: prompt,
+          },
+        ],
+        temperature: 0.5,
+        max_tokens: 300,
+      });
+      let response = completion.choices[0]?.message?.content;
+      if (!response) {
+        throw new Error("No response from OpenAI");
+      }
+      // Remove markdown if present
+      let cleanResponse = response.trim();
+      if (cleanResponse.startsWith('```')) {
+        cleanResponse = cleanResponse.replace(/^```[a-z]*\n?/i, '').replace(/```$/, '').trim();
+      }
+      return cleanResponse;
+    } catch (error) {
+      this.logger.error(
+        `Error rewriting work description: ${error.message}`,
+        error.stack
+      );
+      throw error;
     }
   }
 

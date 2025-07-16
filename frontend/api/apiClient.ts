@@ -46,6 +46,37 @@ export async function fetchWithAuth(url: string, options: RequestInit = {}) {
   return data;
 }
 
+// For file uploads and non-JSON responses
+export async function fetchWithAuthFile(url: string, options: RequestInit = {}) {
+  // Get token from cookies
+  const token = Cookies.get("token");
+
+  const headers = {
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...options.headers,
+  };
+
+  const fullUrl = `${API_URL}${url}`;
+
+  const response = await fetch(fullUrl, {
+    ...options,
+    headers,
+  });
+
+  if (!response.ok) {
+    // Try to parse as JSON for error messages
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Request failed");
+    } else {
+      throw new Error(`Request failed with status ${response.status}`);
+    }
+  }
+
+  return response;
+}
+
 // For public APIs that don't need authentication
 export async function fetchWithoutAuth(url: string, options: RequestInit = {}) {
   const headers = {

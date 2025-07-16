@@ -58,7 +58,7 @@ export default function WorkStylePage() {
     const updatedData = { ...coverLetterData, workStyle: selectedStyle };
     localStorage.setItem('coverLetterData', JSON.stringify(updatedData));
 
-    router.push(`/work-history`);
+    router.push(`/uploadJD`);
   };
 
   return (

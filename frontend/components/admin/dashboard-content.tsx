@@ -1,40 +1,70 @@
+"use client"
+
 import { Eye, ShoppingCart, Package, Users, TrendingUp } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { RevenueChart } from "@/components/admin/revenue-chart"
-import { ProfitChart } from "@/components/admin/profit-chart"
-
-const stats = [
-  {
-    title: "Total CV Template",
-    value: "$3.456K",
-    change: "+0.43%",
-    changeType: "positive" as const,
-    icon: Eye,
-  },
-  {
-    title: "Total CL Template",
-    value: "$45.2K",
-    change: "+4.35%",
-    changeType: "positive" as const,
-    icon: ShoppingCart,
-  },
-  {
-    title: "Total Job",
-    value: "2.450",
-    change: "+2.59%",
-    changeType: "positive" as const,
-    icon: Package,
-  },
-  {
-    title: "Total User",
-    value: "3.456",
-    change: "+0.95%",
-    changeType: "positive" as const,
-    icon: Users,
-  },
-]
+import { useEffect, useState } from "react"
+import { getAllUsers } from "@/api/userApi"
+import { getJobs } from "@/api/jobApi"
+import { getCVTemplates } from "@/api/cvapi"
+import { getCLTemplates } from "@/api/clApi"
 
 export function DashboardContent() {
+  const [stats, setStats] = useState([
+    {
+      title: "Total CV Template",
+      value: "0",
+      change: "+0%",
+      changeType: "positive" as const,
+      icon: Eye,
+    },
+    {
+      title: "Total CL Template",
+      value: "0",
+      change: "+0%",
+      changeType: "positive" as const,
+      icon: ShoppingCart,
+    },
+    {
+      title: "Total Job",
+      value: "0",
+      change: "+0%",
+      changeType: "positive" as const,
+      icon: Package,
+    },
+    {
+      title: "Total User",
+      value: "0",
+      change: "+0%",
+      changeType: "positive" as const,
+      icon: Users,
+    },
+  ])
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const [users, jobs, cvTemplates, clTemplates] = await Promise.all([
+          getAllUsers(),
+          getJobs(),
+          getCVTemplates(),
+          getCLTemplates(),
+        ])
+
+        setStats([
+          { ...stats[0], value: cvTemplates.length.toString() },
+          { ...stats[1], value: clTemplates.length.toString() },
+          { ...stats[2], value: jobs.length.toString() },
+          { ...stats[3], value: users.length.toString() },
+        ])
+      } catch (error) {
+        console.error("Failed to fetch dashboard stats:", error)
+      }
+    }
+
+    fetchStats()
+  }, [])
+
   return (
     <div className="flex-1 space-y-6 p-6 bg-gray-50">
       {/* Stats Cards */}
@@ -61,7 +91,7 @@ export function DashboardContent() {
       </div>
 
       {/* Charts */}
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="">
         <Card className="bg-white">
           <CardHeader>
             <CardTitle className="text-lg">User Tracking</CardTitle>
@@ -71,25 +101,6 @@ export function DashboardContent() {
           </CardHeader>
           <CardContent>
             <RevenueChart />
-          </CardContent>
-        </Card>
-
-        <Card className="bg-white">
-          <CardHeader>
-            <CardTitle className="text-lg">Newest Job</CardTitle>
-            <div className="flex gap-4 text-sm">
-              <div className="flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-blue-500"></div>
-                <span className="text-muted-foreground">Sales</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-cyan-400"></div>
-                <span className="text-muted-foreground">Revenue</span>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <ProfitChart />
           </CardContent>
         </Card>
       </div>

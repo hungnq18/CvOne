@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Search, Plus, Edit, Trash2, Eye, MoreHorizontal } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -12,56 +12,31 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-
-// Mock data for users
-const mockUsers = [
-  {
-    id: 1,
-    name: "John Doe",
-    email: "john.doe@example.com",
-    role: "User",
-    status: "Active",
-    joinDate: "2024-01-15",
-    avatar: "/placeholder.svg?height=40&width=40",
-  },
-  {
-    id: 2,
-    name: "Jane Smith",
-    email: "jane.smith@example.com",
-    role: "Premium",
-    status: "Active",
-    joinDate: "2024-02-20",
-    avatar: "/placeholder.svg?height=40&width=40",
-  },
-  {
-    id: 3,
-    name: "Mike Johnson",
-    email: "mike.johnson@example.com",
-    role: "User",
-    status: "Inactive",
-    joinDate: "2024-03-10",
-    avatar: "/placeholder.svg?height=40&width=40",
-  },
-  {
-    id: 4,
-    name: "Sarah Wilson",
-    email: "sarah.wilson@example.com",
-    role: "Admin",
-    status: "Active",
-    joinDate: "2024-01-05",
-    avatar: "/placeholder.svg?height=40&width=40",
-  },
-]
+import { getAllUsers } from "@/api/userApi"
+import { User } from "@/types/auth"
 
 export function ManageUsers() {
-  const [users, setUsers] = useState(mockUsers)
+  const [users, setUsers] = useState<User[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
 
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const usersData = await getAllUsers()
+        setUsers(usersData)
+      } catch (error) {
+        console.error("Failed to fetch users:", error)
+      }
+    }
+
+    fetchUsers()
+  }, [])
+
   const filteredUsers = users.filter(
     (user) =>
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase()),
+      `${user.first_name} ${user.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.account_id.toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
   const getRoleColor = (role: string) => {
@@ -170,31 +145,28 @@ export function ManageUsers() {
             </TableHeader>
             <TableBody>
               {filteredUsers.map((user) => (
-                <TableRow key={user.id}>
+                <TableRow key={user._id}>
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <Avatar className="h-10 w-10">
-                        <AvatarImage src={user.avatar || "/placeholder.svg"} />
+                        <AvatarImage src={"/placeholder.svg"} />
                         <AvatarFallback>
-                          {user.name
-                            .split(" ")
-                            .map((n) => n[0])
-                            .join("")}
+                          {`${user.first_name[0]}${user.last_name[0]}`}
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <div className="font-medium">{user.name}</div>
-                        <div className="text-sm text-muted-foreground">{user.email}</div>
+                        <div className="font-medium">{`${user.first_name} ${user.last_name}`}</div>
+                        <div className="text-sm text-muted-foreground">{user.account_id}</div>
                       </div>
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge className={getRoleColor(user.role)}>{user.role}</Badge>
+                    <Badge className={getRoleColor("User")}>User</Badge>
                   </TableCell>
                   <TableCell>
-                    <Badge className={getStatusColor(user.status)}>{user.status}</Badge>
+                    <Badge className={getStatusColor("Active")}>Active</Badge>
                   </TableCell>
-                  <TableCell>{user.joinDate}</TableCell>
+                  <TableCell>{"N/A"}</TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>

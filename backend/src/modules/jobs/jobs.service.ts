@@ -9,10 +9,7 @@ import { UsersService } from "../users/users.service";
 import { User, UserDocument } from "../users/schemas/user.schema";
 @Injectable()
 export class JobsService {
-  constructor(
-    @InjectModel(Job.name) private jobModel: Model<JobDocument>,
-    private userService: UsersService
-  ) {}
+  constructor(@InjectModel(Job.name) private jobModel: Model<JobDocument>) {}
 
   async findAll(page: number = 1, limit: number = 10): Promise<JobDocument[]> {
     const skip = (page - 1) * limit;
@@ -100,5 +97,8 @@ export class JobsService {
       page,
       limit,
     };
+  }
+  async getCountJobs(userId: string): Promise<number> {
+    return this.jobModel.countDocuments({ user_id: userId });
   }
 }
