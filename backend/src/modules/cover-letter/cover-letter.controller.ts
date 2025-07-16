@@ -1,13 +1,13 @@
 import {
-    Body,
-    Controller,
-    Delete,
-    Get,
-    Param,
-    Patch,
-    Post,
-    Request,
-    UseGuards
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Request,
+  UseGuards,
 } from "@nestjs/common";
 import * as path from "path";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
@@ -57,7 +57,12 @@ export class CoverLetterController {
   @UseGuards(JwtAuthGuard)
   @Post("generate/ai")
   async generateByAi(@Body() dto: CreateGenerateCoverLetterDto) {
-    return this.coverLetterAiService.generateCoverLetterByAi(dto);
+    const jdPath = path.join(
+      process.cwd(),
+      "uploads/",
+      dto.jobDescriptionFileName
+    );
+    return this.coverLetterAiService.generateCoverLetterByAi(dto, jdPath);
   }
 
   // @UseGuards(JwtAuthGuard)
