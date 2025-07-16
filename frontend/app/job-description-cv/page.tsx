@@ -4,11 +4,11 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useCV } from "@/providers/cv-provider";
-import { analyzeJD } from "@/api/cvapi";
+import { analyzeJD, uploadAndAnalyzeCV } from "@/api/cvapi";
 
 export default function JobDescriptionPage() {
   const router = useRouter();
-  const { jobDescription, setJobDescription } = useCV();
+  const { jobDescription, setJobDescription, pdfFile, updateUserData } = useCV();
 
   const searchParams = useSearchParams();
   const templateId = searchParams.get("id");
@@ -17,13 +17,50 @@ export default function JobDescriptionPage() {
   const [analysisResult, setAnalysisResult] = useState<string>("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisError, setAnalysisError] = useState<string>("");
+  const [isCreatingCV, setIsCreatingCV] = useState(false); // loading cho nút Tạo CV
 
   const handleBack = () => {
     router.back();
   };
 
-  const handleContinue = () => {
-    router.push(`/chooseUploadCreateCV?id=${templateId}`);
+  // Logic chuyển từ handleMyTemplateCreate
+  const uint8ArrayToFile = (uint8Array: Uint8Array, fileName = "cv.pdf", mimeType = "application/pdf") => {
+    const blob = new Blob([uint8Array], { type: mimeType });
+    return new File([blob], fileName, { type: mimeType });
+  };
+
+  const handleContinue = async () => {
+    if (!pdfFile) {
+      alert("Vui lòng tải lên file PDF trước.");
+      return;
+    }
+
+    // Kiểm tra kích thước file (giới hạn 10MB)
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (pdfFile.length > maxSize) {
+      alert("File PDF quá lớn. Vui lòng chọn file nhỏ hơn 10MB.");
+      return;
+    }
+
+    setIsCreatingCV(true);
+    try {
+      const file = uint8ArrayToFile(pdfFile);
+      const result = await uploadAndAnalyzeCV(file, jobDescription);
+      const userData = result?.analysisResult?.userData;
+      if (userData) {
+        updateUserData(userData);
+      }
+      router.push(`/createCV-AIManual?id=${templateId}`);
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('413')) {
+        alert("File PDF quá lớn. Vui lòng chọn file nhỏ hơn 10MB hoặc nén file trước khi tải lên.");
+      } else {
+        alert("Có lỗi khi phân tích CV bằng AI. Vui lòng thử lại.");
+      }
+      console.error(error);
+    } finally {
+      setIsCreatingCV(false);
+    }
   };
 
   const formatAnalysisResult = (result: any): string => {
@@ -231,9 +268,10 @@ export default function JobDescriptionPage() {
 
           <button
             onClick={handleContinue}
-            className="flex items-center gap-2 px-8 py-3 text-lg font-semibold text-white bg-yellow-500 rounded-full hover:bg-yellow-600 transition-colors"
+            disabled={isCreatingCV}
+            className={`flex items-center gap-2 px-8 py-3 text-lg font-semibold text-white rounded-full transition-colors ${isCreatingCV ? 'bg-gray-400 cursor-not-allowed' : 'bg-yellow-500 hover:bg-yellow-600'}`}
           >
-            Tạo CV
+            {isCreatingCV ? 'Đang xử lý...' : 'Tạo CV'}
             <ArrowRight size={20} />
           </button>
         </div>

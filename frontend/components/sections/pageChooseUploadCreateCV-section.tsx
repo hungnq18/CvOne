@@ -3,7 +3,7 @@
 import { uploadAndAnalyzeCV } from "@/api/cvapi";
 import { useCV } from "@/providers/cv-provider";
 import { useRouter, useSearchParams } from "next/navigation"; // <-- Bước 1: Import useRouter
-import { useState } from "react";
+import React ,{ useState } from "react";
 
 export default function PageChooseUploadCreateCVSection() {
   const searchParams = useSearchParams();
@@ -36,11 +36,7 @@ export default function PageChooseUploadCreateCVSection() {
       const file = uint8ArrayToFile(pdfFile);
       console.log('  size:', file.size); // nên ~191*1024
       const result = await uploadAndAnalyzeCV(file, jobDescription);
-
-      // API trả về userData trong result.analysisResult.userData
-      const userData = result?.optimizedCv?.userData;
-
-
+      const userData = result?.analysisResult?.userData;
       if (userData) {
         updateUserData(userData);
       }
