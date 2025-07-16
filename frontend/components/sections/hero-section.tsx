@@ -58,7 +58,7 @@ export function HeroSection() {
               </p>
             </motion.div>
             <Link
-              href="/create-cv"
+              href="/cvTemplates"
               className={styles.button}
             >
               {slide.button}
