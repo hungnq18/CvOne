@@ -451,7 +451,9 @@ export const ExperiencePopup: FC<{
     try {
       const { rewriteWorkDescription } = await import("@/api/cvapi");
       const res = await rewriteWorkDescription(currentItem.description, "vi");
-      const rewritten = res?.rewrittenDescription || res;
+      console.log(currentItem.description)
+      console.log(res?.rewritten)
+      const rewritten = res?.rewritten || res;
       setCurrentItem({ ...currentItem, description: rewritten });
     } catch (err) {
       alert("Không thể lấy gợi ý từ AI. Vui lòng thử lại.");
