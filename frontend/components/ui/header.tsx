@@ -170,11 +170,6 @@ const navigationItems = {
       {
         name: "My Documents",
         href: "/myDocuments",
-        dropdownItems: [
-          { name: "My Resume Templates", href: "/myDocuments" },
-          { name: "My CV Templates", href: "/myDocuments" },
-          { name: "My Cover Letter Templates", href: "/myDocuments" },
-        ],
       },
       {
         name: "CV",
@@ -203,28 +198,14 @@ const navigationItems = {
       {
         name: "CV",
         href: "/cvTemplates",
-        dropdownItems: [
-          { name: "Mẫu CV", href: "/cvTemplates" },
-          { name: "Ví dụ CV", href: "/cv/examples" },
-          { name: "Mẹo về CV", href: "/cv/tips" },
-        ],
       },
       {
         name: "Thư ngỏ",
         href: "/clTemplate",
-        dropdownItems: [
-          { name: "Mẫu Thư ngỏ", href: "/clTemplate" },
-          { name: "Ví dụ Thư ngỏ", href: "/cover-letter/examples" },
-          { name: "Mẹo về Thư ngỏ", href: "/cover-letter/tips" },
-        ],
       },
       {
         name: "Công việc",
         href: "/listJob",
-        dropdownItems: [
-          { name: "Danh sách Công việc", href: "/listJob" },
-          { name: "Mẹo về Công việc", href: "/listJob/tips" },
-        ],
       },
     ],
     admin: [
