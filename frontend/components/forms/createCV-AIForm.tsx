@@ -255,8 +255,9 @@ export const ExperienceForm: FC<FormProps> = ({ data, onUpdate }) => {
     try {
       const { rewriteWorkDescription } = await import("@/api/cvapi");
       const res = await rewriteWorkDescription(currentItem.description, "vi");
-      // Nếu API trả về object có trường rewrittenDescription thì lấy, nếu không thì lấy res trực tiếp
-      const rewritten = res?.rewrittenDescription || res;
+      console.log(currentItem.description)
+      console.log(res?.rewritten)
+      const rewritten = res?.rewritten || res;
       setCurrentItem({ ...currentItem, description: rewritten });
     } catch (err) {
       alert("Không thể lấy gợi ý từ AI. Vui lòng thử lại.");
@@ -454,6 +455,7 @@ export const SkillsForm: FC<FormProps> = ({ data, onUpdate }) => {
 
   useEffect(() => {
     const fetchJDAndSkills = async () => {
+      setSkills([]);
       // Nếu chưa có jobAnalysis thì tự động phân tích JD
       if (!jobAnalysis && jobDescription) {
         setAnalyzingJD(true);

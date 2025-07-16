@@ -55,7 +55,9 @@ export const Modal: FC<{
                 disabled={isSaving}
                 className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-md focus:outline-none focus:shadow-outline flex items-center justify-center disabled:opacity-50"
               >
-                {isSaving && <Loader2 className="animate-spin mr-2" size={18} />}
+                {isSaving && (
+                  <Loader2 className="animate-spin mr-2" size={18} />
+                )}
                 Lưu Thay Đổi
               </button>
             </div>
@@ -86,26 +88,35 @@ export const InfoPopup: FC<{
     if (!file) return;
     setIsUploading(true);
     const formDataUpload = new FormData();
-    formDataUpload.append('file', file);
+    formDataUpload.append("file", file);
     formDataUpload.append(
-      'upload_preset',
+      "upload_preset",
       process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET!
     );
     const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
     const uploadUrl = `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`;
     try {
       const response = await fetch(uploadUrl, {
-        method: 'POST',
+        method: "POST",
         body: formDataUpload,
       });
       if (!response.ok) {
-        throw new Error('Tải ảnh lên thất bại. Vui lòng kiểm tra lại cấu hình preset.');
+        throw new Error(
+          "Tải ảnh lên thất bại. Vui lòng kiểm tra lại cấu hình preset."
+        );
       }
       const responseData = await response.json();
-      setFormData((prevData: any) => ({ ...prevData, avatar: responseData.secure_url }));
+      setFormData((prevData: any) => ({
+        ...prevData,
+        avatar: responseData.secure_url,
+      }));
     } catch (error) {
       console.error(error);
-      alert(error instanceof Error ? error.message : "Có lỗi xảy ra khi tải ảnh lên.");
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Có lỗi xảy ra khi tải ảnh lên."
+      );
     } finally {
       setIsUploading(false);
     }
@@ -124,10 +135,16 @@ export const InfoPopup: FC<{
     >
       {/* Avatar lên đầu popup */}
       <div className="mb-4">
-        <label className="block text-gray-700 text-sm font-bold mb-2">Ảnh Đại Diện</label>
+        <label className="block text-gray-700 text-sm font-bold mb-2">
+          Ảnh Đại Diện
+        </label>
         <div className="flex items-center gap-4 mt-1">
           {formData.avatar && (
-            <img src={formData.avatar} alt="Avatar Preview" className="w-20 h-20 rounded-full object-cover border-2 border-gray-200"/>
+            <img
+              src={formData.avatar}
+              alt="Avatar Preview"
+              className="w-20 h-20 rounded-full object-cover border-2 border-gray-200"
+            />
           )}
           <div className="relative">
             <input
@@ -142,9 +159,11 @@ export const InfoPopup: FC<{
               type="button"
               className="bg-blue-500 text-white font-bold py-2 px-4 rounded-md hover:bg-blue-600 disabled:bg-gray-400 transition-colors"
               disabled={isUploading}
-              onClick={() => document.getElementById('avatar-upload-popup')?.click()}
+              onClick={() =>
+                document.getElementById("avatar-upload-popup")?.click()
+              }
             >
-              {isUploading ? 'Đang tải...' : 'Chọn ảnh'}
+              {isUploading ? "Đang tải..." : "Chọn ảnh"}
             </button>
           </div>
         </div>
@@ -327,6 +346,7 @@ export const ExperiencePopup: FC<{
   const [currentItem, setCurrentItem] = useState<any>(null);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [loadingAI, setLoadingAI] = useState(false);
+  const [aiOutput, setAIOutput] = useState<string | null>(null);
 
   const handleAddNew = () => {
     setCurrentItem({
@@ -367,7 +387,9 @@ export const ExperiencePopup: FC<{
     try {
       const { rewriteWorkDescription } = await import("@/api/cvapi");
       const res = await rewriteWorkDescription(currentItem.description, "vi");
-      const rewritten = res?.rewrittenDescription || res;
+      console.log(currentItem.description)
+      console.log(res?.rewritten)
+      const rewritten = res?.rewritten || res;
       setCurrentItem({ ...currentItem, description: rewritten });
     } catch (err) {
       alert("Không thể lấy gợi ý từ AI. Vui lòng thử lại.");
@@ -475,15 +497,28 @@ export const ExperiencePopup: FC<{
                 className="mt-1 ml-2 px-3 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:bg-gray-400 flex items-center gap-1"
                 onClick={handleAIRewrite}
                 disabled={loadingAI || !currentItem?.description}
-                title="Gợi ý AI cho mô tả công việc"
+                title="Rewrite with AI"
               >
                 {loadingAI ? (
-                  <span className="animate-spin mr-1">⏳</span>
+                  <Loader2 className="animate-spin mr-1" size={18} />
                 ) : (
-                  <span>Sửa lại với AI</span>
+                  <span>Rewrite with AI</span>
                 )}
               </button>
             </div>
+            {aiOutput && (
+              <div className="mt-3 p-3 bg-gray-100 border border-blue-300 rounded">
+                <div className="font-semibold mb-1 text-blue-700">Gợi ý từ AI:</div>
+                <div className="whitespace-pre-line text-gray-800 text-sm">{aiOutput}</div>
+                <button
+                  type="button"
+                  className="mt-2 px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
+                  onClick={() => setCurrentItem({ ...currentItem, description: String(aiOutput) })}
+                >
+                  Dùng kết quả này
+                </button>
+              </div>
+            )}
           </div>
           <div className="flex justify-end gap-2 mt-4">
             <button
@@ -820,7 +855,6 @@ export const UnsavedChangesPopup: FC<{
   );
 };
 
-
 // --- COMPONENT QUẢN LÝ TẤT CẢ POPUP ---
 interface CVEditorPopupsProps {
   activePopup: string | null;
@@ -845,17 +879,53 @@ export const CVEditorPopupsManager: FC<CVEditorPopupsProps> = ({
 
   switch (activePopup) {
     case "info":
-      return <InfoPopup onClose={onClose} initialData={userData} onSave={handleDataUpdate} />;
+      return (
+        <InfoPopup
+          onClose={onClose}
+          initialData={userData}
+          onSave={handleDataUpdate}
+        />
+      );
     case "contact":
-      return <ContactPopup onClose={onClose} initialData={userData} onSave={handleDataUpdate} />;
+      return (
+        <ContactPopup
+          onClose={onClose}
+          initialData={userData}
+          onSave={handleDataUpdate}
+        />
+      );
     case "summary":
-      return <TargetPopup onClose={onClose} initialData={userData} onSave={handleDataUpdate} />;
+      return (
+        <TargetPopup
+          onClose={onClose}
+          initialData={userData}
+          onSave={handleDataUpdate}
+        />
+      );
     case "experience":
-      return <ExperiencePopup onClose={onClose} initialData={userData} onSave={handleDataUpdate} />;
+      return (
+        <ExperiencePopup
+          onClose={onClose}
+          initialData={userData}
+          onSave={handleDataUpdate}
+        />
+      );
     case "education":
-      return <EducationPopup onClose={onClose} initialData={userData} onSave={handleDataUpdate} />;
+      return (
+        <EducationPopup
+          onClose={onClose}
+          initialData={userData}
+          onSave={handleDataUpdate}
+        />
+      );
     case "skills":
-      return <SkillsPopup onClose={onClose} initialData={userData} onSave={handleDataUpdate} />;
+      return (
+        <SkillsPopup
+          onClose={onClose}
+          initialData={userData}
+          onSave={handleDataUpdate}
+        />
+      );
     case "confirmLeave":
       return (
         <UnsavedChangesPopup
