@@ -54,7 +54,7 @@ export class CoverLetterController {
     return this.coverLetterService.remove(id);
   }
 
-  @UseGuards(JwtAuthGuard)
+  // @UseGuards(JwtAuthGuard)
   @Post("generate/ai")
   async generateByAi(@Body() dto: CreateGenerateCoverLetterDto) {
     const jdPath = path.join(

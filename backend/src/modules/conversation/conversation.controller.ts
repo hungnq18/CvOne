@@ -1,17 +1,10 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  Post,
-  UseGuards,
-} from '@nestjs/common';
-import { User } from '../../common/decorators/user.decorator';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { ConversationService } from './conversation.service';
-import { CreateConversationDto } from './dto/create-conversation.dto';
+import { Body, Controller, Get, Param, Post, UseGuards } from "@nestjs/common";
+import { User } from "../../common/decorators/user.decorator";
+import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
+import { ConversationService } from "./conversation.service";
+import { CreateConversationDto } from "./dto/create-conversation.dto";
 
-@Controller('conversations')
+@Controller("conversations")
 export class ConversationController {
   constructor(private readonly conversationService: ConversationService) {}
 
@@ -22,19 +15,19 @@ export class ConversationController {
   }
   @UseGuards(JwtAuthGuard)
   @Get()
-  async getUserConversations(@User('_id') userId: string) {
+  async getUserConversations(@User("_id") userId: string) {
     return this.conversationService.getUserConversations(userId);
   }
 
   @UseGuards(JwtAuthGuard)
-  @Get(':conversationId')
+  @Get(":conversationId")
   async getConversationDetail(
-    @User('_id') userId: string,
-    @Param('conversationId') conversationId: string,
+    @User("_id") userId: string,
+    @Param("conversationId") conversationId: string
   ) {
     return this.conversationService.getConversationDetail(
       conversationId,
-      userId,
+      userId
     );
   }
 }

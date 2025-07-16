@@ -1,10 +1,4 @@
-import {
-  IsArray,
-  IsBoolean,
-  IsNotEmpty,
-  IsObject,
-  IsString,
-} from "class-validator";
+import { IsArray, IsString } from "class-validator";
 
 export class CreateGenerateCoverLetterDto {
   @IsString()

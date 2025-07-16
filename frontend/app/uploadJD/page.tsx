@@ -57,10 +57,19 @@ function UploadJDContent() {
             toast.success('JD uploaded successfully!');
             const jdFilename = uploadResponseData.filename;
 
+            const coverLetterDataString = localStorage.getItem('coverLetterData');
+            const coverLetterData = coverLetterDataString ? JSON.parse(coverLetterDataString) : {};
+            const finalTemplateId = templateId || coverLetterData.templateId;
+
             const params = new URLSearchParams();
-            if (templateId) params.append('templateId', templateId);
+            if (finalTemplateId) params.append('templateId', finalTemplateId);
             if (clFilename) params.append('clFilename', clFilename);
             if (jdFilename) params.append('jdFilename', jdFilename);
+
+            const isAiFlow = !clFilename;
+            if (isAiFlow) {
+                params.append('type', 'generate-by-ai');
+            }
 
             router.push(`/createCLTemplate?${params.toString()}`);
 

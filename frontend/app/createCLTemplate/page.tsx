@@ -45,6 +45,7 @@ const CoverLetterBuilderContent = () => {
     const initialLastName = searchParams.get('lastName');
     const clFilename = searchParams.get('clFilename');
     const jdFilename = searchParams.get('jdFilename');
+    const type = searchParams.get('type');
 
     const [selectedTemplateData, setSelectedTemplateData] = useState<CLTemplate | null>(null);
     const [templateName, setTemplateName] = useState<TemplateType>('cascade');
@@ -85,72 +86,48 @@ const CoverLetterBuilderContent = () => {
     } = useLocations();
 
     useEffect(() => {
-        const initializeFromLocalStorage = async () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            // If clId or templateId are in the URL, it's a manual flow. Let other useEffects handle it.
-            if (urlParams.has('clId') || urlParams.has('templateId')) {
-                return;
-            }
+        const generateAiCv = async () => {
+            if (jdFilename && type === 'generate-by-ai') {
+                const coverLetterDataString = localStorage.getItem('coverLetterData');
+                if (!coverLetterDataString) {
+                    toast.error("Không tìm thấy dữ liệu người dùng. Vui lòng thử lại.");
+                    router.push('/personal-info');
+                    return;
+                }
+                const coverLetterData = JSON.parse(coverLetterDataString);
 
-            const savedDataString = localStorage.getItem('coverLetterData');
-            if (savedDataString) {
-                const coverLetterData = JSON.parse(savedDataString);
-
-                // Populate letter data from localStorage for the AI flow
-                const mappedData: LetterData = {
-                    firstName: coverLetterData.firstName || '',
-                    lastName: coverLetterData.lastName || '',
-                    profession: coverLetterData.profession || '',
-                    city: coverLetterData.city || '',
-                    state: coverLetterData.state || '',
-                    phone: coverLetterData.phone || '',
-                    email: coverLetterData.email || '',
-                    date: new Date().toISOString().split('T')[0],
-                    recipientFirstName: coverLetterData.recipientFirstName || '',
-                    recipientLastName: coverLetterData.recipientLastName || '',
-                    companyName: coverLetterData.targetCompany || coverLetterData.companyName || '',
-                    recipientCity: coverLetterData.recipientCity || '',
-                    recipientState: coverLetterData.recipientState || '',
-                    recipientPhone: coverLetterData.recipientPhone || '',
-                    recipientEmail: coverLetterData.recipientEmail || '',
-                    subject: coverLetterData.targetJobTitle ? `Application for the ${coverLetterData.targetJobTitle} position` : 'Job Application',
-                    greeting: `Dear ${coverLetterData.recipientFirstName ? coverLetterData.recipientFirstName + ' ' + coverLetterData.recipientLastName : 'Hiring Manager'},`,
-                    opening: '', // AI will populate this
-                    body: `Based on the provided job description for the ${coverLetterData.targetJobTitle || 'position'}, my skills in [Skill 1] and [Skill 2], combined with my strengths in ${coverLetterData.strengths?.join(', ')}, make me a strong candidate. My work style is ${coverLetterData.workStyle}.`, // Placeholder for AI
-                    callToAction: '', // AI will populate this
-                    closing: 'Sincerely,',
-                    signature: `${coverLetterData.firstName || ''} ${coverLetterData.lastName || ''}`.trim(),
+                const dto = {
+                    ...coverLetterData,
+                    jobDescriptionFileName: jdFilename,
+                    templateId: coverLetterData.templateId, // Ensure templateId is explicitly passed
                 };
-                setLetterData(mappedData);
 
-                // Pre-load districts for user and recipient city using the hook
-                if (mappedData.city) {
-                    await fetchDistrictsForCity(mappedData.city);
-                }
-                if (mappedData.recipientCity) {
-                    await fetchDistrictsForRecipientCity(mappedData.recipientCity);
-                }
-
-                // Fetch and set the template from localStorage data
-                if (coverLetterData.templateId) {
-                    try {
-                        const data = await getCLTemplateById(coverLetterData.templateId);
-                        if (data) {
-                            setSelectedTemplateData(data);
-                            setTemplateName(data.title.toLowerCase() as TemplateType);
-                        }
-                    } catch (error) {
-                        console.error("Failed to fetch CL template from localStorage data:", error);
+                setIsExtracting(true);
+                try {
+                    const response = await fetchWithAuth(API_ENDPOINTS.CL.GENERATE_CL_BY_AI, {
+                        method: 'POST',
+                        body: JSON.stringify(dto),
+                    });
+                    console.log(response);
+                    if (response && response.data) {
+                        setLetterData(prevData => ({ ...prevData, ...response.data }));
+                        toast.success("Đã tạo nội dung bằng AI!");
+                    } else {
+                        toast.error("Không nhận được dữ liệu từ AI.");
                     }
+                    console.log(response);
+                } catch (error) {
+                    toast.error("Failed to generate data from AI.");
+                    console.error("AI generation failed:", error);
                 }
-
-                // Clear the local storage after using the data to prevent re-populating on refresh
-                localStorage.removeItem('coverLetterData');
+                finally {
+                    setIsExtracting(false);
+                    localStorage.removeItem('coverLetterData');
+                }
             }
-        };
-
-        initializeFromLocalStorage();
-    }, []); // This effect now depends on the fetch functions from the hook
+        }
+        generateAiCv();
+    }, [jdFilename, type, router])
 
     useEffect(() => {
         const extractData = async () => {
