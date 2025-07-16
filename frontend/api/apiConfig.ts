@@ -47,6 +47,7 @@ export const API_ENDPOINTS = {
     SUGGEST_SUMMARY: "/cv/suggest/summary",
     SUGGEST_SKILLS: "/cv/suggest/skills",
     SUGGEST_WORK_EXPERIENCE: "/cv/suggest/work-experience",
+    REWRITE_WORK_DESCRIPTION: "/cv/rewrite-work-description",
     UPLOAD_AND_ANALYZE: "/cv/upload-and-analyze",
     UPLOAD_ANALYZE_GENERATE_PDF: "/cv/upload-analyze-generate-pdf",
     UPLOAD_ANALYZE_OVERLAY_PDF: "/cv/upload-analyze-overlay-pdf",
@@ -78,7 +79,7 @@ export const API_ENDPOINTS = {
     DELETE: (id: string) => `/jobs/${id}`,
     COUNTBYPOSTINGDATE: (month: number, year: number) =>
       `/jobs/count-by-posting-date/${month}/${year}`,
-    GET_JOB_BY_HR: "jobs/by-hr",
+    GET_JOB_BY_HR: "/jobs/by-hr",
   },
   NOTIFICATION: {
     GET_NOTIFICATIONS: "/notifications",

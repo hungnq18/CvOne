@@ -21,6 +21,8 @@ interface CVContextType {
   userData: any | null;
   loadTemplate: (template: CVTemplate) => void;
   updateUserData: (newData: any) => void;
+  jobAnalysis: any;
+  setJobAnalysis: (analysis: any) => void;
 }
 
 const CVContext = createContext<CVContextType | undefined>(undefined);
@@ -50,6 +52,7 @@ export const CVProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const [jobDescription, setJobDescription] = useState<string>("");
+  const [jobAnalysis, setJobAnalysis] = useState<any>(null);
 
   const value = {
     pdfFile,
@@ -60,6 +63,8 @@ export const CVProvider = ({ children }: { children: ReactNode }) => {
     userData,
     loadTemplate,
     updateUserData,
+    jobAnalysis,
+    setJobAnalysis,
   };
 
   return <CVContext.Provider value={value}>{children}</CVContext.Provider>;

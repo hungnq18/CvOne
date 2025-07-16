@@ -1,5 +1,7 @@
-import React, { useState, FC, ChangeEvent } from "react";
+import React, { useState, FC, ChangeEvent, useEffect } from "react";
 import { Edit, PlusCircle, Trash2, X, Check } from "lucide-react";
+import { suggestSummary, suggestSkills, analyzeJD } from "@/api/cvapi";
+import { useCV } from "@/providers/cv-provider";
 
 export interface FormProps {
   data: any;
@@ -126,13 +128,27 @@ export const ContactForm: FC<FormProps> = ({ data, onUpdate }) => {
 
 // Form cho bước 3: Mục tiêu sự nghiệp
 export const SummaryForm: FC<FormProps> = ({ data, onUpdate }) => {
-  const aiSuggestions = [
-    { text: "Self-motivated, with a strong sense of personal responsibility.", expert: true },
-    { text: "Excellent communication skills, both verbal and written.", expert: true },
-    { text: "Proven ability to learn quickly and adapt to new situations.", expert: false },
-    { text: "Skilled at working independently and collaboratively in a team environment.", expert: false },
-    { text: "Worked well in a team setting, providing support and guidance.", expert: false },
-  ];
+  const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchAISummary = async () => {
+      setLoading(true);
+      try {
+        const jobAnalysis = data?.jobAnalysis || {};
+        const res = await suggestSummary({}, jobAnalysis);
+        if (res && Array.isArray(res.summaries)) {
+          setAiSuggestions(res.summaries);
+        }
+      } catch (err) {
+        setAiSuggestions([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAISummary();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleToggleSuggestion = (text: string) => {
     const current = data?.summary || "";
@@ -149,38 +165,34 @@ export const SummaryForm: FC<FormProps> = ({ data, onUpdate }) => {
       <div className="w-full md:w-1/2">
         <div className="font-semibold text-gray-700 mb-2">Gợi ý từ AI</div>
         <div className="flex flex-col gap-4">
-          {aiSuggestions.slice(0, 5).map((item, idx) => {
-            const isSelected = (data?.summary || "").trim() === item.text.trim();
-            return (
-              <div
-                key={idx}
-                className="flex items-start gap-3 p-4 border border-blue-100 rounded-2xl bg-white shadow-sm min-h-[64px]"
-              >
-                <button
-                  type="button"
-                  className={`flex items-center justify-center w-9 h-9 rounded-full text-xl font-bold mt-1 focus:outline-none transition-colors
-                    ${isSelected ? 'bg-blue-500 text-white hover:bg-blue-600' : 'bg-blue-900 text-white hover:bg-blue-700'}`}
-                  onClick={() => handleToggleSuggestion(item.text)}
-                  title={isSelected ? 'Xoá khỏi mục tiêu sự nghiệp' : 'Thêm vào mục tiêu sự nghiệp'}
+          {loading ? (
+            <div>Đang lấy gợi ý từ AI...</div>
+          ) : (
+            aiSuggestions.map((item, idx) => {
+              const isSelected = (data?.summary || "").trim() === item.trim();
+              return (
+                <div
+                  key={idx}
+                  className="flex items-start gap-3 p-4 border border-blue-100 rounded-2xl bg-white shadow-sm min-h-[64px]"
                 >
-                  {isSelected ? '-' : '+'}
-                </button>
-                <div className="flex-1 text-[15px] leading-snug">
-                  {item.expert && (
-                    <div className="flex items-center gap-1 mb-1">
-                      <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-blue-500 mr-1">
-                        <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20"><path d="M10 15l-5.878 3.09 1.122-6.545L.488 6.91l6.561-.955L10 0l2.951 5.955 6.561.955-4.756 4.635 1.122 6.545z"/></svg>
-                      </span>
-                      <span className="italic font-semibold text-gray-800">Expert Recommended</span>
+                  <button
+                    type="button"
+                    className={`flex items-center justify-center w-9 h-9 rounded-full text-xl font-bold mt-1 focus:outline-none transition-colors
+                      ${isSelected ? 'bg-blue-500 text-white hover:bg-blue-600' : 'bg-blue-900 text-white hover:bg-blue-700'}`}
+                    onClick={() => handleToggleSuggestion(item)}
+                    title={isSelected ? 'Xoá khỏi mục tiêu sự nghiệp' : 'Thêm vào mục tiêu sự nghiệp'}
+                  >
+                    {isSelected ? '-' : '+'}
+                  </button>
+                  <div className="flex-1 text-[15px] leading-snug">
+                    <div className="text-gray-800 break-words whitespace-pre-line break-all">
+                      {item}
                     </div>
-                  )}
-                  <div className="text-gray-800 break-words whitespace-pre-line break-all">
-                    {item.text}
                   </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })
+          )}
         </div>
       </div>
       {/* Cột nhập của người dùng bên phải */}
@@ -279,16 +291,6 @@ export const ExperienceForm: FC<FormProps> = ({ data, onUpdate }) => {
         <button onClick={() => setIsEditing(false)} className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md text-sm">Hủy</button>
         <button onClick={handleFormSubmit} className="bg-blue-500 text-white px-4 py-2 rounded-md text-sm">{editingIndex !== null ? "Lưu" : "Thêm"}</button>
       </div>
-      <div className="flex flex-col items-start space-y-4 mt-8">
-        <button
-          type="button"
-          className="max-w-200 bg-blue-400 hover:bg-blue-500 text-white font-bold py-3 px-6 rounded-lg shadow transition-colors"
-        >
-          AI gợi ý dựa trên JD
-        </button>
-        <div className="w-full min-h-[50px] border border-gray-200 rounded-lg bg-gray-50 p-4 text-gray-700">
-        </div>
-      </div>
     </div>
   ) : (
     <div className="space-y-4">
@@ -386,16 +388,6 @@ export const EducationForm: FC<FormProps> = ({ data, onUpdate }) => {
         <button onClick={() => setIsEditing(false)} className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md text-sm">Hủy</button>
         <button onClick={handleFormSubmit} className="bg-blue-500 text-white px-4 py-2 rounded-md text-sm">{editingIndex !== null ? "Lưu" : "Thêm"}</button>
       </div>
-      <div className="flex flex-col items-start space-y-4 mt-8">
-        <button
-          type="button"
-          className="max-w-200 bg-blue-400 hover:bg-blue-500 text-white font-bold py-3 px-6 rounded-lg shadow transition-colors"
-        >
-          AI gợi ý dựa trên JD
-        </button>
-        <div className="w-full min-h-[50px] border border-gray-200 rounded-lg bg-gray-50 p-4 text-gray-700">
-        </div>
-      </div>
     </div>
   ) : (
     <div className="space-y-4">
@@ -420,12 +412,45 @@ export const EducationForm: FC<FormProps> = ({ data, onUpdate }) => {
 
 // Form cho bước 6: Kỹ năng
 export const SkillsForm: FC<FormProps> = ({ data, onUpdate }) => {
+  const { jobDescription, jobAnalysis, setJobAnalysis } = useCV();
   const [skills, setSkills] = useState(data?.skills || []);
   const [newSkill, setNewSkill] = useState("");
+  const [aiSkillSuggestions, setAiSkillSuggestions] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [analyzingJD, setAnalyzingJD] = useState(false);
 
-  const aiSkillSuggestions = [
-    "React", "Next.js", "TypeScript", "Tailwind CSS", "Git", "Docker", "Jira", "Communication", "Teamwork", "Problem Solving",
-  ];
+  useEffect(() => {
+    const fetchJDAndSkills = async () => {
+      // Nếu chưa có jobAnalysis thì tự động phân tích JD
+      if (!jobAnalysis && jobDescription) {
+        setAnalyzingJD(true);
+        try {
+          const result = await analyzeJD(jobDescription);
+          setJobAnalysis(result);
+        } catch (err) {
+          // Có thể hiển thị thông báo lỗi nếu cần
+        } finally {
+          setAnalyzingJD(false);
+        }
+      }
+      setLoading(true);
+      try {
+        const res = await suggestSkills((jobAnalysis || {}));
+        if (res && Array.isArray(res.skillsOptions) && res.skillsOptions.length > 0) {
+          const firstList = res.skillsOptions[0];
+          if (Array.isArray(firstList)) {
+            setAiSkillSuggestions(firstList.map((s: any) => s.name));
+          }
+        }
+      } catch (err) {
+        setAiSkillSuggestions([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchJDAndSkills();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [jobAnalysis, jobDescription]);
 
   const addSkill = (skillName?: string) => {
     const name = (skillName ?? newSkill).trim();
@@ -457,21 +482,28 @@ export const SkillsForm: FC<FormProps> = ({ data, onUpdate }) => {
       <div className="w-full md:w-1/2">
         <div className="font-semibold text-gray-700 mb-2">Gợi ý kỹ năng từ AI</div>
         <div className="flex flex-col gap-3 mb-4">
-          {aiSkillSuggestions.slice(0, 8).map((skill, idx) => {
-            const isSelected = skills.some((s: any) => s.name === skill);
-            return (
-              <button
-                key={skill}
-                type="button"
-                className={`flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium border transition-colors w-full text-left ${isSelected ? 'bg-blue-400 text-white border-blue-400 hover:bg-blue-500' : 'bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-200'}`}
-                onClick={() => handleToggleAISkill(skill)}
-                title={isSelected ? 'Xoá khỏi kỹ năng' : 'Thêm vào kỹ năng'}
-              >
-                <span className="inline-block w-6 h-6 flex items-center justify-center rounded-full bg-blue-800 text-white font-bold mr-2">{isSelected ? '-' : '+'}</span>
-                <span className="flex-1 ">{skill}</span>
-              </button>
-            );
-          })}
+          {analyzingJD && (
+            <div className="text-blue-500 font-semibold mb-2">Đang phân tích mô tả công việc bằng AI...</div>
+          )}
+          {loading ? (
+            <div>Đang lấy gợi ý kỹ năng từ AI...</div>
+          ) : (
+            aiSkillSuggestions.map((skill, idx) => {
+              const isSelected = skills.some((s: any) => s.name === skill);
+              return (
+                <button
+                  key={skill}
+                  type="button"
+                  className={`flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium border transition-colors w-full text-left ${isSelected ? 'bg-blue-400 text-white border-blue-400 hover:bg-blue-500' : 'bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-200'}`}
+                  onClick={() => handleToggleAISkill(skill)}
+                  title={isSelected ? 'Xoá khỏi kỹ năng' : 'Thêm vào kỹ năng'}
+                >
+                  <span className="inline-block w-6 h-6 flex items-center justify-center rounded-full bg-blue-800 text-white font-bold mr-2">{isSelected ? '-' : '+'}</span>
+                  <span className="flex-1 ">{skill}</span>
+                </button>
+              );
+            })
+          )}
         </div>
       </div>
       <div className="w-full md:w-1/2 flex flex-col">

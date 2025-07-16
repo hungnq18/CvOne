@@ -3,8 +3,8 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { getLocalJobById, findRelatedLocalJobs, Job, saveJob } from '@/api/jobApi';
-import { Card, Tag, message, Popover, Modal, Select, Radio, Upload, Input, UploadFile } from 'antd';
-import { ArrowLeftOutlined, EnvironmentOutlined, DollarCircleOutlined, CalendarOutlined, ThunderboltOutlined, CheckCircleOutlined, ProfileOutlined, UserOutlined, MailOutlined, PhoneOutlined, FileAddOutlined, FolderOpenOutlined } from '@ant-design/icons';
+import { Card, Tag, message } from 'antd';
+import { ArrowLeftOutlined, EnvironmentOutlined, DollarCircleOutlined, CalendarOutlined, ThunderboltOutlined, CheckCircleOutlined, ProfileOutlined } from '@ant-design/icons';
 import '../../styles/job-detail-apply.css';
 import { getAllCVs, CV } from '@/api/cvapi';
 import { getCLs, CL } from '@/api/clApi';
@@ -26,29 +26,17 @@ export default function JobDetailClient({ id }: JobDetailClientProps) {
     const [split, setSplit] = useState(false);
     const splitTimeout = useRef<NodeJS.Timeout | null>(null);
     const [selectedCV, setSelectedCV] = useState<string | null>(null);
-    const [intro, setIntro] = useState('');
     const [uploading, setUploading] = useState(false);
-    const [fileList, setFileList] = useState<UploadFile<any>[]>([]);
     const [cvList, setCvList] = useState<CV[]>([]);
     const [clList, setClList] = useState<CL[]>([]);
     const [selectedCL, setSelectedCL] = useState<string | null>(null);
     const [cvUploadFile, setCvUploadFile] = useState<File | null>(null);
     const [cvListLoaded, setCvListLoaded] = useState(false);
     const [applyMode, setApplyMode] = useState<'library' | 'upload'>('library');
-    const [fullName, setFullName] = useState('');
-    const [email, setEmail] = useState('');
-    const [phone, setPhone] = useState('');
     const [formError, setFormError] = useState('');
     const [clMode, setClMode] = useState<'library' | 'upload'>('library');
     const [clUploadFile, setClUploadFile] = useState<File | null>(null);
     const [clUploadName, setClUploadName] = useState('');
-    const [showCVSelect, setShowCVSelect] = useState(false);
-    const [showCLSelect, setShowCLSelect] = useState(false);
-    // Dummy CVs for demo, replace with real data
-    const userCVs = [
-        { id: 'cv1', name: '[FU] CV Intern Java - Vuong Dai Duong' },
-        { id: 'cv2', name: 'testsssss' },
-    ];
 
     const translations = {
         vi: {
@@ -58,8 +46,8 @@ export default function JobDetailClient({ id }: JobDetailClientProps) {
             jobNotFoundDesc: 'Công việc bạn tìm kiếm không tồn tại.',
             loading: 'Đang tải chi tiết công việc...',
             apply: 'Ứng tuyển',
-            applyFast: 'Nộp nhanh',
-            applyDetail: 'Nộp chi tiết',
+            applyFast: 'Ứng tuyển ngay',
+            applyDetail: 'Tối ưu & Ứng tuyển',
             saveJob: 'Lưu việc',
             saving: 'Đang lưu...',
             jobOverview: 'Tổng quan công việc',
@@ -84,8 +72,8 @@ export default function JobDetailClient({ id }: JobDetailClientProps) {
             jobNotFoundDesc: 'The job you are looking for does not exist.',
             loading: 'Loading job details...',
             apply: 'Apply',
-            applyFast: 'Apply Fast',
-            applyDetail: 'Apply Detail',
+            applyFast: 'Apply Now',
+            applyDetail: 'Optimize & Apply',
             saveJob: 'Save job',
             saving: 'Saving...',
             jobOverview: 'Job Overview',
@@ -138,18 +126,12 @@ export default function JobDetailClient({ id }: JobDetailClientProps) {
             getAllCVs().then(res => {
                 const cvs = Array.isArray(res) ? res : [];
                 setCvList(cvs);
-                if (cvs.length > 0) {
-                    const latestCV = [...cvs].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())[0];
-                    setSelectedCV(latestCV._id || null);
-                }
+                setSelectedCV(''); // Không tự động chọn
             });
             getCLs().then(res => {
                 const cls = Array.isArray(res) ? res : [];
                 setClList(cls);
-                if (cls.length > 0) {
-                    const latestCL = [...cls].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())[0];
-                    setSelectedCL(latestCL._id || null);
-                }
+                setSelectedCL(''); // Không tự động chọn
             });
         }
     }, [showFastModal]);
@@ -380,15 +362,30 @@ export default function JobDetailClient({ id }: JobDetailClientProps) {
                                     formError={formError}
                                     setFormError={setFormError}
                                     onSubmit={async () => {
+                                        // Validate chọn CV/CL khi ở chế độ library
+                                        if (applyMode === 'library' && (!selectedCV || selectedCV === '')) {
+                                            setFormError('Bạn chưa chọn CV. Vui lòng chọn một CV để tiếp tục.');
+                                            message.error('Bạn chưa chọn CV. Vui lòng chọn một CV để tiếp tục.');
+                                            return;
+                                        }
+                                        if (applyMode === 'upload' && !cvUploadFile) {
+                                            setFormError('Bạn chưa tải lên file CV. Vui lòng chọn file để tiếp tục.');
+                                            message.error('Bạn chưa tải lên file CV. Vui lòng chọn file để tiếp tục.');
+                                            return;
+                                        }
+                                        if (clMode === 'library' && (!selectedCL || selectedCL === '')) {
+                                            setFormError('Bạn chưa chọn thư ngỏ. Vui lòng chọn một thư ngỏ để tiếp tục.');
+                                            message.error('Bạn chưa chọn thư ngỏ. Vui lòng chọn một thư ngỏ để tiếp tục.');
+                                            return;
+                                        }
+                                        if (clMode === 'upload' && !clUploadFile) {
+                                            setFormError('Bạn chưa tải lên file thư ngỏ. Vui lòng chọn file để tiếp tục.');
+                                            message.error('Bạn chưa tải lên file thư ngỏ. Vui lòng chọn file để tiếp tục.');
+                                            return;
+                                        }
+                                        setFormError('');
                                         if (applyMode === 'library') {
-                                            if (!selectedCV) {
-                                                setFormError('Vui lòng chọn một CV.');
-                                                return;
-                                            }
-                                            // Có thể cho phép không có cover letter
-                                            setFormError('');
                                             try {
-                                                // Gọi API tạo apply job
                                                 const { createApplyJob } = await import('@/api/apiApplyJob');
                                                 await createApplyJob({
                                                     jobId: job?._id,
@@ -397,12 +394,13 @@ export default function JobDetailClient({ id }: JobDetailClientProps) {
                                                 });
                                                 setShowFastModal(false);
                                                 message.success('Nộp đơn thành công!');
-                                            } catch (err: any) {
+                                            } catch (err) {
                                                 setFormError('Có lỗi xảy ra khi nộp đơn. Vui lòng thử lại.');
+                                                message.error('Có lỗi xảy ra khi nộp đơn. Vui lòng thử lại.');
                                             }
                                         } else {
-                                            // Xử lý upload nếu cần
                                             setFormError('Chức năng tải lên chưa được hỗ trợ.');
+                                            message.error('Chức năng tải lên chưa được hỗ trợ.');
                                         }
                                     }}
                                 />

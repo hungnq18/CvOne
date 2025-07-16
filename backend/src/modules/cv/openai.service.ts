@@ -140,10 +140,10 @@ User Profile:
 - Country: ${userProfile.country || "Not specified"}
 
 Job Analysis:
-- Required Skills: ${jobAnalysis.requiredSkills?.join(", ") || "Not specified"}
-- Experience Level: ${jobAnalysis.experienceLevel || "Not specified"}
-- Industry: ${jobAnalysis.industry || "Not specified"}
-- Technologies: ${jobAnalysis.technologies?.join(", ") || "Not specified"}
+- Required Skills: ${(jobAnalysis?.requiredSkills || []).join(", ") || "Not specified"}
+- Experience Level: ${jobAnalysis?.experienceLevel || "Not specified"}
+- Industry: ${jobAnalysis?.industry || "Not specified"}
+- Technologies: ${(jobAnalysis?.technologies || []).join(", ") || "Not specified"}
 
 Additional Requirements: ${additionalRequirements || "None"}
 
@@ -204,7 +204,7 @@ Do not include any explanation or markdown, only valid JSON.
         error.stack
       );
       // fallback: return 3 copies of fallback summary
-      const fallback = this.generateFallbackSummary(userProfile, jobAnalysis);
+      const fallback = this.generateFallbackSummary(userProfile, jobAnalysis || {});
       return [fallback, fallback, fallback];
     }
   }
@@ -309,7 +309,7 @@ Return only valid JSON.
         );
       }
 
-      return this.generateFallbackWorkExperience(jobAnalysis, experienceLevel);
+      return this.generateFallbackWorkExperience(jobAnalysis || {}, experienceLevel);
     }
   }
 
@@ -388,18 +388,40 @@ Do not include any explanation or markdown, only valid JSON.
         cleanResponse = cleanResponse.replace(/^```/, '').replace(/```$/, '').trim();
       }
       const skillsLists = JSON.parse(cleanResponse);
+      // Lọc lại chỉ giữ các kỹ năng có trong JD
+      const validSkills = [
+        ...(jobAnalysis.requiredSkills || []),
+        ...(jobAnalysis.technologies || []),
+        ...(jobAnalysis.softSkills || [])
+      ].map(s => s.toLowerCase());
+      function filterSkills(list) {
+        // Lọc và gán lại rating nếu có trong userSkills
+        return list.filter(skillObj =>
+          validSkills.includes(skillObj.name.toLowerCase())
+        ).map(skillObj => {
+          if (userSkills) {
+            const found = userSkills.find(
+              s => s.name.toLowerCase() === skillObj.name.toLowerCase()
+            );
+            if (found) {
+              return { ...skillObj, rating: found.rating };
+            }
+          }
+          return skillObj;
+        });
+      }
       if (Array.isArray(skillsLists) && skillsLists.length === 3) {
-        return skillsLists;
+        return skillsLists.map(filterSkills);
       }
       // fallback: wrap single list in array
-      return [skillsLists];
+      return [filterSkills(skillsLists)];
     } catch (error) {
       this.logger.error(
         `Error generating skills section: ${error.message}`,
         error.stack
       );
       // fallback: return 3 copies of fallback skills
-      const fallback = this.generateFallbackSkills(jobAnalysis);
+      const fallback = this.generateFallbackSkills(jobAnalysis || {});
       return [fallback, fallback, fallback];
     }
   }
@@ -480,7 +502,10 @@ Do not include any explanation or markdown, only valid JSON.
   }
 
   private generateFallbackSummary(userProfile: any, jobAnalysis: any): string {
-    return `Experienced ${jobAnalysis.experienceLevel} professional with expertise in ${jobAnalysis.requiredSkills?.slice(0, 3).join(", ") || "software development"}.
+    const experienceLevel = jobAnalysis?.experienceLevel || "professional";
+    const skills = jobAnalysis?.requiredSkills?.slice(0, 3).join(", ") || "software development";
+    
+    return `Experienced ${experienceLevel} professional with expertise in ${skills}.
     Passionate about delivering high-quality solutions and collaborating with cross-functional teams.
     Strong problem-solving skills and commitment to continuous learning and professional development.`;
   }
@@ -514,8 +539,8 @@ Do not include any explanation or markdown, only valid JSON.
     jobAnalysis: any
   ): Array<{ name: string; rating: number }> {
     const allSkills = [
-      ...(jobAnalysis.requiredSkills || []),
-      ...(jobAnalysis.technologies || []),
+      ...(jobAnalysis?.requiredSkills || []),
+      ...(jobAnalysis?.technologies || []),
     ];
     const uniqueSkills = [...new Set(allSkills)];
 
@@ -671,6 +696,61 @@ Return only valid JSON without any additional text.
 
       // Fallback to basic analysis if OpenAI fails
       return this.fallbackCvAnalysis(cvText);
+    }
+  }
+
+  /**
+   * Rewrite a work experience description to be more professional and impressive
+   */
+  async rewriteWorkDescription(description: string, language?: string): Promise<string> {
+    try {
+      let languageNote = '';
+      if (language === 'vi') {
+        languageNote = '\nLưu ý: Viết lại mô tả này bằng tiếng Việt chuyên nghiệp, tự nhiên, súc tích.';
+      } else if (language === 'en') {
+        languageNote = '\nNote: Rewrite this description in professional, natural, concise English.';
+      }
+      const prompt = `
+Rewrite the following work experience description to be more professional, impressive, and concise. Use action verbs, highlight achievements, and make it suitable for a CV.${languageNote}
+
+Original description:
+"""
+${description}
+"""
+
+Return only the rewritten description, no explanation, no markdown.
+`;
+      const completion = await this.openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: "You are a professional CV writer. Rewrite work experience descriptions to be impressive and concise.",
+          },
+          {
+            role: "user",
+            content: prompt,
+          },
+        ],
+        temperature: 0.5,
+        max_tokens: 300,
+      });
+      let response = completion.choices[0]?.message?.content;
+      if (!response) {
+        throw new Error("No response from OpenAI");
+      }
+      // Remove markdown if present
+      let cleanResponse = response.trim();
+      if (cleanResponse.startsWith('```')) {
+        cleanResponse = cleanResponse.replace(/^```[a-z]*\n?/i, '').replace(/```$/, '').trim();
+      }
+      return cleanResponse;
+    } catch (error) {
+      this.logger.error(
+        `Error rewriting work description: ${error.message}`,
+        error.stack
+      );
+      throw error;
     }
   }
 

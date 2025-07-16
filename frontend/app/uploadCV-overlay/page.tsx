@@ -95,7 +95,7 @@ export default function UploadCVOverlayPage() {
     // Nếu chưa có mapping, tự động phân tích CV để lấy mapping
     if (!mapping) {
       try {
-        const analyzeRes = await uploadAndAnalyzeCV(file);
+        const analyzeRes = await uploadAndAnalyzeCV(file, jobDescription);
         mapping = analyzeRes?.data?.mapping;
         if (!mapping) {
           setError('Không tìm thấy mapping từ AI sau khi phân tích.');

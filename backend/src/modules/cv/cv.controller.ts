@@ -189,11 +189,14 @@ export class CvController {
       cb(null, true);
     }
   }))
-  async uploadAndAnalyzeCv(@UploadedFile() file: any) {
+  async uploadAndAnalyzeCv(@UploadedFile() file: any, @Body('jobDescription') jobDescription: string, @Body('additionalRequirements') additionalRequirements: string) {
     console.log('DEBUG upload-and-analyze: file:', file);
     if (!file) {
       console.log('DEBUG upload-and-analyze: No file uploaded');
       throw new BadRequestException('No CV file uploaded or invalid file type.');
+    }
+    if (!jobDescription || jobDescription.trim().length === 0) {
+      throw new BadRequestException('Job description is required.');
     }
     // 1. Trích xuất text từ PDF
     const pdfData = await pdf(file.buffer);
@@ -205,9 +208,15 @@ export class CvController {
     }
     // 2. Gửi text cho AI phân tích
     const analysisResult = await this.cvAiService.analyzeCvContent(cvText);
-    // 3. Trả về kết quả phân tích
+    // 3. Phân tích JD
+    const jobAnalysis = await this.cvAiService.getOpenAiService().analyzeJobDescription(jobDescription);
+    // 4. Viết lại CV bằng AI dựa trên phân tích CV gốc và JD
+    const optimizedCv = await this.cvAiService.generateOptimizedCvWithAI(analysisResult, jobAnalysis, additionalRequirements);
+    // 5. Trả về kết quả phân tích và CV đã viết lại
     return {
       analysisResult,
+      jobAnalysis,
+      optimizedCv,
     };
   }
 
@@ -564,21 +573,37 @@ export class CvController {
   async overlayOptimizeCv(
     @UploadedFile() file: any,
     @Body('jobDescription') jobDescription: string,
+    @Body('additionalRequirements') additionalRequirements: string,
     @Res() res: any
   ) {
     if (!file) {
       throw new BadRequestException('No CV file uploaded or invalid file type.');
     }
     try {
-      const result = await this.cvAiService.optimizePdfCvWithHtmlAI(file.buffer, jobDescription);
-      if (!result.success || !result.pdfPath) {
+      const result = await this.cvAiService.optimizePdfCvWithOriginalLayoutAI(file.buffer, jobDescription, additionalRequirements);
+      if (!result.success || !result.pdfBuffer) {
         throw new BadRequestException(result.error || 'Failed to optimize CV');
       }
-      res.send({
-        pdfUrl: `/uploads/${require('path').basename(result.pdfPath)}`
+      res.set({
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': 'attachment; filename="optimized-cv.pdf"',
       });
+      res.send(result.pdfBuffer);
     } catch (error) {
       throw new BadRequestException(`Failed to optimize CV: ${error.message}`);
     }
+  }
+
+  /**
+   * Viết lại mô tả công việc trong work experience cho chuyên nghiệp hơn
+   */
+  @UseGuards(JwtAuthGuard)
+  @Post('rewrite-work-description')
+  async rewriteWorkDescription(@Body('description') description: string, @Body('language') language?: string) {
+    if (!description || description.trim().length === 0) {
+      throw new BadRequestException('Description is required.');
+    }
+    const rewritten = await this.cvAiService.rewriteWorkDescription(description, language);
+    return { rewritten };
   }
 } 

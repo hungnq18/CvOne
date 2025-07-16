@@ -53,11 +53,11 @@ export default function Page() {
   const [loadingCV, setLoadingCV] = useState(true);
 
   useEffect(() => {
-    const loadCoverLetters = async () => {
-      setLoadingCL(true);
-
+    const processPendingCL = async () => {
       const pendingCLJSON = localStorage.getItem("pendingCL");
       if (pendingCLJSON) {
+        // Remove immediately to prevent duplicate saves on re-renders
+        localStorage.removeItem("pendingCL");
         try {
           const pendingCL = JSON.parse(pendingCLJSON);
           const { letterData, templateId } = pendingCL;
@@ -70,26 +70,37 @@ export default function Page() {
               isSaved: true,
             };
             await createCL(newCL);
-            localStorage.removeItem("pendingCL");
             alert("Your pending cover letter has been saved successfully!");
+            // After saving, we can trigger a reload of the cover letters
+            // The second useEffect will handle fetching the updated list.
+            setCoverLetterList(prevList => [...prevList, newCL as CL]); // Optimistic update
+            loadCoverLetters(); //
           }
         } catch (error) {
           console.error("Failed to save pending cover letter:", error);
           alert("There was an error saving your pending cover letter.");
-          localStorage.removeItem("pendingCL");
+          // Optional: If saving fails, you might want to put it back into localStorage
+          // localStorage.setItem("pendingCL", pendingCLJSON);
         }
-      }
-
-      try {
-        const clData = await getCLs();
-        setCoverLetterList(clData || []);
-      } catch (error) {
-        console.error("Failed to fetch cover letters:", error);
-      } finally {
-        setLoadingCL(false);
       }
     };
 
+    processPendingCL();
+  }, []); // Run only once on component mount
+
+  const loadCoverLetters = async () => {
+    setLoadingCL(true);
+    try {
+      const clData = await getCLs();
+      setCoverLetterList(clData || []);
+    } catch (error) {
+      console.error("Failed to fetch cover letters:", error);
+    } finally {
+      setLoadingCL(false);
+    }
+  };
+
+  useEffect(() => {
     loadCoverLetters();
 
     const loadCV = async () => {
@@ -100,10 +111,7 @@ export default function Page() {
         setLoadingCV(false);
       } catch (err) {
         console.error("Lỗi khi gọi getAllCVs hoặc getAllTemplates:", err);
-      } finally {
       }
-
-      loadCV();
     };
     loadCV();
   }, [language]);

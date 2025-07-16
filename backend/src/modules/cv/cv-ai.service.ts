@@ -1,6 +1,5 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
-import axios from 'axios';
 import * as fs from "fs";
 import { Model } from "mongoose";
 import * as path from "path";
@@ -674,6 +673,21 @@ export class CvAiService {
     additionalRequirements?: string
   ): Promise<any> {
     try {
+      // Phát hiện ngôn ngữ CV gốc
+      let language = 'unknown';
+      if (userCvAnalysis?.userData?.summary) {
+        language = this.detectLanguage(userCvAnalysis.userData.summary);
+      } else if (userCvAnalysis?.userData) {
+        // Gộp các trường text lại để detect
+        const allText = Object.values(userCvAnalysis.userData).filter(v => typeof v === 'string').join(' ');
+        language = this.detectLanguage(allText);
+      }
+      let languageNote = '';
+      if (language === 'vi') {
+        languageNote = '\nLưu ý: Hãy viết toàn bộ kết quả bằng tiếng Việt chuẩn, tự nhiên, chuyên nghiệp.';
+      } else if (language === 'en') {
+        languageNote = '\nNote: Write the entire result in professional, natural English.';
+      }
       const prompt = `
 Bạn là chuyên gia viết CV. Dưới đây là phân tích CV gốc của ứng viên và phân tích mô tả công việc (JD):
 
@@ -706,7 +720,7 @@ Yêu cầu:
     "education": [ { "startDate": "YYYY-MM-DD", "endDate": "YYYY-MM-DD", "major": "", "degree": "", "institution": "" } ]
   }
 }
-${additionalRequirements ? `\nYêu cầu bổ sung: ${additionalRequirements}` : ''}
+${additionalRequirements ? `\nYêu cầu bổ sung: ${additionalRequirements}` : ''}${languageNote}
 
 Chỉ trả về JSON hợp lệ, không thêm giải thích, markdown hay text thừa.
 `;
@@ -1175,7 +1189,7 @@ private async convertPdfToHtmlWithConvertApi(pdfBuffer: Buffer, apiKey: string):
   };
 
   // Gọi API ConvertAPI
-  const res = await axios.post(
+  const res = await require('axios').post(
     `https://v2.convertapi.com/convert/pdf/to/html?Secret=${apiKey}`,
     formData,
     {
@@ -1184,24 +1198,18 @@ private async convertPdfToHtmlWithConvertApi(pdfBuffer: Buffer, apiKey: string):
       }
     }
   );
-  console.log('ConvertAPI response:', res.data);
-
   const fileObj = res.data.Files && res.data.Files[0];
   if (!fileObj) {
-    console.error('ConvertAPI did not return a valid file object:', res.data);
     throw new Error('ConvertAPI did not return a valid file object');
   }
-
   let htmlContent = '';
   if (fileObj.Url) {
-    console.log('HTML file URL:', fileObj.Url);
-    const htmlRes = await axios.get(fileObj.Url, { responseType: 'text' });
+    const htmlRes = await require('axios').get(fileObj.Url, { responseType: 'text' });
     htmlContent = htmlRes.data;
   } else if (fileObj.FileData) {
-    console.log('HTML file returned as base64 data');
+    // Nếu là base64 thì decode ra string
     htmlContent = Buffer.from(fileObj.FileData, 'base64').toString('utf-8');
   } else {
-    console.error('ConvertAPI did not return HTML content:', fileObj);
     throw new Error('ConvertAPI did not return HTML content');
   }
   return htmlContent;
@@ -1232,6 +1240,96 @@ public async optimizePdfCvWithHtmlAI(pdfBuffer: Buffer, jobDescription?: string)
   } catch (error) {
     return { success: false, error: error.message };
   }
+}
+
+public async optimizePdfCvWithOriginalLayoutAI(
+    pdfBuffer: Buffer,
+    jobDescription: string,
+    additionalRequirements?: string
+  ): Promise<{ success: boolean; pdfBuffer?: Buffer; error?: string }> {
+    try {
+      // 1. Convert PDF to HTML (giữ layout gốc)
+      const CONVERTAPI_KEY = process.env.CONVERTAPI_KEY || 'YOUR_CONVERTAPI_KEY';
+      const html = await this.convertPdfToHtmlWithConvertApi(pdfBuffer, CONVERTAPI_KEY);
+      if (!html) {
+        this.logger.error('convertPdfToHtmlWithConvertApi trả về null');
+        return { success: false, error: 'Không thể chuyển PDF sang HTML.' };
+      }
+
+      // 2. Parse HTML, tách các đoạn text (dùng cheerio)
+      const cheerio = require('cheerio');
+      const $ = cheerio.load(html);
+      // Giả sử các đoạn text nằm trong các thẻ p, span, div (có thể refine thêm)
+      const textNodes: { el: any, text: string }[] = [];
+      $('p, span, div').each((i, el) => {
+        const text = $(el).text();
+        if (text && text.trim().length > 0) {
+          textNodes.push({ el, text });
+        }
+      });
+      if (textNodes.length === 0) {
+        this.logger.error('Không tìm thấy đoạn text nào trong HTML');
+        return { success: false, error: 'Không tìm thấy nội dung để tối ưu.' };
+      }
+
+      // 3. Gọi AI tối ưu hóa từng đoạn (có thể batch hoặc từng đoạn)
+      const optimizedTexts: string[] = [];
+      for (const node of textNodes) {
+        try {
+          const optimized = await this.generateOptimizedCvWithAI(
+            { summary: node.text },
+            jobDescription,
+            additionalRequirements
+          );
+          optimizedTexts.push(optimized?.summary || node.text);
+        } catch (err) {
+          this.logger.error('AI tối ưu đoạn text lỗi:', err);
+          optimizedTexts.push(node.text); // fallback giữ nguyên
+        }
+      }
+
+      // 4. Thay thế text cũ bằng text mới trong HTML
+      textNodes.forEach((node, idx) => {
+        $(node.el).text(optimizedTexts[idx]);
+      });
+      let optimizedHtml = $.html();
+
+      // 5. Chèn lại font vào <head>
+      const fontStyle = `
+      <style>
+      @font-face { font-family: 'Roboto'; src: url('fonts/Roboto-Regular.ttf') format('truetype'); font-weight: normal; font-style: normal; }
+      @font-face { font-family: 'Roboto'; src: url('fonts/Roboto-Bold.ttf') format('truetype'); font-weight: bold; font-style: normal; }
+      @font-face { font-family: 'Roboto'; src: url('fonts/Roboto-Italic.ttf') format('truetype'); font-weight: normal; font-style: italic; }
+      body, * { font-family: 'Roboto', Arial, sans-serif !important; }
+      </style>
+      `;
+      optimizedHtml = optimizedHtml.replace('<head>', `<head>${fontStyle}`);
+
+      // 6. Convert HTML về PDF (dùng puppeteer trực tiếp)
+      const puppeteer = require('puppeteer');
+      const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox'] });
+      const page = await browser.newPage();
+      await page.setContent(optimizedHtml, { waitUntil: 'networkidle0' });
+      const optimizedPdfBuffer = await page.pdf({ format: 'A4', printBackground: true });
+      await browser.close();
+      if (!optimizedPdfBuffer) {
+        this.logger.error('puppeteer trả về null khi convert HTML về PDF');
+        return { success: false, error: 'Không thể chuyển HTML tối ưu về PDF.' };
+      }
+
+      return { success: true, pdfBuffer: optimizedPdfBuffer };
+    } catch (err) {
+      this.logger.error('Error in optimizePdfCvWithOriginalLayoutAI:', err);
+      return { success: false, error: 'Failed to optimize CV: ' + err.message };
+    }
+  }
+
+public getOpenAiService() {
+  return this.openAiService;
+}
+
+public async rewriteWorkDescription(description: string, language?: string): Promise<string> {
+  return this.openAiService.rewriteWorkDescription(description, language);
 }
 }
 
