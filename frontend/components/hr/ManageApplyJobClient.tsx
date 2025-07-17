@@ -39,9 +39,7 @@ export default function ManageApplyJobClient() {
                     link: `/myJobs`,
                     recipient: candidateId
                 };
-                console.log('Sending notification to candidate:', candidateId, notifData);
-                const notifRes = await sendNotification(notifData);
-                console.log('Notification API response:', notifRes);
+                await sendNotification(notifData);
             }
             getApplyJobByHR().then((data: any) => {
                 let arr = Array.isArray(data)
