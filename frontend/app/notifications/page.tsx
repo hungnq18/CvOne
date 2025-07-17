@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { getUserIdFromToken } from "@/api/userApi";
-import { getNotifications, Notification, markAllNotificationsAsRead } from "@/api/apiNotification";
+import { getNotifications, Notification as NotificationBase, markAllNotificationsAsRead, markNotificationAsRead, deleteNotification } from "@/api/apiNotification";
 import socket from "@/utils/socket/client";
 
 import { getApplyJobByUser } from "@/api/apiApplyJob";
@@ -13,6 +13,8 @@ import NotificationHeader from "@/components/chatAndNotification/NotificationHea
 import NotificationCard from "@/components/chatAndNotification/NotificationCard";
 import NotificationModal from "@/components/chatAndNotification/NotificationModal";
 import { Pagination } from 'antd';
+
+type Notification = NotificationBase & { isRead?: boolean };
 
 const notificationTranslations = {
   en: {
@@ -95,8 +97,14 @@ export default function NotificationCenter() {
   const unread = notifications.filter((n: any) => !n.isRead).length;
 
   // Handler cho các nút
-  const handleMarkAllAsRead = () => {
-    setNotifications(notifications.map(n => ({ ...n, isRead: true })));
+  const handleMarkAllAsRead = async () => {
+    try {
+      await markAllNotificationsAsRead();
+      const res = await getNotifications();
+      setNotifications(res);
+    } catch (err) {
+      // Có thể thêm thông báo lỗi nếu muốn
+    }
   };
   const handleClearAll = () => {
     setNotifications([]);
@@ -106,6 +114,21 @@ export default function NotificationCenter() {
     setModalNotification(notif);
     setModalOpen(true);
     setLastActiveId(notif._id);
+
+    // Nếu notification chưa đọc thì gọi API markAsRead
+    if (!notif.isRead) {
+      try {
+        await markNotificationAsRead(notif._id);
+        setNotifications(prev =>
+          prev.map(n =>
+            n._id === notif._id ? { ...n, isRead: true } : n
+          )
+        );
+      } catch (err) {
+        // Có thể xử lý lỗi nếu muốn
+      }
+    }
+
     if ((notif as any).jobTitle && (notif as any).candidateName && (notif as any).position && (notif as any).location && (notif as any).hrEmail) {
       setDetailInfo(null);
       return;
@@ -156,9 +179,6 @@ export default function NotificationCenter() {
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
-        // Gọi API đánh dấu tất cả là đã đọc
-        await markAllNotificationsAsRead();
-        // Sau đó lấy danh sách notification mới nhất
         const res = await getNotifications();
         setNotifications(res);
       } catch (err) {
@@ -256,6 +276,14 @@ export default function NotificationCenter() {
                   onClick={() => handleOpenModal(notif)}
                   t={t}
                   detailInfo={detail}
+                  onDelete={async () => {
+                    try {
+                      await deleteNotification(notif._id);
+                      setNotifications(prev => prev.filter(n => n._id !== notif._id));
+                    } catch (err) {
+                      // Có thể xử lý lỗi nếu muốn
+                    }
+                  }}
                 />
               );
             })}

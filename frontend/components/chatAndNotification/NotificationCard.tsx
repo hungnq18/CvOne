@@ -8,9 +8,10 @@ interface NotificationCardProps {
     onClick: () => void;
     t: any;
     detailInfo?: any;
+    onDelete?: () => void;
 }
 
-const NotificationCard: React.FC<NotificationCardProps> = ({ notif, isUnread, isActive, onClick, t, detailInfo }) => (
+const NotificationCard: React.FC<NotificationCardProps> = ({ notif, isUnread, isActive, onClick, t, detailInfo, onDelete }) => (
     <div
         className={[
             "group p-5 transition-all duration-200 cursor-pointer",
@@ -18,9 +19,19 @@ const NotificationCard: React.FC<NotificationCardProps> = ({ notif, isUnread, is
             "hover:bg-gray-50 hover:shadow-sm",
             "rounded-xl bg-white shadow-sm flex items-stretch",
         ].join(" ") + " max-w-6xl mx-auto px-8 text-base min-h-[140px] h-[140px]"}
-        style={{ display: 'flex', alignItems: 'stretch', height: '140px', minHeight: '150px' }}
+        style={{ display: 'flex', alignItems: 'stretch', height: '140px', minHeight: '150px', position: 'relative' }}
         onClick={onClick}
     >
+        {/* Nút xóa ở góc trên bên phải */}
+        {onDelete && (
+            <button
+                className="absolute top-2 right-2 text-gray-400 hover:text-red-500 z-10 bg-white rounded-full p-1 shadow"
+                title={t.dismiss}
+                onClick={e => { e.stopPropagation(); onDelete(); }}
+            >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+        )}
         <div className="flex items-start gap-6 w-full h-full">
             <div className="flex-shrink-0 mt-1 text-2xl">
                 {/* {notif.type === "success" && <span className="text-green-500">✓</span>}

@@ -39,12 +39,36 @@ export const sendNotification = async (data: { title: string; message: string; t
 
 export const markAllNotificationsAsRead = async () => {
     try {
-        const res = await fetchWithAuth('/notifications/read-all', {
+        const res = await fetchWithAuth(API_ENDPOINTS.NOTIFICATION.MARK_ALL_AS_READ, {
             method: 'PATCH',
         });
         return res;
     } catch (err) {
         console.error('Failed to mark all notifications as read:', err);
+        throw err;
+    }
+};
+
+export const markNotificationAsRead = async (id: string) => {
+    try {
+        const res = await fetchWithAuth(API_ENDPOINTS.NOTIFICATION.MARK_AS_READ(id), {
+            method: 'PATCH',
+        });
+        return res;
+    } catch (err) {
+        console.error('Failed to mark notification as read:', err);
+        throw err;
+    }
+};
+
+export const deleteNotification = async (id: string) => {
+    try {
+        const res = await fetchWithAuth(API_ENDPOINTS.NOTIFICATION.DELETE_NOTIFICATION(id), {
+            method: 'DELETE',
+        });
+        return res;
+    } catch (err) {
+        console.error('Failed to delete notification:', err);
         throw err;
     }
 };
