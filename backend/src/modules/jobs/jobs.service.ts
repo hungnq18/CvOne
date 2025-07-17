@@ -9,7 +9,7 @@ import { UsersService } from "../users/users.service";
 import { User, UserDocument } from "../users/schemas/user.schema";
 @Injectable()
 export class JobsService {
-  constructor(@InjectModel(Job.name) private jobModel: Model<JobDocument>) {}
+  constructor(@InjectModel(Job.name) private jobModel: Model<JobDocument>) { }
 
   async findAll(page: number = 1, limit: number = 10): Promise<JobDocument[]> {
     const skip = (page - 1) * limit;
@@ -21,7 +21,7 @@ export class JobsService {
 
     const transformedData = {
       ...jobData,
-      postedBy: new Types.ObjectId(userId),
+      user_id: new Types.ObjectId(userId),
     };
 
     const createdJob = new this.jobModel(transformedData);
@@ -54,7 +54,7 @@ export class JobsService {
   async countJobsByPostingDate(
     month: number,
     year: number,
-    userId: string
+    userId: string,
   ): Promise<number> {
     const startDate = new Date(year, month - 1, 1); // Ngày đầu tháng
     const endDate = new Date(year, month, 1); // Ngày đầu tháng kế tiếp
@@ -71,7 +71,7 @@ export class JobsService {
   async getJobsByHr(
     userId: string,
     page: number = 1,
-    limit: number = 10
+    limit: number = 10,
   ): Promise<{
     data: JobDocument[];
     total: number;

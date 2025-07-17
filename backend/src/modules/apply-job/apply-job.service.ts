@@ -176,6 +176,7 @@ export class ApplyJobService {
       throw new BadRequestException("Trạng thái không hợp lệ");
     }
 
+
     const apply = await this.applyJobModel
       .findById(applyJobId)
       .populate("jobId");
