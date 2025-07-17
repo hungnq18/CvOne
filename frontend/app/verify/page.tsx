@@ -97,9 +97,9 @@ export default function VerifyPage() {
       <VerifyContainer>
         <LogoSide>
           <ImageWrapper>
-            <Image 
-              src={logoImg} 
-              alt="Logo" 
+            <Image
+              src={logoImg}
+              alt="Logo"
               fill
               style={{ objectFit: "contain" }}
               priority

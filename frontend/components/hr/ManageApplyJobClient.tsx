@@ -4,6 +4,7 @@ import { getApplyJobByHR, updateStatusByHr, deleteApplyJobByHR } from "@/api/api
 import ManageApplyJobTable from "@/components/hr/ManageApplyJobTable";
 import PreviewCVCLModal from "@/components/hr/PreviewCVCLModal";
 import { sendNotification } from '@/api/apiNotification';
+import { getUserById } from '@/api/userApi';
 
 export default function ManageApplyJobClient() {
     const [applications, setApplications] = useState<any[]>([]);
@@ -29,17 +30,43 @@ export default function ManageApplyJobClient() {
         candidateId: string
     ) => {
         try {
-            await updateStatusByHr(applyJobId, newStatus);
-            // Nếu duyệt thành approved thì gửi notification
-            if (newStatus === 'approved' && candidateId) {
+            const updateRes = await updateStatusByHr(applyJobId, newStatus);
+            // Chỉ gửi notification nếu cập nhật trạng thái thành công
+            if (newStatus === 'approved' && candidateId && updateRes) {
+                // Lấy thông tin ứng viên và vị trí ứng tuyển
+                const app = applications.find(a => a._id === applyJobId);
+                const candidateName = app?.cvId?.content?.userData?.firstName && app?.cvId?.content?.userData?.lastName
+                    ? `${app.cvId.content.userData.firstName} ${app.cvId.content.userData.lastName}`
+                    : app?.userId?.first_name && app?.userId?.last_name
+                        ? `${app.userId.first_name} ${app.userId.last_name}`
+                        : 'Ứng viên';
+                const jobTitle = app?.jobId?.title || app?.jobId?.["Job Title"] || 'N/A';
+                // --- Lấy thông tin HR ---
+                let hrEmail = '';
+                let hrPhone = '';
+                let hrUserId = app?.jobId?.user_id;
+                if (hrUserId && typeof hrUserId === 'object' && (hrUserId as any).$oid) hrUserId = (hrUserId as any).$oid;
+                try {
+                    if (hrUserId) {
+                        const hrUser = await getUserById(hrUserId);
+                        hrPhone = hrUser?.phone || '';
+                        // Không lấy email nữa
+                    }
+                } catch (e) { /* fallback giữ trống */ }
+                // --- End lấy thông tin HR ---
+                const message = `Chúc mừng bạn, ${candidateName}, hồ sơ của bạn cho vị trí ${jobTitle} đã được chấp nhận!\nVui lòng liên hệ với HR thông qua email hoặc số điện thoại bên dưới hoặc thông qua chat để xác nhận.`;
                 const notifData = {
                     title: 'Application Approved',
-                    message: 'You have been selected for an interview.',
+                    message,
                     type: 'info',
-                    link: `/myJobs`,
-                    recipient: candidateId
+                    link: '', // sẽ update sau khi tạo notification
+                    recipient: candidateId,
+                    candidateName,
+                    jobTitle,
+                    hrEmail,
+                    hrPhone
                 };
-                await sendNotification(notifData);
+                const notifRes = await sendNotification(notifData);
             }
             getApplyJobByHR().then((data: any) => {
                 let arr = Array.isArray(data)

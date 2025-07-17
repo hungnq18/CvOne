@@ -36,3 +36,4 @@ export const sendNotification = async (data: { title: string; message: string; t
         throw err;
     }
 };
+
