@@ -2,12 +2,17 @@
 
 import { Eye, ShoppingCart, Package, Users, TrendingUp } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { RevenueChart } from "@/components/admin/revenue-chart"
+import { UserStatsChart } from "@/components/admin/user-stats-chart"
 import { useEffect, useState } from "react"
-import { getAllUsers } from "@/api/userApi"
+import { getAllUsers, User } from "@/api/userApi"
 import { getJobs } from "@/api/jobApi"
 import { getCVTemplates } from "@/api/cvapi"
 import { getCLTemplates } from "@/api/clApi"
+
+interface UserData {
+  month: string;
+  users: number;
+}
 
 export function DashboardContent() {
   const [stats, setStats] = useState([
@@ -40,6 +45,8 @@ export function DashboardContent() {
       icon: Users,
     },
   ])
+  const [userChartData, setUserChartData] = useState<UserData[]>([]);
+
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -57,6 +64,9 @@ export function DashboardContent() {
           { ...stats[2], value: jobs.length.toString() },
           { ...stats[3], value: users.length.toString() },
         ])
+
+        const monthlyUserData = processUserData(users);
+        setUserChartData(monthlyUserData);
       } catch (error) {
         console.error("Failed to fetch dashboard stats:", error)
       }
@@ -64,6 +74,30 @@ export function DashboardContent() {
 
     fetchStats()
   }, [])
+
+  const processUserData = (users: User[]): UserData[] => {
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const monthlyData: { [key: string]: number } = {};
+
+    users.forEach(user => {
+      if (user.createdAt) {
+        const date = new Date(user.createdAt);
+        const monthIndex = date.getMonth();
+        const year = date.getFullYear();
+        const monthKey = `${monthNames[monthIndex]}`;
+
+        if (!monthlyData[monthKey]) {
+          monthlyData[monthKey] = 0;
+        }
+        monthlyData[monthKey]++;
+      }
+    });
+
+    return monthNames.map(monthName => ({
+      month: monthName,
+      users: monthlyData[monthName] || 0
+    }));
+  };
 
   return (
     <div className="flex-1 space-y-6 p-6 bg-gray-50">
@@ -94,13 +128,13 @@ export function DashboardContent() {
       <div className="">
         <Card className="bg-white">
           <CardHeader>
-            <CardTitle className="text-lg">User Tracking</CardTitle>
+            <CardTitle className="text-lg">User Statistics</CardTitle>
             <div className="flex gap-4 text-sm text-muted-foreground">
-              <span>12.04.2022 - 12.05.2022</span>
+              <span>Last 12 months</span>
             </div>
           </CardHeader>
           <CardContent>
-            <RevenueChart />
+            <UserStatsChart data={userChartData} />
           </CardContent>
         </Card>
       </div>
