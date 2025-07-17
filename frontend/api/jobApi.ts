@@ -72,17 +72,7 @@ export const getJobById = async (id: string): Promise<Job | undefined> => {
   }
 };
 
-/**
- * Create a new job (requires HR auth)
- * @param data - Job data to create
- * @returns Promise with the created job
- */
-export const createJob = async (data: Omit<Job, "_id" | "createdAt" | "updatedAt">): Promise<Job> => {
-  return fetchWithAuth(API_ENDPOINTS.JOB.CREATE, {
-    method: "POST",
-    body: JSON.stringify(data),
-  });
-};
+
 
 /**
  * Update a job (requires HR auth)
@@ -233,4 +223,17 @@ export const getAppliedJobsByUser = async (page: number = 1, limit: number = 10)
     console.error('Error fetching applied jobs:', error);
     return { data: [], total: 0, page, limit };
   }
+};
+
+/**
+ * Create a new job (requires HR auth)
+ * @param data - Job data to create
+ * @returns Promise with the created job
+ */
+export const createJob = async (data: Partial<Job>): Promise<Job> => {
+  return fetchWithAuth(API_ENDPOINTS.JOB.CREATE, {
+    method: "POST",
+    body: JSON.stringify(data),
+    headers: { 'Content-Type': 'application/json' },
+  });
 };
