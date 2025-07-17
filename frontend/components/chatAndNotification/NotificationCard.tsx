@@ -50,12 +50,16 @@ const NotificationCard: React.FC<NotificationCardProps> = ({ notif, isUnread, is
                             </div>
                             <p className="text-sm text-gray-700 mb-1 leading-relaxed line-clamp-2 min-h-[40px]">
                                 {(notif.type === "success" || notif.title === t.applicationApproved || notif.title === "Application Approved" || notif.title === "Hồ sơ được duyệt")
-                                    ? t.congratulation(
-                                        notif.candidateName || (detailInfo && detailInfo.candidateName) || "Ứng viên",
-                                        notif.jobTitle || (detailInfo && detailInfo.jobTitle) || "",
-                                        notif.position || (detailInfo && detailInfo.position) || "",
-                                        notif.location || (detailInfo && detailInfo.location) || ""
-                                    )
+                                    ? <>
+                                        {t.congratulation(
+                                            notif.candidateName || (detailInfo && detailInfo.candidateName) || "Ứng viên",
+                                            notif.jobTitle || (detailInfo && detailInfo.jobTitle) || "",
+                                            notif.position || (detailInfo && detailInfo.position) || "",
+                                            notif.location || (detailInfo && detailInfo.location) || ""
+                                        )}
+                                        <br />
+                                        <span className="text-xs text-blue-700">{t.contactInstruction}</span>
+                                    </>
                                     : t.noNotifications
                                 }
                             </p>

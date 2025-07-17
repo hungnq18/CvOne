@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { getUserIdFromToken } from "@/api/userApi";
-import { getNotifications, Notification } from "@/api/apiNotification";
+import { getNotifications, Notification, markAllNotificationsAsRead } from "@/api/apiNotification";
 import socket from "@/utils/socket/client";
 
 import { getApplyJobByUser } from "@/api/apiApplyJob";
@@ -32,7 +32,7 @@ const notificationTranslations = {
     applicationApproved: "Application Approved",
     congratulation: (name: string, job: string, pos: string, loc: string) =>
       `Congratulations ${name}, your application for the job ${job} (position: ${pos}) in ${loc} has been approved!`,
-    contactInstruction: "If you accept the interview, please contact HR using the email above or via chat.",
+    contactInstruction: "If you accept the interview, please contact HR using the email above or via chat (within 5 days).",
     statusSuccess: "Success",
     statusWarning: "Warning",
     statusError: "Error",
@@ -62,7 +62,7 @@ const notificationTranslations = {
     applicationApproved: "Hồ sơ được duyệt",
     congratulation: (name: string, job: string, pos: string, loc: string) =>
       `Chúc mừng ${name}, hồ sơ của bạn cho công việc ${job} vị trí ${pos} ở ${loc} đã được chấp nhận!`,
-    contactInstruction: "Nếu bạn đồng ý phỏng vấn, vui lòng liên hệ HR qua email hoặc chat.",
+    contactInstruction: "Nếu bạn đồng ý phỏng vấn, vui lòng liên hệ HR qua email hoặc chat (trong vòng 5 ngày).",
     statusSuccess: "Thành công",
     statusWarning: "Cảnh báo",
     statusError: "Lỗi",
@@ -156,8 +156,11 @@ export default function NotificationCenter() {
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
+        // Gọi API đánh dấu tất cả là đã đọc
+        await markAllNotificationsAsRead();
+        // Sau đó lấy danh sách notification mới nhất
         const res = await getNotifications();
-        setNotifications(res.map(n => ({ ...n, isRead: true })));
+        setNotifications(res);
       } catch (err) {
         console.error("Failed to fetch notifications:", err);
       } finally {

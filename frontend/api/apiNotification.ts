@@ -37,3 +37,15 @@ export const sendNotification = async (data: { title: string; message: string; t
     }
 };
 
+export const markAllNotificationsAsRead = async () => {
+    try {
+        const res = await fetchWithAuth('/notifications/read-all', {
+            method: 'PATCH',
+        });
+        return res;
+    } catch (err) {
+        console.error('Failed to mark all notifications as read:', err);
+        throw err;
+    }
+};
+
