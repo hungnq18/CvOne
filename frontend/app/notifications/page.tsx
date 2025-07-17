@@ -2,18 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { getUserIdFromToken } from "@/api/userApi";
-import { fetchWithAuth } from "@/api/apiClient";
-import { API_ENDPOINTS } from "@/api/apiConfig";
-import socket from "@/utils/socket/client"; // 👈 THÊM dòng này
+import { getNotifications, Notification } from "@/api/apiNotification";
+import socket from "@/utils/socket/client";
 
-interface Notification {
-  _id: string;
-  title: string;
-  message: string;
-  type: string;
-  link?: string;
-  createdAt: string;
-}
 
 export default function NotificationPage() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -22,7 +13,7 @@ export default function NotificationPage() {
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
-        const res = await fetchWithAuth("/notifications");
+        const res = await getNotifications();
         setNotifications(res);
       } catch (err) {
         console.error("Failed to fetch notifications:", err);

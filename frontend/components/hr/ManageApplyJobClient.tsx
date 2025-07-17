@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { getApplyJobByHR, updateStatusByHr, deleteApplyJobByHR } from "@/api/apiApplyJob";
 import ManageApplyJobTable from "@/components/hr/ManageApplyJobTable";
 import PreviewCVCLModal from "@/components/hr/PreviewCVCLModal";
+import { sendNotification } from '@/api/apiNotification';
 
 export default function ManageApplyJobClient() {
     const [applications, setApplications] = useState<any[]>([]);
@@ -24,10 +25,24 @@ export default function ManageApplyJobClient() {
 
     const handleUpdateStatus = async (
         applyJobId: string,
-        newStatus: "approved" | "rejected" | "reviewed"
+        newStatus: "approved" | "rejected" | "reviewed",
+        candidateId: string
     ) => {
         try {
             await updateStatusByHr(applyJobId, newStatus);
+            // Nếu duyệt thành approved thì gửi notification
+            if (newStatus === 'approved' && candidateId) {
+                const notifData = {
+                    title: 'Application Approved',
+                    message: 'You have been selected for an interview.',
+                    type: 'info',
+                    link: `/myJobs`,
+                    recipient: candidateId
+                };
+                console.log('Sending notification to candidate:', candidateId, notifData);
+                const notifRes = await sendNotification(notifData);
+                console.log('Notification API response:', notifRes);
+            }
             getApplyJobByHR().then((data: any) => {
                 let arr = Array.isArray(data)
                     ? data

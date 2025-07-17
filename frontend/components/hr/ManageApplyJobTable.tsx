@@ -27,7 +27,7 @@ interface ManageApplyJobTableProps {
     setSearchTerm: (v: string) => void;
     handleViewCV: (cvId: string) => void;
     handleViewCoverLetter: (coverLetterId: string) => void;
-    handleUpdateStatus: (applyJobId: string, newStatus: "approved" | "rejected" | "reviewed") => void;
+    handleUpdateStatus: (applyJobId: string, newStatus: "approved" | "rejected" | "reviewed", candidateId: string) => void;
     handleDeleteApplyJob?: (applyJobId: string) => void;
 }
 
@@ -310,7 +310,7 @@ const ManageApplyJobTable: React.FC<ManageApplyJobTableProps> = ({
                                                     size="sm"
                                                     variant="outline"
                                                     className="text-blue-600 border-blue-600 hover:bg-blue-50"
-                                                    onClick={() => handleUpdateStatus(app._id, "reviewed")}
+                                                    onClick={() => handleUpdateStatus(app._id, "reviewed", app.userId?._id || app.user_id || app.userId)}
                                                 >
                                                     <Check className="h-4 w-4 mr-1" /> Reviewed
                                                 </Button>
@@ -321,7 +321,7 @@ const ManageApplyJobTable: React.FC<ManageApplyJobTableProps> = ({
                                                     size="sm"
                                                     variant="outline"
                                                     className="text-green-600 border-green-600 hover:bg-green-50"
-                                                    onClick={() => handleUpdateStatus(app._id, "approved")}
+                                                    onClick={() => handleUpdateStatus(app._id, "approved", app.userId?._id || app.user_id || app.userId)}
                                                 >
                                                     <Check className="h-4 w-4 mr-1" /> Approve
                                                 </Button>
@@ -329,7 +329,7 @@ const ManageApplyJobTable: React.FC<ManageApplyJobTableProps> = ({
                                                     size="sm"
                                                     variant="outline"
                                                     className="text-red-600 border-red-600 hover:bg-red-50"
-                                                    onClick={() => handleUpdateStatus(app._id, "rejected")}
+                                                    onClick={() => handleUpdateStatus(app._id, "rejected", app.userId?._id || app.user_id || app.userId)}
                                                 >
                                                     <X className="h-4 w-4 mr-1" /> Reject
                                                 </Button>
@@ -340,7 +340,7 @@ const ManageApplyJobTable: React.FC<ManageApplyJobTableProps> = ({
                                                     size="sm"
                                                     variant="outline"
                                                     className="text-blue-600 border-blue-600 hover:bg-blue-50"
-                                                    onClick={() => handleUpdateStatus(app._id, "reviewed")}
+                                                    onClick={() => handleUpdateStatus(app._id, "reviewed", app.userId?._id || app.user_id || app.userId)}
                                                 >
                                                     <svg
                                                         style={{ marginRight: 4 }}
