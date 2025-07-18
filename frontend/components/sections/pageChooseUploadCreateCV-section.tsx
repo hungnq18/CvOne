@@ -2,94 +2,134 @@
 
 import { uploadAndAnalyzeCV } from "@/api/cvapi";
 import { useCV } from "@/providers/cv-provider";
-import { useRouter, useSearchParams } from "next/navigation"; // <-- Bước 1: Import useRouter
-import React ,{ useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import React, { useState } from "react";
+import { useLanguage } from "@/providers/global-provider"; // Giả định hook này tồn tại
+
+// --- ĐỐI TƯỢNG TRANSLATIONS ---
+const translations = {
+  en: {
+    chooseUpload: {
+      title: "Use your uploaded CV?",
+      subtitle: "Choose how you want to proceed with the uploaded CV file.",
+      buttons: {
+        analyze: {
+          label: "Analyze CV and fill in the new template",
+          description: "AI will read your CV and automatically fill in the information.",
+          loading: "Analyzing..."
+        },
+        startOver: {
+          label: "Start over with AI assistance",
+          description: "Skip the uploaded file and create a new CV with AI."
+        }
+      },
+      alerts: {
+        noFile: "Please upload your CV file first.",
+        fileTooLargeInitial: "File size exceeds 10MB. Please choose a smaller file.",
+        fileTooLarge413: "The PDF file is too large. Please select a file smaller than 10MB or compress it before uploading.",
+        analysisError: "An error occurred while analyzing the CV. Please try again."
+      }
+    }
+  },
+  vi: {
+    chooseUpload: {
+      title: "Sử dụng CV bạn vừa tải lên?",
+      subtitle: "Chọn cách bạn muốn tiếp tục với file CV đã được tải lên.",
+      buttons: {
+        analyze: {
+          label: "Phân tích CV và điền vào mẫu mới",
+          description: "AI sẽ đọc CV của bạn và tự động điền thông tin.",
+          loading: "Đang phân tích..."
+        },
+        startOver: {
+          label: "Bắt đầu lại với sự trợ giúp của AI",
+          description: "Bỏ qua file đã tải và tạo CV mới với AI."
+        }
+      },
+      alerts: {
+        noFile: "Vui lòng tải lên file CV của bạn trước.",
+        fileTooLargeInitial: "Kích thước file vượt quá 10MB. Vui lòng chọn file nhỏ hơn.",
+        fileTooLarge413: "File PDF quá lớn. Vui lòng chọn file nhỏ hơn 10MB hoặc nén file trước khi tải lên.",
+        analysisError: "Đã xảy ra lỗi khi phân tích CV. Vui lòng thử lại."
+      }
+    }
+  }
+};
 
 export default function PageChooseUploadCreateCVSection() {
-  const searchParams = useSearchParams();
-  const templateId = searchParams.get("id");
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { pdfFile, jobDescription, updateUserData } = useCV();
-  const [isLoading, setIsLoading] = useState(false);
+  const { language } = useLanguage();
+  const t = translations[language].chooseUpload; // Lấy "từ điển" cho component này
 
-  // Helper: Convert Uint8Array to File
-  function uint8ArrayToFile(uint8Array: Uint8Array, fileName = "cv.pdf", mimeType = "application/pdf") {
+  const [isLoading, setIsLoading] = useState(false);
+  const templateId = searchParams.get("id") || "";
+
+  const uint8ArrayToFile = (uint8Array: Uint8Array, fileName = "cv.pdf", mimeType = "application/pdf"): File => {
     const blob = new Blob([uint8Array], { type: mimeType });
     return new File([blob], fileName, { type: mimeType });
-  }
+  };
 
-  const handleMyTemplateCreate = async () => {
+  const handleAnalyzeUploadedCV = async () => {
     if (!pdfFile) {
-      alert("Vui lòng tải lên file PDF trước.");
+      alert(t.alerts.noFile);
       return;
     }
 
-    // Kiểm tra kích thước file (giới hạn 10MB)
-    const maxSize = 10 * 1024 * 1024; // 10MB
-    if (pdfFile.length > maxSize) {
-      alert("File PDF quá lớn. Vui lòng chọn file nhỏ hơn 10MB.");
+    const MAX_FILE_SIZE = 10 * 1024 * 1024;
+    if (pdfFile.length > MAX_FILE_SIZE) {
+      alert(t.alerts.fileTooLargeInitial);
       return;
     }
 
     setIsLoading(true);
     try {
-      const file = uint8ArrayToFile(pdfFile);
-      console.log('  size:', file.size); // nên ~191*1024
-      const result = await uploadAndAnalyzeCV(file, jobDescription);
-      const userData = result?.analysisResult?.userData;
-      if (userData) {
-        updateUserData(userData);
+      const fileToUpload = uint8ArrayToFile(pdfFile);
+      const result = await uploadAndAnalyzeCV(fileToUpload, jobDescription);
+      
+      if (result?.analysisResult?.userData) {
+        updateUserData(result.analysisResult.userData);
       }
+      
       router.push(`/createCV-AIManual?id=${templateId}`);
+
     } catch (error) {
       if (error instanceof Error && error.message.includes('413')) {
-        alert("File PDF quá lớn. Vui lòng chọn file nhỏ hơn 10MB hoặc nén file trước khi tải lên.");
+        alert(t.alerts.fileTooLarge413);
       } else {
-        alert("Có lỗi khi phân tích CV bằng AI. Vui lòng thử lại.");
+        alert(t.alerts.analysisError);
+        console.error("Lỗi phân tích CV:", error);
       }
-      console.error(error);
     } finally {
       setIsLoading(false);
     }
   };
-  const handleTemplateCreate = () => {
+
+  const handleCreateWithAIAssistanceInstead = () => {
     router.push(`/createCV-AI?id=${templateId}`);
   };
 
   return (
-    <div className="bg-white pt-10 pb-10 py-24 sm:py-32">
-      <div className="mx-auto max-w-3xl text-center">
+    <div className="bg-white py-24 sm:py-32">
+      <div className="mx-auto max-w-3xl px-6 lg:px-8 text-center">
         <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-          Bạn muốn dùng mẫu nào?
+          {t.title}
         </h2>
         <p className="mt-4 text-lg leading-8 text-gray-600">
-          Hãy chọn một phương pháp để bắt đầu hành trình của bạn.
+          {t.subtitle}
         </p>
-        <div className="mt-10 flex items-center justify-center gap-x-6">
-          <button
-            type="button"
-            onClick={handleMyTemplateCreate}
-            disabled={isLoading}
-            className="rounded-md border border-gray-300 bg-white 
-            w-3/4 h-40 px-8 py-10 text-base font-semibold text-blue-600
-            shadow-sm 
-            transition-all duration-300 ease-in-out
-            hover:bg-blue-100 hover:scale-105 disabled:bg-gray-100 disabled:cursor-not-allowed
-            focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-          >
-            {isLoading ? "Đang xử lý..." : "Dùng mẫu bạn đã chọn"}
+        <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-6">
+          {/* Nút Phân tích CV */}
+          <button type="button" onClick={handleAnalyzeUploadedCV} disabled={isLoading || !pdfFile} className="w-full sm:w-1/2 flex flex-col items-center justify-center rounded-lg border border-gray-300 bg-white p-6 text-base font-semibold text-blue-600 shadow-sm transition-all hover:border-blue-500 hover:bg-blue-50 hover:scale-105 disabled:cursor-not-allowed disabled:bg-gray-200 disabled:opacity-70">
+            {isLoading ? t.buttons.analyze.loading : t.buttons.analyze.label}
+            <span className="mt-1 text-sm font-normal text-gray-500">{t.buttons.analyze.description}</span>
           </button>
-          <button
-            type="button"
-            onClick={handleTemplateCreate}
-            className="rounded-md border border-gray-300 bg-white 
-            w-3/4 h-40 px-8 py-10 text-base font-semibold text-blue-600
-            shadow-sm 
-            transition-all duration-300 ease-in-out
-            hover:bg-blue-100 hover:scale-105 
-            focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-          >
-            Dùng mẫu bạn đăng tải
+          
+          {/* Nút Bắt đầu lại */}
+          <button type="button" onClick={handleCreateWithAIAssistanceInstead} className="w-full sm:w-1/2 flex flex-col items-center justify-center rounded-lg border border-gray-300 bg-white p-6 text-base font-semibold text-gray-800 shadow-sm transition-all hover:border-gray-400 hover:bg-gray-50 hover:scale-105">
+            {t.buttons.startOver.label}
+            <span className="mt-1 text-sm font-normal text-gray-500">{t.buttons.startOver.description}</span>
           </button>
         </div>
       </div>

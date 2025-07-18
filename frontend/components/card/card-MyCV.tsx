@@ -4,52 +4,129 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { CV, getAllCVs, CVTemplate, getCVTemplates, deleteCV } from "@/api/cvapi";
-import { Edit, Share2, Trash2 } from "lucide-react";
+import { Edit, Trash2 } from "lucide-react";
 import { Card } from "antd";
 import { templateComponentMap } from "@/components/cvTemplate/index";
+import { useLanguage } from "@/providers/global-provider";
 
-const formatTimeAgo = (isoDate: string) => {
+// --- ĐỐI TƯỢNG TRANSLATIONS ---
+const translations = {
+  en: {
+    cardMyCV: {
+      timeAgo: {
+        seconds: (s: number) => `${s} second${s > 1 ? 's' : ''} ago`,
+        minutes: (m: number) => `${m} minute${m > 1 ? 's' : ''} ago`,
+        hours: (h: number) => `${h} hour${h > 1 ? 's' : ''} ago`,
+      },
+      deleteDialog: {
+        confirm: (title: string) => `Are you sure you want to delete the CV "${title}"? This action cannot be undone.`,
+        success: "CV deleted successfully!",
+        error: "An error occurred while deleting the CV. Please try again.",
+      },
+      errors: {
+        fetch: "Error fetching CVs or templates:",
+        delete: "Error deleting CV:",
+      },
+      emptyState: {
+        title: "No CVs yet",
+        subtitle: "Create your first CV to get started",
+      },
+      card: {
+        unnamed: "Unnamed CV",
+        edited: "Edited",
+        creation: "Creation:",
+        status: "Status:",
+        statusFinal: "Final",
+        statusDraft: "Draft",
+      },
+      buttons: {
+        edit: "Edit",
+        deleteTooltip: "Delete this CV",
+        deleting: "Deleting...",
+        delete: "Delete",
+      },
+    },
+  },
+  vi: {
+    cardMyCV: {
+      timeAgo: {
+        seconds: (s: number) => `${s} giây trước`,
+        minutes: (m: number) => `${m} phút trước`,
+        hours: (h: number) => `${h} giờ trước`,
+      },
+      deleteDialog: {
+        confirm: (title: string) => `Bạn có chắc chắn muốn xóa CV "${title}"? Hành động này không thể hoàn tác.`,
+        success: "Xóa CV thành công!",
+        error: "Có lỗi xảy ra khi xóa CV. Vui lòng thử lại.",
+      },
+      errors: {
+        fetch: "Lỗi khi gọi getAllCVs hoặc getAllTemplates:",
+        delete: "Lỗi khi xóa CV:",
+      },
+      emptyState: {
+        title: "Chưa có CV nào",
+        subtitle: "Tạo CV đầu tiên của bạn để bắt đầu",
+      },
+      card: {
+        unnamed: "CV chưa có tên",
+        edited: "Đã chỉnh sửa",
+        creation: "Ngày tạo:",
+        status: "Trạng thái:",
+        statusFinal: "Hoàn tất",
+        statusDraft: "Bản nháp",
+      },
+      buttons: {
+        edit: "Chỉnh sửa",
+        deleteTooltip: "Xóa CV này",
+        deleting: "Đang xóa...",
+        delete: "Xóa",
+      },
+    },
+  },
+};
+
+const formatTimeAgo = (isoDate: string, t_timeAgo: typeof translations.vi.cardMyCV.timeAgo, locale: string) => {
   const date = new Date(isoDate);
   const diff = Math.floor((Date.now() - date.getTime()) / 1000);
 
-  if (diff < 60) return `${diff} seconds ago`;
-  if (diff < 3600) return `${Math.floor(diff / 60)} minutes ago`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)} hours ago`;
-  return date.toLocaleDateString("vi-VN");
+  if (diff < 60) return t_timeAgo.seconds(diff);
+  if (diff < 3600) return t_timeAgo.minutes(Math.floor(diff / 60));
+  if (diff < 86400) return t_timeAgo.hours(Math.floor(diff / 3600));
+  return date.toLocaleDateString(locale === 'vi' ? "vi-VN" : "en-US");
 };
 
 const CardMyCV: React.FC<{}> = ({}) => {
+  const { language } = useLanguage();
+  const t = translations[language].cardMyCV;
+
   const [cvList, setCvList] = useState<CV[]>([]);
   const [templates, setTemplates] = useState<CVTemplate[]>([]);
   const [deletingCVId, setDeletingCVId] = useState<string | null>(null);
 
   const fetchData = async () => {
     try {
-      const [cvs, templates] = await Promise.all([
+      const [cvs, templatesData] = await Promise.all([
         getAllCVs(),
         getCVTemplates(),
       ]);
       setCvList(cvs);
-      setTemplates(templates);
+      setTemplates(templatesData);
     } catch (err) {
-      console.error("Lỗi khi gọi getAllCVs hoặc getAllTemplates:", err);
+      console.error(t.errors.fetch, err);
     }
   };
 
   useEffect(() => {
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const containerWidth = 180;
   const templateOriginalWidth = 794;
   const scaleFactor = containerWidth / templateOriginalWidth;
 
-  // Function để xóa CV
   const handleDeleteCV = async (cvId: string, cvTitle: string) => {
-    // Hiển thị confirm dialog
-    const isConfirmed = window.confirm(
-      `Bạn có chắc chắn muốn xóa CV "${cvTitle}"? Hành động này không thể hoàn tác.`
-    );
+    const isConfirmed = window.confirm(t.deleteDialog.confirm(cvTitle));
 
     if (!isConfirmed) return;
 
@@ -57,13 +134,12 @@ const CardMyCV: React.FC<{}> = ({}) => {
       setDeletingCVId(cvId);
       await deleteCV(cvId);
       
-      // Cập nhật danh sách CV sau khi xóa thành công
       setCvList(prevList => prevList.filter(cv => cv._id !== cvId));
       
-      alert("Xóa CV thành công!");
+      alert(t.deleteDialog.success);
     } catch (error) {
-      console.error("Lỗi khi xóa CV:", error);
-      alert("Có lỗi xảy ra khi xóa CV. Vui lòng thử lại.");
+      console.error(t.errors.delete, error);
+      alert(t.deleteDialog.error);
     } finally {
       setDeletingCVId(null);
     }
@@ -75,120 +151,93 @@ const CardMyCV: React.FC<{}> = ({}) => {
         <div className="col-span-full text-center py-8">
           <div className="text-gray-500">
             <Trash2 size={48} className="mx-auto mb-4 opacity-50" />
-            <p className="text-lg font-medium">Chưa có CV nào</p>
-            <p className="text-sm">Tạo CV đầu tiên của bạn để bắt đầu</p>
+            <p className="text-lg font-medium">{t.emptyState.title}</p>
+            <p className="text-sm">{t.emptyState.subtitle}</p>
           </div>
         </div>
       ) : (
         cvList.map((cv) => {
-        const template = templates.find((t) => t._id === cv.cvTemplateId);
-        const TemplateComponent = templateComponentMap?.[template?.title || ""];
+          const template = templates.find((temp) => temp._id === cv.cvTemplateId);
+          const TemplateComponent = templateComponentMap?.[template?.title || ""];
 
-        const formattedDate = new Date(cv.updatedAt).toLocaleDateString(
-          "vi-VN",
-          {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-          }
-        );
+          if (!TemplateComponent || !cv.content?.userData) return null;
 
-        if (!TemplateComponent || !cv.content?.userData) return null;
+          const componentData = {
+            ...template?.data,
+            userData: cv.content.userData,
+          };
 
-        const componentData = {
-          ...template?.data,
-          userData: cv.content.userData,
-        };
-
-        return (
-          <Card key={cv._id} hoverable>
-            <motion.div
-              className="bg-white rounded-xl overflow-hidden
-            w-[350px] h-[260px]
-            items-start"
-              initial
-            >
-              <div
-                className="bg-white overflow-hidden
-            w-[350px] h-[260px] flex gap-4 items-start"
-              >
-                {/* Preview CV */}
-                <div className="relative shrink-0 w-[180px] aspect-[210/350] bg-gray-100 border rounded-md overflow-hidden">
-                  <div
-                    className="absolute bg-white"
-                    style={{
+          return (
+            <Card key={cv._id} hoverable>
+              <motion.div className="bg-white rounded-xl overflow-hidden w-[350px] h-[260px] items-start">
+                <div className="bg-white overflow-hidden w-[350px] h-[260px] flex gap-4 items-start">
+                  <div className="relative shrink-0 w-[180px] aspect-[210/350] bg-gray-100 border rounded-md overflow-hidden">
+                    <div className="absolute bg-white" style={{
                       position: "absolute",
                       width: `${templateOriginalWidth}px`,
                       height: `${templateOriginalWidth * (350 / 210)}px`,
                       transformOrigin: "top left",
                       transform: `scale(${scaleFactor})`,
                       backgroundColor: "white",
-                    }}
-                  >
-                    <div className="pointer-events-none ">
-                      <TemplateComponent data={componentData} />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Thông tin bên phải */}
-                <div className="flex-1 flex flex-col justify-between h-full">
-                  <div>
-                    <div className="flex items-start justify-between gap-2">
-                      <h3 className="text-lg font-semibold text-gray-900 leading-tight">
-                        {cv.title || "CV chưa có tên"}
-                      </h3>
-                    </div>
-                    <p className="text-sm text-blue-500 mt-1">
-                      Edited {formatTimeAgo(cv.updatedAt)}
-                    </p>
-
-                    <div className="mt-2 text-sm text-gray-600 space-y-1">
-                      <p>
-                        Creation:{" "}
-                        {new Date(cv.createdAt).toLocaleDateString("vi-VN")}
-                      </p>
-                      <p>Status: {cv.isFinalized ? "Final" : "Draft"}</p>
+                    }}>
+                      <div className="pointer-events-none ">
+                        <TemplateComponent data={componentData} />
+                      </div>
                     </div>
                   </div>
 
-                  {/* Nút hành động */}
-                  <div className="mt-3 flex flex-col gap-2">
-                    <Link href={`/updateCV?id=${cv._id}`}>
-                      <button className="flex w-[90px] items-center gap-1 text-sm px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-md text-blue-600">
-                        <Edit size={16} /> Edit
-                      </button>
-                    </Link>
+                  <div className="flex-1 flex flex-col justify-between h-full">
                     <div>
-                      <button 
-                        onClick={() => handleDeleteCV(cv._id, cv.title || "CV chưa có tên")}
-                        disabled={deletingCVId === cv._id}
-                        className={`flex w-[90px] items-center gap-1 text-sm px-3 py-1.5 rounded-md transition-colors ${
-                          deletingCVId === cv._id
-                            ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                            : "bg-gray-100 hover:bg-red-100 text-red-600 hover:text-red-700"
-                        }`}
-                        title="Xóa CV này"
-                      >
-                        {deletingCVId === cv._id ? (
-                          <>
-                            <div className="w-4 h-4 border-2 border-gray-500 border-t-transparent rounded-full animate-spin"></div>
-                            Deleting...
-                          </>
-                        ) : (
-                          <>
-                            <Trash2 size={16} /> Delete
-                          </>
-                        )}
-                      </button>
+                      <div className="flex items-start justify-between gap-2">
+                        <h3 className="text-lg font-semibold text-gray-900 leading-tight">
+                          {cv.title || t.card.unnamed}
+                        </h3>
+                      </div>
+                      <p className="text-sm text-blue-500 mt-1">
+                        {t.card.edited} {formatTimeAgo(cv.updatedAt, t.timeAgo, language)}
+                      </p>
+                      <div className="mt-2 text-sm text-gray-600 space-y-1">
+                        <p>{t.card.creation} {new Date(cv.createdAt).toLocaleDateString(language === 'vi' ? "vi-VN" : "en-US")}</p>
+                        <p>{t.card.status} {cv.isFinalized ? t.card.statusFinal : t.card.statusDraft}</p>
+                      </div>
+                    </div>
+
+                    <div className="mt-3 flex flex-col gap-2">
+                      <Link href={`/updateCV?id=${cv._id}`}>
+                        <button className="flex w-[90px] items-center gap-1 text-sm px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-md text-blue-600">
+                          <Edit size={16} /> {t.buttons.edit}
+                        </button>
+                      </Link>
+                      <div>
+                        <button 
+                          onClick={() => handleDeleteCV(cv._id, cv.title || t.card.unnamed)}
+                          disabled={deletingCVId === cv._id}
+                          className={`flex w-[90px] items-center gap-1 text-sm px-3 py-1.5 rounded-md transition-colors ${
+                            deletingCVId === cv._id
+                              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                              : "bg-gray-100 hover:bg-red-100 text-red-600 hover:text-red-700"
+                          }`}
+                          title={t.buttons.deleteTooltip}
+                        >
+                          {deletingCVId === cv._id ? (
+                            <>
+                              <div className="w-4 h-4 border-2 border-gray-500 border-t-transparent rounded-full animate-spin"></div>
+                              {t.buttons.deleting}
+                            </>
+                          ) : (
+                            <>
+                              <Trash2 size={16} /> {t.buttons.delete}
+                            </>
+                          )}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            </motion.div>
-          </Card>
-        );
-      })
+              </motion.div>
+            </Card>
+          );
+        })
       )}
     </div>
   );

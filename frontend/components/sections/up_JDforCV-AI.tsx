@@ -1,142 +1,177 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, FC, ReactNode } from "react";
 import { useCV } from "@/providers/cv-provider";
 import { analyzeJD } from "@/api/cvapi";
+import { useLanguage } from "@/providers/global-provider";
 
-interface UpJdStepProps {
-}
+// --- ĐỐI TƯỢNG TRANSLATIONS ---
+const translations = {
+  en: {
+    jdAnalysis: {
+      ui: {
+        description: "Add job descriptions, requirements, and responsibilities to help AI better understand the position you want to create a CV for.",
+        label: "JOB DESCRIPTION",
+        placeholder: "Paste the job description, requirements, and responsibilities here.",
+        buttonAnalyzing: "Analyzing...",
+        buttonAnalyze: "Analyze Job Description with AI",
+      },
+      alerts: {
+        emptyDescription: "Please enter a job description before analyzing.",
+        analysisError: "An error occurred during analysis. Please try again.",
+      },
+      results: {
+        title: "📋 Job Analysis Result",
+        levelMap: {
+          'senior': 'Senior',
+          'mid-level': 'Mid-level',
+          'junior': 'Junior',
+          'entry-level': 'Entry-level'
+        },
+        experienceLevel: "Experience Level",
+        requiredSkills: "Required Skills",
+        technologies: "Technologies Used",
+        keyResponsibilities: "Key Responsibilities",
+        softSkills: "Soft Skills",
+        industry: "Industry",
+        education: "Education Requirement",
+        certifications: "Recommended Certifications",
+        suggestionsTitle: "💡 CV Suggestions",
+        suggestionFocusSkills: "Focus on the required skills and technologies",
+        suggestionFocusExperience: (level: string) => `Emphasize experience relevant to the ${level} level`,
+        suggestionResponsibilities: "Provide specific examples of responsibilities performed",
+        suggestionSoftSkills: "Demonstrate soft skills through team projects",
+        defaultLevel: "job's",
+        errorFormatting: 'Error formatting analysis result:',
+      }
+    }
+  },
+  vi: {
+    jdAnalysis: {
+      ui: {
+        description: "Thêm mô tả công việc, yêu cầu và trách nhiệm để giúp AI hiểu rõ hơn về vị trí bạn muốn tạo CV.",
+        label: "MÔ TẢ CÔNG VIỆC",
+        placeholder: "Dán nội dung mô tả công việc, yêu cầu và trách nhiệm vào đây.",
+        buttonAnalyzing: "Đang phân tích...",
+        buttonAnalyze: "Phân tích Mô tả công việc bằng AI",
+      },
+      alerts: {
+        emptyDescription: "Vui lòng nhập mô tả công việc trước khi phân tích.",
+        analysisError: "Có lỗi xảy ra khi phân tích. Vui lòng thử lại.",
+      },
+      results: {
+        title: "📋 Kết Quả Phân Tích Công Việc",
+        levelMap: {
+          'senior': 'Cấp cao (Senior)',
+          'mid-level': 'Cấp trung (Mid-level)',
+          'junior': 'Cấp cơ sở (Junior)',
+          'entry-level': 'Cấp mới bắt đầu (Entry-level)'
+        },
+        experienceLevel: "Cấp độ kinh nghiệm",
+        requiredSkills: "Kỹ năng yêu cầu",
+        technologies: "Công nghệ sử dụng",
+        keyResponsibilities: "Trách nhiệm chính",
+        softSkills: "Kỹ năng mềm",
+        industry: "Ngành nghề",
+        education: "Yêu cầu học vấn",
+        certifications: "Chứng chỉ khuyến nghị",
+        suggestionsTitle: "💡 Gợi Ý Cho CV",
+        suggestionFocusSkills: "Tập trung vào các kỹ năng và công nghệ được yêu cầu",
+        suggestionFocusExperience: (level: string) => `Nhấn mạnh kinh nghiệm phù hợp với cấp độ ${level}`,
+        suggestionResponsibilities: "Đưa ra các ví dụ cụ thể về trách nhiệm đã thực hiện",
+        suggestionSoftSkills: "Thể hiện kỹ năng mềm thông qua các dự án nhóm",
+        defaultLevel: "công việc",
+        errorFormatting: 'Lỗi khi định dạng kết quả phân tích:',
+      }
+    }
+  }
+};
+
+interface UpJdStepProps {}
+
+// --- CÁC COMPONENT CON ĐỂ HIỂN THỊ KẾT QUẢ ĐẸP HƠN ---
+const AnalysisSection: FC<{ icon: string; title: string; children: ReactNode; }> = ({ icon, title, children }) => (
+  <div className="mb-5">
+    <h4 className="text-md font-semibold text-gray-800 mb-2 flex items-center">
+      <span className="text-xl mr-2">{icon}</span>
+      {title}
+    </h4>
+    <div className="pl-8 text-sm text-gray-700">{children}</div>
+  </div>
+);
+
+const AnalysisList: FC<{ items: string[] }> = ({ items }) => (
+  <ul className="list-disc list-inside space-y-1">
+    {items.map((item, index) => <li key={index}>{item}</li>)}
+  </ul>
+);
+
+// --- HÀM formatAnalysisResult ĐÃ ĐƯỢC NÂNG CẤP ĐỂ TRẢ VỀ JSX ---
+const formatAnalysisResult = (result: any, t_results: typeof translations.vi.jdAnalysis.results): ReactNode => {
+  try {
+    if (typeof result === 'string' || result.analysis || result.message) {
+      return <div className="whitespace-pre-wrap">{result.analysis || result.message || result}</div>;
+    }
+
+    const level = result.experienceLevel ? t_results.levelMap[result.experienceLevel as keyof typeof t_results.levelMap] || result.experienceLevel : null;
+    const suggestions = [
+      t_results.suggestionFocusSkills,
+      t_results.suggestionFocusExperience(result.experienceLevel || t_results.defaultLevel),
+      t_results.suggestionResponsibilities,
+      t_results.suggestionSoftSkills,
+    ];
+
+    return (
+      <div className="space-y-4">
+        {level && <AnalysisSection icon="🎯" title={t_results.experienceLevel}>{level}</AnalysisSection>}
+        {result.requiredSkills?.length > 0 && <AnalysisSection icon="💼" title={t_results.requiredSkills}><AnalysisList items={result.requiredSkills} /></AnalysisSection>}
+        {result.technologies?.length > 0 && <AnalysisSection icon="🛠️" title={t_results.technologies}><AnalysisList items={result.technologies} /></AnalysisSection>}
+        {result.keyResponsibilities?.length > 0 && <AnalysisSection icon="📝" title={t_results.keyResponsibilities}><AnalysisList items={result.keyResponsibilities} /></AnalysisSection>}
+        {result.softSkills?.length > 0 && <AnalysisSection icon="🤝" title={t_results.softSkills}><AnalysisList items={result.softSkills} /></AnalysisSection>}
+        {result.industry && <AnalysisSection icon="🏢" title={t_results.industry}>{result.industry}</AnalysisSection>}
+        {result.education && <AnalysisSection icon="🎓" title={t_results.education}>{result.education}</AnalysisSection>}
+        {result.certifications?.length > 0 && <AnalysisSection icon="🏆" title={t_results.certifications}><AnalysisList items={result.certifications} /></AnalysisSection>}
+        <AnalysisSection icon="💡" title={t_results.suggestionsTitle}><AnalysisList items={suggestions} /></AnalysisSection>
+      </div>
+    );
+  } catch (error) {
+    console.error(t_results.errorFormatting, error);
+    return <div className="whitespace-pre-wrap">{JSON.stringify(result, null, 2)}</div>;
+  }
+};
+
 
 const UpJdStep: React.FC<UpJdStepProps> = () => {
+  const { language } = useLanguage();
+  const t = translations[language].jdAnalysis;
+
   const { jobDescription, setJobDescription, setJobAnalysis } = useCV();
 
-  // State for AI analysis
-  const [analysisResult, setAnalysisResult] = useState<string>("");
+  const [analysisResult, setAnalysisResult] = useState<ReactNode | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisError, setAnalysisError] = useState<string>("");
 
   const maxLength = 5000;
   const currentLength = jobDescription.length;
 
-  const formatAnalysisResult = (result: any): string => {
-    try {
-      // Nếu result là string, trả về luôn
-      if (typeof result === 'string') {
-        return result;
-      }
-
-      // Nếu có analysis field, sử dụng nó
-      if (result.analysis) {
-        return result.analysis;
-      }
-
-      // Nếu có message field, sử dụng nó
-      if (result.message) {
-        return result.message;
-      }
-
-      // Xử lý JSON object và chuyển thành đoạn văn tiếng Việt
-      let analysis = "📋 **KẾT QUẢ PHÂN TÍCH CÔNG VIỆC**\n\n";
-
-      // Thông tin về cấp độ kinh nghiệm
-      if (result.experienceLevel) {
-        const levelMap: { [key: string]: string } = {
-          'senior': 'Cấp cao (Senior)',
-          'mid-level': 'Cấp trung (Mid-level)',
-          'junior': 'Cấp cơ sở (Junior)',
-          'entry-level': 'Cấp mới bắt đầu (Entry-level)'
-        };
-        const level = levelMap[result.experienceLevel] || result.experienceLevel;
-        analysis += `🎯 **Cấp độ kinh nghiệm:** ${level}\n\n`;
-      }
-
-      // Kỹ năng yêu cầu
-      if (result.requiredSkills && result.requiredSkills.length > 0) {
-        analysis += `💼 **Kỹ năng yêu cầu:**\n`;
-        result.requiredSkills.forEach((skill: string, index: number) => {
-          analysis += `   ${index + 1}. ${skill}\n`;
-        });
-        analysis += '\n';
-      }
-
-      // Công nghệ sử dụng
-      if (result.technologies && result.technologies.length > 0) {
-        analysis += `🛠️ **Công nghệ sử dụng:**\n`;
-        result.technologies.forEach((tech: string, index: number) => {
-          analysis += `   ${index + 1}. ${tech}\n`;
-        });
-        analysis += '\n';
-      }
-
-      // Trách nhiệm chính
-      if (result.keyResponsibilities && result.keyResponsibilities.length > 0) {
-        analysis += `📝 **Trách nhiệm chính:**\n`;
-        result.keyResponsibilities.forEach((resp: string, index: number) => {
-          analysis += `   ${index + 1}. ${resp}\n`;
-        });
-        analysis += '\n';
-      }
-
-      // Kỹ năng mềm
-      if (result.softSkills && result.softSkills.length > 0) {
-        analysis += `🤝 **Kỹ năng mềm:**\n`;
-        result.softSkills.forEach((skill: string, index: number) => {
-          analysis += `   ${index + 1}. ${skill}\n`;
-        });
-        analysis += '\n';
-      }
-
-      // Ngành nghề
-      if (result.industry) {
-        analysis += `🏢 **Ngành nghề:** ${result.industry}\n\n`;
-      }
-
-      // Yêu cầu học vấn
-      if (result.education) {
-        analysis += `🎓 **Yêu cầu học vấn:** ${result.education}\n\n`;
-      }
-
-      // Chứng chỉ (nếu có)
-      if (result.certifications && result.certifications.length > 0) {
-        analysis += `🏆 **Chứng chỉ khuyến nghị:**\n`;
-        result.certifications.forEach((cert: string, index: number) => {
-          analysis += `   ${index + 1}. ${cert}\n`;
-        });
-        analysis += '\n';
-      }
-
-      // Thêm gợi ý tổng quan
-      analysis += `💡 **GỢI Ý CHO CV:**\n`;
-      analysis += `• Tập trung vào các kỹ năng và công nghệ được yêu cầu\n`;
-      analysis += `• Nhấn mạnh kinh nghiệm phù hợp với cấp độ ${result.experienceLevel || 'công việc'}\n`;
-      analysis += `• Đưa ra các ví dụ cụ thể về trách nhiệm đã thực hiện\n`;
-      analysis += `• Thể hiện kỹ năng mềm thông qua các dự án nhóm\n`;
-
-      return analysis;
-    } catch (error) {
-      console.error('Error formatting analysis result:', error);
-      return JSON.stringify(result, null, 2);
-    }
-  };
-
   const handleAnalyzeAI = async () => {
     if (!jobDescription.trim()) {
-      setAnalysisError("Vui lòng nhập mô tả công việc trước khi phân tích");
+      setAnalysisError(t.alerts.emptyDescription);
       return;
     }
 
     setIsAnalyzing(true);
     setAnalysisError("");
-    setAnalysisResult("");
+    setAnalysisResult(null);
 
     try {
       const result = await analyzeJD(jobDescription);
-      setJobAnalysis(result); // Lưu JSON gốc vào context
-      const formattedResult = formatAnalysisResult(result);
+      setJobAnalysis(result);
+      const formattedResult = formatAnalysisResult(result, t.results);
       setAnalysisResult(formattedResult);
     } catch (error) {
       console.error("Error analyzing job description:", error);
-      setAnalysisError("Có lỗi xảy ra khi phân tích. Vui lòng thử lại.");
+      setAnalysisError(t.alerts.analysisError);
     } finally {
       setIsAnalyzing(false);
     }
@@ -147,21 +182,16 @@ const UpJdStep: React.FC<UpJdStepProps> = () => {
       <div className="w-full max-w-2xl space-y-8">
         <div className="space-y-6">
           <div className="text-center">
-            <p className="text-gray-600">
-              Thêm mô tả công việc, yêu cầu và trách nhiệm để giúp AI hiểu rõ hơn về vị trí bạn muốn tạo CV.
-            </p>
+            <p className="text-gray-600">{t.ui.description}</p>
           </div>
-
           <div className="space-y-2">
-            <label htmlFor="jobDescription" className="block text-sm font-medium text-gray-700 uppercase tracking-wide">
-              MÔ TẢ CÔNG VIỆC
-            </label>
+            <label htmlFor="jobDescription" className="block text-sm font-medium text-gray-700 uppercase tracking-wide">{t.ui.label}</label>
             <div className="relative">
               <textarea
                 id="jobDescription"
                 value={jobDescription}
                 onChange={(e) => setJobDescription(e.target.value)}
-                placeholder="Dán nội dung mô tả công việc, yêu cầu và trách nhiệm vào đây."
+                placeholder={t.ui.placeholder}
                 maxLength={maxLength}
                 rows={6}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg text-base focus:outline-none focus:border-blue-500 transition-colors resize-none"
@@ -172,7 +202,6 @@ const UpJdStep: React.FC<UpJdStepProps> = () => {
             </div>
           </div>
         </div>
-        {/* Nút phân tích và ô hiển thị kết quả */}
         <div className="flex flex-col items-start space-y-4 mt-8">
           <button
             type="button"
@@ -184,23 +213,19 @@ const UpJdStep: React.FC<UpJdStepProps> = () => {
                 : "bg-yellow-400 hover:bg-yellow-500 text-white"
             }`}
           >
-            {isAnalyzing ? "Đang phân tích..." : "Phân tích Mô tả công việc bằng AI"}
+            {isAnalyzing ? t.ui.buttonAnalyzing : t.ui.buttonAnalyze}
           </button>
           
-          {/* Error message */}
           {analysisError && (
             <div className="w-full p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
               {analysisError}
             </div>
           )}
           
-          {/* Analysis result */}
           {analysisResult && (
-            <div className="w-full max-w-2xl min-h-[200px] border border-gray-200 rounded-lg bg-gray-50 p-4">
-              <h3 className="text-lg font-semibold text-gray-800 mb-3">Kết quả phân tích AI:</h3>
-              <div className="text-gray-700 whitespace-pre-wrap text-sm leading-relaxed">
-                {analysisResult}
-              </div>
+            <div className="w-full max-w-2xl min-h-[200px] border border-gray-200 rounded-lg bg-gray-50 p-6">
+              <h3 className="text-xl font-bold text-gray-900 mb-4 border-b pb-2">{t.results.title}</h3>
+              {analysisResult}
             </div>
           )}
         </div>
