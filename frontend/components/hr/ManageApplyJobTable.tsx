@@ -1,8 +1,11 @@
-import React, { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CVTemplate, getCVTemplates } from "@/api/cvapi";
+import { templateComponentMap } from "@/components/cvTemplate/index";
+import StatusRadioTabs from "@/components/hr/RadioTabsInManageApply";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import HrAction from "@/components/ui/hrActions";
+import { Input } from "@/components/ui/input";
 import {
     Table,
     TableBody,
@@ -11,13 +14,9 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import { Search, Check, X } from "lucide-react";
-import HrAction from "@/components/ui/hrActions";
-import StatusRadioTabs from "@/components/hr/RadioTabsInManageApply";
-import DeleteButton from "@/components/ui/DeleteButton";
-import { templateComponentMap } from "@/components/cvTemplate/index";
 import html2pdf from "html2pdf.js";
-import { getCVTemplates, CVTemplate } from "@/api/cvapi";
+import { Check, Search, X } from "lucide-react";
+import React, { useEffect, useState } from "react";
 
 interface ManageApplyJobTableProps {
     applications: any[];
@@ -72,6 +71,21 @@ const ManageApplyJobTable: React.FC<ManageApplyJobTableProps> = ({
         const matchWorkType = workType === 'All' || jobWorkType === workTypeFilter;
         return matchName && matchWorkType;
     });
+
+    // Phân trang
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 5;
+    // Thêm filter/sort theo thời gian apply
+    const [applySort, setApplySort] = useState<'newest' | 'oldest'>('newest');
+
+    // Sắp xếp theo thời gian apply
+    const sortedApplications = [...searchedApplications].sort((a, b) => {
+        const dateA = new Date(a.createdAt || a.submit_at || 0).getTime();
+        const dateB = new Date(b.createdAt || b.submit_at || 0).getTime();
+        return applySort === 'newest' ? dateB - dateA : dateA - dateB;
+    });
+    const totalPages = Math.ceil(sortedApplications.length / itemsPerPage);
+    const paginatedApplications = sortedApplications.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
     const getStatusColor = (status: string) => {
         switch (status.toLowerCase()) {
@@ -173,6 +187,17 @@ const ManageApplyJobTable: React.FC<ManageApplyJobTableProps> = ({
         <Card>
             <CardHeader>
                 <CardTitle>Job Applications with CV & Cover Letter</CardTitle>
+                <div className="flex items-center gap-2 mt-2">
+                    <label className="text-sm">Sort by:</label>
+                    <select
+                        className="border rounded px-2 py-1 text-sm"
+                        value={applySort}
+                        onChange={e => { setApplySort(e.target.value as 'newest' | 'oldest'); setCurrentPage(1); }}
+                    >
+                        <option value="newest">Newest Applied</option>
+                        <option value="oldest">Oldest Applied</option>
+                    </select>
+                </div>
                 <div className="flex items-center space-x-2" style={{ marginTop: 20 }}>
                     <div className="relative">
                         <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -238,14 +263,14 @@ const ManageApplyJobTable: React.FC<ManageApplyJobTableProps> = ({
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {searchedApplications.length === 0 ? (
+                        {paginatedApplications.length === 0 ? (
                             <TableRow>
                                 <TableCell colSpan={7} className="text-center text-gray-400">
                                     No applications found for this status.
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            searchedApplications.map((app: any) => (
+                            paginatedApplications.map((app: any) => (
                                 <TableRow key={app._id}>
                                     <TableCell>
                                         <div className="flex items-center space-x-3">
@@ -380,6 +405,32 @@ const ManageApplyJobTable: React.FC<ManageApplyJobTableProps> = ({
                         )}
                     </TableBody>
                 </Table>
+                {/* Pagination controls */}
+                <div className="flex justify-center items-center gap-1 mt-2">
+                    <button
+                        className="w-8 h-8 flex items-center justify-center rounded-md border text-xs bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
+                        onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                        disabled={currentPage === 1}
+                    >
+                        &lt;
+                    </button>
+                    {Array.from({ length: totalPages }, (_, i) => (
+                        <button
+                            key={i + 1}
+                            className={`w-8 h-8 flex items-center justify-center rounded-md border text-xs ${currentPage === i + 1 ? 'bg-blue-500 text-white' : 'bg-gray-100 hover:bg-gray-200'}`}
+                            onClick={() => setCurrentPage(i + 1)}
+                        >
+                            {i + 1}
+                        </button>
+                    ))}
+                    <button
+                        className="w-8 h-8 flex items-center justify-center rounded-md border text-xs bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
+                        onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                        disabled={currentPage === totalPages}
+                    >
+                        &gt;
+                    </button>
+                </div>
             </CardContent>
         </Card>
     );

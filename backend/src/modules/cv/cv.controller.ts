@@ -246,9 +246,6 @@ export class CvController {
     @Body('mapping') mapping: string, // nhận mapping từ frontend
     @Res() res: any
   ) {
-    console.log('DEBUG upload-analyze-overlay-pdf: file:', file);
-    console.log('DEBUG upload-analyze-overlay-pdf: jobDescription:', jobDescription);
-    console.log('DEBUG upload-analyze-overlay-pdf: mapping:', mapping);
     if (!file) {
       console.log('DEBUG upload-analyze-overlay-pdf: No file uploaded');
       throw new BadRequestException('No CV file uploaded or invalid file type.');
@@ -588,7 +585,10 @@ export class CvController {
         'Content-Type': 'application/pdf',
         'Content-Disposition': 'attachment; filename="optimized-cv.pdf"',
       });
-      res.send(result.pdfBuffer);
+      // Trả về file PDF dạng stream để tối ưu tốc độ load
+      const { Readable } = require('stream');
+      const stream = Readable.from(result.pdfBuffer);
+      stream.pipe(res);
     } catch (error) {
       throw new BadRequestException(`Failed to optimize CV: ${error.message}`);
     }

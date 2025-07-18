@@ -1,11 +1,11 @@
 'use client';
-import { useEffect, useState } from "react"
-import { Eye, ShoppingCart, Package, Users, TrendingUp } from "lucide-react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { RevenueChart } from "@/components/hr/revenue-chart"
-import { ProfitChart } from "@/components/hr/profit-chart"
-import { getApplyJobByHR, ApplyJob } from "@/api/apiApplyJob"
+import { ApplyJob, getApplyJobByHR } from "@/api/apiApplyJob";
+import { ProfitChart } from "@/components/hr/profit-chart";
+import { RevenueChart } from "@/components/hr/revenue-chart";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLanguage } from '@/providers/global-provider';
+import { Eye, Package, ShoppingCart, Users } from "lucide-react";
+import { useEffect, useState } from "react";
 
 const stats = [
     {
@@ -42,6 +42,8 @@ export function DashboardContent() {
     const [appliedJobs, setAppliedJobs] = useState<ApplyJob[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 5;
     const { language } = useLanguage ? useLanguage() : { language: 'vi' };
 
     const t = {
@@ -102,7 +104,16 @@ export function DashboardContent() {
                     <div className="overflow-x-auto w-full">
                         {(() => {
                             const filteredJobs = appliedJobs.filter((job: any) => job.status === 'pending');
+                            // Sort by newest first (createdAt or submit_at)
+                            const sortedJobs = filteredJobs.sort((a: any, b: any) => {
+                                const dateA = new Date(a.createdAt || a.submit_at || 0).getTime();
+                                const dateB = new Date(b.createdAt || b.submit_at || 0).getTime();
+                                return dateB - dateA;
+                            });
+                            const totalPages = Math.ceil(sortedJobs.length / itemsPerPage);
+                            const paginatedJobs = sortedJobs.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
                             return (
+                                <>
                                 <table className="min-w-[700px] w-full divide-y divide-gray-200">
                                     <thead className="bg-gray-50">
                                         <tr>
@@ -115,12 +126,12 @@ export function DashboardContent() {
                                         </tr>
                                     </thead>
                                     <tbody className="bg-white divide-y divide-gray-200">
-                                        {filteredJobs.length === 0 ? (
+                                        {paginatedJobs.length === 0 ? (
                                             <tr>
                                                 <td colSpan={6} className="px-4 py-4 text-center text-gray-400">{t.noData}</td>
                                             </tr>
                                         ) : (
-                                            filteredJobs.map((job: any) => (
+                                            paginatedJobs.map((job: any) => (
                                                 <tr key={job.id || job._id}>
                                                     <td className="px-4 py-2 whitespace-nowrap">
                                                         {job.jobId && job.jobId.title ? job.jobId.title : (job.job_id || (job.jobId && job.jobId._id) || '-')}
@@ -145,6 +156,33 @@ export function DashboardContent() {
                                         )}
                                     </tbody>
                                 </table>
+                                {/* Pagination controls */}
+                                <div className="flex justify-center items-center gap-1 mt-2">
+                                    <button
+                                        className="px-2 py-1 rounded-full border text-xs bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
+                                        onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                                        disabled={currentPage === 1}
+                                    >
+                                        &lt;
+                                    </button>
+                                    {Array.from({ length: totalPages }, (_, i) => (
+                                        <button
+                                            key={i + 1}
+                                            className={`px-2 py-1 rounded-full border text-xs ${currentPage === i + 1 ? 'bg-blue-500 text-white' : 'bg-gray-100 hover:bg-gray-200'}`}
+                                            onClick={() => setCurrentPage(i + 1)}
+                                        >
+                                            {i + 1}
+                                        </button>
+                                    ))}
+                                    <button
+                                        className="px-2 py-1 rounded-full border text-xs bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
+                                        onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                                        disabled={currentPage === totalPages}
+                                    >
+                                        &gt;
+                                    </button>
+                                </div>
+                                </>
                             );
                         })()}
                     </div>
