@@ -160,16 +160,24 @@ const CoverLetterBuilderContent = () => {
             if (clId) {
                 try {
                     const clData = await getCLById(clId);
-                    if (clData) {
+                    if (clData && clData.templateId) {
                         const fetchedData = {
                             ...clData.data,
                             date: clData.data.date ? new Date(clData.data.date).toISOString().split('T')[0] : '',
                         };
                         setLetterData(fetchedData);
                         setClTitle(clData.title || '');
-                        const template = clData.templateId as CLTemplate;
-                        setSelectedTemplateData(template);
-                        setTemplateName(template.title.toLowerCase() as TemplateType);
+
+                        const templateIdentifier = typeof clData.templateId === 'string'
+                            ? clData.templateId
+                            : (clData.templateId as CLTemplate)._id;
+
+                        const templateDetails = await getCLTemplateById(templateIdentifier);
+
+                        if (templateDetails) {
+                            setSelectedTemplateData(templateDetails);
+                            setTemplateName(templateDetails.title.toLowerCase() as TemplateType);
+                        }
                     }
                 } catch (error) {
                     console.error("Failed to fetch CL data:", error);

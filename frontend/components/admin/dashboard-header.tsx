@@ -16,6 +16,7 @@ export function DashboardHeader() {
     document.cookie = "token=; path=/; max-age=0";
     window.location.href = '/login';
   }
+
   return (
     <header className="flex h-16 shrink-0 items-center gap-4 border-b bg-white px-6">
       <div className="flex flex-1 items-center gap-4">
@@ -27,18 +28,16 @@ export function DashboardHeader() {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="flex items-center gap-2 px-3">
               <Avatar className="h-8 w-8">
-                <AvatarImage src="/placeholder.svg?height=32&width=32" />
-                <AvatarFallback>TA</AvatarFallback>
+                <AvatarImage src="/admin.png" />
+                <AvatarFallback>A</AvatarFallback>
               </Avatar>
               <div className="text-left">
-                <p className="text-sm font-medium">Thomas Anree</p>
-                <p className="text-xs text-muted-foreground">UX Designer</p>
+                <p className="text-sm font-medium">Admin</p>
               </div>
               <ChevronDown className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem>Profile</DropdownMenuItem>
             <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
