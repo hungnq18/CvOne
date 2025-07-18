@@ -41,6 +41,7 @@ export default function ManageApplyJobClient() {
                         ? `${app.userId.first_name} ${app.userId.last_name}`
                         : 'Ứng viên';
                 const jobTitle = app?.jobId?.title || app?.jobId?.["Job Title"] || 'N/A';
+                const jobrole = app?.jobId?.role || app?.jobId?.Role || '';
                 // --- Lấy thông tin HR ---
                 let hrEmail = '';
                 let hrPhone = '';
@@ -54,7 +55,7 @@ export default function ManageApplyJobClient() {
                     }
                 } catch (e) { /* fallback giữ trống */ }
                 // --- End lấy thông tin HR ---
-                const message = `Chúc mừng bạn, ${candidateName}, hồ sơ của bạn cho vị trí ${jobTitle} đã được chấp nhận!\nVui lòng liên hệ với HR thông qua email hoặc số điện thoại bên dưới hoặc thông qua chat để xác nhận.`;
+                const message = `Chúc mừng bạn, ${candidateName}, hồ sơ của bạn cho vị trí ${jobrole} của công việc ${jobTitle} đã được chấp nhận!`;
                 const notifData = {
                     title: 'Application Approved',
                     message,
@@ -64,7 +65,8 @@ export default function ManageApplyJobClient() {
                     candidateName,
                     jobTitle,
                     hrEmail,
-                    hrPhone
+                    hrPhone,
+                    jobId: app?.jobId?._id || app?.jobId,
                 };
                 const notifRes = await sendNotification(notifData);
             }
