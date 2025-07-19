@@ -17,14 +17,16 @@ import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 
 @Controller("notifications")
 export class NotificationsController {
-  constructor(private readonly notificationsService: NotificationsService) {}
+  constructor(private readonly notificationsService: NotificationsService) { }
 
   @UseGuards(JwtAuthGuard)
   @Post()
-  async create(@Body() body: CreateNotificationDto, @Request() req) {
-    const { title, message, type, link } = body;
-    const recipient = req.user.user._id;
-
+  async create(
+    @Body() body: CreateNotificationDto & { recipient?: string },
+    @Request() req,
+  ) {
+    const { title, message, type, link, recipient } = body;
+    const recipientId = recipient || req.user.user._id;
     return this.notificationsService.createNotification(
       {
         title,
@@ -32,7 +34,7 @@ export class NotificationsController {
         type,
         link,
       },
-      recipient
+      recipientId,
     );
   }
 

@@ -1,7 +1,7 @@
 "use client"
 
 import { getApplyJobByHR } from '@/api/apiApplyJob'
-import { deleteJob, getJobsByHR, updateJob } from '@/api/jobApi'
+import { createJob, deleteJob, getJobsByHR, updateJob } from '@/api/jobApi'
 import JobDeleteDialog from '@/components/hr/JobDeleteDialog'
 import JobTableInmanageJob from '@/components/hr/JobTableInManageJob'
 import SearchInmanageJob from '@/components/hr/searchInManageJob'
@@ -61,6 +61,7 @@ export default function ManageJobPage() {
     const [statusFilter, setStatusFilter] = useState<string>('all');
     const [workTypeFilter, setWorkTypeFilter] = useState<string>('all');
     const [sortOption, setSortOption] = useState<string>('newest');
+    const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
     // Lấy dữ liệu thật từ API khi load trang
     useEffect(() => {
@@ -111,10 +112,10 @@ export default function ManageJobPage() {
     // Filter jobs
     const filteredJobs = jobs.filter(job => {
         const matchSearch =
-            job["Job Title"].toLowerCase().includes(searchTerm.toLowerCase()) ||
-            job.Role.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            job.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            job.Country.toLowerCase().includes(searchTerm.toLowerCase());
+            (job["Job Title"] || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (job.Role || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (job.location || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (job.Country || "").toLowerCase().includes(searchTerm.toLowerCase());
         const matchStatus = statusFilter === 'all' || (job.status || 'Active') === statusFilter;
         const matchWorkType = workTypeFilter === 'all' || job["Work Type"] === workTypeFilter;
         return matchSearch && matchStatus && matchWorkType;
@@ -145,44 +146,82 @@ export default function ManageJobPage() {
     const totalPages = Math.ceil(sortedJobs.length / itemsPerPage);
     const paginatedJobs = sortedJobs.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-    const handleAddJob = () => {
-        const job: Job = {
-            _id: `job_${Date.now()}`,
-            "Job Title": newJob["Job Title"] || "",
-            Role: newJob.Role || "",
-            Experience: newJob.Experience || "",
-            Qualifications: newJob.Qualifications || "",
-            "Salary Range": newJob["Salary Range"] || "",
-            location: newJob.location || "",
-            Country: newJob.Country || "",
-            "Work Type": newJob["Work Type"] || "",
-            "Job Posting Date": new Date().toLocaleDateString(),
-            "Job Description": newJob["Job Description"] || "",
-            Benefits: newJob.Benefits || "",
-            skills: newJob.skills || "",
-            Responsibilities: newJob.Responsibilities || "",
-            user_id: "current_user_id",
-            status: "Active",
-            applications: 0
+    const handleAddJob = async () => {
+        const salary = newJob["Salary Range"] || "";
+        const salaryRegex = /^\$\d{1,3}K-\$\d{1,3}K$/;
+        let newErrors: { [key: string]: string } = {};
+        // Validate required fields
+        const requiredFields = [
+            { key: "Job Title", label: "Job Title" },
+            { key: "Job Description", label: "Job Description" },
+            { key: "Role", label: "Role" },
+            { key: "Work Type", label: "Work Type" },
+            { key: "Experience", label: "Experience" },
+            { key: "Qualifications", label: "Qualifications" },
+            { key: "Salary Range", label: "Salary Range" },
+            { key: "location", label: "Location" },
+            { key: "Country", label: "Country" },
+            { key: "skills", label: "Skills" },
+            { key: "Responsibilities", label: "Responsibilities" },
+        ];
+        requiredFields.forEach(f => {
+            const value = (newJob as any)[f.key];
+            if (!value || (typeof value === 'string' && value.trim() === '')) {
+                newErrors[f.key] = `${f.label} is required.`;
+            }
+        });
+        // Validate salary format
+        if (salary && !salaryRegex.test(salary)) {
+            newErrors["Salary Range"] = 'Salary Range must be in format: $56K-$116K';
         }
-        setJobs([...jobs, job])
-        setNewJob({
-            "Job Title": "",
-            Role: "",
-            Experience: "",
-            Qualifications: "",
-            "Salary Range": "",
-            location: "",
-            Country: "",
-            "Work Type": "",
-            "Job Description": "",
-            Benefits: "",
-            skills: "",
-            Responsibilities: ""
-        })
-        setIsAddDialogOpen(false)
+        setErrors(newErrors);
+        if (Object.keys(newErrors).length > 0) {
+            return;
+        }
+        try {
+            await createJob({
+                title: newJob["Job Title"] || "",
+                description: newJob["Job Description"] || "",
+                role: newJob.Role || "",
+                workType: newJob["Work Type"] || "",
+                postingDate: new Date().toISOString(),
+                experience: newJob.Experience || "",
+                qualifications: newJob.Qualifications || "",
+                salaryRange: salary,
+                location: newJob.location || "",
+                country: newJob.Country || "",
+                benefits: typeof newJob.Benefits === 'string'
+                    ? newJob.Benefits.split(',').map(b => b.trim()).filter(Boolean)
+                    : [],
+                skills: newJob.skills || "",
+                responsibilities: newJob.Responsibilities || "",
+            });
+            // Sau khi tạo thành công, reload lại danh sách jobs
+            const jobsData = await getJobsByHR();
+            let jobsArr = Array.isArray(jobsData) ? jobsData : ((jobsData as any)?.data ? (jobsData as any).data : []);
+            setJobs(jobsArr);
+            // Reset form
+            setNewJob({
+                "Job Title": "",
+                Role: "",
+                Experience: "",
+                Qualifications: "",
+                "Salary Range": "",
+                location: "",
+                Country: "",
+                "Work Type": "",
+                "Job Description": "",
+                Benefits: "",
+                skills: "",
+                Responsibilities: ""
+            });
+            setErrors({});
+            setIsAddDialogOpen(false);
+            window.location.reload();
+        } catch (error) {
+            setErrors({ general: 'Failed to add job' });
+        }
     }
-
     const handleEditJob = async () => {
         if (selectedJob) {
             try {
@@ -256,17 +295,14 @@ export default function ManageJobPage() {
                     onChange={setNewJob}
                     onSave={handleAddJob}
                     isEdit={false}
+                    errors={errors}
                 />
-                <Button className="flex items-center gap-2 w-full sm:w-auto" onClick={() => setIsAddDialogOpen(true)}>
-                    <Plus className="h-4 w-4" />
-                    Add New Job
-                </Button>
             </div>
 
             <Card>
-                <CardHeader>
+                <CardHeader className="space-y-2">
                     <CardTitle>Job Listings</CardTitle>
-                    <div className="flex flex-wrap gap-2 mt-2">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mt-2">
                         {/* Filter by status */}
                         <select
                             className="border rounded px-2 py-1 text-sm"
@@ -301,6 +337,10 @@ export default function ManageJobPage() {
                             <option value="leastApplicants">Least Applicants</option>
                             <option value="activeFirst">Active First</option>
                         </select>
+                        <Button className="w-full mt-2 sm:ml-auto sm:w-auto sm:mt-0 flex items-center gap-2" onClick={() => setIsAddDialogOpen(true)}>
+                            <Plus className="h-4 w-4" />
+                            Add New Job
+                        </Button>
                     </div>
                     <SearchInmanageJob searchTerm={searchTerm} onSearchTermChange={setSearchTerm} />
                 </CardHeader>

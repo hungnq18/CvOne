@@ -314,12 +314,12 @@ function DropdownMenu({
           style={
             isMobile
               ? {
-                  position: "static",
-                  boxShadow: "none",
-                  border: 0,
-                  marginTop: 0,
-                  width: '100%',
-                }
+                position: "static",
+                boxShadow: "none",
+                border: 0,
+                marginTop: 0,
+                width: '100%',
+              }
               : { marginTop: "1%", boxShadow: "0 4px 16px rgba(0,0,0,0.10)" }
           }
         >
@@ -403,10 +403,10 @@ export function Header() {
     role === "admin"
       ? navigationItems[language].admin
       : role === "hr"
-      ? navigationItems[language].hr
-      : role === "user"
-      ? navigationItems[language].user
-      : navigationItems[language].default;
+        ? navigationItems[language].hr
+        : role === "user"
+          ? navigationItems[language].user
+          : navigationItems[language].default;
 
   // Custom nav for user role: group Jobs and Saved Jobs, Dashboard and My Profile
   if (role === "user") {

@@ -182,9 +182,9 @@ export default function RegisterPage() {
       <RegisterContainer>
         <LogoSide>
           <ImageWrapper>
-            <Image 
-              src={logoImg} 
-              alt="Logo" 
+            <Image
+              src={logoImg}
+              alt="Logo"
               fill
               style={{ objectFit: "contain" }}
               priority

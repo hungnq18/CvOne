@@ -5,12 +5,14 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { getUserIdFromToken } from '@/api/userApi';
 import { getUserConversations } from '@/api/apiChat';
+import { getNotifications } from '@/api/apiNotification';
 import { useAuth } from '@/hooks/use-auth';
 
 const IconChatAndNotification: React.FC = () => {
     const pathname = usePathname();
     const { user } = useAuth();
     const [unreadCount, setUnreadCount] = useState(0);
+    const [unreadNotif, setUnreadNotif] = useState(0);
     const [isMounted, setIsMounted] = useState(false);
 
     const checkUnreadMessages = async () => {
@@ -33,6 +35,20 @@ const IconChatAndNotification: React.FC = () => {
         }
     };
 
+    const checkUnreadNotifications = async () => {
+        if (!user) {
+            setUnreadNotif(0);
+            return;
+        }
+        try {
+            const notifs = await getNotifications();
+            const unread = notifs.filter((n: any) => !n.isRead).length;
+            setUnreadNotif(unread);
+        } catch {
+            setUnreadNotif(0);
+        }
+    };
+
     useEffect(() => {
         setIsMounted(true);
     }, []);
@@ -41,9 +57,13 @@ const IconChatAndNotification: React.FC = () => {
         if (!isMounted) return;
 
         checkUnreadMessages();
+        checkUnreadNotifications();
 
         // Check unread messages every 3 seconds
-        const interval = setInterval(checkUnreadMessages, 5000);
+        const interval = setInterval(() => {
+            checkUnreadMessages();
+            checkUnreadNotifications();
+        }, 5000);
 
         return () => {
             clearInterval(interval);
@@ -128,7 +148,11 @@ const IconChatAndNotification: React.FC = () => {
                         d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0"
                     />
                 </svg>
-                <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full opacity-0"></div>
+                {unreadNotif > 0 && (
+                    <div className="absolute -top-1 -right-1 min-w-[1.2em] h-5 px-1 bg-red-500 text-white text-xs rounded-full flex items-center justify-center animate-pulse">
+                        {unreadNotif > 99 ? '99+' : unreadNotif}
+                    </div>
+                )}
             </Link>
 
             <Link

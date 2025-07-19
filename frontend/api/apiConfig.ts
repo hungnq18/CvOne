@@ -84,6 +84,9 @@ export const API_ENDPOINTS = {
   },
   NOTIFICATION: {
     GET_NOTIFICATIONS: "/notifications",
+    MARK_ALL_AS_READ: "/notifications/read-all",
+    MARK_AS_READ: (id: string) => `/notifications/read/${id}`,
+    DELETE_NOTIFICATION: (id: string) => `/notifications/${id}`,
   },
   APPLYJOB: {
     COUNTBYCREATEAT: (month: number, year: number) =>
