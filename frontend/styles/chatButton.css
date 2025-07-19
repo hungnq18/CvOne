@@ -62,4 +62,21 @@
 }
 .chat-btn:active {
   transform: translate(2px, 2px);
+}
+
+/* Compact mode: luôn nhỏ, không hiện text, không hiệu ứng hover */
+.chat-btn.chat-btn--compact {
+  width: 40px !important;
+  border-radius: 50% !important;
+}
+.chat-btn.chat-btn--compact .sign {
+  width: 100% !important;
+  padding-left: 0 !important;
+}
+.chat-btn.chat-btn--compact .text {
+  display: none !important;
+}
+.chat-btn.chat-btn--compact:hover {
+  width: 40px !important;
+  border-radius: 50% !important;
 } 

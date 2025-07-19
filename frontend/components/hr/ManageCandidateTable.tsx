@@ -280,6 +280,7 @@ const ManageCandidateTable = () => {
                                         <ChatButton
                                             participantId={app.userId?._id || app.userId || app.cvId?.userId || ''}
                                             buttonText="Chat"
+                                            compact={true}
                                         />
                                         <DeleteButton onClick={() => setDeleteModal({ open: true, appId: app._id })} />
                                     </div>
