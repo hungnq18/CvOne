@@ -98,7 +98,7 @@ const CVList: React.FC<CVListProps> = ({ cvList }) => {
                 dataSource={cvList}
                 columns={columns}
                 rowKey="_id"
-                pagination={false}
+                pagination={cvList.length > 5 ? { pageSize: 5, hideOnSinglePage: true } : false}
                 className="bg-white rounded-lg"
                 rowClassName="hover:bg-blue-50 transition-colors duration-200"
             />

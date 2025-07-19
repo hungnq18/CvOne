@@ -15,6 +15,8 @@ import { Modal } from 'antd';
 import React from 'react';
 import '../../styles/manageCandidate.css';
 import PreviewCVCLModal from '@/components/hr/PreviewCVCLModal';
+import ChatButton from '@/components/ui/chatButton';
+import "@/styles/chatButton.css";
 
 const DownloadButton = ({ onClick }: { onClick?: () => void }) => (
     <button className="Btn" onClick={onClick} type="button">
@@ -275,6 +277,11 @@ const ManageCandidateTable = () => {
                                             View CL
                                         </Button>
                                         <DownloadButton onClick={() => setDownloadModal({ open: true, app })} />
+                                        <ChatButton
+                                            participantId={app.userId?._id || app.userId || app.cvId?.userId || ''}
+                                            buttonText="Chat"
+                                            compact={true}
+                                        />
                                         <DeleteButton onClick={() => setDeleteModal({ open: true, appId: app._id })} />
                                     </div>
                                 </TableCell>

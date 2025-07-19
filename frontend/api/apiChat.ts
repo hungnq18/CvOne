@@ -174,14 +174,15 @@ export const sendMessage = async (data: {
  * Create a new conversation
  */
 export const createConversation = async (
-  participantId: string
+  participants: string[]
 ): Promise<Conversation | null> => {
   try {
     const response = await fetchWithAuth(
       API_ENDPOINTS.CONVERSATION.CREATE,
       {
         method: "POST",
-        body: JSON.stringify({ participants: [participantId] }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ participants }),
       }
     );
     return response as Conversation;
