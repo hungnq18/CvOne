@@ -11,11 +11,15 @@ const translations = {
         suggestedJobs: "Các công việc được gợi ý",
         company: "Công ty",
         description: "Mô tả",
+        viewDetail: "Xem chi tiết",
+        suggested: "Gợi ý",
     },
     en: {
         suggestedJobs: "Suggested Jobs",
         company: "Company",
         description: "Description",
+        viewDetail: "View details",
+        suggested: "Suggested",
     }
 };
 
@@ -64,16 +68,38 @@ const SuggestedJobs: React.FC<SuggestedJobsProps> = ({ jobs }) => {
                 <FaLightbulb className="text-blue-600 mr-2" />
                 <h2 className="text-xl font-semibold text-blue-600">{t.suggestedJobs}</h2>
             </div>
-            <div className="flex space-x-4 overflow-x-auto scroll-smooth" ref={scrollRef}>
-                {jobs.map((job) => (
-                    <Card
-                        key={job._id}
-                        className="bg-white rounded-lg shadow-sm hover:bg-blue-50 transition-colors duration-200 min-w-[250px]"
-                    >
-                        <h3 className="text-md font-medium text-gray-900">{job.title}</h3>
-                        <p className="text-xs text-gray-600 mt-1">{job.description}</p>
-                    </Card>
-                ))}
+            <div className="flex gap-6 pb-2" ref={scrollRef}>
+                {jobs.map((job) => {
+                    // Xử lý hiển thị company nếu có
+                    let companyNode: React.ReactNode = null;
+
+                    return (
+                        <div
+                            key={job._id}
+                            className="flex-1 min-w-0 max-w-full bg-white rounded-2xl shadow-md border border-blue-100 hover:shadow-xl hover:border-blue-300 transition-all duration-200 p-5 flex flex-col gap-2 group relative"
+                            style={{ minWidth: 0 }}
+                        >
+                            <h3 className="text-lg font-semibold text-blue-700 group-hover:text-blue-900 transition-colors mb-1 truncate" title={job.title}>{job.title}</h3>
+                            <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-600 mb-1">
+                                {companyNode}
+                                {job.location && <span><span className="font-medium text-blue-500">{job.location}</span></span>}
+                            </div>
+                            {job.salaryRange && (
+                                <div className="text-sm text-green-600 font-medium mb-1">{job.salaryRange}</div>
+                            )}
+                            <p className="text-xs text-gray-500 line-clamp-3 mb-2">{job.description}</p>
+                            <button
+                                className="mt-auto px-4 py-2 bg-blue-500 text-white rounded-lg shadow hover:bg-blue-600 transition-colors text-sm font-semibold"
+                                onClick={() => window.open(`/jobPage/${job._id}`, '_blank')}
+                            >
+                                {t.viewDetail}
+                            </button>
+                            <div className="absolute top-2 right-2">
+                                <span className="inline-block px-2 py-1 text-xs bg-blue-50 text-blue-500 rounded-full border border-blue-100">{t.suggested}</span>
+                            </div>
+                        </div>
+                    );
+                })}
             </div>
             {showLeft && (
                 <button

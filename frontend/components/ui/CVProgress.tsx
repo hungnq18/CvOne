@@ -11,13 +11,13 @@ import { templateComponentMap } from '@/components/cvTemplate/index';
 
 const translations = {
     vi: {
-        title: "Tiến độ hoàn thiện hồ sơ",
+        title: "Hồ sơ mới nhất",
         completed: "hoàn thành",
         update: "Cập nhật",
         create: "Tạo CV",
     },
     en: {
-        title: "Profile Completion Progress",
+        title: "Latest profile",
         completed: "completed",
         update: "Update",
         create: "Create CV",
@@ -78,15 +78,12 @@ const ProfileProgress: React.FC<ProfileProgressProps> = ({ progress, cvImage, cv
     }
 
     return (
-        <div>
-            <div className="bg-gradient-to-r from-blue-100 to-white p-6 rounded-xl shadow-md hover:shadow-lg transition duration-300">
+        <div className="fixed top-22 left-13 w-[300px] z-30">
+            <div className="bg-blue-100 p-6 rounded-xl shadow-md hover:shadow-lg transition duration-300">
                 <div className="flex items-center mb-4">
                     <FaUserEdit className="text-blue-600 text-lg mr-2" />
                     <h2 className="text-xl font-semibold text-blue-600">{t.title}</h2>
                 </div>
-
-                <Progress percent={progress} strokeColor="#10B981" />
-                <p className="text-gray-700 text-sm mt-2">{progress}% {t.completed}</p>
 
                 {cvImage && (
                     <div className="mt-4">
