@@ -18,4 +18,7 @@ export class CreateNotificationDto {
   @IsString()
   @IsOptional()
   link?: string;
+
+  @IsString()
+  jobId: string;
 }

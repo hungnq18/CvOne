@@ -25,7 +25,7 @@ export class NotificationsController {
     @Body() body: CreateNotificationDto & { recipient?: string },
     @Request() req,
   ) {
-    const { title, message, type, link, recipient } = body;
+    const { title, message, type, link, jobId, recipient } = body;
     const recipientId = recipient || req.user.user._id;
     return this.notificationsService.createNotification(
       {
@@ -33,6 +33,7 @@ export class NotificationsController {
         message,
         type,
         link,
+        jobId,
       },
       recipientId,
     );

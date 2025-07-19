@@ -40,13 +40,8 @@ const NotificationHeader: React.FC<NotificationHeaderProps> = ({ total, unread, 
             </div>
             <div className="flex items-center gap-2">
                 {unread > 0 && (
-                    <button onClick={handleMarkAllAsRead} className="flex items-center gap-2 px-3 py-2 rounded border bg-white hover:bg-gray-100 text-gray-700 text-sm font-medium">
+                    <button onClick={handleMarkAllAsRead} className="flex items-center  px-3 py-2 rounded border bg-white hover:bg-gray-100 text-gray-700 text-sm font-medium">
                         <CheckCheck className="h-4 w-4" /> {t.markAllAsRead}
-                    </button>
-                )}
-                {total > 0 && (
-                    <button onClick={handleClearAll} className="flex items-center gap-2 px-3 py-2 rounded border bg-white hover:bg-red-50 text-red-600 text-sm font-medium">
-                        <Trash2 className="h-4 w-4" /> {t.clearAll}
                     </button>
                 )}
             </div>

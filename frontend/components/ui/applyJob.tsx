@@ -16,6 +16,7 @@ const translations = {
         location: "Địa điểm",
         salary: "Lương",
         workType: "Loại việc",
+        viewAll: "Xem tất cả",
     },
     en: {
         appliedJobs: "Applied Jobs",
@@ -26,6 +27,7 @@ const translations = {
         location: "Location",
         salary: "Salary",
         workType: "Work Type",
+        viewAll: "View all",
     }
 };
 
@@ -51,12 +53,45 @@ const AppliedJobs: React.FC<AppliedJobsProps> = ({ jobs }) => {
 
     return (
         <div className="bg-gradient-to-r from-blue-100 to-white p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 relative">
-            <div className="flex items-center mb-4">
+            <div className="flex items-center mb-4 relative">
                 <FaBriefcase className="text-blue-600 mr-2" />
                 <h2 className="text-xl font-semibold text-blue-600">{t.appliedJobs}</h2>
+                <button
+                    className="absolute right-0 top-0 flex items-center px-7 py-2 overflow-hidden font-medium transition-all bg-blue-500 rounded-md group mb-1 text-sm"
+                    onClick={() => window.location.href = '/myJobs'}
+                    title={language === 'vi' ? 'Xem tất cả việc đã ứng tuyển' : 'View all applied jobs'}
+                    style={{ zIndex: 1 }}
+                >
+                    <span
+                        className="absolute top-0 right-0 inline-block w-4 h-4 transition-all duration-500 ease-in-out bg-blue-600 rounded group-hover:-mr-4 group-hover:-mt-4"
+                    >
+                        <span
+                            className="absolute top-0 right-0 w-5 h-5 rotate-45 translate-x-1/2 -translate-y-1/2 bg-white"
+                        ></span>
+                    </span>
+                    <span
+                        className="absolute bottom-0 rotate-180 left-0 inline-block w-4 h-4 transition-all duration-500 ease-in-out bg-blue-600 rounded group-hover:-ml-4 group-hover:-mb-4"
+                    >
+                        <span
+                            className="absolute top-0 right-0 w-5 h-5 rotate-45 translate-x-1/2 -translate-y-1/2 bg-white"
+                        ></span>
+                    </span>
+                    <span
+                        className="absolute bottom-0 left-0 w-full h-full transition-all duration-500 ease-in-out delay-200 -translate-x-full bg-blue-400 rounded-md group-hover:translate-x-0"
+                    ></span>
+                    <span
+                        className="relative w-full text-left text-white transition-colors duration-200 ease-in-out group-hover:text-white font-semibold"
+                    >
+                        {t.viewAll}
+                    </span>
+                </button>
             </div>
             <div className="grid grid-cols-1 gap-4">
-                {jobs.map((job) => {
+                {(jobs
+                    .slice() // copy array
+                    .sort((a, b) => new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime())
+                    .slice(0, 3)
+                ).map((job) => {
                     // jobId có thể là object hoặc string
                     const jobObj = typeof job.jobId === 'object' && job.jobId !== null ? job.jobId : null;
                     return (
