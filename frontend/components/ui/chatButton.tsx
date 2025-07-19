@@ -15,7 +15,7 @@ interface ChatButtonProps {
 const ChatButton: React.FC<ChatButtonProps> = ({
     participantId,
     buttonText = "Chat",
-    className = "Btn ml-2",
+    className = "chat-btn ml-2",
     style = {},
     onCreated,
     children,
@@ -33,7 +33,7 @@ const ChatButton: React.FC<ChatButtonProps> = ({
             const conversation = await createConversation([currentUserId, participantId]);
             if (conversation?._id) {
                 if (onCreated) onCreated(conversation._id);
-                else router.push(`/chat/${conversation._id}`);
+                else router.push(`/chat`);
             }
         } finally {
             setLoading(false);

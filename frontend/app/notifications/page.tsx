@@ -19,6 +19,7 @@ import NotificationCard from "@/components/chatAndNotification/NotificationCard"
 import NotificationModal from "@/components/chatAndNotification/NotificationModal";
 import { Pagination } from "antd";
 
+
 type Notification = NotificationBase & { isRead?: boolean };
 
 const notificationTranslations = {
