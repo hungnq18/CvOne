@@ -1,4 +1,4 @@
- "use client";
+"use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
 import React, { useEffect, useState, useRef } from "react";
@@ -25,8 +25,96 @@ import { useCV } from "@/providers/cv-provider";
 import { useOnClickOutside } from "@/hooks/useOnClickOutside";
 import { jwtDecode } from "jwt-decode";
 import { CVAIEditorPopupsManager } from "@/components/forms/CV-AIEditorPopup";
+// BƯỚC 1: Import hook để lấy ngôn ngữ
+import { useLanguage } from "@/providers/global-provider";
 
-// --- INTERFACES & TYPES ---
+// BƯỚC 2: TẠO ĐỐI TƯỢNG TRANSLATIONS ---
+const translations = {
+  en: {
+    // Sidebar Sections
+    personalInfo: "Personal Information",
+    contact: "Contact",
+    careerObjective: "Career Objective",
+    workExperience: "Work Experience",
+    education: "Education",
+    skills: "Skills",
+    cvSections: "CV SECTIONS",
+
+    // Header & Buttons
+    editCv: "Edit CV",
+    editTitleTooltip: "Click to edit title",
+    cvTemplates: "CV TEMPLATES",
+    goBack: "Go Back",
+    saving: "Saving...",
+    complete: "Complete",
+    
+    // Main Content & Loaders
+    loadingTemplate: "Loading Template...",
+    templateComponentNotFound: (title: string) => `Component for "${title}" not found.`,
+    
+    // Actions
+    download: "Download",
+    print: "Print CV",
+    email: "Email",
+    
+    // Alerts & Messages
+    errorDecodingToken: "Error decoding token:",
+    noDataToSave: "No data or CV template to save.",
+    cvDataEmpty: "CV data is empty, cannot save.",
+    saveSuccess: "CV saved successfully!",
+    saveError: "An error occurred while saving your CV.",
+    pdfCreateEnvError: "Cannot create environment to export PDF.",
+    pdfCreateError: "An error occurred while exporting the PDF file.",
+
+    // Dynamic titles
+    loadingTemplateForNew: "Loading template to create new...",
+    cvTitleDefault: (title: string) => `CV - ${title}`,
+    cvForUser: (name: string) => `CV for ${name || "Untitled"}`,
+  },
+  vi: {
+    // Sidebar Sections
+    personalInfo: "Thông tin cá nhân",
+    contact: "Liên hệ",
+    careerObjective: "Mục tiêu sự nghiệp",
+    workExperience: "Kinh nghiệm làm việc",
+    education: "Học vấn",
+    skills: "Kỹ năng",
+    cvSections: "CÁC MỤC CỦA CV",
+
+    // Header & Buttons
+    editCv: "Chỉnh Sửa CV",
+    editTitleTooltip: "Click để chỉnh sửa tiêu đề",
+    cvTemplates: "MẪU CV",
+    goBack: "Quay Lại",
+    saving: "Đang lưu...",
+    complete: "Hoàn Thành",
+
+    // Main Content & Loaders
+    loadingTemplate: "Đang tải Mẫu...",
+    templateComponentNotFound: (title: string) => `Không tìm thấy component cho "${title}".`,
+    
+    // Actions
+    download: "Tải về",
+    print: "In CV",
+    email: "Email",
+
+    // Alerts & Messages
+    errorDecodingToken: "Lỗi giải mã token:",
+    noDataToSave: "Chưa có dữ liệu hoặc mẫu CV để lưu.",
+    cvDataEmpty: "Dữ liệu CV trống, không thể lưu.",
+    saveSuccess: "Lưu CV thành công!",
+    saveError: "Có lỗi xảy ra khi lưu CV của bạn.",
+    pdfCreateEnvError: "Không thể tạo môi trường để xuất PDF.",
+    pdfCreateError: "Đã có lỗi xảy ra khi xuất file PDF.",
+    
+    // Dynamic titles
+    loadingTemplateForNew: "Đang tải template để tạo mới...",
+    cvTitleDefault: (title: string) => `CV - ${title}`,
+    cvForUser: (name: string) => `CV cho ${name || "Chưa có tên"}`,
+  },
+};
+
+// --- INTERFACES & TYPES (Không đổi) ---
 interface DecodedToken {
   sub: string;
   role: string;
@@ -36,17 +124,22 @@ const DropdownArrow = () => (
   <span className="absolute -top-[8px] left-1/2 -translate-x-1/2 w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-b-[8px] border-b-white" />
 );
 
-const sidebarSections = [
-  { id: "info", title: "Thông tin cá nhân" },
-  { id: "contact", title: "Liên hệ" },
-  { id: "summary", title: "Mục tiêu sự nghiệp" },
-  { id: "experience", title: "Kinh nghiệm làm việc" },
-  { id: "education", title: "Học vấn" },
-  { id: "skills", title: "Kỹ năng" },
-];
-
 
 const PageCreateCVAIContent = () => {
+  // BƯỚC 3: SỬ DỤNG HOOK VÀ LẤY ĐÚNG BỘ TỪ ĐIỂN
+  const { language } = useLanguage();
+  const t = translations[language];
+
+  // BƯỚC 4: TẠO MẢNG sidebarSections ĐỘNG
+  const sidebarSections = [
+    { id: "info", title: t.personalInfo },
+    { id: "contact", title: t.contact },
+    { id: "summary", title: t.careerObjective },
+    { id: "experience", title: t.workExperience },
+    { id: "education", title: t.education },
+    { id: "skills", title: t.skills },
+  ];
+
   const searchParams = useSearchParams();
   const router = useRouter();
   const id = searchParams.get("id");
@@ -57,7 +150,6 @@ const PageCreateCVAIContent = () => {
   const [activePopup, setActivePopup] = useState<string | null>(null);
   const [allTemplates, setAllTemplates] = useState<CVTemplate[]>([]);
   const [showTemplatePopup, setShowTemplatePopup] = useState(false);
-  const [showColorPopup, setShowColorPopup] = useState(false);
   const [cvId, setCvId] = useState<string | null>(id);
   const [isDirty, setIsDirty] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -65,11 +157,9 @@ const PageCreateCVAIContent = () => {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
 
   const templateDropdownRef = useRef(null);
-  const colorDropdownRef = useRef(null);
   const previewRef = useRef<HTMLDivElement>(null);
 
   useOnClickOutside(templateDropdownRef, () => setShowTemplatePopup(false));
-  useOnClickOutside(colorDropdownRef, () => setShowColorPopup(false));
 
   useEffect(() => {
     getCVTemplates().then((data) => setAllTemplates(data));
@@ -84,7 +174,6 @@ const PageCreateCVAIContent = () => {
             if (templateData.title) {
               setCvTitle(templateData.title);
             }
-            // Ưu tiên userData từ context, nếu không có thì mới lấy từ DB
             if ((!userData || Object.keys(userData).length === 0) && templateData.content?.userData) {
               updateUserData(templateData.content.userData);
             }
@@ -92,16 +181,15 @@ const PageCreateCVAIContent = () => {
           setLoading(false);
         })
         .catch(() => {
-          console.log("Đang tải template để tạo mới...");
+          console.log(t.loadingTemplateForNew);
           setCvId(null);
           getCVTemplateById(idFromUrl).then((templateData) => {
             if (templateData) {
               loadTemplate(templateData);
-              // Ưu tiên userData từ context, nếu không có thì mới lấy từ DB
               if ((!userData || Object.keys(userData).length === 0) && templateData.data?.userData) {
                 updateUserData(templateData.data.userData);
               }
-              setCvTitle(`CV - ${templateData.title}`);
+              setCvTitle(t.cvTitleDefault(templateData.title));
             }
             setLoading(false);
           });
@@ -109,13 +197,14 @@ const PageCreateCVAIContent = () => {
     } else {
       setLoading(false);
     }
-  }, [id, loadTemplate, updateUserData, userData]);
+  }, [id, loadTemplate, updateUserData, userData, t]);
 
   const handleTemplateSelect = (selectedTemplate: CVTemplate) => {
+    // Sửa lại URL cho đúng với trang AI
     router.push(
       `/createCV-AIManual?id=${selectedTemplate._id}`
     );
-    setCvTitle(`CV - ${selectedTemplate.title}`);
+    setCvTitle(t.cvTitleDefault(selectedTemplate.title));
     setShowTemplatePopup(false);
   };
 
@@ -135,7 +224,7 @@ const PageCreateCVAIContent = () => {
       const decoded = jwtDecode<DecodedToken>(token);
       return decoded.sub;
     } catch (error) {
-      console.error("Lỗi giải mã token:", error);
+      console.error(t.errorDecodingToken, error);
       return null;
     }
   };
@@ -143,11 +232,11 @@ const PageCreateCVAIContent = () => {
   const handleSaveToDB = async (): Promise<boolean> => {
     const userId = getUserIdFromToken();
     if (!userData || !currentTemplate) {
-      alert("Chưa có dữ liệu hoặc mẫu CV để lưu.");
+      alert(t.noDataToSave);
       return false;
     }
     if (Object.keys(userData).length === 0) {
-      alert("Dữ liệu CV trống, không thể lưu.");
+      alert(t.cvDataEmpty);
       return false;
     }
 
@@ -156,14 +245,14 @@ const PageCreateCVAIContent = () => {
       if (cvId) {
         const dataToUpdate: Partial<CV> = {
           content: { userData },
-          title: cvTitle || `CV for ${userData.firstName || "Untitled"}`,
+          title: cvTitle || t.cvForUser(userData.firstName),
           updatedAt: new Date().toISOString(),
         };
         await updateCV(cvId, dataToUpdate);
       } else {
         const dataToCreate: Omit<CV, "_id"> = {
           userId: userId || "", 
-          title: cvTitle || `CV for ${userData.firstName} ${userData.lastName}`,
+          title: cvTitle || t.cvForUser(`${userData.firstName} ${userData.lastName}`),
           content: { userData },
           isPublic: false,
           createdAt: new Date().toISOString(),
@@ -175,15 +264,16 @@ const PageCreateCVAIContent = () => {
         const newCV = await createCV(dataToCreate);
         if (newCV && newCV.id) {
           setCvId(newCV.id);
+          // Sửa lại URL cho đúng với trang AI
           router.replace(`/createCV-AIManual?id=${newCV.id}`, { scroll: false });
         }
       }
-      alert("Lưu CV thành công!");
+      alert(t.saveSuccess);
       setIsDirty(false);
       return true;
     } catch (error) {
-      console.error("Lỗi khi lưu CV:", error);
-      alert("Có lỗi xảy ra khi lưu CV của bạn.");
+      console.error(t.saveError, error);
+      alert(t.saveError);
       return false;
     } finally {
       setIsSaving(false);
@@ -211,7 +301,6 @@ const PageCreateCVAIContent = () => {
       userData: userData,
     };
 
-    // LƯU Ý: Bạn vẫn cần lấy chuỗi Base64 của font chữ mà bạn đang dùng và thay vào đây.
     const fontBase64 = "data:font/woff2;base64,d09GMgABAAAAA... (thay bằng chuỗi Base64 thật của font bạn dùng)";
     const fontName = 'CVFont';
 
@@ -235,50 +324,42 @@ const PageCreateCVAIContent = () => {
     );
   };
 
-  // HÀM TẠO PDF PHIÊN BẢN CUỐI CÙNG, SỬ DỤNG IFRAME
   const handleDownloadPDF = async () => {
-    // 1. Tạo một iframe ẩn để tạo môi trường render biệt lập
     const iframe = document.createElement('iframe');
     iframe.style.position = 'fixed';
     iframe.style.width = '794px';
-    iframe.style.height = '1123px'; // Tỷ lệ A4
-    iframe.style.left = '-9999px'; // Đẩy ra ngoài màn hình
+    iframe.style.height = '1123px';
+    iframe.style.left = '-9999px';
     document.body.appendChild(iframe);
 
     const iframeDoc = iframe.contentWindow?.document;
     if (!iframeDoc) {
-      alert("Không thể tạo môi trường để xuất PDF.");
+      alert(t.pdfCreateEnvError);
       document.body.removeChild(iframe);
       return;
     }
     
-    // 2. Sao chép tất cả các file CSS từ trang chính vào iframe
     const head = iframeDoc.head;
     document.querySelectorAll('style, link[rel="stylesheet"]').forEach(node => {
         head.appendChild(node.cloneNode(true));
     });
 
-    // 3. Tạo một div root bên trong iframe để React render vào
     const mountNode = iframeDoc.createElement('div');
     iframeDoc.body.appendChild(mountNode);
 
     let root: any = null;
     
     try {
-      // Đợi một chút để CSS trong iframe được áp dụng
       await new Promise(resolve => setTimeout(resolve, 300));
 
-      // 4. Render component vào root của iframe bằng API của React 18
       const { createRoot } = await import('react-dom/client');
       root = createRoot(mountNode);
       root.render(renderCVForPDF());
       
-      // Đợi thêm một chút cho React render và các tài nguyên (ảnh) tải xong
       await new Promise(resolve => setTimeout(resolve, 500)); 
 
       const html2pdf = (await import("html2pdf.js"))?.default || (await import("html2pdf.js"));
       
-      // 5. Xuất PDF từ body của iframe
       await html2pdf()
         .from(iframe.contentWindow.document.body)
         .set({
@@ -291,10 +372,9 @@ const PageCreateCVAIContent = () => {
         .save();
 
     } catch (error) {
-      console.error("Lỗi khi tạo PDF:", error);
-      alert("Đã có lỗi xảy ra khi xuất file PDF.");
+      console.error(t.pdfCreateError, error);
+      alert(t.pdfCreateError);
     } finally {
-      // 6. Luôn dọn dẹp iframe sau khi xong việc để tránh rò rỉ bộ nhớ
       if (root) {
         root.unmount();
       }
@@ -306,11 +386,11 @@ const PageCreateCVAIContent = () => {
 
   const renderCVPreview = () => {
     if (loading || !currentTemplate || !userData) {
-      return <p className="text-center">Đang tải Mẫu...</p>;
+      return <p className="text-center">{t.loadingTemplate}</p>;
     }
     const TemplateComponent = templateComponentMap?.[currentTemplate.title];
     if (!TemplateComponent) {
-      return <div>Không tìm thấy component cho "{currentTemplate.title}".</div>;
+      return <div>{t.templateComponentNotFound(currentTemplate.title)}</div>;
     }
     const componentData = {
       ...currentTemplate.data,
@@ -387,40 +467,19 @@ const PageCreateCVAIContent = () => {
               <h1 
                 className="text-2xl font-bold cursor-pointer hover:text-blue-300 transition-colors"
                 onClick={handleTitleEdit}
-                title="Click để chỉnh sửa tiêu đề"
+                title={t.editTitleTooltip}
               >
-                {cvTitle || (currentTemplate ? currentTemplate.title : "Chỉnh Sửa CV")}
+                {cvTitle || (currentTemplate ? t.cvTitleDefault(currentTemplate.title) : t.editCv)}
               </h1>
             )}
           </div>
           <div className="flex items-center gap-4">
-            <div className="relative" ref={colorDropdownRef}>
-              <button
-                onClick={() => setShowColorPopup(!showColorPopup)}
-                className="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-md text-sm font-semibold"
-              >
-                MÀU SẮC
-              </button>
-              {showColorPopup && (
-                <div
-                  className="absolute top-full mt-3 bg-white rounded-md shadow-lg"
-                  style={{ left: "-7%" }}
-                >
-                  <DropdownArrow />
-                  <div className="flex gap-2 p-3">
-                    <button className="w-6 h-6 rounded-full bg-red-500 hover:ring-2 ring-offset-2 ring-red-500"></button>
-                    <button className="w-6 h-6 rounded-full bg-blue-500 hover:ring-2 ring-offset-2 ring-blue-500"></button>
-                    <button className="w-6 h-6 rounded-full bg-green-500 hover:ring-2 ring-offset-2 ring-green-500"></button>
-                  </div>
-                </div>
-              )}
-            </div>
             <div className="relative" ref={templateDropdownRef}>
               <button
                 onClick={() => setShowTemplatePopup(!showTemplatePopup)}
                 className="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-md text-sm font-semibold"
               >
-                MẪU CV
+                {t.cvTemplates}
               </button>
               {showTemplatePopup && (
                 <div
@@ -468,7 +527,7 @@ const PageCreateCVAIContent = () => {
             disabled={isSaving}
             className="bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 px-6 rounded-lg flex items-center gap-2 disabled:opacity-50"
           >
-            <ArrowLeft size={18} /> Quay Lại
+            <ArrowLeft size={18} /> {t.goBack}
           </button>
           <button
             onClick={handleFinish}
@@ -480,7 +539,7 @@ const PageCreateCVAIContent = () => {
             ) : (
               <CheckCircle2 size={18} />
             )}
-            {isSaving ? "Đang lưu..." : "Hoàn Thành"}{" "}
+            {isSaving ? t.saving : t.complete}{" "}
           </button>
         </div>
       </header>
@@ -488,7 +547,7 @@ const PageCreateCVAIContent = () => {
       <main className="flex-grow flex overflow-hidden">
         <aside className="w-72 bg-white p-6 border-r border-slate-200 overflow-y-auto">
           <h2 className="text-sm font-bold uppercase text-slate-500 mb-4">
-            CÁC MỤC CỦA CV
+            {t.cvSections}
           </h2>
           <nav className="flex flex-col gap-1">
             {sidebarSections.map((section) => (
@@ -521,13 +580,13 @@ const PageCreateCVAIContent = () => {
               className="w-full flex items-center gap-3 p-3 rounded-md text-slate-700 hover:bg-slate-100 font-medium"
               onClick={handleDownloadPDF}
             >
-              <FileDown size={20} /> Tải về
+              <FileDown size={20} /> {t.download}
             </button>
             <button className="w-full flex items-center gap-3 p-3 rounded-md text-slate-700 hover:bg-slate-100 font-medium">
-              <Printer size={20} /> In CV
+              <Printer size={20} /> {t.print}
             </button>
             <button className="w-full flex items-center gap-3 p-3 rounded-md text-slate-700 hover:bg-slate-100 font-medium">
-              <Mail size={20} /> Email
+              <Mail size={20} /> {t.email}
             </button>
           </div>
         </aside>
