@@ -8,11 +8,14 @@ import { ArrowLeftOutlined, EnvironmentOutlined, DollarCircleOutlined, CalendarO
 import '../../styles/job-detail-apply.css';
 import { getAllCVs, CV } from '@/api/cvapi';
 import { getCLs, CL } from '@/api/clApi';
+import { createApplyJob } from '@/api/apiApplyJob';
 import FastApplyModal from '@/components/modals/FastApplyModal';
 import { useLanguage } from '@/providers/global-provider';
-import { useRouter } from "next/navigation";
-import { useCV } from "@/providers/cv-provider";
-
+import { useRouter } from 'next/navigation';
+import { useCV } from '@/providers/cv-provider';
+import { uploadFileToCloudinary } from '@/utils/uploadCloudinary/upload';
+import { fetchWithAuth } from '@/api/apiClient';
+import { API_ENDPOINTS } from '@/api/apiConfig';
 
 interface JobDetailClientProps {
     id: string;
@@ -21,7 +24,6 @@ interface JobDetailClientProps {
 export default function JobDetailClient({ id }: JobDetailClientProps) {
     const router = useRouter();
     const { setJobDescription, jobDescription } = useCV();
-
     const [job, setJob] = useState<Job | null>(null);
     const [relatedJobs, setRelatedJobs] = useState<Job[]>([]);
     const [loading, setLoading] = useState(true);
@@ -42,7 +44,7 @@ export default function JobDetailClient({ id }: JobDetailClientProps) {
     const [formError, setFormError] = useState('');
     const [clMode, setClMode] = useState<'library' | 'upload'>('library');
     const [clUploadFile, setClUploadFile] = useState<File | null>(null);
-    const [clUploadName, setClUploadName] = useState('');
+    const [skipCoverLetter, setSkipCoverLetter] = useState(false);
 
     const translations = {
         vi: {
@@ -70,6 +72,23 @@ export default function JobDetailClient({ id }: JobDetailClientProps) {
             relatedJobs: 'Việc liên quan',
             status: 'Trạng thái:',
             submittedOn: 'Ngày nộp:',
+            selectCV: 'Chọn CV',
+            chooseFromLibrary: 'Chọn từ thư viện',
+            uploadFromComputer: 'Tải lên từ máy tính',
+            selectCL: 'Chọn Cover Letter',
+            chooseCLFromLibrary: 'Chọn Cover Letter từ thư viện',
+            uploadCLFromComputer: 'Tải lên Cover Letter từ máy tính',
+            youNeedToLogin: 'Bạn cần đăng nhập để ứng tuyển',
+            submit: 'Nộp đơn',
+            uploading: 'Đang tải lên...',
+            cancel: 'Hủy',
+            mustProvideCvIdOrCvUrl: 'Phải cung cấp ít nhất CV ID hoặc URL CV',
+            mustProvideCoverletterIdOrCoverletterUrl: 'Phải cung cấp ít nhất Cover Letter ID hoặc URL Cover Letter',
+            skipCoverLetter: 'Bỏ qua Cover Letter',
+            fastApply: 'Ứng tuyển nhanh',
+            submitSuccess: 'Nộp đơn thành công!',
+            submitError: 'Có lỗi xảy ra khi nộp đơn. Vui lòng thử lại.',
+            uploadError: 'Lỗi tải file lên Cloudinary. Vui lòng thử lại.',
         },
         en: {
             backToJobs: 'Back to Jobs',
@@ -96,7 +115,24 @@ export default function JobDetailClient({ id }: JobDetailClientProps) {
             relatedJobs: 'Related Jobs',
             status: 'Status:',
             submittedOn: 'Submitted on:',
-        }
+            selectCV: 'Select CV',
+            chooseFromLibrary: 'Choose from library',
+            uploadFromComputer: 'Upload from computer',
+            selectCL: 'Select Cover Letter',
+            chooseCLFromLibrary: 'Choose Cover Letter from library',
+            uploadCLFromComputer: 'Upload Cover Letter from computer',
+            youNeedToLogin: 'You need to login to apply',
+            submit: 'Submit',
+            uploading: 'Uploading...',
+            cancel: 'Cancel',
+            mustProvideCvIdOrCvUrl: 'Must provide at least CV ID or CV URL',
+            mustProvideCoverletterIdOrCoverletterUrl: 'Must provide at least Cover Letter ID or Cover Letter URL',
+            skipCoverLetter: 'Skip Cover Letter',
+            fastApply: 'Fast Apply',
+            submitSuccess: 'Application submitted successfully!',
+            submitError: 'An error occurred while submitting the application. Please try again.',
+            uploadError: 'Error uploading file to Cloudinary. Please try again.',
+        },
     };
     const { language } = useLanguage ? useLanguage() : { language: 'en' };
     const lang: 'vi' | 'en' = language === 'vi' ? 'vi' : 'en';
@@ -112,7 +148,6 @@ export default function JobDetailClient({ id }: JobDetailClientProps) {
                     return;
                 }
                 setJob(jobData);
-                // Fetch related jobs
                 const related = await findRelatedLocalJobs(jobData, 3);
                 setRelatedJobs(related);
             } catch (err) {
@@ -129,15 +164,16 @@ export default function JobDetailClient({ id }: JobDetailClientProps) {
         if (showFastModal) {
             setApplyMode('library');
             setClMode('library');
+            setSkipCoverLetter(false);
             getAllCVs().then(res => {
                 const cvs = Array.isArray(res) ? res : [];
                 setCvList(cvs);
-                setSelectedCV(''); // Không tự động chọn
+                setSelectedCV('');
             });
             getCLs().then(res => {
                 const cls = Array.isArray(res) ? res : [];
                 setClList(cls);
-                setSelectedCL(''); // Không tự động chọn
+                setSelectedCL('');
             });
         }
     }, [showFastModal]);
@@ -155,17 +191,17 @@ export default function JobDetailClient({ id }: JobDetailClientProps) {
             .find((row) => row.startsWith('token='))
             ?.split('=')[1];
         if (!token) {
-            alert('Bạn cần đăng nhập trước khi lưu công việc!');
-            window.location.href = '/login';
+            message.error(t.youNeedToLogin);
+            router.push('/login');
             return;
         }
         if (!job) return;
         setSaving(true);
         try {
             await saveJob(job._id);
-            message.success('Job saved successfully!');
+            message.success(t.saveJob + ' successfully!');
         } catch (err) {
-            message.error('Failed to save job. Please login or try again.');
+            message.error(t.submitError);
         } finally {
             setSaving(false);
         }
@@ -177,10 +213,47 @@ export default function JobDetailClient({ id }: JobDetailClientProps) {
             .find((row) => row.startsWith('token='))
             ?.split('=')[1];
         if (!token) {
-            window.location.href = `/login?redirect=/jobPage/${id}`;
+            message.error(t.youNeedToLogin);
+            router.push(`/login?redirect=/jobPage/${id}`);
             return;
         }
         setShowFastModal(true);
+    };
+
+    const handleApply = () => {
+        const token = document.cookie
+            .split('; ')
+            .find((row) => row.startsWith('token='))
+            ?.split('=')[1];
+        if (!token) {
+            message.error(t.youNeedToLogin);
+            router.push(`/login?redirect=/jobPage/${id}`);
+            return;
+        }
+        router.push(`/user/applyOption?jobId=${job?._id}`);
+    };
+
+    const handleApplyDetail = () => {
+        const jdString =
+            `description: ${job?.description || ''}\n` +
+            `role: ${job?.role || ''}\n` +
+            `workType: ${job?.workType || ''}\n` +
+            `experience: ${job?.experience || ''}\n` +
+            `qualifications: ${job?.qualifications || ''}\n` +
+            `skills: ${job?.skills || ''}\n` +
+            `responsibilities: ${job?.responsibilities || ''}`;
+        setJobDescription(jdString);
+        localStorage.setItem('jobDescription', jdString);
+        const token = document.cookie
+            .split('; ')
+            .find((row) => row.startsWith('token='))
+            ?.split('=')[1];
+        if (!token) {
+            message.error(t.youNeedToLogin);
+            router.push(`/login?redirect=/jobPage/${id}`);
+            return;
+        }
+        router.push(`/user/applyOption?jobId=${job?._id}`);
     };
 
     if (loading) {
@@ -207,7 +280,7 @@ export default function JobDetailClient({ id }: JobDetailClientProps) {
     }
 
     return (
-        <div className="min-h-screen ">
+        <div className="min-h-screen">
             <div className="container mx-auto p-4 sm:p-6 lg:p-8">
                 <Link href="/jobPage" className="text-blue-500 hover:text-blue-700 mb-6 inline-flex items-center gap-2">
                     <ArrowLeftOutlined /> {t.backToAllJobs}
@@ -229,24 +302,38 @@ export default function JobDetailClient({ id }: JobDetailClientProps) {
                     {/* Main column */}
                     <div className="lg:col-span-2 bg-white p-6 sm:p-8 rounded-xl shadow-xl">
                         <div className="mt-0 border-l-4 border-blue-500 p-4 mb-6 rounded-md bg-white">
-                            <h2 className="text-xl font-semibold text-blue-700 mb-2 flex items-center gap-2"><ProfileOutlined /> {t.jobDescription}</h2>
+                            <h2 className="text-xl font-semibold text-blue-700 mb-2 flex items-center gap-2">
+                                <ProfileOutlined /> {t.jobDescription}
+                            </h2>
                             <p className="text-gray-700 whitespace-pre-line text-sm">{job.description}</p>
                         </div>
 
                         <div className="border-l-4 border-blue-500 p-4 mb-6 rounded-md bg-white">
-                            <h2 className="text-xl font-semibold text-blue-600 mb-2 flex items-center gap-2"><ThunderboltOutlined /> {t.responsibilities}</h2>
+                            <h2 className="text-xl font-semibold text-blue-600 mb-2 flex items-center gap-2">
+                                <ThunderboltOutlined /> {t.responsibilities}
+                            </h2>
                             <p className="text-gray-700 whitespace-pre-line text-sm">{job.responsibilities}</p>
                         </div>
 
                         <div className="border-l-4 border-blue-500 p-4 rounded-md bg-white">
-                            <h2 className="text-xl font-semibold text-blue-700 mb-2 flex items-center gap-2"><CheckCircleOutlined /> {t.qualifications}</h2>
+                            <h2 className="text-xl font-semibold text-blue-700 mb-2 flex items-center gap-2">
+                                <CheckCircleOutlined /> {t.qualifications}
+                            </h2>
                             <div className="space-y-4">
-                                <p className="text-gray-700 text-sm"><strong className="font-medium">{t.qualificationsLabel}</strong> {job.qualifications}</p>
-                                <p className="text-gray-700 text-sm"><strong className="font-medium">{t.experience}</strong> {job.experience}</p>
+                                <p className="text-gray-700 text-sm">
+                                    <strong className="font-medium">{t.qualificationsLabel}</strong> {job.qualifications}
+                                </p>
+                                <p className="text-gray-700 text-sm">
+                                    <strong className="font-medium">{t.experience}</strong> {job.experience}
+                                </p>
                                 <div>
                                     <strong className="font-medium">{t.skills}</strong>
                                     <div className="flex flex-wrap gap-2 mt-2">
-                                        {job.skills.split(',').map((skill, index) => <Tag key={index} className="bg-blue-100 text-blue-700 border border-blue-200">{skill.trim()}</Tag>)}
+                                        {job.skills.split(',').map((skill, index) => (
+                                            <Tag key={index} className="bg-blue-100 text-blue-700 border border-blue-200">
+                                                {skill.trim()}
+                                            </Tag>
+                                        ))}
                                     </div>
                                 </div>
                             </div>
@@ -296,17 +383,7 @@ export default function JobDetailClient({ id }: JobDetailClientProps) {
                                     {!split && (
                                         <button
                                             className="apply-split-main bg-indigo-600 text-white shadow-lg hover:bg-indigo-700 transition-all duration-200 font-semibold px-6 py-2 rounded-2xl text-center cursor-pointer w-full h-[44px]"
-                                            onClick={() => {
-                                                const token = document.cookie
-                                                    .split('; ')
-                                                    .find((row) => row.startsWith('token='))
-                                                    ?.split('=')[1];
-                                                if (!token) {
-                                                    window.location.href = `/login?redirect=/jobPage/${id}`;
-                                                    return;
-                                                }
-                                                window.location.href = `/user/applyOption?jobId=${job._id}`;
-                                            }}
+                                            onClick={handleApply}
                                         >
                                             {t.apply}
                                         </button>
@@ -321,27 +398,7 @@ export default function JobDetailClient({ id }: JobDetailClientProps) {
                                             </button>
                                             <button
                                                 className="apply-split-btn bg-indigo-600 text-white shadow-lg hover:bg-indigo-700 transition-all duration-200 font-semibold px-6 py-2 rounded-r-2xl text-center cursor-pointer w-full h-[44px]"
-                                                onClick={() => {
-                                                    const jdString =
-                                                        `description: ${job.description || ""}\n` +
-                                                        `role: ${job.role || ""}\n` +
-                                                        `workType: ${job.workType || ""}\n` +
-                                                        `experience: ${job.experience || ""}\n` +
-                                                        `qualifications: ${job.qualifications || ""}\n` +
-                                                        `skills: ${job.skills || ""}\n` +
-                                                        `responsibilities: ${job.responsibilities || ""}`;
-                                                    setJobDescription(jdString);
-                                                    localStorage.setItem('jobDescription', jdString);
-                                                    const token = document.cookie
-                                                        .split("; ")
-                                                        .find((row) => row.startsWith("token="))
-                                                        ?.split("=")[1];
-                                                    if (!token) {
-                                                        router.push(`/login?redirect=/jobPage/${id}`);
-                                                        return;
-                                                    }
-                                                    router.push(`/user/applyOption?jobId=${job._id}`);
-                                                }}
+                                                onClick={handleApplyDetail}
                                             >
                                                 {t.applyDetail}
                                             </button>
@@ -349,7 +406,7 @@ export default function JobDetailClient({ id }: JobDetailClientProps) {
                                     )}
                                 </div>
                                 <button
-                                    className={`bg-indigo-600 text-white shadow-lg hover:bg-indigo-700 hover:scale-105 hover:brightness-110 hover:shadow-xl transition-all duration-200 font-semibold px-6 py-2 rounded-2xl rounded-tl-lg rounded-tr-lg text-center cursor-pointer w-full ${saving ? 'opacity-60 cursor-not-allowed' : ''} w-full h-[44px]`}
+                                    className={`bg-indigo-600 text-white shadow-lg hover:bg-indigo-700 hover:scale-105 hover:brightness-110 hover:shadow-xl transition-all duration-200 font-semibold px-6 py-2 rounded-2xl text-center cursor-pointer w-full ${saving ? 'opacity-60 cursor-not-allowed' : ''} h-[44px]`}
                                     onClick={handleSaveJob}
                                     disabled={saving}
                                 >
@@ -360,6 +417,7 @@ export default function JobDetailClient({ id }: JobDetailClientProps) {
                                     onClose={() => setShowFastModal(false)}
                                     cvList={cvList}
                                     clList={clList}
+                                    jobId={job?._id}
                                     selectedCV={selectedCV}
                                     setSelectedCV={setSelectedCV}
                                     selectedCL={selectedCL}
@@ -372,58 +430,99 @@ export default function JobDetailClient({ id }: JobDetailClientProps) {
                                     setCvUploadFile={setCvUploadFile}
                                     clUploadFile={clUploadFile}
                                     setClUploadFile={setClUploadFile}
-                                    clUploadName={clUploadName}
-                                    setClUploadName={setClUploadName}
                                     uploading={uploading}
+                                    setUploading={setUploading}
                                     formError={formError}
                                     setFormError={setFormError}
                                     onSubmit={async () => {
-                                        // Validate chọn CV/CL khi ở chế độ library
-                                        if (applyMode === 'library' && (!selectedCV || selectedCV === '')) {
-                                            setFormError('Bạn chưa chọn CV. Vui lòng chọn một CV để tiếp tục.');
-                                            message.error('Bạn chưa chọn CV. Vui lòng chọn một CV để tiếp tục.');
-                                            return;
-                                        }
-                                        if (applyMode === 'upload' && !cvUploadFile) {
-                                            setFormError('Bạn chưa tải lên file CV. Vui lòng chọn file để tiếp tục.');
-                                            message.error('Bạn chưa tải lên file CV. Vui lòng chọn file để tiếp tục.');
-                                            return;
-                                        }
-                                        if (clMode === 'library' && (!selectedCL || selectedCL === '')) {
-                                            setFormError('Bạn chưa chọn thư ngỏ. Vui lòng chọn một thư ngỏ để tiếp tục.');
-                                            message.error('Bạn chưa chọn thư ngỏ. Vui lòng chọn một thư ngỏ để tiếp tục.');
-                                            return;
-                                        }
-                                        if (clMode === 'upload' && !clUploadFile) {
-                                            setFormError('Bạn chưa tải lên file thư ngỏ. Vui lòng chọn file để tiếp tục.');
-                                            message.error('Bạn chưa tải lên file thư ngỏ. Vui lòng chọn file để tiếp tục.');
-                                            return;
-                                        }
-                                        setFormError('');
-                                        if (applyMode === 'library') {
-                                            try {
-                                                const { createApplyJob } = await import('@/api/apiApplyJob');
-                                                await createApplyJob({
-                                                    jobId: job?._id,
-                                                    cvId: selectedCV,
-                                                    coverletterId: selectedCL || undefined,
-                                                });
-                                                setShowFastModal(false);
-                                                message.success('Nộp đơn thành công!');
-                                            } catch (err) {
-                                                setFormError('Có lỗi xảy ra khi nộp đơn. Vui lòng thử lại.');
-                                                message.error('Có lỗi xảy ra khi nộp đơn. Vui lòng thử lại.');
+                                        try {
+                                            setUploading(true);
+                                            setFormError('');
+                                            // Validate CV
+                                            if (applyMode === 'library' && (!selectedCV || selectedCV === '')) {
+                                                const msg = t.selectCV + ' - ' + t.chooseFromLibrary;
+                                                setFormError(msg);
+                                                message.error(msg);
+                                                return;
                                             }
-                                        } else {
-                                            setFormError('Chức năng tải lên chưa được hỗ trợ.');
-                                            message.error('Chức năng tải lên chưa được hỗ trợ.');
+                                            if (applyMode === 'upload' && !cvUploadFile) {
+                                                const msg = t.selectCV + ' - ' + t.uploadFromComputer;
+                                                setFormError(msg);
+                                                message.error(msg);
+                                                return;
+                                            }
+                                            // Validate Cover Letter (if not skipped)
+                                            if (!skipCoverLetter) {
+                                                if (clMode === 'library' && (!selectedCL || selectedCL === '')) {
+                                                    const msg = t.selectCL + ' - ' + t.chooseCLFromLibrary;
+                                                    setFormError(msg);
+                                                    message.error(msg);
+                                                    return;
+                                                }
+                                                if (clMode === 'upload' && !clUploadFile) {
+                                                    const msg = t.selectCL + ' - ' + t.uploadCLFromComputer;
+                                                    setFormError(msg);
+                                                    message.error(msg);
+                                                    return;
+                                                }
+                                            }
+                                            let cvId: string | undefined = selectedCV || undefined;
+                                            let clId: string | undefined = selectedCL || undefined;
+                                            let cvUrl: string | undefined = undefined;
+                                            let coverletterUrl: string | undefined = undefined;
+                                            // Handle CV
+                                            if (applyMode === 'upload' && cvUploadFile) {
+                                                cvUrl = await uploadFileToCloudinary(cvUploadFile);
+                                                cvId = undefined;
+                                            } else if (applyMode === 'library' && selectedCV) {
+                                                const cv = cvList.find(cv => cv._id === selectedCV);
+                                                cvUrl = (cv && (cv as any).content && (cv as any).content.userData) ? (cv as any).content.userData.fileUrl : undefined;
+                                                cvId = cv?._id || undefined;
+                                            }
+                                            // Handle Cover Letter (if not skipped)
+                                            if (!skipCoverLetter) {
+                                                if (clMode === 'upload' && clUploadFile) {
+                                                    coverletterUrl = await uploadFileToCloudinary(clUploadFile);
+                                                    clId = undefined;
+                                                } else if (clMode === 'library' && selectedCL) {
+                                                    const cl = clList.find(cl => cl._id === selectedCL);
+                                                    coverletterUrl = (cl && (cl as any).content && (cl as any).content.userData) ? (cl as any).content.userData.fileUrl : undefined;
+                                                    clId = cl?._id || undefined;
+                                                }
+                                            }
+                                            // Submit application (KHÔNG truyền userId)
+                                            await createApplyJob({
+                                                jobId: job._id,
+                                                cvId: cvId,
+                                                cvUrl,
+                                                coverletterId: clId,
+                                                coverletterUrl,
+                                            });
+                                            setShowFastModal(false);
+                                            message.success(t.submitSuccess);
+                                        } catch (err) {
+                                            const errorMsg = err instanceof Error ? err.message : t.submitError;
+                                            setFormError(errorMsg);
+                                            if (errorMsg.includes('Cloudinary')) {
+                                                message.error(t.uploadError);
+                                            } else if (errorMsg.includes('cvId hoặc cvUrl')) {
+                                                message.error(t.mustProvideCvIdOrCvUrl);
+                                            } else if (errorMsg.includes('coverletterId hoặc coverletterUrl')) {
+                                                message.error(t.mustProvideCoverletterIdOrCoverletterUrl);
+                                            } else {
+                                                message.error(errorMsg);
+                                            }
+                                        } finally {
+                                            setUploading(false);
                                         }
                                     }}
                                 />
                             </div>
                             <Card title={<span className="text-blue-600 font-semibold">{t.benefits}</span>} className="border-blue-200">
                                 <ul className="list-disc list-inside space-y-1 text-gray-700">
-                                    {job.benefits.map((benefit, index) => <li key={index}>{benefit}</li>)}
+                                    {job.benefits.map((benefit, index) => (
+                                        <li key={index}>{benefit}</li>
+                                    ))}
                                 </ul>
                             </Card>
                         </div>

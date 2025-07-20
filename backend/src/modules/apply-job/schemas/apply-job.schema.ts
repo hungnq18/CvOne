@@ -11,11 +11,17 @@ export class ApplyJob {
   @Prop({ type: Types.ObjectId, ref: "User", required: true })
   userId: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: "Cv", required: false })
+  @Prop({ type: Types.ObjectId, ref: "Cv" })
   cvId?: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: "CoverLetter", required: false })
+  @Prop({ type: String })
+  cvUrl?: string;
+
+  @Prop({ type: Types.ObjectId, ref: "CoverLetter" })
   coverletterId?: Types.ObjectId;
+
+  @Prop({ type: String })
+  coverletterUrl?: string;
 
   @Prop({
     type: String,
@@ -26,3 +32,14 @@ export class ApplyJob {
 }
 
 export const ApplyJobSchema = SchemaFactory.createForClass(ApplyJob);
+
+// Thêm pre-validate hook để kiểm tra ít nhất một trong cvId hoặc cvUrl, và coverletterId hoặc coverletterUrl
+ApplyJobSchema.pre("validate", function (next) {
+  if (!this.cvId && !this.cvUrl) {
+    next(new Error("Phải cung cấp ít nhất cvId hoặc cvUrl"));
+  }
+  if (!this.coverletterId && !this.coverletterUrl) {
+    next(new Error("Phải cung cấp ít nhất coverletterId hoặc coverletterUrl"));
+  }
+  next();
+});
