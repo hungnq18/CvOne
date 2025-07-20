@@ -8,6 +8,16 @@ interface ChatMessagesProps {
     messagesEndRef: React.RefObject<HTMLDivElement>;
 }
 
+// Thêm hàm tạo màu nền từ tên user (giống ChatSidebar)
+function getAvatarColor(name: string) {
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+        hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const color = `hsl(${hash % 360}, 70%, 60%)`;
+    return color;
+}
+
 export default function ChatMessages({
     messages,
     userId,
@@ -23,9 +33,12 @@ export default function ChatMessages({
                             <div className={`flex items-end gap-2 max-w-[70%] ${isOwnMessage ? "flex-row-reverse" : "flex-row"}`}>
                                 {/* Avatar chỉ hiển thị cho tin nhắn người khác nếu có */}
                                 {!isOwnMessage && msg.sender && (
-                                    <Avatar className="h-8 w-8">
-                                        <AvatarImage src={typeof msg.sender === 'object' && 'avatar' in msg.sender && typeof (msg.sender as any).avatar === 'string' ? (msg.sender as any).avatar : "/placeholder.svg"} alt={msg.sender.first_name || "U"} />
-                                        <AvatarFallback>{msg.sender.first_name ? msg.sender.first_name.charAt(0) : "U"}</AvatarFallback>
+                                    <Avatar className="h-8 w-8" style={{ background: msg.sender && typeof msg.sender.first_name === 'string' && typeof msg.sender.last_name === 'string' ? getAvatarColor(msg.sender.first_name + msg.sender.last_name) : '#888' }}>
+                                        <span className="text-base text-white font-semibold flex items-center justify-center w-full h-full">
+                                            {msg.sender && typeof msg.sender.first_name === 'string' && typeof msg.sender.last_name === 'string'
+                                                ? `${msg.sender.first_name[0]}${msg.sender.last_name[0]}`
+                                                : 'U'}
+                                        </span>
                                     </Avatar>
                                 )}
                                 <div className={`rounded-2xl px-4 py-2 ${isOwnMessage ? "bg-primary text-primary-foreground" : "bg-muted"}`}>

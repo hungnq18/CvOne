@@ -75,6 +75,17 @@ export default function ChatSidebar({
         return !entry || entry.count === 0;
     });
 
+    // Thêm hàm tạo màu nền từ tên user
+    function getAvatarColor(name: string) {
+        // Tạo màu dựa trên mã hash của tên
+        let hash = 0;
+        for (let i = 0; i < name.length; i++) {
+            hash = name.charCodeAt(i) + ((hash << 5) - hash);
+        }
+        const color = `hsl(${hash % 360}, 70%, 60%)`;
+        return color;
+    }
+
     return (
         <div className="h-full flex flex-col bg-muted/20 w-80 border-r">
             {/* Header sidebar */}
@@ -118,9 +129,12 @@ export default function ChatSidebar({
                                     className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors hover:bg-muted/50 ${isSelected ? "bg-muted" : ""}`}
                                 >
                                     <div className="relative">
-                                        <Avatar className="h-12 w-12">
-                                            <AvatarImage src={typeof otherUser === 'object' && typeof (otherUser as any).avatar === 'string' ? (otherUser as any).avatar : "/placeholder.svg"} alt={otherUser && typeof otherUser.first_name === 'string' && typeof otherUser.last_name === 'string' ? `${otherUser.first_name} ${otherUser.last_name}` : "User"} />
-                                            <AvatarFallback>{otherUser && typeof otherUser.first_name === 'string' ? otherUser.first_name.charAt(0) : "U"}</AvatarFallback>
+                                        <Avatar className="h-12 w-12" style={{ background: otherUser && typeof otherUser.first_name === 'string' && typeof otherUser.last_name === 'string' ? getAvatarColor(otherUser.first_name + otherUser.last_name) : '#888' }}>
+                                            <span className="text-2xl text-white font-semibold flex items-center justify-center w-full h-full">
+                                                {otherUser && typeof otherUser.first_name === 'string' && typeof otherUser.last_name === 'string'
+                                                    ? `${otherUser.first_name[0]}${otherUser.last_name[0]}`
+                                                    : 'U'}
+                                            </span>
                                         </Avatar>
                                         {/* Online dot */}
                                         {typeof otherUser === 'object' && typeof (otherUser as any).online === 'boolean' && (otherUser as any).online && (
