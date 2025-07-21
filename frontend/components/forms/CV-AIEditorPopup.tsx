@@ -101,7 +101,7 @@ const translations = {
       title: "Sửa thông tin cá nhân",
       uploadErrorPreset: "Tải ảnh lên thất bại. Vui lòng kiểm tra lại cấu hình preset.",
       uploadErrorGeneral: "Có lỗi xảy ra khi tải ảnh lên.",
-      avatarLabel: "Ảnh Đại Diện",
+      avatarLabel: "Avatar",
       uploading: "Đang tải...",
       chooseImage: "Chọn ảnh",
       firstNameLabel: "Họ",
