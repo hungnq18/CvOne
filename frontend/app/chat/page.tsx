@@ -19,7 +19,9 @@ import ChatInput from "@/components/chatAndNotification/ChatInput";
 export default function ChatPage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
+  const [selectedConversationId, setSelectedConversationId] = useState<
+    string | null
+  >(null);
   const [selectedConversationDetail, setSelectedConversationDetail] = useState<{
     _id: string;
     participants: any[];
@@ -62,7 +64,9 @@ export default function ChatPage() {
     const fetchConversationDetail = async () => {
       try {
         // Sử dụng getConversationDetail từ ConversationService
-        const conversationDetail = await getConversationDetail(selectedConversationId);
+        const conversationDetail = await getConversationDetail(
+          selectedConversationId
+        );
         setSelectedConversationDetail(conversationDetail);
       } catch (err) {
         console.error("Failed to fetch conversation detail:", err);
@@ -128,7 +132,6 @@ export default function ChatPage() {
               participants: userId ? [msg.senderId, userId] : [msg.senderId],
               lastMessage: msg,
               unreadCount: msg.senderId === userId ? 0 : 1,
-
             },
             ...prev,
           ];
@@ -175,14 +178,6 @@ export default function ChatPage() {
 
     socket.emit("sendMessage", messageDto);
 
-    socket.emit("sendRealtimeNotification", {
-      userId: receiverId,
-      title: "Tin nhắn mới",
-      message: content,
-      type: "message",
-      link: `/chat`,
-    });
-
     // Đẩy conversation lên đầu sidebar
     setConversations((prev) => {
       const idx = prev.findIndex((c) => c._id === selectedConversationId);
@@ -194,8 +189,14 @@ export default function ChatPage() {
             ...prevLastMessage,
             content,
             senderId: userId,
-            _id: prevLastMessage && prevLastMessage._id ? prevLastMessage._id : Date.now().toString(),
-            createdAt: prevLastMessage && prevLastMessage.createdAt ? prevLastMessage.createdAt : new Date().toISOString(),
+            _id:
+              prevLastMessage && prevLastMessage._id
+                ? prevLastMessage._id
+                : Date.now().toString(),
+            createdAt:
+              prevLastMessage && prevLastMessage.createdAt
+                ? prevLastMessage.createdAt
+                : new Date().toISOString(),
             sender: prevLastMessage?.sender,
           },
         };
@@ -246,7 +247,9 @@ export default function ChatPage() {
               <div className="flex items-center gap-3">
                 <div>
                   <h2 className="font-semibold">
-                    {selectedConversationDetail?.participants?.map((p) => p.first_name || p).join(', ') || 'Người dùng'}
+                    {selectedConversationDetail?.participants
+                      ?.map((p) => p.first_name || p)
+                      .join(", ") || "Người dùng"}
                   </h2>
                   <p className="text-sm text-muted-foreground">
                     {/* Có thể hiển thị trạng thái online nếu có */}
@@ -279,12 +282,26 @@ export default function ChatPage() {
             <div className="text-center">
               <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
                 {/* Icon gửi */}
-                <svg className="h-10 w-10 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                <svg
+                  className="h-10 w-10 text-muted-foreground"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
                 </svg>
               </div>
-              <h3 className="text-lg font-semibold mb-2">Chọn một cuộc trò chuyện</h3>
-              <p className="text-muted-foreground">Chọn một người từ danh sách bên trái để bắt đầu nhắn tin</p>
+              <h3 className="text-lg font-semibold mb-2">
+                Chọn một cuộc trò chuyện
+              </h3>
+              <p className="text-muted-foreground">
+                Chọn một người từ danh sách bên trái để bắt đầu nhắn tin
+              </p>
             </div>
           </div>
         )}

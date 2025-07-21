@@ -1,6 +1,20 @@
 import { fetchWithAuth } from './apiClient';
 import { API_ENDPOINTS } from './apiConfig';
 
+
+// Helper fetch
+// (apiFetch giữ lại nếu cần cho public API, nhưng các API xác thực sẽ dùng fetchWithAuth)
+async function apiFetch(url: string, options: RequestInit = {}) {
+  const res = await fetch(url, {
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    ...options,
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+
 export interface ApplyJob {
   id: string;
   job_id: string;
@@ -78,4 +92,8 @@ export async function deleteApplyJobByHR(id: string) {
       method: 'DELETE',
     }
   );
+}
+
+export async function getCountApplyJobByStatus(status: string) {
+  return fetchWithAuth(API_ENDPOINTS.APPLYJOB.COUNT_BY_STATUS(status));
 }

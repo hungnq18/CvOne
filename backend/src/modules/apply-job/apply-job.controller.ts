@@ -1,20 +1,20 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
-  Post,
-  Query,
-  UseGuards,
-  Request,
   Param,
   Patch,
-  Delete,
+  Post,
+  Query,
+  Request,
+  UseGuards
 } from "@nestjs/common";
-import { ApplyJobService } from "./apply-job.service";
-import { CreateApplyJobDto } from "./dto/create-apply-job.dto";
+import { Roles } from "src/common/decorators/roles.decorator";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { RolesGuard } from "../auth/guards/roles.guard";
-import { Roles } from "src/common/decorators/roles.decorator";
+import { ApplyJobService } from "./apply-job.service";
+import { CreateApplyJobDto } from "./dto/create-apply-job.dto";
 
 @Controller("apply-job")
 export class ApplyJobController {
@@ -81,25 +81,41 @@ export class ApplyJobController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles("hr")
-  @Get("count-apply-job-by-status/:status")
+  @Get("count-apply-job-by-status/:status/:day/:month/:year")
   async getCountApplyJobByStatus(
     @Request() req,
-    @Param("status") status: string
+    @Param("status") status: string,
+    @Param("day") day: number,
+    @Param("month") month: number,
+    @Param("year") year: number
   ) {
     const userId = req.user.user._id;
-    return this.applyJobService.getCountApplyJobByStatus(status, userId);
+    return this.applyJobService.getCountApplyJobByStatus(
+      status,
+      userId,
+      day,
+      month,
+      year
+    );
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles("hr")
-  @Get("/:applyJobId/by-hr")
-  async getApplyJobByHr(
-    @Param("applyJobId") applyJobId: string,
-    @Request() req
+  @Get("count-apply-job-by-status-week/:status/:week/:month/:year")
+  async getCountApplyJobByStatusWeek(
+    @Request() req,
+    @Param("status") status: string,
+    @Param("week") week: number,
+    @Param("month") month: number,
+    @Param("year") year: number,
   ) {
-    return this.applyJobService.getApplyJobDetailByHr(
-      applyJobId,
-      req.user.user._id
+    const userId = req.user.user._id;
+    return this.applyJobService.getCountApplyJobByStatusWeek(
+      status,
+      userId,
+      week,
+      month,
+      year
     );
   }
 
