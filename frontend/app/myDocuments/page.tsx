@@ -116,22 +116,22 @@ export default function Page() {
     loadCV();
   }, [language]);
 
-  const handleCreateNewCL = () => {
-    router.push("/clTemplate");
-  };
+  // const handleCreateNewCL = () => {
+  //   router.push("/clTemplate");
+  // };
 
-  const handleEditCL = (id: string) => {
-    router.push(`/createCLTemplate?clId=${id}`);
-  };
+  // const handleEditCL = (id: string) => {
+  //   router.push(`/createCLTemplate?clId=${id}`);
+  // };
 
-  const handleDeleteCL = async (id: string) => {
-    try {
-      await deleteCL(id);
-      setCoverLetterList((prev) => prev.filter((cl) => cl._id !== id));
-    } catch (error) {
-      console.error("Failed to delete cover letter:", error);
-    }
-  };
+  // const handleDeleteCL = async (id: string) => {
+  //   try {
+  //     await deleteCL(id);
+  //     setCoverLetterList((prev) => prev.filter((cl) => cl._id !== id));
+  //   } catch (error) {
+  //     console.error("Failed to delete cover letter:", error);
+  //   }
+  // };
 
   const onTabChange = (key: string) => setActiveTab(key);
   const onSearch = (value: string) => setSearchValue(value);
@@ -238,9 +238,6 @@ export default function Page() {
               <CoverLetterList
                 coverLetters={filteredCoverLetterList}
                 viewMode={viewMode}
-                onDelete={handleDeleteCL}
-                onEdit={handleEditCL}
-                onCreateNew={handleCreateNewCL}
               />
             ))}
         </div>
