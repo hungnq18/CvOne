@@ -81,13 +81,22 @@ export class ApplyJobController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles("hr")
-  @Get("count-apply-job-by-status/:status")
+  @Get("count-apply-job-by-status/:status/:day/:month/:year")
   async getCountApplyJobByStatus(
     @Request() req,
-    @Param("status") status: string
+    @Param("status") status: string,
+    @Param("day") day: number,
+    @Param("month") month: number,
+    @Param("year") year: number
   ) {
     const userId = req.user.user._id;
-    return this.applyJobService.getCountApplyJobByStatus(status, userId);
+    return this.applyJobService.getCountApplyJobByStatus(
+      status,
+      userId,
+      day,
+      month,
+      year
+    );
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)

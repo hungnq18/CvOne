@@ -14,7 +14,6 @@ import {
 import { Search, Check, X } from "lucide-react";
 import HrAction from "@/components/ui/hrActions";
 import StatusRadioTabs from "@/components/hr/RadioTabsInManageApply";
-import DeleteButton from "@/components/ui/DeleteButton";
 import { templateComponentMap } from "@/components/cvTemplate/index";
 import html2pdf from "html2pdf.js";
 import { getCVTemplates, CVTemplate } from "@/api/cvapi";
@@ -232,7 +231,7 @@ const ManageApplyJobTable: React.FC<ManageApplyJobTableProps> = ({
                             <TableHead>Job Title</TableHead>
                             <TableHead>Role</TableHead>
                             <TableHead>Applied Date</TableHead>
-                            <TableHead>Experience</TableHead>
+                            <TableHead>Skill</TableHead>
                             <TableHead>{statusFilter === "all" ? "Status" : "Action"}</TableHead>
                             <TableHead>Documents</TableHead>
                         </TableRow>
@@ -292,7 +291,21 @@ const ManageApplyJobTable: React.FC<ManageApplyJobTableProps> = ({
                                                 : "-"}
                                     </TableCell>
                                     <TableCell>
-                                        {app.cvId?.content?.userData?.professional || "-"}
+                                        {(() => {
+                                            const skills = app.cvId?.content?.userData?.skills;
+                                            let skillStr = '-';
+                                            if (Array.isArray(skills)) {
+                                                const filtered = skills.filter(s => {
+                                                    const name = s.name || s;
+                                                    return name && !/công cụ|tool/i.test(name);
+                                                });
+                                                skillStr = filtered.length ? filtered.map(s => s.name || s).join(', ') : '-';
+                                            } else if (typeof skills === 'string') {
+                                                if (!/công cụ|tool/i.test(skills)) skillStr = skills;
+                                            }
+                                            if (skillStr.length > 40) return <>{skillStr.slice(0, 37)}...</>;
+                                            return <>{skillStr}</>;
+                                        })()}
                                     </TableCell>
                                     <TableCell>
                                         {statusFilter === "all" ? (

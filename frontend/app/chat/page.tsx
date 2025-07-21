@@ -125,7 +125,7 @@ export default function ChatPage() {
           return [
             {
               _id: msg.conversationId,
-              participants: [msg.senderId, msg.receiverId],// chạy được không sửa
+              participants: userId ? [msg.senderId, userId] : [msg.senderId],
               lastMessage: msg,
               unreadCount: msg.senderId === userId ? 0 : 1,
 
@@ -184,15 +184,19 @@ export default function ChatPage() {
     });
 
     // Đẩy conversation lên đầu sidebar
-    setConversations((prev) => { // chạy được không sửa
+    setConversations((prev) => {
       const idx = prev.findIndex((c) => c._id === selectedConversationId);
       if (idx !== -1) {
+        const prevLastMessage = prev[idx].lastMessage;
         const updatedConv = {
           ...prev[idx],
           lastMessage: {
-            ...prev[idx].lastMessage,
+            ...prevLastMessage,
             content,
             senderId: userId,
+            _id: prevLastMessage && prevLastMessage._id ? prevLastMessage._id : Date.now().toString(),
+            createdAt: prevLastMessage && prevLastMessage.createdAt ? prevLastMessage.createdAt : new Date().toISOString(),
+            sender: prevLastMessage?.sender,
           },
         };
         const newList = prev.filter((c) => c._id !== selectedConversationId);
@@ -214,39 +218,77 @@ export default function ChatPage() {
   };
 
   return (
-    <main className="flex justify-center items-center h-screen w-screen bg-gray-100 pt-0">
-      <div className="flex h-full w-full bg-white shadow-lg overflow-hidden border border-gray-200">
-        <ChatSidebar
-          conversations={conversations}
-          selectedConversationId={selectedConversationId}
-          selectedConversationDetail={selectedConversationDetail}
-          userId={userId}
-          onSelectConversation={handleSelectConversation}
-        />
+    <div className="flex h-[calc(100vh-64px)] bg-background mt-[64px]">
+      {/* Sidebar - Danh sách cuộc trò chuyện */}
+      <div className="w-80 border-r bg-muted/20 flex flex-col">
+        {/* Header sidebar */}
+        <div className="p-4 border-b">
+          <h1 className="text-xl font-semibold mb-3">Tin nhắn</h1>
+          {/* Đã xóa input search dư thừa ở đây, chỉ giữ lại search trong ChatSidebar */}
+        </div>
+        {/* Danh sách cuộc trò chuyện */}
+        <div className="flex-1 overflow-y-auto">
+          <ChatSidebar
+            conversations={conversations}
+            selectedConversationId={selectedConversationId}
+            selectedConversationDetail={selectedConversationDetail}
+            userId={userId}
+            onSelectConversation={setSelectedConversationId}
+          />
+        </div>
+      </div>
+      {/* Khu vực chat chính */}
+      <div className="flex-1 flex flex-col">
         {selectedConversationId ? (
-          <div className="flex-1 flex flex-col h-full">
-            <ChatMessages
-              messages={messages}
-              userId={userId}
-              messagesEndRef={messagesEndRef}
-            />
-            <ChatInput
-              content={content}
-              onContentChange={setContent}
-              onSend={handleSend}
-            />
-          </div>
+          <>
+            {/* Header chat */}
+            <div className="p-4 border-b flex items-center justify-between bg-white">
+              <div className="flex items-center gap-3">
+                <div>
+                  <h2 className="font-semibold">
+                    {selectedConversationDetail?.participants?.map((p) => p.first_name || p).join(', ') || 'Người dùng'}
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
+                    {/* Có thể hiển thị trạng thái online nếu có */}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                {/* Các nút call/video/more nếu muốn, chỉ UI */}
+              </div>
+            </div>
+            {/* Khu vực tin nhắn */}
+            <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
+              <ChatMessages
+                messages={messages}
+                userId={userId}
+                messagesEndRef={messagesEndRef}
+              />
+            </div>
+            {/* Khu vực nhập tin nhắn */}
+            <div className="p-4 border-t bg-white">
+              <ChatInput
+                content={content}
+                onContentChange={setContent}
+                onSend={handleSend}
+              />
+            </div>
+          </>
         ) : (
-          <div className="flex-1 flex items-center justify-center bg-gray-50">
-            <div className="text-center text-gray-500">
-              <h2 className="text-2xl font-semibold mb-2">
-                Select a conversation
-              </h2>
-              <p>Choose a conversation from the list to start chatting</p>
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center">
+              <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                {/* Icon gửi */}
+                <svg className="h-10 w-10 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-semibold mb-2">Chọn một cuộc trò chuyện</h3>
+              <p className="text-muted-foreground">Chọn một người từ danh sách bên trái để bắt đầu nhắn tin</p>
             </div>
           </div>
         )}
       </div>
-    </main>
+    </div>
   );
 }
