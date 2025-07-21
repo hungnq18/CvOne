@@ -349,3 +349,18 @@ export async function rewriteWorkDescription(description: string, language?: str
     body: JSON.stringify({ description, language })
   });
 }
+
+/**
+ * Upload JD PDF và phân tích bằng AI
+ * @param file - File PDF JD
+ * @returns Promise với kết quả phân tích
+ */
+export async function uploadJDPdfAndAnalyze(file: File) {
+  const formData = new FormData();
+  formData.append('file', file);
+  return fetchWithAuth(API_ENDPOINTS.JOB.ANALYZE_JD_PDF, {
+    method: 'POST',
+    body: formData
+    // KHÔNG thêm headers Content-Type ở đây!
+  });
+}

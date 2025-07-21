@@ -43,6 +43,12 @@ export function DashboardContent() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
+    const [filterMode, setFilterMode] = useState<'daily' | 'monthly' | 'yearly'>('daily');
+    const [filterDate, setFilterDate] = useState({
+        day: new Date().getDate(),
+        month: new Date().getMonth() + 1,
+        year: new Date().getFullYear(),
+    });
     const itemsPerPage = 5;
     const { language } = useLanguage ? useLanguage() : { language: 'vi' };
 
@@ -61,6 +67,9 @@ export function DashboardContent() {
             accepted: 'Đã nhận',
             rejected: 'Từ chối',
             submitByFile: 'Nộp bằng file',
+            daily: 'Hàng ngày',
+            monthly: 'Hàng tháng',
+            yearly: 'Hàng năm',
         },
         en: {
             jobTitle: 'Job Title',
@@ -76,12 +85,22 @@ export function DashboardContent() {
             accepted: 'Accepted',
             rejected: 'Rejected',
             submitByFile: 'Submit by file',
+            daily: 'Daily',
+            monthly: 'Monthly',
+            yearly: 'Yearly',
         }
     }[language === 'en' ? 'en' : 'vi'];
 
     useEffect(() => {
         setLoading(true);
-        getApplyJobByHR()
+        const filters: { day?: number, month?: number, year?: number } = { year: filterDate.year };
+        if (filterMode === 'monthly') {
+            filters.month = filterDate.month;
+        } else if (filterMode === 'daily') {
+            filters.month = filterDate.month;
+            filters.day = filterDate.day;
+        }
+        getApplyJobByHR(filters.day, filters.month, filters.year)
             .then((data) => {
                 setAppliedJobs(Array.isArray(data) ? data : (data.data || []));
                 setError(null);
@@ -91,13 +110,51 @@ export function DashboardContent() {
                 setAppliedJobs([]);
             })
             .finally(() => setLoading(false));
-    }, []);
+    }, [filterDate, filterMode]);
 
     return (
         <div className="flex-1 space-y-6 p-6 pt-0 bg-gray-50 w-full max-w-full">
             {/* Bảng danh sách các appliedJobs */}
             <div className="bg-white rounded-lg shadow p-6 mb-6 overflow-x-auto w-full">
-                <h2 className="text-xl font-bold mb-4">{language === 'en' ? 'Applied Jobs List' : 'Danh sách Applied Jobs'}</h2>
+                <div className="flex items-center gap-4 mb-4">
+                    <h2 className="text-xl font-bold">{language === 'en' ? 'Applied Jobs List' : 'Danh sách Applied Jobs'}</h2>
+                    <div className="flex items-center gap-2 ml-auto">
+                        <select
+                            value={filterMode}
+                            onChange={(e) => setFilterMode(e.target.value as any)}
+                            className="p-1 border rounded"
+                        >
+                            <option value="daily">{t.daily}</option>
+                            <option value="monthly">{t.monthly}</option>
+                            <option value="yearly">{t.yearly}</option>
+                        </select>
+                        {filterMode === 'daily' && (
+                            <input
+                                type="number"
+                                value={filterDate.day}
+                                onChange={(e) => setFilterDate(prev => ({ ...prev, day: parseInt(e.target.value, 10) || prev.day }))}
+                                className="p-1 border rounded w-16 text-center"
+                                placeholder="Day"
+                            />
+                        )}
+                        {(filterMode === 'daily' || filterMode === 'monthly') && (
+                            <input
+                                type="number"
+                                value={filterDate.month}
+                                onChange={(e) => setFilterDate(prev => ({ ...prev, month: parseInt(e.target.value, 10) || prev.month }))}
+                                className="p-1 border rounded w-20 text-center"
+                                placeholder="Month"
+                            />
+                        )}
+                        <input
+                            type="number"
+                            value={filterDate.year}
+                            onChange={(e) => setFilterDate(prev => ({ ...prev, year: parseInt(e.target.value, 10) || prev.year }))}
+                            className="p-1 border rounded w-24 text-center"
+                            placeholder="Year"
+                        />
+                    </div>
+                </div>
                 {loading ? (
                     <div className="text-center text-blue-500 py-8">{t.loading}</div>
                 ) : error ? (
@@ -106,12 +163,12 @@ export function DashboardContent() {
                     <div className="overflow-x-auto w-full">
                         {(() => {
                             const filteredJobs = appliedJobs.filter((job: any) => job.status === 'pending');
-                            // Sort by newest first (createdAt or submit_at)
                             const sortedJobs = filteredJobs.sort((a: any, b: any) => {
                                 const dateA = new Date(a.createdAt || a.submit_at || 0).getTime();
                                 const dateB = new Date(b.createdAt || b.submit_at || 0).getTime();
                                 return dateB - dateA;
                             });
+                            const itemsPerPage = 5;
                             const totalPages = Math.ceil(sortedJobs.length / itemsPerPage);
                             const paginatedJobs = sortedJobs.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
                             return (
@@ -210,10 +267,7 @@ export function DashboardContent() {
                 </Card>
 
                 <Card className="bg-white">
-                    <CardHeader>
-                        <CardTitle className="text-lg">Apply Job Overview</CardTitle>
-                    </CardHeader>
-                    <CardContent>
+                    <CardContent className="pt-6">
                         <ApplyJobOverviewChart />
                     </CardContent>
                 </Card>

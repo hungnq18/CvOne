@@ -81,6 +81,7 @@ export const API_ENDPOINTS = {
     COUNTBYPOSTINGDATE: (month: number, year: number) =>
       `/jobs/count-by-posting-date/${month}/${year}`,
     GET_JOB_BY_HR: "/jobs/by-hr",
+    ANALYZE_JD_PDF: "/jobs/analyze-jd-pdf",
   },
   NOTIFICATION: {
     GET_NOTIFICATIONS: "/notifications",
