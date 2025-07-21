@@ -1,10 +1,9 @@
+import { Modal, message } from 'antd';
 import React from 'react';
-import { Modal, Input, message } from 'antd';
 import { UiverseFileUpload } from '@/components/ui/UiverseFileUpload';
 import { CustomRadioGroup } from '@/components/ui/CustomRadioGroup';
 import { FolderOpenOutlined } from '@ant-design/icons';
 import { useLanguage } from '@/providers/global-provider';
-
 
 interface FastApplyModalProps {
     open: boolean;
@@ -12,9 +11,9 @@ interface FastApplyModalProps {
     cvList: any[];
     clList: any[];
     selectedCV: string | null;
-    setSelectedCV: (id: string) => void;
+    setSelectedCV: (id: string | null) => void;
     selectedCL: string | null;
-    setSelectedCL: (id: string) => void;
+    setSelectedCL: (id: string | null) => void;
     applyMode: 'library' | 'upload';
     setApplyMode: (mode: 'library' | 'upload') => void;
     clMode: 'library' | 'upload';
@@ -23,21 +22,41 @@ interface FastApplyModalProps {
     setCvUploadFile: (file: File | null) => void;
     clUploadFile: File | null;
     setClUploadFile: (file: File | null) => void;
-    clUploadName: string;
-    setClUploadName: (name: string) => void;
     uploading: boolean;
+    setUploading: (value: boolean) => void;
     formError: string;
     setFormError: (err: string) => void;
+    jobId: string;
     onSubmit: () => void;
 }
 
 const MAX_DISPLAY = 3;
 
 const FastApplyModal: React.FC<FastApplyModalProps> = ({
-    open, onClose, cvList, clList, selectedCV, setSelectedCV, selectedCL, setSelectedCL,
-    applyMode, setApplyMode, clMode, setClMode, cvUploadFile, setCvUploadFile, clUploadFile, setClUploadFile, clUploadName, setClUploadName, uploading, formError, setFormError, onSubmit
+    open,
+    onClose,
+    cvList,
+    clList,
+    selectedCV,
+    setSelectedCV,
+    selectedCL,
+    setSelectedCL,
+    applyMode,
+    setApplyMode,
+    clMode,
+    setClMode,
+    cvUploadFile,
+    setCvUploadFile,
+    clUploadFile,
+    setClUploadFile,
+    uploading,
+    setUploading,
+    formError,
+    setFormError,
+    jobId,
+    onSubmit,
 }) => {
-    const { language } = useLanguage();
+    const { language } = useLanguage ? useLanguage() : { language: 'en' };
     const translations = {
         vi: {
             submit: 'Nộp đơn',
@@ -59,6 +78,12 @@ const FastApplyModal: React.FC<FastApplyModalProps> = ({
             selected: 'Đang chọn',
             chooseCVFromComputer: 'Chọn CV từ máy tính',
             chooseCLFromComputer: 'Chọn thư ngỏ từ máy tính',
+            skipCoverLetter: 'Bỏ qua Cover Letter',
+            submitSuccess: 'Nộp đơn thành công!',
+            submitError: 'Có lỗi xảy ra khi nộp đơn. Vui lòng thử lại.',
+            uploadError: 'Lỗi tải file lên Cloudinary. Vui lòng thử lại.',
+            mustProvideCvIdOrCvUrl: 'Phải cung cấp ít nhất CV ID hoặc URL CV',
+            mustProvideCoverletterIdOrCoverletterUrl: 'Phải cung cấp ít nhất Cover Letter ID hoặc URL Cover Letter',
         },
         en: {
             submit: 'Submit Application',
@@ -80,9 +105,17 @@ const FastApplyModal: React.FC<FastApplyModalProps> = ({
             selected: 'Selected',
             chooseCVFromComputer: 'Choose CV from computer',
             chooseCLFromComputer: 'Choose cover letter from computer',
-        }
+            skipCoverLetter: 'Skip Cover Letter',
+            submitSuccess: 'Application submitted successfully!',
+            submitError: 'An error occurred while submitting the application. Please try again.',
+            uploadError: 'Error uploading file to Cloudinary. Please try again.',
+            mustProvideCvIdOrCvUrl: 'Must provide at least CV ID or CV URL',
+            mustProvideCoverletterIdOrCoverletterUrl: 'Must provide at least Cover Letter ID or Cover Letter URL',
+        },
     };
-    const t = translations[language] || translations.en;
+    const lang: 'vi' | 'en' = language === 'vi' ? 'vi' : 'en';
+    const t = translations[lang];
+
     return (
         <Modal
             open={open}
@@ -104,11 +137,10 @@ const FastApplyModal: React.FC<FastApplyModalProps> = ({
                         value={applyMode}
                         onChange={val => {
                             setApplyMode(val as 'library' | 'upload');
-                            // Khi chuyển sang library, không tự động chọn CV nào
                             if (val === 'library') {
                                 setSelectedCV('');
+                                setCvUploadFile(null);
                             }
-                            // Khi chuyển sang upload, không tự động chọn
                             if (val === 'upload') {
                                 setSelectedCV('');
                                 setCvUploadFile(null);
@@ -128,17 +160,38 @@ const FastApplyModal: React.FC<FastApplyModalProps> = ({
                                 <>
                                     <div className="font-semibold text-black mb-2">{t.yourCVs}</div>
                                     <div className="max-h-48 overflow-y-auto pr-1 space-y-2 scrollbar-thin scrollbar-thumb-[#b3ecec] scrollbar-track-transparent">
-                                        {cvList.map((cv, idx) => (
-                                            <div key={cv._id || String(idx)} className={`flex items-center justify-between p-3 rounded-lg border ${selectedCV === cv._id ? 'border-[#217a8a] bg-[#b3ecec]' : 'border-[#b3ecec] bg-white'} transition-all`}>
+                                        {cvList.slice(0, MAX_DISPLAY).map((cv, idx) => (
+                                            <div
+                                                key={cv._id || String(idx)}
+                                                className={`flex items-center justify-between p-3 rounded-lg border ${selectedCV === cv._id ? 'border-[#217a8a] bg-[#b3ecec]' : 'border-[#b3ecec] bg-white'
+                                                    } transition-all`}
+                                            >
                                                 <div className="flex items-center gap-2">
-                                                    <svg className="w-5 h-5 text-[#217a8a]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 17v-2a2 2 0 012-2h2a2 2 0 012 2v2m-6 4h6a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                                    <svg
+                                                        className="w-5 h-5 text-[#217a8a]"
+                                                        fill="none"
+                                                        stroke="currentColor"
+                                                        strokeWidth="2"
+                                                        viewBox="0 0 24 24"
+                                                    >
+                                                        <path
+                                                            strokeLinecap="round"
+                                                            strokeLinejoin="round"
+                                                            d="M9 17v-2a2 2 0 012-2h2a2 2 0 012 2v2m-6 4h6a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                                        />
+                                                    </svg>
                                                     <span className="text-base font-semibold text-black">{cv.title || 'CV chưa đặt tên'}</span>
                                                 </div>
                                                 <div className="flex gap-2 items-center">
-                                                    <span className="text-xs text-black">{cv.updatedAt ? new Date(cv.updatedAt).toLocaleDateString() : '-'}</span>
+                                                    <span className="text-xs text-black">
+                                                        {cv.updatedAt ? new Date(cv.updatedAt).toLocaleDateString() : '-'}
+                                                    </span>
                                                     <button
-                                                        className={`px-3 py-1 rounded ${selectedCV === cv._id ? 'bg-[#217a8a] text-white' : 'bg-[#e3f6f5] text-[#217a8a] hover:bg-[#b3ecec]'} font-medium text-sm transition`}
-                                                        onClick={() => setSelectedCV((cv._id || '') as string)}
+                                                        className={`px-3 py-1 rounded ${selectedCV === cv._id
+                                                            ? 'bg-[#217a8a] text-white'
+                                                            : 'bg-[#e3f6f5] text-[#217a8a] hover:bg-[#b3ecec]'
+                                                            } font-medium text-sm transition`}
+                                                        onClick={() => setSelectedCV(cv._id || '')}
                                                         disabled={selectedCV === cv._id}
                                                     >
                                                         {selectedCV === cv._id ? t.selected : t.select}
@@ -178,7 +231,7 @@ const FastApplyModal: React.FC<FastApplyModalProps> = ({
                                         onChange={e => {
                                             const file = e.target.files?.[0] || null;
                                             setCvUploadFile(file);
-                                            setSelectedCV('upload');
+                                            setSelectedCV(file ? 'upload' : '');
                                         }}
                                     />
                                     {cvUploadFile?.name || t.chooseCVFromComputer}
@@ -198,11 +251,11 @@ const FastApplyModal: React.FC<FastApplyModalProps> = ({
                             setClMode(val as 'library' | 'upload');
                             if (val === 'library') {
                                 setSelectedCL('');
+                                setClUploadFile(null);
                             }
                             if (val === 'upload') {
                                 setSelectedCL('');
                                 setClUploadFile(null);
-                                setClUploadName('');
                             }
                         }}
                         name="cl-mode"
@@ -219,17 +272,40 @@ const FastApplyModal: React.FC<FastApplyModalProps> = ({
                                 <>
                                     <div className="font-semibold text-black mb-2">{t.yourCLs}</div>
                                     <div className="max-h-48 overflow-y-auto pr-1 space-y-2 scrollbar-thin scrollbar-thumb-[#b3ecec] scrollbar-track-transparent">
-                                        {clList.map((cl, idx) => (
-                                            <div key={cl._id || String(idx)} className={`flex items-center justify-between p-3 rounded-lg border ${selectedCL === cl._id ? 'border-[#217a8a] bg-[#b3ecec]' : 'border-[#b3ecec] bg-white'} transition-all`}>
+                                        {clList.slice(0, MAX_DISPLAY).map((cl, idx) => (
+                                            <div
+                                                key={cl._id || String(idx)}
+                                                className={`flex items-center justify-between p-3 rounded-lg border ${selectedCL === cl._id ? 'border-[#217a8a] bg-[#b3ecec]' : 'border-[#b3ecec] bg-white'
+                                                    } transition-all`}
+                                            >
                                                 <div className="flex items-center gap-2">
-                                                    <svg className="w-5 h-5 text-[#217a8a]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M16 7a2 2 0 012 2v6a2 2 0 01-2 2H8a2 2 0 01-2-2V9a2 2 0 012-2h8zm0 0V5a2 2 0 00-2-2H10a2 2 0 00-2 2v2" /></svg>
-                                                    <span className="text-base font-semibold text-black">{cl.title || 'Thư ngỏ chưa đặt tên'}</span>
+                                                    <svg
+                                                        className="w-5 h-5 text-[#217a8a]"
+                                                        fill="none"
+                                                        stroke="currentColor"
+                                                        strokeWidth="2"
+                                                        viewBox="0 0 24 24"
+                                                    >
+                                                        <path
+                                                            strokeLinecap="round"
+                                                            strokeLinejoin="round"
+                                                            d="M16 7a2 2 0 012 2v6a2 2 0 01-2 2H8a2 2 0 01-2-2V9a2 2 0 012-2h8zm0 0V5a2 2 0 00-2-2H10a2 2 0 00-2 2v2"
+                                                        />
+                                                    </svg>
+                                                    <span className="text-base font-semibold text-black">
+                                                        {cl.title || 'Thư ngỏ chưa đặt tên'}
+                                                    </span>
                                                 </div>
                                                 <div className="flex gap-2 items-center">
-                                                    <span className="text-xs text-black">{cl.updatedAt ? new Date(cl.updatedAt).toLocaleDateString() : '-'}</span>
+                                                    <span className="text-xs text-black">
+                                                        {cl.updatedAt ? new Date(cl.updatedAt).toLocaleDateString() : '-'}
+                                                    </span>
                                                     <button
-                                                        className={`px-3 py-1 rounded ${selectedCL === cl._id ? 'bg-[#217a8a] text-white' : 'bg-[#e3f6f5] text-[#217a8a] hover:bg-[#b3ecec]'} font-medium text-sm transition`}
-                                                        onClick={() => setSelectedCL((cl._id || '') as string)}
+                                                        className={`px-3 py-1 rounded ${selectedCL === cl._id
+                                                            ? 'bg-[#217a8a] text-white'
+                                                            : 'bg-[#e3f6f5] text-[#217a8a] hover:bg-[#b3ecec]'
+                                                            } font-medium text-sm transition`}
+                                                        onClick={() => setSelectedCL(cl._id || '')}
                                                         disabled={selectedCL === cl._id}
                                                     >
                                                         {selectedCL === cl._id ? t.selected : t.select}
@@ -269,8 +345,7 @@ const FastApplyModal: React.FC<FastApplyModalProps> = ({
                                         onChange={e => {
                                             const file = e.target.files?.[0] || null;
                                             setClUploadFile(file);
-                                            setClUploadName(file?.name || '');
-                                            setSelectedCL('upload');
+                                            setSelectedCL(file ? 'upload' : '');
                                         }}
                                     />
                                     {clUploadFile?.name || t.chooseCLFromComputer}
@@ -279,6 +354,7 @@ const FastApplyModal: React.FC<FastApplyModalProps> = ({
                         </div>
                     )}
                 </div>
+                {formError && <p className="text-red-500 mb-4">{formError}</p>}
                 <div className="flex gap-4 mt-6">
                     <button
                         className="py-3 px-6 rounded-xl font-semibold text-[#2563eb] bg-white border border-[#2563eb] text-lg transition focus:outline-none focus:ring-2 focus:ring-[#2563eb] cancel-btn"
@@ -291,6 +367,7 @@ const FastApplyModal: React.FC<FastApplyModalProps> = ({
                     <button
                         className="flex-1 py-3 rounded-xl font-semibold text-white bg-[#2563eb] hover:bg-[#1e40af] text-lg transition shadow-md"
                         onClick={() => {
+                            setFormError('');
                             // Validate CV
                             if (applyMode === 'library' && (!selectedCV || selectedCV === '')) {
                                 const msg = t.selectCV + ' - ' + t.chooseFromLibrary;
@@ -304,7 +381,7 @@ const FastApplyModal: React.FC<FastApplyModalProps> = ({
                                 message.error(msg);
                                 return;
                             }
-                            // Validate CL
+                            // Validate Cover Letter
                             if (clMode === 'library' && (!selectedCL || selectedCL === '')) {
                                 const msg = t.selectCL + ' - ' + t.chooseCLFromLibrary;
                                 setFormError(msg);
@@ -317,12 +394,11 @@ const FastApplyModal: React.FC<FastApplyModalProps> = ({
                                 message.error(msg);
                                 return;
                             }
-                            setFormError('');
                             onSubmit();
                         }}
                         disabled={uploading}
                     >
-                        {t.submit}
+                        {uploading ? 'Đang tải lên...' : t.submit}
                     </button>
                 </div>
             </div>
@@ -333,123 +409,123 @@ const FastApplyModal: React.FC<FastApplyModalProps> = ({
                     color: #d90429;
                 }
                 .container {
-                  --transition: 350ms;
-                  --folder-W: 120px;
-                  --folder-H: 80px;
-                  display: flex;
-                  flex-direction: column;
-                  align-items: center;
-                  justify-content: flex-end;
-                  padding: 10px;
-                  background: linear-gradient(135deg, #60a5fa, #38bdf8);
-                  border-radius: 15px;
-                  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
-                  height: calc(var(--folder-H) * 1.7);
-                  position: relative;
-                  margin-top: 50px;
+                    --transition: 350ms;
+                    --folder-W: 120px;
+                    --folder-H: 80px;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: flex-end;
+                    padding: 10px;
+                    background: linear-gradient(135deg, #60a5fa, #38bdf8);
+                    border-radius: 15px;
+                    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+                    height: calc(var(--folder-H) * 1.7);
+                    position: relative;
+                    margin-top: 50px;
                 }
                 .folder {
-                  position: absolute;
-                  top: -20px;
-                  left: calc(50% - 60px);
-                  animation: float 2.5s infinite ease-in-out;
-                  transition: transform var(--transition) ease;
+                    position: absolute;
+                    top: -20px;
+                    left: calc(50% - 60px);
+                    animation: float 2.5s infinite ease-in-out;
+                    transition: transform var(--transition) ease;
                 }
                 .folder:hover {
-                  transform: scale(1.05);
+                    transform: scale(1.05);
                 }
                 .folder .front-side,
                 .folder .back-side {
-                  position: absolute;
-                  transition: transform var(--transition);
-                  transform-origin: bottom center;
+                    position: absolute;
+                    transition: transform var(--transition);
+                    transform-origin: bottom center;
                 }
                 .folder .back-side::before,
                 .folder .back-side::after {
-                  content: "";
-                  display: block;
-                  background-color: white;
-                  opacity: 0.5;
-                  z-index: 0;
-                  width: var(--folder-W);
-                  height: var(--folder-H);
-                  position: absolute;
-                  transform-origin: bottom center;
-                  border-radius: 15px;
-                  transition: transform 350ms;
-                  z-index: 0;
+                    content: "";
+                    display: block;
+                    background-color: white;
+                    opacity: 0.5;
+                    z-index: 0;
+                    width: var(--folder-W);
+                    height: var(--folder-H);
+                    position: absolute;
+                    transform-origin: bottom center;
+                    border-radius: 15px;
+                    transition: transform 350ms;
+                    z-index: 0;
                 }
                 .container:hover .back-side::before {
-                  transform: rotateX(-5deg) skewX(5deg);
+                    transform: rotateX(-5deg) skewX(5deg);
                 }
                 .container:hover .back-side::after {
-                  transform: rotateX(-15deg) skewX(12deg);
+                    transform: rotateX(-15deg) skewX(12deg);
                 }
                 .folder .front-side {
-                  z-index: 1;
+                    z-index: 1;
                 }
                 .container:hover .front-side {
-                  transform: rotateX(-40deg) skewX(15deg);
+                    transform: rotateX(-40deg) skewX(15deg);
                 }
                 .folder .tip {
-                  background: linear-gradient(135deg, #ff9a56, #ff6f56);
-                  width: 80px;
-                  height: 20px;
-                  border-radius: 12px 12px 0 0;
-                  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-                  position: absolute;
-                  top: -10px;
-                  z-index: 2;
+                    background: linear-gradient(135deg, #ff9a56, #ff6f56);
+                    width: 80px;
+                    height: 20px;
+                    border-radius: 12px 12px 0 0;
+                    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+                    position: absolute;
+                    top: -10px;
+                    z-index: 2;
                 }
                 .folder .cover {
-                  background: linear-gradient(135deg, #ffe563, #ffc663);
-                  width: var(--folder-W);
-                  height: var(--folder-H);
-                  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
-                  border-radius: 10px;
+                    background: linear-gradient(135deg, #ffe563, #ffc663);
+                    width: var(--folder-W);
+                    height: var(--folder-H);
+                    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+                    border-radius: 10px;
                 }
                 .custom-file-upload {
-                  font-size: 1.1em;
-                  color: #ffffff;
-                  text-align: center;
-                  background: rgba(255, 255, 255, 0.2);
-                  border: none;
-                  border-radius: 10px;
-                  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-                  cursor: pointer;
-                  transition: background var(--transition) ease;
-                  display: inline-block;
-                  width: 100%;
-                  padding: 10px 35px;
-                  position: relative;
+                    font-size: 1.1em;
+                    color: #ffffff;
+                    text-align: center;
+                    background: rgba(255, 255, 255, 0.2);
+                    border: none;
+                    border-radius: 10px;
+                    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+                    cursor: pointer;
+                    transition: background var(--transition) ease;
+                    display: inline-block;
+                    width: 100%;
+                    padding: 10px 35px;
+                    position: relative;
                 }
                 .custom-file-upload:hover {
-                  background: rgba(255, 255, 255, 0.4);
+                    background: rgba(255, 255, 255, 0.4);
                 }
                 .custom-file-upload input[type="file"] {
-                  display: none;
+                    display: none;
                 }
                 @keyframes float {
-                  0% {
-                    transform: translateY(0px);
-                  }
-                  50% {
-                    transform: translateY(-20px);
-                  }
-                  100% {
-                    transform: translateY(0px);
-                  }
+                    0% {
+                        transform: translateY(0px);
+                    }
+                    50% {
+                        transform: translateY(-20px);
+                    }
+                    100% {
+                        transform: translateY(0px);
+                    }
                 }
             `}</style>
             <style jsx global>{`
-  .ant-message .ant-message-notice-content {
-    font-size: 1.25rem;
-    padding: 16px 32px;
-    border-radius: 12px;
-  }
-`}</style>
+                .ant-message .ant-message-notice-content {
+                    font-size: 1.25rem;
+                    padding: 16px 32px;
+                    border-radius: 12px;
+                }
+            `}</style>
         </Modal>
     );
 };
 
-export default FastApplyModal; 
+export default FastApplyModal;
