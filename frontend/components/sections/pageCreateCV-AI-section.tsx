@@ -288,6 +288,9 @@ const PageCreateCVAIContent = () => {
   };
 
   const handleSectionClick = (sectionId: string) => {
+    if(sectionId == "avatar") {
+      sectionId = "info"
+    }
     setActivePopup(sectionId);
   };
 

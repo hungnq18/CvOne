@@ -257,7 +257,7 @@ const ManageApplyJobTable: React.FC<ManageApplyJobTableProps> = ({
                             <TableHead>Job Title</TableHead>
                             <TableHead>Role</TableHead>
                             <TableHead>Applied Date</TableHead>
-                            <TableHead>Experience</TableHead>
+                            <TableHead>Skill</TableHead>
                             <TableHead>{statusFilter === "all" ? "Status" : "Action"}</TableHead>
                             <TableHead>Documents</TableHead>
                         </TableRow>
@@ -317,7 +317,21 @@ const ManageApplyJobTable: React.FC<ManageApplyJobTableProps> = ({
                                                 : "-"}
                                     </TableCell>
                                     <TableCell>
-                                        {app.cvId?.content?.userData?.professional || "-"}
+                                        {(() => {
+                                            const skills = app.cvId?.content?.userData?.skills;
+                                            let skillStr = '-';
+                                            if (Array.isArray(skills)) {
+                                                const filtered = skills.filter(s => {
+                                                    const name = s.name || s;
+                                                    return name && !/công cụ|tool/i.test(name);
+                                                });
+                                                skillStr = filtered.length ? filtered.map(s => s.name || s).join(', ') : '-';
+                                            } else if (typeof skills === 'string') {
+                                                if (!/công cụ|tool/i.test(skills)) skillStr = skills;
+                                            }
+                                            if (skillStr.length > 40) return <>{skillStr.slice(0, 37)}...</>;
+                                            return <>{skillStr}</>;
+                                        })()}
                                     </TableCell>
                                     <TableCell>
                                         {statusFilter === "all" ? (

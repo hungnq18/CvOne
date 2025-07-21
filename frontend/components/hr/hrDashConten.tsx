@@ -60,6 +60,7 @@ export function DashboardContent() {
             pending: 'Chờ duyệt',
             accepted: 'Đã nhận',
             rejected: 'Từ chối',
+            submitByFile: 'Nộp bằng file',
         },
         en: {
             jobTitle: 'Job Title',
@@ -74,6 +75,7 @@ export function DashboardContent() {
             pending: 'Pending',
             accepted: 'Accepted',
             rejected: 'Rejected',
+            submitByFile: 'Submit by file',
         }
     }[language === 'en' ? 'en' : 'vi'];
 
@@ -139,8 +141,12 @@ export function DashboardContent() {
                                                     <td className="px-4 py-2 whitespace-nowrap">
                                                         {job.userId && job.userId.first_name ? `${job.userId.first_name} ${job.userId.last_name}` : (job.user_id || (job.userId && job.userId._id) || '-')}
                                                     </td>
-                                                    <td className="px-4 py-2 whitespace-nowrap">{job.cvId ? (job.cvId.title || job.cvId._id) : (job.cv_id || '-')}</td>
-                                                    <td className="px-4 py-2 whitespace-nowrap">{job.coverletterId ? (job.coverletterId.title || job.coverletterId._id) : (job.coverletter_id || '-')}</td>
+                                                    <td className="px-4 py-2 whitespace-nowrap">
+                                                        {job.cvId && (job.cvId.title || job.cvId._id) ? (job.cvId.title || job.cvId._id) : (job.cv_id || t.submitByFile)}
+                                                    </td>
+                                                    <td className="px-4 py-2 whitespace-nowrap">
+                                                        {job.coverletterId && (job.coverletterId.title || job.coverletterId._id) ? (job.coverletterId.title || job.coverletterId._id) : (job.coverletter_id || t.submitByFile)}
+                                                    </td>
                                                     <td className="px-4 py-2 whitespace-nowrap">
                                                         <span className={`px-2 py-1 rounded-full text-xs font-semibold ${job.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : job.status === 'accepted' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                                                             {job.status === 'pending' ? t.pending : job.status === 'accepted' ? t.accepted : job.status === 'rejected' ? t.rejected : job.status}
