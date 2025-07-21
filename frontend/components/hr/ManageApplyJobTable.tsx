@@ -376,6 +376,10 @@ const ManageApplyJobTable: React.FC<ManageApplyJobTableProps> = ({
                                                     ? () => handleDeleteApplyJob(app._id)
                                                     : undefined
                                             }
+                                            cvId={app.cvId?._id || app.cv_id}
+                                            cvUrl={app.cvUrl}
+                                            clId={app.coverletterId?._id || app.coverletter_id}
+                                            clUrl={app.clUrl}
                                         />
                                     </TableCell>
                                 </TableRow>

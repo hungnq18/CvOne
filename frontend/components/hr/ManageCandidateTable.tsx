@@ -265,7 +265,13 @@ const ManageCandidateTable = () => {
                                         <Button
                                             variant="outline"
                                             size="sm"
-                                            onClick={() => setPreviewModal({ open: true, type: 'cv', cvData: app.cvId })}
+                                            onClick={() => {
+                                                if (app.cvId?._id || app.cv_id) {
+                                                    setPreviewModal({ open: true, type: 'cv', cvData: app.cvId });
+                                                } else if (app.cvUrl) {
+                                                    window.open(app.cvUrl, '_blank');
+                                                }
+                                            }}
                                             style={{ background: '#f5f5f5', color: '#1e40af', border: '1px solid #d1d5db', fontWeight: 500 }}
                                         >
                                             <FileText className="mr-1" style={{ color: '#1e40af' }} />
@@ -274,7 +280,13 @@ const ManageCandidateTable = () => {
                                         <Button
                                             variant="outline"
                                             size="sm"
-                                            onClick={() => setPreviewModal({ open: true, type: 'cl', clData: app.coverletterId })}
+                                            onClick={() => {
+                                                if (app.coverletterId?._id || app.coverletter_id) {
+                                                    setPreviewModal({ open: true, type: 'cl', clData: app.coverletterId });
+                                                } else if (app.clUrl) {
+                                                    window.open(app.clUrl, '_blank');
+                                                }
+                                            }}
                                             style={{ background: '#f5f5f5', color: '#047857', border: '1px solid #d1d5db', fontWeight: 500 }}
                                         >
                                             <User className="mr-1" style={{ color: '#047857' }} />
@@ -307,7 +319,16 @@ const ManageCandidateTable = () => {
                         style={{ width: 200 }}
                         onClick={async () => {
                             setDownloadModal({ open: false });
-                            await handleDownloadCV(downloadModal.app.cvId);
+                            if (downloadModal.app?.cvId?._id || downloadModal.app?.cv_id) {
+                                await handleDownloadCV(downloadModal.app.cvId);
+                            } else if (downloadModal.app?.cvUrl) {
+                                const link = document.createElement('a');
+                                link.href = downloadModal.app.cvUrl;
+                                link.download = '';
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                            }
                         }}
                     >
                         Tải CV
@@ -316,7 +337,16 @@ const ManageCandidateTable = () => {
                         style={{ width: 200 }}
                         onClick={() => {
                             setDownloadModal({ open: false });
-                            handleDownloadCL(downloadModal.app.coverletterId);
+                            if (downloadModal.app?.coverletterId?._id || downloadModal.app?.coverletter_id) {
+                                handleDownloadCL(downloadModal.app.coverletterId);
+                            } else if (downloadModal.app?.clUrl) {
+                                const link = document.createElement('a');
+                                link.href = downloadModal.app.clUrl;
+                                link.download = '';
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                            }
                         }}
                     >
                         Tải Cover Letter
