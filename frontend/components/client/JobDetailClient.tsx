@@ -14,8 +14,7 @@ import { useLanguage } from '@/providers/global-provider';
 import { useRouter } from 'next/navigation';
 import { useCV } from '@/providers/cv-provider';
 import { uploadFileToCloudinary } from '@/utils/uploadCloudinary/upload';
-import { fetchWithAuth } from '@/api/apiClient';
-import { API_ENDPOINTS } from '@/api/apiConfig';
+
 
 interface JobDetailClientProps {
     id: string;

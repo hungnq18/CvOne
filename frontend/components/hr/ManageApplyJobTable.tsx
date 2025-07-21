@@ -70,6 +70,10 @@ const ManageApplyJobTable: React.FC<ManageApplyJobTableProps> = ({
         const matchName = name.toLowerCase().includes(search);
         const matchWorkType = workType === 'All' || jobWorkType === workTypeFilter;
         return matchName && matchWorkType;
+    }).sort((a, b) => {
+        const dateA = new Date(a.createdAt || a.submit_at || 0).getTime();
+        const dateB = new Date(b.createdAt || b.submit_at || 0).getTime();
+        return dateB - dateA;
     });
 
     const getStatusColor = (status: string) => {
@@ -231,7 +235,7 @@ const ManageApplyJobTable: React.FC<ManageApplyJobTableProps> = ({
                             <TableHead>Job Title</TableHead>
                             <TableHead>Role</TableHead>
                             <TableHead>Applied Date</TableHead>
-                            <TableHead>Skill</TableHead>
+                            <TableHead>Phone</TableHead>
                             <TableHead>{statusFilter === "all" ? "Status" : "Action"}</TableHead>
                             <TableHead>Documents</TableHead>
                         </TableRow>
@@ -291,21 +295,7 @@ const ManageApplyJobTable: React.FC<ManageApplyJobTableProps> = ({
                                                 : "-"}
                                     </TableCell>
                                     <TableCell>
-                                        {(() => {
-                                            const skills = app.cvId?.content?.userData?.skills;
-                                            let skillStr = '-';
-                                            if (Array.isArray(skills)) {
-                                                const filtered = skills.filter(s => {
-                                                    const name = s.name || s;
-                                                    return name && !/công cụ|tool/i.test(name);
-                                                });
-                                                skillStr = filtered.length ? filtered.map(s => s.name || s).join(', ') : '-';
-                                            } else if (typeof skills === 'string') {
-                                                if (!/công cụ|tool/i.test(skills)) skillStr = skills;
-                                            }
-                                            if (skillStr.length > 40) return <>{skillStr.slice(0, 37)}...</>;
-                                            return <>{skillStr}</>;
-                                        })()}
+                                        {app.userId?.phone || "-"}
                                     </TableCell>
                                     <TableCell>
                                         {statusFilter === "all" ? (

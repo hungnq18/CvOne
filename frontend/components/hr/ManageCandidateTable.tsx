@@ -143,6 +143,10 @@ const ManageCandidateTable = () => {
         const matchName = name.includes(term);
         const matchWorkType = workType === 'All' || jobWorkType === workTypeFilter;
         return matchName && matchWorkType;
+    }).sort((a, b) => {
+        const dateA = new Date(a.updatedAt || a.createdAt || a.submit_at || 0).getTime();
+        const dateB = new Date(b.updatedAt || b.createdAt || b.submit_at || 0).getTime();
+        return dateB - dateA;
     });
 
     // Lấy danh sách work type duy nhất từ dữ liệu job
@@ -211,7 +215,7 @@ const ManageCandidateTable = () => {
                         <TableRow>
                             <TableHead>Candidate</TableHead>
                             <TableHead>Location</TableHead>
-                            <TableHead>Skill</TableHead>
+                            <TableHead>Number</TableHead>
                             <TableHead>Applied Jobs</TableHead>
                             <TableHead>Last Active</TableHead>
                             <TableHead>Actions</TableHead>
@@ -241,24 +245,10 @@ const ManageCandidateTable = () => {
                                     </div>
                                 </TableCell>
                                 <TableCell>
-                                    {app.cvId?.content?.userData?.city || '-'}, {app.cvId?.content?.userData?.country || '-'}
+                                    {app.userId?.city || '-'}, {app.userId?.country || '-'}
                                 </TableCell>
                                 <TableCell>
-                                    {(() => {
-                                        const skills = app.cvId?.content?.userData?.skills;
-                                        let skillStr = '-';
-                                        if (Array.isArray(skills)) {
-                                            const filtered = skills.filter(s => {
-                                                const name = s.name || s;
-                                                return name && !/công cụ|tool/i.test(name);
-                                            });
-                                            skillStr = filtered.length ? filtered.map(s => s.name || s).join(', ') : '-';
-                                        } else if (typeof skills === 'string') {
-                                            if (!/công cụ|tool/i.test(skills)) skillStr = skills;
-                                        }
-                                        if (skillStr.length > 40) return <>{skillStr.slice(0, 37)}...</>;
-                                        return <>{skillStr}</>;
-                                    })()}
+                                    {app.userId?.phone || '-'}
                                 </TableCell>
                                 <TableCell>
                                     {app.jobId?.title || app.job_id || '-'}
