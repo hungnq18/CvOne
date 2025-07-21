@@ -14,7 +14,6 @@ import {
 import { Search, Check, X } from "lucide-react";
 import HrAction from "@/components/ui/hrActions";
 import StatusRadioTabs from "@/components/hr/RadioTabsInManageApply";
-import DeleteButton from "@/components/ui/DeleteButton";
 import { templateComponentMap } from "@/components/cvTemplate/index";
 import html2pdf from "html2pdf.js";
 import { getCVTemplates, CVTemplate } from "@/api/cvapi";
@@ -27,7 +26,7 @@ interface ManageApplyJobTableProps {
     setSearchTerm: (v: string) => void;
     handleViewCV: (cvId: string) => void;
     handleViewCoverLetter: (coverLetterId: string) => void;
-    handleUpdateStatus: (applyJobId: string, newStatus: "approved" | "rejected" | "reviewed") => void;
+    handleUpdateStatus: (applyJobId: string, newStatus: "approved" | "rejected" | "reviewed", candidateId: string) => void;
     handleDeleteApplyJob?: (applyJobId: string) => void;
 }
 
@@ -232,7 +231,7 @@ const ManageApplyJobTable: React.FC<ManageApplyJobTableProps> = ({
                             <TableHead>Job Title</TableHead>
                             <TableHead>Role</TableHead>
                             <TableHead>Applied Date</TableHead>
-                            <TableHead>Experience</TableHead>
+                            <TableHead>Skill</TableHead>
                             <TableHead>{statusFilter === "all" ? "Status" : "Action"}</TableHead>
                             <TableHead>Documents</TableHead>
                         </TableRow>
@@ -292,7 +291,21 @@ const ManageApplyJobTable: React.FC<ManageApplyJobTableProps> = ({
                                                 : "-"}
                                     </TableCell>
                                     <TableCell>
-                                        {app.cvId?.content?.userData?.professional || "-"}
+                                        {(() => {
+                                            const skills = app.cvId?.content?.userData?.skills;
+                                            let skillStr = '-';
+                                            if (Array.isArray(skills)) {
+                                                const filtered = skills.filter(s => {
+                                                    const name = s.name || s;
+                                                    return name && !/công cụ|tool/i.test(name);
+                                                });
+                                                skillStr = filtered.length ? filtered.map(s => s.name || s).join(', ') : '-';
+                                            } else if (typeof skills === 'string') {
+                                                if (!/công cụ|tool/i.test(skills)) skillStr = skills;
+                                            }
+                                            if (skillStr.length > 40) return <>{skillStr.slice(0, 37)}...</>;
+                                            return <>{skillStr}</>;
+                                        })()}
                                     </TableCell>
                                     <TableCell>
                                         {statusFilter === "all" ? (
@@ -310,7 +323,7 @@ const ManageApplyJobTable: React.FC<ManageApplyJobTableProps> = ({
                                                     size="sm"
                                                     variant="outline"
                                                     className="text-blue-600 border-blue-600 hover:bg-blue-50"
-                                                    onClick={() => handleUpdateStatus(app._id, "reviewed")}
+                                                    onClick={() => handleUpdateStatus(app._id, "reviewed", app.userId?._id || app.user_id || app.userId)}
                                                 >
                                                     <Check className="h-4 w-4 mr-1" /> Reviewed
                                                 </Button>
@@ -321,7 +334,7 @@ const ManageApplyJobTable: React.FC<ManageApplyJobTableProps> = ({
                                                     size="sm"
                                                     variant="outline"
                                                     className="text-green-600 border-green-600 hover:bg-green-50"
-                                                    onClick={() => handleUpdateStatus(app._id, "approved")}
+                                                    onClick={() => handleUpdateStatus(app._id, "approved", app.userId?._id || app.user_id || app.userId)}
                                                 >
                                                     <Check className="h-4 w-4 mr-1" /> Approve
                                                 </Button>
@@ -329,7 +342,7 @@ const ManageApplyJobTable: React.FC<ManageApplyJobTableProps> = ({
                                                     size="sm"
                                                     variant="outline"
                                                     className="text-red-600 border-red-600 hover:bg-red-50"
-                                                    onClick={() => handleUpdateStatus(app._id, "rejected")}
+                                                    onClick={() => handleUpdateStatus(app._id, "rejected", app.userId?._id || app.user_id || app.userId)}
                                                 >
                                                     <X className="h-4 w-4 mr-1" /> Reject
                                                 </Button>
@@ -340,7 +353,7 @@ const ManageApplyJobTable: React.FC<ManageApplyJobTableProps> = ({
                                                     size="sm"
                                                     variant="outline"
                                                     className="text-blue-600 border-blue-600 hover:bg-blue-50"
-                                                    onClick={() => handleUpdateStatus(app._id, "reviewed")}
+                                                    onClick={() => handleUpdateStatus(app._id, "reviewed", app.userId?._id || app.user_id || app.userId)}
                                                 >
                                                     <svg
                                                         style={{ marginRight: 4 }}

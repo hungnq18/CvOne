@@ -23,6 +23,9 @@ export class Notification {
 
   @Prop({ type: String }) // Ví dụ: URL liên kết tới hành động
   link?: string;
+
+  @Prop({ type: Types.ObjectId, ref: "Job", required: false })
+  jobId?: Types.ObjectId;
 }
 
 export const NotificationSchema = SchemaFactory.createForClass(Notification);

@@ -15,6 +15,8 @@ import { Modal } from 'antd';
 import React from 'react';
 import '../../styles/manageCandidate.css';
 import PreviewCVCLModal from '@/components/hr/PreviewCVCLModal';
+import ChatButton from '@/components/ui/chatButton';
+import "@/styles/chatButton.css";
 
 const DownloadButton = ({ onClick }: { onClick?: () => void }) => (
     <button className="Btn" onClick={onClick} type="button">
@@ -209,7 +211,7 @@ const ManageCandidateTable = () => {
                         <TableRow>
                             <TableHead>Candidate</TableHead>
                             <TableHead>Location</TableHead>
-                            <TableHead>Experience</TableHead>
+                            <TableHead>Skill</TableHead>
                             <TableHead>Applied Jobs</TableHead>
                             <TableHead>Last Active</TableHead>
                             <TableHead>Actions</TableHead>
@@ -242,7 +244,21 @@ const ManageCandidateTable = () => {
                                     {app.cvId?.content?.userData?.city || '-'}, {app.cvId?.content?.userData?.country || '-'}
                                 </TableCell>
                                 <TableCell>
-                                    {app.cvId?.content?.userData?.professional || '-'}
+                                    {(() => {
+                                        const skills = app.cvId?.content?.userData?.skills;
+                                        let skillStr = '-';
+                                        if (Array.isArray(skills)) {
+                                            const filtered = skills.filter(s => {
+                                                const name = s.name || s;
+                                                return name && !/công cụ|tool/i.test(name);
+                                            });
+                                            skillStr = filtered.length ? filtered.map(s => s.name || s).join(', ') : '-';
+                                        } else if (typeof skills === 'string') {
+                                            if (!/công cụ|tool/i.test(skills)) skillStr = skills;
+                                        }
+                                        if (skillStr.length > 40) return <>{skillStr.slice(0, 37)}...</>;
+                                        return <>{skillStr}</>;
+                                    })()}
                                 </TableCell>
                                 <TableCell>
                                     {app.jobId?.title || app.job_id || '-'}
@@ -275,6 +291,11 @@ const ManageCandidateTable = () => {
                                             View CL
                                         </Button>
                                         <DownloadButton onClick={() => setDownloadModal({ open: true, app })} />
+                                        <ChatButton
+                                            participantId={app.userId?._id || app.userId || app.cvId?.userId || ''}
+                                            buttonText="Chat"
+                                            compact={true}
+                                        />
                                         <DeleteButton onClick={() => setDeleteModal({ open: true, appId: app._id })} />
                                     </div>
                                 </TableCell>

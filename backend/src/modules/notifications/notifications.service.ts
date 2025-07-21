@@ -14,17 +14,18 @@ export class NotificationsService {
   constructor(
     @InjectModel(Notification.name)
     private notificationModel: Model<NotificationDocument>,
-    private readonly notificationsGateway: NotificationsGateway // ✅ Inject Gateway
-  ) {}
+    private readonly notificationsGateway: NotificationsGateway, // ✅ Inject Gateway
+  ) { }
 
   async createNotification(
     dto: CreateNotificationDto,
-    userId: string
+    userId: string,
   ): Promise<NotificationDocument> {
     const created = new this.notificationModel({
       ...dto,
       recipient: new Types.ObjectId(userId),
       isRead: false,
+      ...(dto.jobId ? { jobId: new Types.ObjectId(dto.jobId) } : {}),
     });
 
     const saved = await created.save();
@@ -33,7 +34,7 @@ export class NotificationsService {
   }
 
   async getNotificationsByUser(
-    userId: string
+    userId: string,
   ): Promise<NotificationDocument[]> {
     return this.notificationModel
       .find({ recipient: userId })
@@ -45,7 +46,7 @@ export class NotificationsService {
     const updated = await this.notificationModel.findByIdAndUpdate(
       notificationId,
       { isRead: true },
-      { new: true }
+      { new: true },
     );
     if (!updated) throw new NotFoundException("Notification not found");
     return updated;
@@ -54,7 +55,7 @@ export class NotificationsService {
   async markAllAsRead(userId: string): Promise<{ modifiedCount: number }> {
     const result = await this.notificationModel.updateMany(
       { recipient: userId, isRead: false },
-      { $set: { isRead: true } }
+      { $set: { isRead: true } },
     );
     return { modifiedCount: result.modifiedCount };
   }
