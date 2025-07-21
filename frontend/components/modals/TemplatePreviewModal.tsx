@@ -10,7 +10,7 @@ import Cascade from '@/app/createCLTemplate/templates/cascade';
 import Crisp from '@/app/createCLTemplate/templates/crisp';
 
 const TemplateRenderer = ({ templateName, letterData }: { templateName: string; letterData: any }) => {
-    const props = { letterData, isPreview: true };
+    const props = { letterData, isPreview: false };
     switch (templateName) {
         case 'concept':
             return <Concept {...props} />;
@@ -88,9 +88,7 @@ const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({ isOpen, onC
                         </div>
                     )}
                     {!loading && letterData && template && (
-                        <div className="bg-white w-full shadow-lg mx-auto" style={{ height: '1123px', width: '794px' }}>
-                             <TemplateRenderer templateName={template.title.toLowerCase()} letterData={letterData} />
-                        </div>
+                        <TemplateRenderer templateName={template.title.toLowerCase()} letterData={letterData} />
                     )}
                      {!loading && !template && (
                         <div className="flex items-center justify-center h-full text-red-500">
