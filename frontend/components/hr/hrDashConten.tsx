@@ -1,6 +1,6 @@
 'use client';
 import { ApplyJob, getApplyJobByHR } from "@/api/apiApplyJob";
-import { ProfitChart } from "@/components/hr/profit-chart";
+import { ApplyJobOverviewChart } from "@/components/hr/profit-chart";
 import { RevenueChart } from "@/components/hr/revenue-chart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLanguage } from '@/providers/global-provider';
@@ -205,20 +205,10 @@ export function DashboardContent() {
 
                 <Card className="bg-white">
                     <CardHeader>
-                        <CardTitle className="text-lg">Profit this week</CardTitle>
-                        <div className="flex gap-4 text-sm">
-                            <div className="flex items-center gap-2">
-                                <div className="h-2 w-2 rounded-full bg-blue-500"></div>
-                                <span className="text-muted-foreground">Sales</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <div className="h-2 w-2 rounded-full bg-cyan-400"></div>
-                                <span className="text-muted-foreground">Revenue</span>
-                            </div>
-                        </div>
+                        <CardTitle className="text-lg">Apply Job Overview</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <ProfitChart />
+                        <ApplyJobOverviewChart />
                     </CardContent>
                 </Card>
             </div>

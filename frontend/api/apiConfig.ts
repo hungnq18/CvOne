@@ -102,6 +102,7 @@ export const API_ENDPOINTS = {
     UPDATE_STATUS_BY_HR: (id: string) => `/apply-job/${id}/status/by-hr`,
     UPDATE_APPLY_JOB_BY_USER: (id: string) => `/apply-job/${id}/user-update`,
     DELETE_APPLY_JOB_BY_HR: (id: string) => `/apply-job/${id}`,
+    COUNT_BY_STATUS: (status: string) => `/apply-job/count-apply-job-by-status/${status}`,
   },
   SAVED_JOB: {
     GET_SAVE_JOB: "/saved-jobs",

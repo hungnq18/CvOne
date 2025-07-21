@@ -1,6 +1,5 @@
-import { UpdateApplyJobByHrDto } from './../../backend/src/modules/apply-job/dto/update-apply-job.dto';
-import { API_URL, API_ENDPOINTS } from './apiConfig';
 import { fetchWithAuth } from './apiClient';
+import { API_ENDPOINTS } from './apiConfig';
 
 // Helper fetch
 // (apiFetch giữ lại nếu cần cho public API, nhưng các API xác thực sẽ dùng fetchWithAuth)
@@ -87,4 +86,8 @@ export async function deleteApplyJobByHR(id: string) {
       method: 'DELETE',
     }
   );
+}
+
+export async function getCountApplyJobByStatus(status: string) {
+  return fetchWithAuth(API_ENDPOINTS.APPLYJOB.COUNT_BY_STATUS(status));
 }
