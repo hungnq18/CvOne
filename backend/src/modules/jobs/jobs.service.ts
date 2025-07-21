@@ -21,7 +21,7 @@ export class JobsService {
 
     const transformedData = {
       ...jobData,
-      postedBy: new Types.ObjectId(userId),
+      user_id: new Types.ObjectId(userId),
     };
 
     const createdJob = new this.jobModel(transformedData);
