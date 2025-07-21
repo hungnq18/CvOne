@@ -30,12 +30,12 @@ interface ConceptProps {
 
 const Concept: React.FC<ConceptProps> = ({ letterData, onSectionClick, isPreview = false }) => {
   const containerClassName = `bg-white font-sans text-sm ${
-    isPreview ? 'w-full h-full' : 'shadow-lg w-[21cm] h-[29.7cm] mx-auto'
+    isPreview ? 'w-full h-full' : 'shadow-lg w-[21cm] mx-auto'
   }`;
 
   return (
     <div className={containerClassName}>
-      <div className="flex w-full h-full">
+      <div className="flex w-full">
         {/* Left Sidebar - Dark Background */}
         <div className="w-72 bg-gray-800 text-white p-8 flex flex-col items-center flex-shrink-0">
           <HoverableSection

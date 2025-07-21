@@ -60,7 +60,7 @@ const CoverLetterBuilderContent = () => {
         state: '',
         phone: '',
         email: '',
-        date: '',
+        date: new Date().toISOString().split('T')[0],
         recipientFirstName: '',
         recipientLastName: '',
         companyName: '',
@@ -163,7 +163,7 @@ const CoverLetterBuilderContent = () => {
                     if (clData && clData.templateId) {
                         const fetchedData = {
                             ...clData.data,
-                            date: clData.data.date ? new Date(clData.data.date).toISOString().split('T')[0] : '',
+                            date: clData.data.date ? new Date(clData.data.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
                         };
                         setLetterData(fetchedData);
                         setClTitle(clData.title || '');
@@ -207,20 +207,23 @@ const CoverLetterBuilderContent = () => {
     }, [clId, templateId, clFilename, jdFilename]);
 
     const getInitialData = () => {
+        const currentDate = new Date().toISOString().split('T')[0];
         if (!selectedTemplateData || !selectedTemplateData.data) {
             const firstName = initialFirstName || '';
             const lastName = initialLastName || '';
-            return { firstName, lastName, profession: '', city: '', state: '', phone: '', email: '', date: '', recipientFirstName: '', recipientLastName: '', companyName: '', recipientCity: '', recipientState: '', recipientPhone: '', recipientEmail: '', subject: '', greeting: '', opening: '', body: '', callToAction: '', closing: '', signature: `${firstName} ${lastName}`.trim() };
+            return { firstName, lastName, profession: '', city: '', state: '', phone: '', email: '', date: currentDate, recipientFirstName: '', recipientLastName: '', companyName: '', recipientCity: '', recipientState: '', recipientPhone: '', recipientEmail: '', subject: '', greeting: '', opening: '', body: '', callToAction: '', closing: '', signature: `${firstName} ${lastName}`.trim() };
         }
 
         const baseData = selectedTemplateData.data;
         const firstName = initialFirstName || baseData.firstName;
         const lastName = initialLastName || baseData.lastName;
+        const templateDate = baseData.date ? new Date(baseData.date).toISOString().split('T')[0] : currentDate;
 
         return {
             ...baseData,
             firstName,
             lastName,
+            date: templateDate,
             signature: `${firstName} ${lastName}`,
         };
     };
@@ -793,7 +796,7 @@ const CoverLetterBuilderContent = () => {
                             Bạn vui lòng nhập tiêu đề Cover Letter để quản lý dễ dàng hơn
                         </h2>
                         <p className="text-sm text-gray-500 mb-4">
-                            Ví dụ: Thư ứng tuyển FPT, Thư ứng tuyển vị trí Marketing...
+                            Ví dụ: Thư ứng tuyển FPT, Thư ứng tuyển vị trí TTS DEV...
                         </p>
                         <input
                             type="text"
