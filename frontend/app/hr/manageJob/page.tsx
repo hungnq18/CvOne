@@ -1,15 +1,16 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Plus, Edit, Trash2, Eye, Search, MapPin, Calendar, DollarSign, Briefcase, GraduationCap } from "lucide-react"
+import { getApplyJobByHR } from '@/api/apiApplyJob'
+import { createJob, deleteJob, getJobsByHR, updateJob } from '@/api/jobApi'
+import JobDeleteDialog from '@/components/hr/JobDeleteDialog'
+import JobTableInmanageJob from '@/components/hr/JobTableInManageJob'
+import SearchInmanageJob from '@/components/hr/searchInManageJob'
+import JobEditModel from '@/components/modals/JobEditModel'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { getJobsByHR, Job as JobApi, updateJob, deleteJob, createJob } from '@/api/jobApi';
-import { getApplyJobByHR } from '@/api/apiApplyJob';
-import JobTableInmanageJob from '@/components/hr/JobTableInManageJob';
-import JobEditModel from '@/components/modals/JobEditModel';
-import JobDeleteDialog from '@/components/hr/JobDeleteDialog';
-import SearchInmanageJob from '@/components/hr/searchInManageJob';
+import { toast } from "@/hooks/use-toast"
+import { Plus } from "lucide-react"
+import { useEffect, useState } from "react"
 
 // Định nghĩa interface cho Job
 interface Job {
@@ -54,6 +55,12 @@ export default function ManageJobPage() {
         skills: "",
         Responsibilities: ""
     })
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 5;
+    // State cho filter và sort
+    const [statusFilter, setStatusFilter] = useState<string>('all');
+    const [workTypeFilter, setWorkTypeFilter] = useState<string>('all');
+    const [sortOption, setSortOption] = useState<string>('newest');
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
     // Lấy dữ liệu thật từ API khi load trang
@@ -102,12 +109,42 @@ export default function ManageJobPage() {
         fetchData();
     }, []);
 
-    const filteredJobs = jobs.filter(job =>
-        (job["Job Title"] || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (job.Role || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (job.location || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (job.Country || "").toLowerCase().includes(searchTerm.toLowerCase())
-    )
+    // Filter jobs
+    const filteredJobs = jobs.filter(job => {
+        const matchSearch =
+            (job["Job Title"] || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (job.Role || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (job.location || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (job.Country || "").toLowerCase().includes(searchTerm.toLowerCase());
+        const matchStatus = statusFilter === 'all' || (job.status || 'Active') === statusFilter;
+        const matchWorkType = workTypeFilter === 'all' || job["Work Type"] === workTypeFilter;
+        return matchSearch && matchStatus && matchWorkType;
+    });
+
+    // Sort jobs
+    const sortedJobs = [...filteredJobs].sort((a, b) => {
+        if (sortOption === 'newest') {
+            // Ưu tiên ngày đăng mới nhất
+            const dateA = new Date(a["Job Posting Date"]).getTime();
+            const dateB = new Date(b["Job Posting Date"]).getTime();
+            return dateB - dateA;
+        } else if (sortOption === 'oldest') {
+            const dateA = new Date(a["Job Posting Date"]).getTime();
+            const dateB = new Date(b["Job Posting Date"]).getTime();
+            return dateA - dateB;
+        } else if (sortOption === 'mostApplicants') {
+            return (b.applications || 0) - (a.applications || 0);
+        } else if (sortOption === 'leastApplicants') {
+            return (a.applications || 0) - (b.applications || 0);
+        } else if (sortOption === 'activeFirst') {
+            return (b.status === 'Active' ? 1 : 0) - (a.status === 'Active' ? 1 : 0);
+        }
+        return 0;
+    });
+
+    // Pagination logic
+    const totalPages = Math.ceil(sortedJobs.length / itemsPerPage);
+    const paginatedJobs = sortedJobs.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
     const handleAddJob = async () => {
         const salary = newJob["Salary Range"] || "";
@@ -204,6 +241,7 @@ export default function ManageJobPage() {
                     responsibilities: selectedJob.Responsibilities,
                 });
                 setJobs(jobs.map(job => job._id === selectedJob._id ? { ...selectedJob } : job));
+                toast({ title: "Success", description: "Job updated successfully!" });
             } catch (error) {
                 alert('Failed to update job');
             }
@@ -218,6 +256,7 @@ export default function ManageJobPage() {
                 // Gọi API deleteJob
                 await deleteJob(selectedJob._id);
                 setJobs(jobs.filter(job => job._id !== selectedJob._id));
+                toast({ title: "Success", description: "Job deleted successfully!" });
             } catch (error) {
                 alert('Failed to delete job');
             }
@@ -258,26 +297,56 @@ export default function ManageJobPage() {
                     isEdit={false}
                     errors={errors}
                 />
-                <Button className="flex items-center gap-2 w-full sm:w-auto" onClick={() => setIsAddDialogOpen(true)}>
-                    <Plus className="h-4 w-4" />
-                    Add New Job
-                </Button>
             </div>
 
             <Card>
                 <CardHeader className="space-y-2">
                     <CardTitle>Job Listings</CardTitle>
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                        <SearchInmanageJob searchTerm={searchTerm} onSearchTermChange={setSearchTerm} />
-                        <Button className="flex items-center gap-2 w-full sm:w-auto" onClick={() => setIsAddDialogOpen(true)}>
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mt-2">
+                        {/* Filter by status */}
+                        <select
+                            className="border rounded px-2 py-1 text-sm"
+                            value={statusFilter}
+                            onChange={e => { setStatusFilter(e.target.value); setCurrentPage(1); }}
+                        >
+                            <option value="all">All Status</option>
+                            <option value="Active">Active</option>
+                            <option value="Inactive">Inactive</option>
+                        </select>
+                        {/* Filter by work type */}
+                        <select
+                            className="border rounded px-2 py-1 text-sm"
+                            value={workTypeFilter}
+                            onChange={e => { setWorkTypeFilter(e.target.value); setCurrentPage(1); }}
+                        >
+                            <option value="all">All Work Types</option>
+                            <option value="Full-Time">Full-time</option>
+                            <option value="Part-Time">Part-time</option>
+                            <option value="Intern">Intern</option>
+                            <option value="Temporary">Temporary</option>
+                        </select>
+                        {/* Sort options */}
+                        <select
+                            className="border rounded px-2 py-1 text-sm"
+                            value={sortOption}
+                            onChange={e => setSortOption(e.target.value)}
+                        >
+                            <option value="newest">Newest</option>
+                            <option value="oldest">Oldest</option>
+                            <option value="mostApplicants">Most Applicants</option>
+                            <option value="leastApplicants">Least Applicants</option>
+                            <option value="activeFirst">Active First</option>
+                        </select>
+                        <Button className="w-full mt-2 sm:ml-auto sm:w-auto sm:mt-0 flex items-center gap-2" onClick={() => setIsAddDialogOpen(true)}>
                             <Plus className="h-4 w-4" />
-                            Add Job
+                            Add New Job
                         </Button>
                     </div>
+                    <SearchInmanageJob searchTerm={searchTerm} onSearchTermChange={setSearchTerm} />
                 </CardHeader>
                 <CardContent className="overflow-x-auto p-0">
                     <JobTableInmanageJob
-                        jobs={filteredJobs}
+                        jobs={paginatedJobs}
                         onEdit={(job: Job) => {
                             setSelectedJob(job);
                             setIsEditDialogOpen(true);
@@ -289,6 +358,32 @@ export default function ManageJobPage() {
                         getStatusColor={getStatusColor}
                         getWorkTypeColor={getWorkTypeColor}
                     />
+                    {/* Pagination controls */}
+                    <div className="flex justify-center items-center gap-1 mt-2">
+                        <button
+                            className="w-8 h-8 flex items-center justify-center rounded-md border text-xs bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
+                            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                            disabled={currentPage === 1}
+                        >
+                            &lt;
+                        </button>
+                        {Array.from({ length: totalPages }, (_, i) => (
+                            <button
+                                key={i + 1}
+                                className={`w-8 h-8 flex items-center justify-center rounded-md border text-xs ${currentPage === i + 1 ? 'bg-blue-500 text-white' : 'bg-gray-100 hover:bg-gray-200'}`}
+                                onClick={() => setCurrentPage(i + 1)}
+                            >
+                                {i + 1}
+                            </button>
+                        ))}
+                        <button
+                            className="w-8 h-8 flex items-center justify-center rounded-md border text-xs bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
+                            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                            disabled={currentPage === totalPages}
+                        >
+                            &gt;
+                        </button>
+                    </div>
                 </CardContent>
             </Card>
 

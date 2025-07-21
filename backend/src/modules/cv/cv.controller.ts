@@ -206,30 +206,18 @@ export class CvController {
    * @requires Authentication
    */
   @UseGuards(JwtAuthGuard)
-  @Post("upload-and-analyze")
-  @UseInterceptors(
-    FileInterceptor("cvFile", {
-      limits: { fileSize: 10 * 1024 * 1024 },
-      fileFilter: (req, file, cb) => {
-        if (!file.mimetype || !file.mimetype.includes("pdf")) {
-          return cb(
-            new BadRequestException("Only PDF files are allowed!"),
-            false,
-          );
-        }
-        cb(null, true);
-      },
-    }),
-  )
-  async uploadAndAnalyzeCv(
-    @UploadedFile() file: any,
-    @Body("jobDescription") jobDescription: string,
-    @Body("additionalRequirements") additionalRequirements: string,
-  ) {
-    if (!file)
-      throw new BadRequestException(
-        "No CV file uploaded or invalid file type.",
-      );
+  @Post('upload-and-analyze')
+  @UseInterceptors(FileInterceptor('cvFile', {
+    limits: { fileSize: 10 * 1024 * 1024 },
+    fileFilter: (req, file, cb) => {
+      if (!file.mimetype || !file.mimetype.includes('pdf')) {
+        return cb(new BadRequestException('Only PDF files are allowed!'), false);
+      }
+      cb(null, true);
+    }
+  }))
+  async uploadAndAnalyzeCv(@UploadedFile() file: any, @Body('jobDescription') jobDescription: string, @Body('additionalRequirements') additionalRequirements: string) {
+    if (!file) throw new BadRequestException('No CV file uploaded or invalid file type.');
     if (!jobDescription || jobDescription.trim().length === 0) {
       throw new BadRequestException("Job description is required.");
     }
@@ -237,7 +225,7 @@ export class CvController {
     const pdfData = await pdf(file.buffer);
     const cvText = pdfData.text;
     if (!cvText || cvText.trim().length === 0) {
-      throw new BadRequestException("Could not extract text from PDF.");
+      throw new BadRequestException('Could not extract text from PDF.');
     }
     // 2. Gửi text cho AI phân tích
     const analysisResult = await this.cvAiService.analyzeCvContent(cvText);
@@ -680,7 +668,7 @@ export class CvController {
         "Content-Disposition": 'attachment; filename="optimized-cv.pdf"',
       });
       // Trả về file PDF dạng stream để tối ưu tốc độ load
-      const { Readable } = require("stream");
+      const { Readable } = require('stream');
       const stream = Readable.from(result.pdfBuffer);
       stream.pipe(res);
     } catch (error) {

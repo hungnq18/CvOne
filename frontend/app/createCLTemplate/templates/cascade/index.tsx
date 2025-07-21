@@ -30,12 +30,12 @@ interface CascadeProps {
 
 const Cascade: React.FC<CascadeProps> = ({ letterData, onSectionClick, isPreview = false }) => {
   const containerClassName = `bg-white font-sans text-sm ${
-    isPreview ? 'w-full h-full' : 'shadow-lg w-[21cm] h-[29.7cm] mx-auto'
+    isPreview ? 'w-full h-full' : 'shadow-lg w-[21cm] mx-auto'
   }`;
 
   return (
     <div className={containerClassName}>
-      <div className="flex w-full h-full">
+      <div className="flex w-full">
         <div className="w-36 bg-gray-800 flex-shrink-0"></div>
         <div className="flex-1 p-5 text-gray-800 space-y-6">
 

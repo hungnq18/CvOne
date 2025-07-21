@@ -35,12 +35,12 @@ const Crisp: React.FC<CrispProps> = ({ letterData, onSectionClick, isPreview = f
   const psContent = hasPS ? `P.S. ${letterData.body.split('P.S.').slice(1).join('P.S.').trim()}` : '';
 
   const containerClassName = `bg-white font-sans text-sm ${
-    isPreview ? 'w-full h-full' : 'shadow-lg w-[21cm] h-[29.7cm] mx-auto'
+    isPreview ? 'w-full h-full' : 'shadow-lg w-[21cm] mx-auto'
   }`;
 
   return (
     <div className={containerClassName}>
-      <div className="flex gap-10 w-full h-full p-10">
+      <div className="flex gap-10 w-full p-10">
         {/* Left Sidebar */}
         <div className="w-48 flex-shrink-0">
           <HoverableSection
@@ -86,7 +86,7 @@ const Crisp: React.FC<CrispProps> = ({ letterData, onSectionClick, isPreview = f
             onSectionClick={onSectionClick}
             fullWidth={true}
           >
-            <p className="text-right mb-8">{letterData.date}</p>
+            <p className="mb-8">{letterData.date}</p>
           </HoverableSection>
 
           <HoverableSection

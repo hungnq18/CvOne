@@ -1,11 +1,11 @@
 'use client';
-import { useEffect, useState } from "react"
-import { Eye, ShoppingCart, Package, Users, TrendingUp } from "lucide-react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { RevenueChart } from "@/components/hr/revenue-chart"
-import { ProfitChart } from "@/components/hr/profit-chart"
-import { getApplyJobByHR, ApplyJob } from "@/api/apiApplyJob"
+import { ApplyJob, getApplyJobByHR } from "@/api/apiApplyJob";
+import { ApplyJobOverviewChart } from "@/components/hr/profit-chart";
+import { RevenueChart } from "@/components/hr/revenue-chart";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLanguage } from '@/providers/global-provider';
+import { Eye, Package, ShoppingCart, Users } from "lucide-react";
+import { useEffect, useState } from "react";
 
 const stats = [
     {
@@ -42,6 +42,14 @@ export function DashboardContent() {
     const [appliedJobs, setAppliedJobs] = useState<ApplyJob[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [filterMode, setFilterMode] = useState<'daily' | 'monthly' | 'yearly'>('daily');
+    const [filterDate, setFilterDate] = useState({
+        day: new Date().getDate(),
+        month: new Date().getMonth() + 1,
+        year: new Date().getFullYear(),
+    });
+    const itemsPerPage = 5;
     const { language } = useLanguage ? useLanguage() : { language: 'vi' };
 
     const t = {
@@ -59,6 +67,9 @@ export function DashboardContent() {
             accepted: 'Đã nhận',
             rejected: 'Từ chối',
             submitByFile: 'Nộp bằng file',
+            daily: 'Hàng ngày',
+            monthly: 'Hàng tháng',
+            yearly: 'Hàng năm',
         },
         en: {
             jobTitle: 'Job Title',
@@ -74,12 +85,22 @@ export function DashboardContent() {
             accepted: 'Accepted',
             rejected: 'Rejected',
             submitByFile: 'Submit by file',
+            daily: 'Daily',
+            monthly: 'Monthly',
+            yearly: 'Yearly',
         }
     }[language === 'en' ? 'en' : 'vi'];
 
     useEffect(() => {
         setLoading(true);
-        getApplyJobByHR()
+        const filters: { day?: number, month?: number, year?: number } = { year: filterDate.year };
+        if (filterMode === 'monthly') {
+            filters.month = filterDate.month;
+        } else if (filterMode === 'daily') {
+            filters.month = filterDate.month;
+            filters.day = filterDate.day;
+        }
+        getApplyJobByHR(filters.day, filters.month, filters.year)
             .then((data) => {
                 setAppliedJobs(Array.isArray(data) ? data : (data.data || []));
                 setError(null);
@@ -89,13 +110,51 @@ export function DashboardContent() {
                 setAppliedJobs([]);
             })
             .finally(() => setLoading(false));
-    }, []);
+    }, [filterDate, filterMode]);
 
     return (
         <div className="flex-1 space-y-6 p-6 pt-0 bg-gray-50 w-full max-w-full">
             {/* Bảng danh sách các appliedJobs */}
             <div className="bg-white rounded-lg shadow p-6 mb-6 overflow-x-auto w-full">
-                <h2 className="text-xl font-bold mb-4">{language === 'en' ? 'Applied Jobs List' : 'Danh sách Applied Jobs'}</h2>
+                <div className="flex items-center gap-4 mb-4">
+                    <h2 className="text-xl font-bold">{language === 'en' ? 'Applied Jobs List' : 'Danh sách Applied Jobs'}</h2>
+                    <div className="flex items-center gap-2 ml-auto">
+                        <select
+                            value={filterMode}
+                            onChange={(e) => setFilterMode(e.target.value as any)}
+                            className="p-1 border rounded"
+                        >
+                            <option value="daily">{t.daily}</option>
+                            <option value="monthly">{t.monthly}</option>
+                            <option value="yearly">{t.yearly}</option>
+                        </select>
+                        {filterMode === 'daily' && (
+                            <input
+                                type="number"
+                                value={filterDate.day}
+                                onChange={(e) => setFilterDate(prev => ({ ...prev, day: parseInt(e.target.value, 10) || prev.day }))}
+                                className="p-1 border rounded w-16 text-center"
+                                placeholder="Day"
+                            />
+                        )}
+                        {(filterMode === 'daily' || filterMode === 'monthly') && (
+                            <input
+                                type="number"
+                                value={filterDate.month}
+                                onChange={(e) => setFilterDate(prev => ({ ...prev, month: parseInt(e.target.value, 10) || prev.month }))}
+                                className="p-1 border rounded w-20 text-center"
+                                placeholder="Month"
+                            />
+                        )}
+                        <input
+                            type="number"
+                            value={filterDate.year}
+                            onChange={(e) => setFilterDate(prev => ({ ...prev, year: parseInt(e.target.value, 10) || prev.year }))}
+                            className="p-1 border rounded w-24 text-center"
+                            placeholder="Year"
+                        />
+                    </div>
+                </div>
                 {loading ? (
                     <div className="text-center text-blue-500 py-8">{t.loading}</div>
                 ) : error ? (
@@ -104,7 +163,16 @@ export function DashboardContent() {
                     <div className="overflow-x-auto w-full">
                         {(() => {
                             const filteredJobs = appliedJobs.filter((job: any) => job.status === 'pending');
+                            const sortedJobs = filteredJobs.sort((a: any, b: any) => {
+                                const dateA = new Date(a.createdAt || a.submit_at || 0).getTime();
+                                const dateB = new Date(b.createdAt || b.submit_at || 0).getTime();
+                                return dateB - dateA;
+                            });
+                            const itemsPerPage = 5;
+                            const totalPages = Math.ceil(sortedJobs.length / itemsPerPage);
+                            const paginatedJobs = sortedJobs.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
                             return (
+                                <>
                                 <table className="min-w-[700px] w-full divide-y divide-gray-200">
                                     <thead className="bg-gray-50">
                                         <tr>
@@ -117,12 +185,12 @@ export function DashboardContent() {
                                         </tr>
                                     </thead>
                                     <tbody className="bg-white divide-y divide-gray-200">
-                                        {filteredJobs.length === 0 ? (
+                                        {paginatedJobs.length === 0 ? (
                                             <tr>
                                                 <td colSpan={6} className="px-4 py-4 text-center text-gray-400">{t.noData}</td>
                                             </tr>
                                         ) : (
-                                            filteredJobs.map((job: any) => (
+                                            paginatedJobs.map((job: any) => (
                                                 <tr key={job.id || job._id}>
                                                     <td className="px-4 py-2 whitespace-nowrap">
                                                         {job.jobId && job.jobId.title ? job.jobId.title : (job.job_id || (job.jobId && job.jobId._id) || '-')}
@@ -151,6 +219,33 @@ export function DashboardContent() {
                                         )}
                                     </tbody>
                                 </table>
+                                {/* Pagination controls */}
+                                <div className="flex justify-center items-center gap-1 mt-2">
+                                    <button
+                                        className="px-2 py-1 rounded-full border text-xs bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
+                                        onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                                        disabled={currentPage === 1}
+                                    >
+                                        &lt;
+                                    </button>
+                                    {Array.from({ length: totalPages }, (_, i) => (
+                                        <button
+                                            key={i + 1}
+                                            className={`px-2 py-1 rounded-full border text-xs ${currentPage === i + 1 ? 'bg-blue-500 text-white' : 'bg-gray-100 hover:bg-gray-200'}`}
+                                            onClick={() => setCurrentPage(i + 1)}
+                                        >
+                                            {i + 1}
+                                        </button>
+                                    ))}
+                                    <button
+                                        className="px-2 py-1 rounded-full border text-xs bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
+                                        onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                                        disabled={currentPage === totalPages}
+                                    >
+                                        &gt;
+                                    </button>
+                                </div>
+                                </>
                             );
                         })()}
                     </div>
@@ -172,21 +267,8 @@ export function DashboardContent() {
                 </Card>
 
                 <Card className="bg-white">
-                    <CardHeader>
-                        <CardTitle className="text-lg">Profit this week</CardTitle>
-                        <div className="flex gap-4 text-sm">
-                            <div className="flex items-center gap-2">
-                                <div className="h-2 w-2 rounded-full bg-blue-500"></div>
-                                <span className="text-muted-foreground">Sales</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <div className="h-2 w-2 rounded-full bg-cyan-400"></div>
-                                <span className="text-muted-foreground">Revenue</span>
-                            </div>
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        <ProfitChart />
+                    <CardContent className="pt-6">
+                        <ApplyJobOverviewChart />
                     </CardContent>
                 </Card>
             </div>

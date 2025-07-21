@@ -747,7 +747,7 @@ Chỉ trả về JSON hợp lệ, không thêm giải thích, markdown hay text 
       if (!response) {
         throw new Error("No response from OpenAI");
       }
-      // Loại bỏ markdown nếu có
+      // Remove markdown if present
       let cleanResponse = response.trim();
       if (cleanResponse.startsWith('```json')) {
         cleanResponse = cleanResponse.replace(/^```json/, '').replace(/```$/, '').trim();
