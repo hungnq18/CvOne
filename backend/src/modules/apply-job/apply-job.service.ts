@@ -17,8 +17,8 @@ export class ApplyJobService {
   constructor(
     @InjectModel(ApplyJob.name)
     private readonly applyJobModel: Model<ApplyJobDocument>,
-    private readonly jobService: JobsService,
-  ) { }
+    private readonly jobService: JobsService
+  ) {}
 
   async apply(dto: CreateApplyJobDto, userId: string) {
     // Validate trong service để đảm bảo
@@ -27,7 +27,7 @@ export class ApplyJobService {
     }
     if (!dto.coverletterId && !dto.coverletterUrl) {
       throw new BadRequestException(
-        "Phải cung cấp ít nhất coverletterId hoặc coverletterUrl",
+        "Phải cung cấp ít nhất coverletterId hoặc coverletterUrl"
       );
     }
 
@@ -115,7 +115,7 @@ export class ApplyJobService {
     jobId: string,
     status: string,
     page: number,
-    limit: number,
+    limit: number
   ) {
     const skip = (page - 1) * limit;
 
@@ -173,7 +173,7 @@ export class ApplyJobService {
   async updateStatusByHr(
     applyJobId: string,
     hrUserId: string,
-    newStatus: string,
+    newStatus: string
   ) {
     if (!["approved", "rejected", "reviewed"].includes(newStatus)) {
       throw new BadRequestException("Trạng thái không hợp lệ");
@@ -195,7 +195,7 @@ export class ApplyJobService {
   async updateApplyJobByUser(
     applyJobId: string,
     userId: string,
-    updates: UpdateApplyJobByUserDto,
+    updates: UpdateApplyJobByUserDto
   ) {
     const applyJob = await this.applyJobModel.findById(applyJobId);
 
@@ -210,7 +210,7 @@ export class ApplyJobService {
     const forbiddenStatuses = ["accepted", "reviewed", "rejected"];
     if (forbiddenStatuses.includes(applyJob.status)) {
       throw new ForbiddenException(
-        `Đơn ứng tuyển đã ở trạng thái "${applyJob.status}" và không thể chỉnh sửa`,
+        `Đơn ứng tuyển đã ở trạng thái "${applyJob.status}" và không thể chỉnh sửa`
       );
     }
 
@@ -221,7 +221,7 @@ export class ApplyJobService {
       !updates.cvUrl
     ) {
       throw new BadRequestException(
-        "Phải cung cấp ít nhất cvId hoặc cvUrl khi cập nhật CV",
+        "Phải cung cấp ít nhất cvId hoặc cvUrl khi cập nhật CV"
       );
     }
     if (
@@ -231,7 +231,7 @@ export class ApplyJobService {
       !updates.coverletterUrl
     ) {
       throw new BadRequestException(
-        "Phải cung cấp ít nhất coverletterId hoặc coverletterUrl khi cập nhật Cover Letter",
+        "Phải cung cấp ít nhất coverletterId hoặc coverletterUrl khi cập nhật Cover Letter"
       );
     }
 
@@ -255,7 +255,7 @@ export class ApplyJobService {
   async countByCreateAt(
     month: number,
     year: number,
-    userId: string,
+    userId: string
   ): Promise<number> {
     const startDate = new Date(year, month - 1, 1);
     const endDate = new Date(year, month, 1);
@@ -287,17 +287,26 @@ export class ApplyJobService {
     return count;
   }
 
-  async getCountApplyJobByStatus(status: string, userId: string) {
-    const applyJobs = await this.applyJobModel
-      .find({ status })
+  async getCountApplyJobByStatus(
+    status: string,
+    userId: string,
+    day: number,
+    month: number,
+    year: number
+  ): Promise<number> {
+    const startDate = new Date(year, month - 1, day, 0, 0, 0); // Start of day
+    const endDate = new Date(year, month - 1, day + 1, 0, 0, 0); // Start of next day
+
+    const count = await this.applyJobModel
+      .countDocuments({
+        status,
+        createdAt: { $gte: startDate, $lt: endDate },
+      })
       .populate({
         path: "jobId",
         match: { user_id: userId },
         select: "_id",
-      })
-      .exec();
-
-    const count = applyJobs.filter((aj) => aj.jobId !== null).length;
+      });
 
     return count;
   }
