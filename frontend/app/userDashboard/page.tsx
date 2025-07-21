@@ -91,9 +91,10 @@ export default function Home() {
       <div className="max-w-7xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 min-h-[80vh]">
           {/* Cột bên trái: ProfileProgress và ảnh CV */}
-          <div className="lg:col-span-1">
-            <div className="sticky top-12 space-y-6">
+          <div className="lg:col-span-1 ">
+            <div className="sticky top-12 space-y-6 ">
               <ProfileProgress
+                cvId={latestCV?._id}
                 progress={profileProgress}
                 cvTemplateId={latestCV?.cvTemplateId}
                 cvUserData={latestCV?.content?.userData}
