@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, FC, ReactNode } from "react";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { ArrowLeft, ArrowRight, Wand2 } from "lucide-react";
 import { useCV } from "@/providers/cv-provider";
 import { analyzeJD, uploadAndAnalyzeCV } from "@/api/cvapi";
 import { useLanguage } from "@/providers/global-provider";
@@ -21,6 +21,11 @@ const translations = {
         buttonBack: "Back",
         buttonCreating: "Processing...",
         buttonCreateCV: "Create CV",
+        tabText: "JD Text",
+        tabFile: "JD File PDF",
+        fileUploadLabel: "UPLOAD JOB DESCRIPTION FILE",
+        fileUploadPlaceholder: "Select a file",
+        fileSelected: (name: string) => `Selected: ${name}`,
       },
       alerts: {
         pdfMissing: "Please upload a PDF file first.",
@@ -29,6 +34,7 @@ const translations = {
         cvAnalysisError: "An error occurred while analyzing the CV with AI. Please try again.",
         jdMissing: "Please enter the job description before analyzing.",
         jdAnalysisError: "An error occurred during analysis. Please try again.",
+        fileMissing: "Please select a file before analyzing.",
       },
       analysisResults: {
         title: "📋 Job Analysis Result",
@@ -68,6 +74,11 @@ const translations = {
         buttonBack: "Quay Lại",
         buttonCreating: "Đang xử lý...",
         buttonCreateCV: "Tạo CV",
+        tabText: "Mô tả văn bản",
+        tabFile: "Tệp PDF",
+        fileUploadLabel: "TẢI LÊN TỆP MÔ TẢ CÔNG VIỆC",
+        fileUploadPlaceholder: "Chọn tệp",
+        fileSelected: (name: string) => `Đã chọn: ${name}`,
       },
       alerts: {
         pdfMissing: "Vui lòng tải lên file PDF trước.",
@@ -76,6 +87,7 @@ const translations = {
         cvAnalysisError: "Có lỗi khi phân tích CV bằng AI. Vui lòng thử lại.",
         jdMissing: "Vui lòng nhập mô tả công việc trước khi phân tích.",
         jdAnalysisError: "Có lỗi xảy ra khi phân tích. Vui lòng thử lại.",
+        fileMissing: "Vui lòng chọn một tệp trước khi phân tích.",
       },
       analysisResults: {
         title: "📋 Kết Quả Phân Tích Công Việc",
@@ -165,6 +177,8 @@ export default function JobDescriptionPage() {
   const searchParams = useSearchParams();
   const templateId = searchParams.get("id");
 
+  const [activeTab, setActiveTab] = useState<'text' | 'file'>('text');
+  const [jdFile, setJdFile] = useState<File | null>(null);
   const [analysisResult, setAnalysisResult] = useState<ReactNode | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisError, setAnalysisError] = useState<string>("");
@@ -210,7 +224,7 @@ export default function JobDescriptionPage() {
     }
   };
 
-  const handleAnalyzeAI = async () => {
+  const handleAnalyzeText = async () => {
     if (!jobDescription.trim()) {
       setAnalysisError(t.alerts.jdMissing);
       return;
@@ -229,46 +243,143 @@ export default function JobDescriptionPage() {
       setIsAnalyzing(false);
     }
   };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setJdFile(e.target.files[0]);
+    }
+  };
+
+  const handleAnalyzeFile = async () => {
+    if (!jdFile) {
+      setAnalysisError(t.alerts.fileMissing);
+      return;
+    }
+    setIsAnalyzing(true);
+    setAnalysisError("");
+    setAnalysisResult(null);
+    try {
+      const text = await jdFile.text();
+      setJobDescription(text); // Update context for handleContinue
+      const result = await analyzeJD(text);
+      const formattedResult = formatAnalysisResult(result, t.analysisResults);
+      setAnalysisResult(formattedResult);
+    } catch (error) {
+      console.error("Error analyzing job description file:", error);
+      setAnalysisError(t.alerts.jdAnalysisError);
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
   
   const maxLength = 5000;
   const currentLength = jobDescription.length;
 
+  const handleAnalyze = () => {
+    if (activeTab === 'text') {
+      handleAnalyzeText();
+    } else {
+      handleAnalyzeFile();
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-white flex flex-col items-center justify-center py-12 px-4">
-      <div className="w-full max-w-2xl space-y-8">
-        <div className="space-y-6">
-          <div className="text-center">
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">{t.ui.title}</h1>
-          </div>
-          <div className="space-y-2">
-            <label htmlFor="jobDescription" className="block text-sm font-medium text-gray-700 uppercase tracking-wide">{t.ui.label}</label>
-            <div className="relative">
-              <textarea
-                id="jobDescription"
-                value={jobDescription}
-                onChange={(e) => setJobDescription(e.target.value)}
-                placeholder={t.ui.placeholder}
-                maxLength={maxLength}
-                rows={6}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg text-base focus:outline-none focus:border-blue-500 transition-colors resize-none"
-              />
-              <div className="absolute bottom-3 right-3 text-xs text-gray-400">{currentLength} / {maxLength}</div>
+    <div className="min-h-screen bg-white flex flex-col items-center justify-center py-12 px-4 mt-4">
+      <div className="w-full max-w-6xl mx-auto">
+        <div className="text-center mb-10">
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">{t.ui.title}</h1>
+        </div>
+
+        <div className="flex flex-col md:flex-row gap-8">
+          {/* Left Panel: Input */}
+          <div className="w-full md:w-1/2 space-y-6">
+            <div className="flex border-b">
+              <button
+                onClick={() => {setJobDescription(""); setActiveTab('text')}}
+                className={`py-2 px-4 text-sm font-medium transition-colors ${activeTab === 'text' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+              >
+                {t.ui.tabText}
+              </button>
+              <button
+                onClick={() => setActiveTab('file')}
+                className={`py-2 px-4 text-sm font-medium transition-colors ${activeTab === 'file' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+              >
+                {t.ui.tabFile}
+              </button>
+            </div>
+
+            {activeTab === 'text' ? (
+              <div className="space-y-2">
+                <label htmlFor="jobDescription" className="block text-sm font-medium text-gray-700 uppercase tracking-wide">{t.ui.label}</label>
+                <div className="relative">
+                  <textarea
+                    id="jobDescription"
+                    value={jobDescription}
+                    onChange={(e) => setJobDescription(e.target.value)}
+                    placeholder={t.ui.placeholder}
+                    maxLength={maxLength}
+                    rows={10}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg text-base focus:outline-none focus:border-blue-500 transition-colors resize-none"
+                  />
+                  <div className="absolute bottom-3 right-3 text-xs text-gray-400">{currentLength} / {maxLength}</div>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700 uppercase tracking-wide">{t.ui.fileUploadLabel}</label>
+                <div className="flex items-center justify-center w-full">
+                  <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-40 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                      <svg className="w-8 h-8 mb-4 text-gray-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
+                        <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/>
+                      </svg>
+                      <p className="mb-2 text-sm text-gray-500"><span className="font-semibold">{t.ui.fileUploadPlaceholder}</span></p>
+                      {jdFile && <p className="text-xs text-gray-500">{t.ui.fileSelected(jdFile.name)}</p>}
+                    </div>
+                    <input id="dropzone-file" type="file" className="hidden" onChange={handleFileChange} accept=".pdf,.doc,.docx,.txt" />
+                  </label>
+                </div>
+              </div>
+            )}
+            
+            <div className="flex flex-col items-start space-y-4 mt-4">
+              <div className={`rounded-full p-1 bg-gradient-to-r from-[#e0f923] to-[#24C6DC] shadow-lg transition-opacity w-[80%] md:w-auto ${isAnalyzing ? "opacity-60" : ""}`}>
+                <button
+                  type="button"
+                  onClick={handleAnalyze}
+                  disabled={isAnalyzing}
+                  className={`flex w-full items-center justify-center gap-3 rounded-full bg-white px-8 py-3 font-bold text-lg text-[#0a2342] transition-all ${isAnalyzing ? "cursor-not-allowed" : "hover:bg-gradient-to-r hover:from-yellow-100 hover:to-teal-100"}`}
+                >
+                  {isAnalyzing ? (
+                    <>
+                      <Wand2 className="h-6 w-6 animate-pulse" />
+                      <span>{t.ui.buttonAnalyzing}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Wand2 className="h-6 w-6" />
+                      <span>{t.ui.buttonAnalyze}</span>
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
-          <div className="flex flex-col items-start space-y-4 mt-4">
-            <button type="button" onClick={handleAnalyzeAI} disabled={isAnalyzing} className={`font-bold py-3 px-6 rounded-lg shadow transition-colors ${ isAnalyzing ? "bg-gray-400 text-white cursor-not-allowed" : "bg-yellow-400 hover:bg-yellow-500 text-white"}`}>
-              {isAnalyzing ? t.ui.buttonAnalyzing : t.ui.buttonAnalyze}
-            </button>
+
+          {/* Right Panel: Output */}
+          <div className="w-full md:w-1/2">
+            <h3 className="text-xl font-bold text-gray-900 mb-4 border-b pb-2">{t.analysisResults.title}</h3>
+            {isAnalyzing && <p>{t.ui.buttonAnalyzing}</p>}
             {analysisError && <div className="w-full p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">{analysisError}</div>}
             {analysisResult && (
-              <div className="w-full border border-gray-200 rounded-lg bg-gray-50 p-6">
-                <h3 className="text-xl font-bold text-gray-900 mb-4 border-b pb-2">{t.analysisResults.title}</h3>
+              <div className="w-full border border-gray-200 rounded-lg bg-gray-50 p-6 h-[25rem] overflow-y-auto">
                 {analysisResult}
               </div>
             )}
           </div>
         </div>
-        <div className="flex justify-between items-center pt-8">
+
+        <div className="flex justify-between items-center pt-8 mt-8 border-t">
           <button onClick={handleBack} className="flex items-center gap-2 px-8 py-3 text-lg font-semibold text-gray-700 bg-white border border-gray-400 rounded-full hover:bg-gray-100 transition-colors">
             <ArrowLeft size={20} />
             {t.ui.buttonBack}
