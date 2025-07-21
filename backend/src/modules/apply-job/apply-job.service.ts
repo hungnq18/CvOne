@@ -1,16 +1,15 @@
 import {
-  Injectable,
   BadRequestException,
   ForbiddenException,
+  Injectable,
   NotFoundException,
 } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model, Types } from "mongoose";
-import { ApplyJob, ApplyJobDocument } from "./schemas/apply-job.schema";
+import { JobsService } from "../jobs/jobs.service";
 import { CreateApplyJobDto } from "./dto/create-apply-job.dto";
 import { UpdateApplyJobByUserDto } from "./dto/update-apply-job.dto";
-import { Job, JobDocument } from "../jobs/schemas/job.schema";
-import { JobsService } from "../jobs/jobs.service";
+import { ApplyJob, ApplyJobDocument } from "./schemas/apply-job.schema";
 
 @Injectable()
 export class ApplyJobService {
@@ -293,21 +292,99 @@ export class ApplyJobService {
     day: number,
     month: number,
     year: number
-  ): Promise<number> {
-    const startDate = new Date(year, month - 1, day, 0, 0, 0); // Start of day
-    const endDate = new Date(year, month - 1, day + 1, 0, 0, 0); // Start of next day
+  ): Promise<{ count: number }> { // Trả về object { count: number }
+    // Lấy danh sách job do HR này quản lý
+    const jobsByHr = await this.jobService.getJobsByHr(userId);
+    if (!jobsByHr || !jobsByHr.data || jobsByHr.data.length === 0) {
+      return { count: 0 };
+    }
+    const jobIds = jobsByHr.data.map(job => job._id);
 
-    const count = await this.applyJobModel
-      .countDocuments({
+    // Tạo khoảng thời gian lọc
+    const startDate = new Date(year, month - 1, day, 0, 0, 0);
+    const endDate = new Date(year, month - 1, day, 23, 59, 59, 999);
+
+    // Đếm số lượng apply job theo status, jobId và ngày tạo
+    const count = await this.applyJobModel.countDocuments({
+      status,
+      jobId: { $in: jobIds },
+      createdAt: { $gte: startDate, $lt: endDate },
+    });
+
+    return { count }; // Trả về object
+  }
+
+  async getCountApplyJobByStatusWeek(
+    status: string,
+    userId: string,
+    week: number,
+    month: number,
+    year: number
+  ): Promise<{ days: string[], counts: number[] }> {
+    // Lấy danh sách jobId của HR
+    const jobsByHr = await this.jobService.getJobsByHr(userId);
+    const jobIds = jobsByHr.data.map(job => job._id);
+
+    // Tìm ngày đầu tuần (thứ 2) của tuần cần lấy
+    const firstDayOfMonth = new Date(year, month - 1, 1);
+    let firstDayOfWeek = new Date(firstDayOfMonth);
+    firstDayOfWeek.setDate(1 + (week - 1) * 7);
+    // Đảm bảo là thứ 2
+    const dayOfWeek = firstDayOfWeek.getDay();
+    if (dayOfWeek !== 1) {
+      // Nếu là chủ nhật (0) thì +1 để ra thứ 2, còn lại thì + (8 - dayOfWeek) % 7
+      firstDayOfWeek.setDate(firstDayOfWeek.getDate() + ((8 - dayOfWeek) % 7));
+    }
+    const days: string[] = [];
+    const counts: number[] = [];
+    for (let i = 0; i < 7; i++) {
+      const day = new Date(firstDayOfWeek);
+      day.setDate(firstDayOfWeek.getDate() + i);
+      const start = new Date(day);
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(day);
+      end.setHours(23, 59, 59, 999);
+      const count = await this.applyJobModel.countDocuments({
         status,
-        createdAt: { $gte: startDate, $lt: endDate },
-      })
-      .populate({
-        path: "jobId",
-        match: { user_id: userId },
-        select: "_id",
+        jobId: { $in: jobIds },
+        createdAt: { $gte: start, $lt: end },
       });
+      days.push(day.toISOString().slice(0, 10));
+      counts.push(count);
+    }
+    return { days, counts };
+  }
 
-    return count;
+  async getApplyJobByHr(
+    hrId: string,
+    day?: number,
+    month?: number,
+    year?: number,
+  ) {
+    const { data: jobsByHr } = await this.jobService.getJobsByHr(hrId);
+    const jobIds = jobsByHr.map(job => job._id);
+
+    const query: any = { jobId: { $in: jobIds } };
+
+    if (day && month && year) {
+      const startDate = new Date(year, month - 1, day);
+      startDate.setHours(0, 0, 0, 0);
+
+      const endDate = new Date(year, month - 1, day);
+      endDate.setHours(23, 59, 59, 999);
+
+      query.createdAt = {
+        $gte: startDate,
+        $lt: endDate,
+      };
+    }
+
+    return this.applyJobModel.find(query)
+      .populate('jobId')
+      .populate('userId')
+      .populate('cvId')
+      .populate('coverletterId')
+      .sort({ createdAt: -1 })
+      .exec();
   }
 }

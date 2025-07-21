@@ -190,20 +190,14 @@ export class CvController {
     }
   }))
   async uploadAndAnalyzeCv(@UploadedFile() file: any, @Body('jobDescription') jobDescription: string, @Body('additionalRequirements') additionalRequirements: string) {
-    console.log('DEBUG upload-and-analyze: file:', file);
-    if (!file) {
-      console.log('DEBUG upload-and-analyze: No file uploaded');
-      throw new BadRequestException('No CV file uploaded or invalid file type.');
-    }
+    if (!file) throw new BadRequestException('No CV file uploaded or invalid file type.');
     if (!jobDescription || jobDescription.trim().length === 0) {
       throw new BadRequestException('Job description is required.');
     }
-    // 1. Trích xuất text từ PDF
+    // 1. Trích xuất text từ PDF bằng pdf-parse
     const pdfData = await pdf(file.buffer);
     const cvText = pdfData.text;
-    console.log('DEBUG upload-and-analyze: cvText:', cvText?.slice(0, 200));
     if (!cvText || cvText.trim().length === 0) {
-      console.log('DEBUG upload-and-analyze: Could not extract text from PDF');
       throw new BadRequestException('Could not extract text from PDF.');
     }
     // 2. Gửi text cho AI phân tích
