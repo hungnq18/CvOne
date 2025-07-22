@@ -20,6 +20,9 @@ export class Job {
   postingDate: Date;
 
   @Prop({ required: true })
+  applicationDeadline: Date;
+
+  @Prop({ required: true })
   experience: string;
 
   @Prop({ required: true })
@@ -45,6 +48,9 @@ export class Job {
 
   @Prop({ type: Types.ObjectId, ref: "User", required: true })
   user_id: Types.ObjectId;
+
+  @Prop({ default: true })
+  isActive: boolean;
 }
 
 export const JobSchema = SchemaFactory.createForClass(Job);

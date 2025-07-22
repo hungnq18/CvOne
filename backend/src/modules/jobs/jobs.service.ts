@@ -5,15 +5,28 @@ import { Model, Types } from "mongoose";
 import { CreateJobDto } from "./dto/create-job.dto";
 import { NotFoundException } from "@nestjs/common";
 import { UpdateJobDto } from "./dto/update-job.dto";
-import { UsersService } from "../users/users.service";
-import { User, UserDocument } from "../users/schemas/user.schema";
+import { Cron, CronExpression } from "@nestjs/schedule";
+import { NotificationsService } from "../notifications/notifications.service";
+import { CreateNotificationDto } from "../notifications/dto/create-notification.dto";
 @Injectable()
 export class JobsService {
-  constructor(@InjectModel(Job.name) private jobModel: Model<JobDocument>) { }
+  constructor(
+    @InjectModel(Job.name) private jobModel: Model<JobDocument>,
+    private notificationService: NotificationsService
+  ) {}
 
   async findAll(page: number = 1, limit: number = 10): Promise<JobDocument[]> {
     const skip = (page - 1) * limit;
-    return this.jobModel.find().skip(skip).limit(limit).exec();
+    const today = new Date();
+
+    return this.jobModel
+      .find({
+        isActive: true,
+        applicationDeadline: { $gte: today }, // Chỉ lấy các job còn hạn
+      })
+      .skip(skip)
+      .limit(limit)
+      .exec();
   }
 
   async create(jobData: CreateJobDto, userId: string): Promise<JobDocument> {
@@ -54,7 +67,7 @@ export class JobsService {
   async countJobsByPostingDate(
     month: number,
     year: number,
-    userId: string,
+    userId: string
   ): Promise<number> {
     const startDate = new Date(year, month - 1, 1); // Ngày đầu tháng
     const endDate = new Date(year, month, 1); // Ngày đầu tháng kế tiếp
@@ -71,7 +84,7 @@ export class JobsService {
   async getJobsByHr(
     userId: string,
     page: number = 1,
-    limit: number = 10,
+    limit: number = 10
   ): Promise<{
     data: JobDocument[];
     total: number;
@@ -100,5 +113,42 @@ export class JobsService {
   }
   async getCountJobs(userId: string): Promise<number> {
     return this.jobModel.countDocuments({ user_id: userId });
+  }
+
+  @Cron(CronExpression.EVERY_DAY_AT_6AM)
+  // @Cron("* * * * *")
+  async notifyHRBeforeDeadline() {
+    const today = new Date();
+    const twoDaysLater = new Date();
+    twoDaysLater.setDate(today.getDate() + 2);
+
+    const expiringJobs: JobDocument[] = await this.jobModel
+      .find({
+        isActive: true,
+        applicationDeadline: {
+          $gte: today,
+          $lte: twoDaysLater,
+        },
+      })
+      .populate("user_id")
+      .exec();
+
+    for (const job of expiringJobs) {
+      const hrUser = job.user_id;
+      if (!hrUser?._id) continue;
+
+      const dto: CreateNotificationDto = {
+        title: "Expiring job",
+        message: `Công việc "${job.title}" sẽ hết hạn vào ${job.applicationDeadline.toLocaleDateString()}.`,
+        type: "job-expiring",
+        link: `/hr/jobs/${job._id}`,
+        jobId: (job._id as Types.ObjectId).toString(),
+      };
+
+      await this.notificationService.createNotification(
+        dto,
+        hrUser._id.toString()
+      );
+    }
   }
 }
