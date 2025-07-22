@@ -20,16 +20,29 @@ export class ApplyJobService {
   ) {}
 
   async apply(dto: CreateApplyJobDto, userId: string) {
-    // Validate trong service để đảm bảo
-    if (!dto.cvId && !dto.cvUrl) {
-      throw new BadRequestException("Phải cung cấp ít nhất cvId hoặc cvUrl");
-    }
-    if (!dto.coverletterId && !dto.coverletterUrl) {
-      throw new BadRequestException(
-        "Phải cung cấp ít nhất coverletterId hoặc coverletterUrl"
-      );
+    // Kiểm tra đã ứng tuyển trước đó chưa
+    const existingApplication = await this.applyJobModel.findOne({
+      jobId: new Types.ObjectId(dto.jobId),
+      userId: new Types.ObjectId(userId),
+    });
+
+    if (existingApplication) {
+      throw new BadRequestException("Bạn đã ứng tuyển vào công việc này rồi.");
     }
 
+    // Lấy thông tin job để kiểm tra hạn nộp và trạng thái
+    const job = await this.jobService.getJobById(dto.jobId);
+
+    if (!job.isActive) {
+      throw new BadRequestException("Công việc này không còn hoạt động.");
+    }
+
+    const now = new Date();
+    if (now > job.applicationDeadline) {
+      throw new BadRequestException("Công việc đã hết hạn nộp hồ sơ.");
+    }
+
+    // Tạo apply mới
     const applyJob = new this.applyJobModel({
       ...dto,
       jobId: new Types.ObjectId(dto.jobId),
@@ -292,13 +305,14 @@ export class ApplyJobService {
     day: number,
     month: number,
     year: number
-  ): Promise<{ count: number }> { // Trả về object { count: number }
+  ): Promise<{ count: number }> {
+    // Trả về object { count: number }
     // Lấy danh sách job do HR này quản lý
     const jobsByHr = await this.jobService.getJobsByHr(userId);
     if (!jobsByHr || !jobsByHr.data || jobsByHr.data.length === 0) {
       return { count: 0 };
     }
-    const jobIds = jobsByHr.data.map(job => job._id);
+    const jobIds = jobsByHr.data.map((job) => job._id);
 
     // Tạo khoảng thời gian lọc
     const startDate = new Date(year, month - 1, day, 0, 0, 0);
@@ -320,10 +334,10 @@ export class ApplyJobService {
     week: number,
     month: number,
     year: number
-  ): Promise<{ days: string[], counts: number[] }> {
+  ): Promise<{ days: string[]; counts: number[] }> {
     // Lấy danh sách jobId của HR
     const jobsByHr = await this.jobService.getJobsByHr(userId);
-    const jobIds = jobsByHr.data.map(job => job._id);
+    const jobIds = jobsByHr.data.map((job) => job._id);
 
     // Tìm ngày đầu tuần (thứ 2) của tuần cần lấy
     const firstDayOfMonth = new Date(year, month - 1, 1);
@@ -359,10 +373,10 @@ export class ApplyJobService {
     hrId: string,
     day?: number,
     month?: number,
-    year?: number,
+    year?: number
   ) {
     const { data: jobsByHr } = await this.jobService.getJobsByHr(hrId);
-    const jobIds = jobsByHr.map(job => job._id);
+    const jobIds = jobsByHr.map((job) => job._id);
 
     const query: any = { jobId: { $in: jobIds } };
 
@@ -379,11 +393,12 @@ export class ApplyJobService {
       };
     }
 
-    return this.applyJobModel.find(query)
-      .populate('jobId')
-      .populate('userId')
-      .populate('cvId')
-      .populate('coverletterId')
+    return this.applyJobModel
+      .find(query)
+      .populate("jobId")
+      .populate("userId")
+      .populate("cvId")
+      .populate("coverletterId")
       .sort({ createdAt: -1 })
       .exec();
   }

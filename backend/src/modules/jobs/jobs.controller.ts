@@ -12,15 +12,15 @@ import {
   UnauthorizedException,
   UploadedFile,
   UseGuards,
-  UseInterceptors
+  UseInterceptors,
 } from "@nestjs/common";
-import { FileInterceptor } from '@nestjs/platform-express';
-import type { File as MulterFile } from 'multer';
-import * as pdf from 'pdf-parse';
+import { FileInterceptor } from "@nestjs/platform-express";
+import type { File as MulterFile } from "multer";
+import * as pdf from "pdf-parse";
 import { Roles } from "src/common/decorators/roles.decorator";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { RolesGuard } from "../auth/guards/roles.guard";
-import { CvAiService } from '../cv/cv-ai.service';
+import { CvAiService } from "../cv/cv-ai.service";
 import { CreateJobDto } from "./dto/create-job.dto";
 import { UpdateJobDto } from "./dto/update-job.dto";
 import { JobsService } from "./jobs.service";
@@ -28,25 +28,31 @@ import { JobsService } from "./jobs.service";
 export class JobsController {
   constructor(
     private readonly jobsService: JobsService,
-    private readonly cvAiService: CvAiService,
+    private readonly cvAiService: CvAiService
   ) {}
 
-  @Post('analyze-jd-pdf')
-  @UseInterceptors(FileInterceptor('file', {
-    limits: { fileSize: 5 * 1024 * 1024 },
-    fileFilter: (req, file, cb) => {
-      if (!file.mimetype || !file.mimetype.includes('pdf')) {
-        return cb(new BadRequestException('Only PDF files are allowed!'), false);
-      }
-      cb(null, true);
-    }
-  }))
+  @Post("analyze-jd-pdf")
+  @UseInterceptors(
+    FileInterceptor("file", {
+      limits: { fileSize: 5 * 1024 * 1024 },
+      fileFilter: (req, file, cb) => {
+        if (!file.mimetype || !file.mimetype.includes("pdf")) {
+          return cb(
+            new BadRequestException("Only PDF files are allowed!"),
+            false
+          );
+        }
+        cb(null, true);
+      },
+    })
+  )
   async analyzeJobDescriptionPdf(@UploadedFile() file: MulterFile) {
-    if (!file) throw new BadRequestException('No file uploaded or invalid file type.');
+    if (!file)
+      throw new BadRequestException("No file uploaded or invalid file type.");
     const pdfData = await pdf(file.buffer);
     const jdText = pdfData.text;
     if (!jdText || jdText.trim().length === 0) {
-      throw new BadRequestException('Could not extract text from PDF.');
+      throw new BadRequestException("Could not extract text from PDF.");
     }
     return this.cvAiService.analyzeJobDescription(jdText);
   }
@@ -56,8 +62,7 @@ export class JobsController {
     @Query("page") page: number = 1,
     @Query("limit") limit: number = 10
   ) {
-    const jobs = await this.jobsService.findAll(page, limit);
-    return { data: jobs, page, limit };
+    return this.jobsService.findAll(page, limit);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)

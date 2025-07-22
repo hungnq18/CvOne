@@ -5,15 +5,22 @@ import { Model, Types } from "mongoose";
 import { CreateJobDto } from "./dto/create-job.dto";
 import { NotFoundException } from "@nestjs/common";
 import { UpdateJobDto } from "./dto/update-job.dto";
-import { UsersService } from "../users/users.service";
-import { User, UserDocument } from "../users/schemas/user.schema";
 @Injectable()
 export class JobsService {
-  constructor(@InjectModel(Job.name) private jobModel: Model<JobDocument>) { }
+  constructor(@InjectModel(Job.name) private jobModel: Model<JobDocument>) {}
 
   async findAll(page: number = 1, limit: number = 10): Promise<JobDocument[]> {
     const skip = (page - 1) * limit;
-    return this.jobModel.find().skip(skip).limit(limit).exec();
+    const today = new Date();
+
+    return this.jobModel
+      .find({
+        isActive: true,
+        applicationDeadline: { $gte: today }, // Chỉ lấy các job còn hạn
+      })
+      .skip(skip)
+      .limit(limit)
+      .exec();
   }
 
   async create(jobData: CreateJobDto, userId: string): Promise<JobDocument> {
@@ -54,7 +61,7 @@ export class JobsService {
   async countJobsByPostingDate(
     month: number,
     year: number,
-    userId: string,
+    userId: string
   ): Promise<number> {
     const startDate = new Date(year, month - 1, 1); // Ngày đầu tháng
     const endDate = new Date(year, month, 1); // Ngày đầu tháng kế tiếp
@@ -71,7 +78,7 @@ export class JobsService {
   async getJobsByHr(
     userId: string,
     page: number = 1,
-    limit: number = 10,
+    limit: number = 10
   ): Promise<{
     data: JobDocument[];
     total: number;
