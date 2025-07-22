@@ -7,6 +7,7 @@ import { sendNotification } from '@/api/apiNotification';
 import { getUserById } from '@/api/userApi';
 import { getCLById, getCLTemplateById } from '@/api/clApi';
 import html2pdf from "html2pdf.js";
+import FilterByDateHr from './filterBydateHr';
 
 export default function ManageApplyJobClient() {
     const [applications, setApplications] = useState<any[]>([]);

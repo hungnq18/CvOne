@@ -18,6 +18,7 @@ import PreviewCVCLModal from '@/components/hr/PreviewCVCLModal';
 import ChatButton from '@/components/ui/chatButton';
 import "@/styles/chatButton.css";
 import { getCLById, getCLTemplateById } from '@/api/clApi';
+import FilterByDateHr from './filterBydateHr';
 
 
 const DownloadButton = ({ onClick }: { onClick?: () => void }) => (
@@ -42,8 +43,8 @@ const ManageCandidateTable = () => {
     const [downloadModal, setDownloadModal] = useState<{ open: boolean, app?: any }>({ open: false });
     const [allTemplates, setAllTemplates] = useState<CVTemplate[]>([]);
     const [deleteModal, setDeleteModal] = useState<{ open: boolean, appId?: string }>({ open: false });
-    const [workType, setWorkType] = useState('All');
-    const [showWorkTypeDropdown, setShowWorkTypeDropdown] = useState(false);
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
 
     useEffect(() => {
         getApplyJobByHR().then((data: any) => {
@@ -236,11 +237,14 @@ const ManageCandidateTable = () => {
     const filteredApplications = applications.filter(app => {
         const name = ((app.cvId?.content?.userData?.firstName || '') + ' ' + (app.cvId?.content?.userData?.lastName || '')).toLowerCase();
         const term = searchTerm.toLowerCase();
-        const jobWorkType = (app.jobId?.workType || app.jobId?.["Work Type"] || '').trim().toLowerCase();
-        const workTypeFilter = workType.trim().toLowerCase();
         const matchName = name.includes(term);
-        const matchWorkType = workType === 'All' || jobWorkType === workTypeFilter;
-        return matchName && matchWorkType;
+        // Filter theo ngày
+        const createdAt = new Date(app.createdAt || app.updatedAt || app.submit_at || 0);
+        const start = startDate ? new Date(startDate) : null;
+        const end = endDate ? new Date(endDate) : null;
+        if (start && createdAt < start) return false;
+        if (end && createdAt > end) return false;
+        return matchName;
     }).sort((a, b) => {
         const dateA = new Date(a.updatedAt || a.createdAt || a.submit_at || 0).getTime();
         const dateB = new Date(b.updatedAt || b.createdAt || b.submit_at || 0).getTime();
@@ -267,43 +271,12 @@ const ManageCandidateTable = () => {
                                 className="pl-8"
                             />
                         </div>
-                        <div className="relative inline-block">
-                            <button
-                                id="dropdownDefaultButton"
-                                type="button"
-                                className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-                                onClick={() => setShowWorkTypeDropdown((v: boolean) => !v)}
-                            >
-                                {workType === 'All' ? 'All Work Types' : workType}
-                                <svg className="w-2.5 h-2.5 ms-3" aria-hidden="true" fill="none" viewBox="0 0 10 6">
-                                    <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m1 1 4 4 4-4" />
-                                </svg>
-                            </button>
-                            {showWorkTypeDropdown && (
-                                <div className="z-10 absolute bg-white divide-y divide-gray-100 rounded-lg shadow-sm w-44 dark:bg-gray-700 mt-2">
-                                    <ul className="py-2 text-sm text-gray-700 dark:text-gray-200">
-                                        <li>
-                                            <button
-                                                className="block w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white"
-                                                onClick={() => { setWorkType('All'); setShowWorkTypeDropdown(false); }}
-                                            >
-                                                All Work Types
-                                            </button>
-                                        </li>
-                                        {workTypes.map(type => (
-                                            <li key={type}>
-                                                <button
-                                                    className="block w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white"
-                                                    onClick={() => { setWorkType(type); setShowWorkTypeDropdown(false); }}
-                                                >
-                                                    {type}
-                                                </button>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </div>
-                            )}
-                        </div>
+                        <FilterByDateHr
+                            startDate={startDate}
+                            endDate={endDate}
+                            setStartDate={setStartDate}
+                            setEndDate={setEndDate}
+                        />
                     </div>
                 </CardHeader>
                 <Table>
@@ -485,4 +458,4 @@ const ManageCandidateTable = () => {
     );
 };
 
-export default ManageCandidateTable;
+export default ManageCandidateTable; 
