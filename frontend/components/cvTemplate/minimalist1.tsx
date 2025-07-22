@@ -1,7 +1,6 @@
 import Image from "next/image";
 import React from "react";
 // BƯỚC 1: Import hook để lấy ngôn ngữ
-import { useLanguage } from "@/providers/global-provider";
 
 // --- BƯỚC 2: TẠO ĐỐI TƯỢNG TRANSLATIONS ---
 const translations = {
@@ -77,6 +76,7 @@ interface CVTemplateProps {
   data: any;
   onSectionClick?: (sectionId:string) => void;
   isPdfMode?: boolean;
+  language?: string;
 }
 
 // --- COMPONENTS (Được cập nhật) ---
@@ -185,10 +185,11 @@ const CVTemplateInspired: React.FC<CVTemplateProps> = ({
   data,
   onSectionClick,
   isPdfMode = false,
+  language,
 }) => {
-  // BƯỚC 3: SỬ DỤNG HOOK VÀ LẤY ĐÚNG BỘ TỪ ĐIỂN
-  const { language } = useLanguage();
-  const t = translations[language];
+  // BƯỚC 3: LẤY ĐÚNG BỘ TỪ ĐIỂN TỪ PROP
+  const lang = language || "en";
+  const t = translations[lang as "en" | "vi"];
 
   const userData = data?.userData || {};
 

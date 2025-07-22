@@ -201,7 +201,7 @@ function CreateCVwithAI() {
               boxShadow: "0 0 5px rgba(0,0,0,0.1)",
             }}
           >
-            <TemplateComponent data={componentData} />
+            <TemplateComponent data={componentData} language={language}/>
           </div>
         </div>
       </div>

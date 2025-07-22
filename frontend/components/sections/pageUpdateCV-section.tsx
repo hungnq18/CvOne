@@ -296,7 +296,7 @@ const PageUpdateCVContent = () => {
       <div>
         <style>{`@font-face { font-family: '${fontName}'; src: url(${fontBase64}) format('woff2'); font-weight: normal; font-style: normal; }`}</style>
         <div style={{ fontFamily: `'${fontName}', sans-serif` }}>
-           <TemplateComponent data={componentData} isPdfMode={true} />
+           <TemplateComponent data={componentData} isPdfMode={true}  language={language} />
         </div>
       </div>
     );
@@ -374,7 +374,7 @@ const PageUpdateCVContent = () => {
             transformOrigin: "top",
             transform: `scale(${scaleFactor})`,
           }}>
-          <TemplateComponent data={componentData} onSectionClick={handleSectionClick}/>
+          <TemplateComponent data={componentData} onSectionClick={handleSectionClick}  language={language}/>
         </div>
       </div>
     );

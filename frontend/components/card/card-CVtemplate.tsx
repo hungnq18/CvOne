@@ -114,7 +114,7 @@ const CardCVTemplate: React.FC<CardCVTemplateProps> = ({
           boxShadow: "0 0 5px rgba(0,0,0,0.1)",
         }}
       >
-        <TemplateComponent data={previewData} />
+        <TemplateComponent data={previewData}  language={language}/>
       </div>
     );
   };
