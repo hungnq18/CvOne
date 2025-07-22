@@ -33,10 +33,9 @@ export class CoverLetterService {
       .exec();
   }
 
-  async findOne(id: string, userId: string): Promise<CoverLetter> {
+  async findOne(id: string): Promise<CoverLetter> {
     const cl = await this.coverLetterModel.findOne({
       _id: id,
-      userId: new Types.ObjectId(userId),
     });
     if (!cl) {
       throw new NotFoundException("Cover letter not found");
