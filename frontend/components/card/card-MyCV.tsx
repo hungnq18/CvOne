@@ -199,7 +199,7 @@ const CardMyCV: React.FC<{}> = ({}) => {
                       }}
                     >
                       <div className="pointer-events-none ">
-                        <TemplateComponent data={componentData} />
+                        <TemplateComponent data={componentData}  language={language}/>
                       </div>
                     </div>
                   </div>

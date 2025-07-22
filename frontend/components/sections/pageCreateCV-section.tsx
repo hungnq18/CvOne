@@ -317,9 +317,8 @@ const PageCreateCVContent = () => {
             }
             `}
         </style>
-        
         <div style={{ fontFamily: `'${fontName}', sans-serif` }}>
-             <TemplateComponent data={componentData} isPdfMode={true} />
+             <TemplateComponent data={componentData} isPdfMode={true} language={language} />
         </div>
       </div>
     );

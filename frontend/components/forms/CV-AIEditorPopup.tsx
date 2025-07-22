@@ -92,6 +92,7 @@ const translations = {
       addButton: "Add",
       aiSuggestions: "AI Suggestions",
       loadingAISuggestions: "Loading AI suggestions...",
+      skillsLoading: "Loading AI suggestions...",
     },
     unsavedChangesPopup: {
       title: "You have unsaved changes",
@@ -173,6 +174,7 @@ const translations = {
       addButton: "Thêm",
       aiSuggestions: "Gợi ý từ AI",
       loadingAISuggestions: "Đang tải gợi ý AI...",
+      skillsLoading: "Đang tải gợi ý kỹ năng AI...",
     },
     unsavedChangesPopup: {
       title: "Bạn có thay đổi chưa được lưu",
@@ -541,7 +543,10 @@ export const TargetPopup: FC<{
             </div>
             <div className="flex flex-col gap-4 overflow-y-auto pr-1 flex-1">
               {loading ? (
-                <div>{t.loadingAISuggestions}</div>
+                <div className="flex flex-col items-center justify-center h-full space-y-4">
+                <Loader2 className="animate-spin h-8 w-8 text-blue-500" />
+                <p className="text-gray-600 text-lg">{t.loadingAISuggestions}</p>
+              </div>
               ) : (
                 aiSuggestions.map((item, idx) => {
                   const isSelected = summary.trim() === item.trim();
@@ -1017,24 +1022,19 @@ export const SkillsPopup: FC<{
   const [analyzingJD, setAnalyzingJD] = useState(false);
 
   useEffect(() => {
-    if (!jobAnalysis && jobDescription) {
-      setAnalyzingJD(true);
+    let isMounted = true;
+    const fetchAll = async () => {
+      setLoading(true);
       try {
-        // console.log(jobDescription);
-        const fetchData = async () => {
-          // your await code here
-          const result = await analyzeJD(jobDescription);
-          setJobAnalysis(result);
-        };
-        fetchData();
-      } catch (err) {
-      } finally {
-        setAnalyzingJD(false);
-      }
-    }
-    setLoading(true);
-    try {
-      const fetchData = async () => {
+        if (!jobAnalysis && jobDescription) {
+          setAnalyzingJD(true);
+          try {
+            const result = await analyzeJD(jobDescription);
+            if (isMounted) setJobAnalysis(result);
+          } finally {
+            if (isMounted) setAnalyzingJD(false);
+          }
+        }
         const res = await suggestSkills(jobAnalysis || {});
         if (
           res &&
@@ -1042,17 +1042,20 @@ export const SkillsPopup: FC<{
           res.skillsOptions.length > 0
         ) {
           const firstList = res.skillsOptions[0];
-          if (Array.isArray(firstList)) {
+          if (Array.isArray(firstList) && isMounted) {
             setAiSkillSuggestions(firstList.map((s: any) => s.name));
           }
         }
-      };
-      fetchData();
-    } catch (err) {
-      setAiSkillSuggestions([]);
-    } finally {
-      setLoading(false);
-    }
+      } catch (err) {
+        if (isMounted) setAiSkillSuggestions([]);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+    fetchAll();
+    return () => {
+      isMounted = false;
+    };
   }, [jobAnalysis, jobDescription]);
 
   const addSkill = (skillName?: string) => {
@@ -1105,24 +1108,20 @@ export const SkillsPopup: FC<{
             </button>
           </div>
           <div className="flex flex-wrap gap-2 flex-1 overflow-y-auto pr-1">
-            {loading ? (
-              <div className="text-blue-600 font-medium w-full text-center">{t.loadingAISuggestions}</div>
-            ) : (
-              skills.map((skill: any, index: number) => (
-                <div
-                  key={index}
-                  className="bg-blue-100 text-blue-800 text-sm font-medium h-fit px-3 py-1 rounded-full flex items-center gap-2"
+            {skills.map((skill: any, index: number) => (
+              <div
+                key={index}
+                className="bg-blue-100 text-blue-800 text-sm font-medium h-fit px-3 py-1 rounded-full flex items-center gap-2"
+              >
+                {skill.name}
+                <button
+                  onClick={() => removeSkill(skill.name)}
+                  className="hover:text-red-500"
                 >
-                  {skill.name}
-                  <button
-                    onClick={() => removeSkill(skill.name)}
-                    className="hover:text-red-500"
-                  >
-                    <X size={14} />
-                  </button>
-                </div>
-              ))
-            )}
+                  <X size={14} />
+                </button>
+              </div>
+            ))}
           </div>
         </div>
         <div className=" absolute top-0 right-0 h-full w-full md:w-[49%] flex flex-col bg-gray-50 bg-opacity-90 backdrop-blur-sm border-l border-gray-200 shadow-xl p-4">
@@ -1131,8 +1130,11 @@ export const SkillsPopup: FC<{
           </div>
           <div className="flex flex-col gap-3 flex-1 overflow-y-auto pr-1 ">
             {loading ? (
-              <div className="flex items-center justify-center h-full">
-                <Loader2 className="animate-spin" />
+              <div className="flex flex-col items-center justify-center h-full space-y-4">
+                <Loader2 className="animate-spin h-8 w-8 text-blue-500" />
+                <p className="text-gray-600 text-lg">
+                  {t.skillsLoading}
+                </p>
               </div>
             ) : (
               aiSkillSuggestions.map((skill) => {

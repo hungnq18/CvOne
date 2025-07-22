@@ -25,6 +25,9 @@ const TemplatePreviewModal: FC<TemplatePreviewModalProps> = ({
   const modalRef = useRef<HTMLDivElement>(null);
   useOnClickOutside(modalRef, onClose);
 
+  const { language } = useLanguage();
+
+
   const router = useRouter();
 
   const defaultPreviewData = {
@@ -116,7 +119,7 @@ const TemplatePreviewModal: FC<TemplatePreviewModalProps> = ({
             </div>
           ) : (
             <div className="mt-8 w-full max-w-[1050px] shadow-2xl origin-top scale-[0.6] md:scale-[0.7] lg:scale-[0.8]">
-              <TemplateComponent data={defaultPreviewData} />
+              <TemplateComponent data={defaultPreviewData} language={language}/>
             </div>
           )}
         </div>
