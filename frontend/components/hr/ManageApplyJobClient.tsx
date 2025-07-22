@@ -5,6 +5,8 @@ import ManageApplyJobTable from "@/components/hr/ManageApplyJobTable";
 import PreviewCVCLModal from "@/components/hr/PreviewCVCLModal";
 import { sendNotification } from '@/api/apiNotification';
 import { getUserById } from '@/api/userApi';
+import { getCLById, getCLTemplateById } from '@/api/clApi';
+import html2pdf from "html2pdf.js";
 
 export default function ManageApplyJobClient() {
     const [applications, setApplications] = useState<any[]>([]);
@@ -15,6 +17,7 @@ export default function ManageApplyJobClient() {
         type: "cv" | "cl" | null;
         cvData?: any;
         clData?: any;
+        templateObj?: any;
     }>({ open: false, type: null });
 
     useEffect(() => {
@@ -107,8 +110,107 @@ export default function ManageApplyJobClient() {
             setPreviewModal({ open: true, type: "cv", cvData: app.cvId });
         }
     };
-    const handleViewCoverLetter = (coverLetterId: string) => {
-        setPreviewModal({ open: true, type: "cl" });
+    const handleViewCoverLetter = async (coverLetterId: string) => {
+        try {
+            const clData = await getCLById(coverLetterId);
+            if (clData) {
+                const templateId = typeof clData.templateId === 'string' ? clData.templateId : clData.templateId?._id;
+                const templateObj = templateId ? await getCLTemplateById(templateId) : undefined;
+                setPreviewModal({ open: true, type: 'cl', clData, templateObj });
+            } else {
+                alert("Không tìm thấy dữ liệu Cover Letter.");
+            }
+        } catch (error) {
+            alert("Đã có lỗi xảy ra khi lấy dữ liệu Cover Letter.");
+        }
+    };
+
+    const handleDownloadCoverLetter = async (clId?: string, clUrl?: string) => {
+        if (clUrl) {
+            // Tải file trực tiếp từ link
+            const link = document.createElement('a');
+            link.href = clUrl;
+            link.download = '';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            return;
+        }
+        if (!clId) return;
+        try {
+            const clData = await getCLById(clId);
+            if (!clData) {
+                alert('Không tìm thấy dữ liệu Cover Letter.');
+                return;
+            }
+            const templateId = typeof clData.templateId === 'string' ? clData.templateId : clData.templateId?._id;
+            const templateObj = templateId ? await getCLTemplateById(templateId) : undefined;
+            if (!templateObj) {
+                alert('Không tìm thấy template phù hợp để xuất PDF');
+                return;
+            }
+            const clTemplateModule = await import("@/app/createCLTemplate/templates");
+            const clTemplateComponents = clTemplateModule.templates;
+            type TemplateType = keyof typeof clTemplateComponents;
+            const key = templateObj.title.toLowerCase() as TemplateType;
+            const TemplateComponent = clTemplateComponents[key] as React.ComponentType<any>;
+            if (!TemplateComponent) {
+                alert('Không tìm thấy component template để xuất PDF');
+                return;
+            }
+            // Tạo iframe ẩn
+            const iframe = document.createElement('iframe');
+            iframe.style.position = 'fixed';
+            iframe.style.width = '794px';
+            iframe.style.height = '1123px';
+            iframe.style.left = '-9999px';
+            document.body.appendChild(iframe);
+            const iframeDoc = iframe.contentWindow?.document;
+            if (!iframeDoc) {
+                alert('Không thể tạo môi trường để xuất PDF.');
+                document.body.removeChild(iframe);
+                return;
+            }
+            // Copy CSS
+            const head = iframeDoc.head;
+            document.querySelectorAll('style, link[rel="stylesheet"]').forEach(node => {
+                head.appendChild(node.cloneNode(true));
+            });
+            // Mount node
+            const mountNode = iframeDoc.createElement('div');
+            iframeDoc.body.appendChild(mountNode);
+            let root = null;
+            try {
+                await new Promise(resolve => setTimeout(resolve, 300));
+                const { createRoot } = await import('react-dom/client');
+                root = createRoot(mountNode);
+                root.render(
+                    <div>
+                        <div style={{ fontFamily: 'sans-serif' }}>
+                            <TemplateComponent letterData={clData.data} data={clData.data} isPdfMode={true} />
+                        </div>
+                    </div>
+                );
+                await new Promise(resolve => setTimeout(resolve, 500));
+                await html2pdf()
+                    .from(iframe.contentWindow.document.body)
+                    .set({
+                        margin: 0,
+                        filename: `${clData.title || "cover-letter"}.pdf`,
+                        image: { type: "jpeg", quality: 0.98 },
+                        html2canvas: { scale: 2, useCORS: true },
+                        jsPDF: { unit: "px", format: [794, 1123], orientation: "portrait" },
+                    })
+                    .save();
+            } catch (error) {
+                alert('Đã có lỗi xảy ra khi xuất file PDF.');
+            } finally {
+                if (root) root.unmount();
+                if (document.body.contains(iframe)) document.body.removeChild(iframe);
+            }
+        } catch (error) {
+            alert('Đã có lỗi xảy ra khi xuất file PDF.');
+        }
     };
 
     return (
@@ -126,12 +228,14 @@ export default function ManageApplyJobClient() {
                 handleViewCoverLetter={handleViewCoverLetter}
                 handleUpdateStatus={handleUpdateStatus}
                 handleDeleteApplyJob={handleDeleteApplyJob}
+                handleDownloadCL={handleDownloadCoverLetter}
             />
             <PreviewCVCLModal
                 open={previewModal.open}
                 type={previewModal.type}
                 cvData={previewModal.cvData}
                 clData={previewModal.clData}
+                templateObj={previewModal.templateObj}
                 onClose={() => setPreviewModal({ open: false, type: null })}
             />
         </div>

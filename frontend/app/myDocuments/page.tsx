@@ -5,8 +5,7 @@ import CVList from "@/components/sections/listMyCV";
 import CoverLetterList from "@/components/sections/listMyCL";
 import "@/styles/myDocuments.css";
 import { useLanguage } from "@/providers/global-provider";
-import { getCLs, CL, deleteCL, createCL, CreateCLDto } from "@/api/clApi";
-import { useRouter } from "next/navigation";
+import { getCLs, CL, createCL, CreateCLDto } from "@/api/clApi";
 import { getAllCVs, CV } from "@/api/cvapi";
 
 const translations = {
@@ -44,7 +43,6 @@ export default function Page() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const { language } = useLanguage();
   const t = translations[language];
-  const router = useRouter();
 
   const [coverLetterList, setCoverLetterList] = useState<CL[]>([]);
   const [loadingCL, setLoadingCL] = useState(true);
@@ -115,23 +113,6 @@ export default function Page() {
     };
     loadCV();
   }, [language]);
-
-  // const handleCreateNewCL = () => {
-  //   router.push("/clTemplate");
-  // };
-
-  // const handleEditCL = (id: string) => {
-  //   router.push(`/createCLTemplate?clId=${id}`);
-  // };
-
-  // const handleDeleteCL = async (id: string) => {
-  //   try {
-  //     await deleteCL(id);
-  //     setCoverLetterList((prev) => prev.filter((cl) => cl._id !== id));
-  //   } catch (error) {
-  //     console.error("Failed to delete cover letter:", error);
-  //   }
-  // };
 
   const onTabChange = (key: string) => setActiveTab(key);
   const onSearch = (value: string) => setSearchValue(value);

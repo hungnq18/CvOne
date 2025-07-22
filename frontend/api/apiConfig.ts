@@ -63,6 +63,7 @@ export const API_ENDPOINTS = {
     DELETE: (id: string) => `/cover-letters/${id}`,
     EXTRACT_COVER_LETTER: "/cover-letters/extract/from-path",
     GENERATE_CL_BY_AI: "/cover-letters/generate/ai",
+
   },
   CHAT: {
     GET_MESSAGES: (convId: string) => `/chat/messages/${convId}`,

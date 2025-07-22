@@ -17,6 +17,8 @@ import '../../styles/manageCandidate.css';
 import PreviewCVCLModal from '@/components/hr/PreviewCVCLModal';
 import ChatButton from '@/components/ui/chatButton';
 import "@/styles/chatButton.css";
+import { getCLById, getCLTemplateById } from '@/api/clApi';
+
 
 const DownloadButton = ({ onClick }: { onClick?: () => void }) => (
     <button className="Btn" onClick={onClick} type="button">
@@ -36,12 +38,13 @@ const DeleteButton = ({ onClick }: { onClick?: () => void }) => (
 const ManageCandidateTable = () => {
     const [applications, setApplications] = useState<any[]>([]);
     const [searchTerm, setSearchTerm] = useState("");
-    const [previewModal, setPreviewModal] = useState<{ open: boolean, type: 'cv' | 'cl' | null, cvData?: any, clData?: any }>({ open: false, type: null });
+    const [previewModal, setPreviewModal] = useState<{ open: boolean, type: 'cv' | 'cl' | null, cvData?: any, clData?: any, templateObj?: any }>({ open: false, type: null });
     const [downloadModal, setDownloadModal] = useState<{ open: boolean, app?: any }>({ open: false });
     const [allTemplates, setAllTemplates] = useState<CVTemplate[]>([]);
     const [deleteModal, setDeleteModal] = useState<{ open: boolean, appId?: string }>({ open: false });
     const [workType, setWorkType] = useState('All');
     const [showWorkTypeDropdown, setShowWorkTypeDropdown] = useState(false);
+
     useEffect(() => {
         getApplyJobByHR().then((data: any) => {
             let arr = Array.isArray(data) ? data : (data && data.data ? data.data : []);
@@ -56,8 +59,22 @@ const ManageCandidateTable = () => {
             setPreviewModal({ open: true, type: 'cv', cvData: app.cvId });
         }
     };
-    const handleViewCoverLetter = (coverLetterId: string) => {
-        setPreviewModal({ open: true, type: 'cl' });
+
+    const handleViewCoverLetter = async (coverLetterId: string) => {
+        try {
+            const clData = await getCLById(coverLetterId);
+            if (clData) {
+                // Lấy templateObj theo templateId
+                const templateId = typeof clData.templateId === 'string' ? clData.templateId : clData.templateId?._id;
+                const templateObj = templateId ? await getCLTemplateById(templateId) : undefined;
+                setPreviewModal({ open: true, type: 'cl', clData, templateObj });
+            } else {
+                alert("Không tìm thấy dữ liệu Cover Letter.");
+            }
+        } catch (error) {
+            console.error("Lỗi khi lấy Cover Letter:", error);
+            alert("Đã có lỗi xảy ra khi lấy dữ liệu Cover Letter.");
+        }
     };
 
     const handleDownloadCV = async (cvData: any) => {
@@ -130,11 +147,92 @@ const ManageCandidateTable = () => {
             if (document.body.contains(iframe)) document.body.removeChild(iframe);
         }
     };
-    const handleDownloadCL = (clData: any) => {
-        alert('Chức năng tải Cover Letter đang phát triển!');
+
+    const handleDownloadCL = async (coverLetterId?: string, coverletterUrl?: string) => {
+        if (coverletterUrl) {
+            const link = document.createElement('a');
+            link.href = coverletterUrl;
+            link.download = '';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            return;
+        }
+        if (!coverLetterId) return;
+        try {
+            const clData = await getCLById(coverLetterId);
+            if (!clData) {
+                alert('Không tìm thấy dữ liệu Cover Letter.');
+                return;
+            }
+            const templateId = typeof clData.templateId === 'string' ? clData.templateId : clData.templateId?._id;
+            const templateObj = templateId ? await getCLTemplateById(templateId) : undefined;
+            if (!templateObj) {
+                alert('Không tìm thấy template phù hợp để xuất PDF');
+                return;
+            }
+            const clTemplateModule = await import("@/app/createCLTemplate/templates");
+            const clTemplateComponents = clTemplateModule.templates;
+            type TemplateType = keyof typeof clTemplateComponents;
+            const key = templateObj.title.toLowerCase() as TemplateType;
+            const TemplateComponent = clTemplateComponents[key] as React.ComponentType<any>;
+            if (!TemplateComponent) {
+                alert('Không tìm thấy component template để xuất PDF');
+                return;
+            }
+            const iframe = document.createElement('iframe');
+            iframe.style.position = 'fixed';
+            iframe.style.width = '794px';
+            iframe.style.height = '1123px';
+            iframe.style.left = '-9999px';
+            document.body.appendChild(iframe);
+            const iframeDoc = iframe.contentWindow?.document;
+            if (!iframeDoc) {
+                alert('Không thể tạo môi trường để xuất PDF.');
+                document.body.removeChild(iframe);
+                return;
+            }
+            const head = iframeDoc.head;
+            document.querySelectorAll('style, link[rel="stylesheet"]').forEach(node => {
+                head.appendChild(node.cloneNode(true));
+            });
+            const mountNode = iframeDoc.createElement('div');
+            iframeDoc.body.appendChild(mountNode);
+            let root = null;
+            try {
+                await new Promise(resolve => setTimeout(resolve, 300));
+                const { createRoot } = await import('react-dom/client');
+                root = createRoot(mountNode);
+                root.render(
+                    <div>
+                        <div style={{ fontFamily: 'sans-serif' }}>
+                            <TemplateComponent letterData={clData.data} data={clData.data} isPdfMode={true} />
+                        </div>
+                    </div>
+                );
+                await new Promise(resolve => setTimeout(resolve, 500));
+                const html2pdf = (await import("html2pdf.js")).default || (await import("html2pdf.js"));
+                await html2pdf()
+                    .from(iframe.contentWindow.document.body)
+                    .set({
+                        margin: 0,
+                        filename: `${clData.title || "cover-letter"}.pdf`,
+                        image: { type: "jpeg", quality: 0.98 },
+                        html2canvas: { scale: 2, useCORS: true },
+                        jsPDF: { unit: "px", format: [794, 1123], orientation: "portrait" },
+                    })
+                    .save();
+            } catch (error) {
+                alert('Đã có lỗi xảy ra khi xuất file PDF.');
+            } finally {
+                if (root) root.unmount();
+                if (document.body.contains(iframe)) document.body.removeChild(iframe);
+            }
+        } catch (error) {
+            alert('Đã có lỗi xảy ra khi xuất file PDF.');
+        }
     };
 
-    // Lọc ứng viên chỉ theo cột Candidate (tên ứng viên) và work type (lấy work type từ job)
     const filteredApplications = applications.filter(app => {
         const name = ((app.cvId?.content?.userData?.firstName || '') + ' ' + (app.cvId?.content?.userData?.lastName || '')).toLowerCase();
         const term = searchTerm.toLowerCase();
@@ -149,7 +247,6 @@ const ManageCandidateTable = () => {
         return dateB - dateA;
     });
 
-    // Lấy danh sách work type duy nhất từ dữ liệu job
     const workTypes = Array.from(new Set(applications.map(app => app.jobId?.workType || app.jobId?.["Work Type"]).filter(Boolean)));
 
     return (
@@ -157,8 +254,8 @@ const ManageCandidateTable = () => {
             <div className="flex justify-between items-center">
                 <h1 className="text-3xl font-bold">Manage Job Applications</h1>
             </div>
-            <Card >
-                <CardHeader style={{ marginTop: 50 }} >
+            <Card>
+                <CardHeader style={{ marginTop: 50 }}>
                     <CardTitle>Candidate Manager</CardTitle>
                     <div className="flex items-center space-x-2" style={{ marginTop: 20 }}>
                         <div className="relative">
@@ -170,7 +267,6 @@ const ManageCandidateTable = () => {
                                 className="pl-8"
                             />
                         </div>
-                        {/* Dropdown Work Type custom */}
                         <div className="relative inline-block">
                             <button
                                 id="dropdownDefaultButton"
@@ -280,13 +376,7 @@ const ManageCandidateTable = () => {
                                         <Button
                                             variant="outline"
                                             size="sm"
-                                            onClick={() => {
-                                                if (app.coverletterId?._id || app.coverletter_id) {
-                                                    setPreviewModal({ open: true, type: 'cl', clData: app.coverletterId });
-                                                } else if (app.clUrl) {
-                                                    window.open(app.clUrl, '_blank');
-                                                }
-                                            }}
+                                            onClick={() => handleViewCoverLetter(app.coverletterId?._id || app.coverletter_id)}
                                             style={{ background: '#f5f5f5', color: '#047857', border: '1px solid #d1d5db', fontWeight: 500 }}
                                         >
                                             <User className="mr-1" style={{ color: '#047857' }} />
@@ -337,8 +427,11 @@ const ManageCandidateTable = () => {
                         style={{ width: 200 }}
                         onClick={() => {
                             setDownloadModal({ open: false });
-                            if (downloadModal.app?.coverletterId?._id || downloadModal.app?.coverletter_id) {
-                                handleDownloadCL(downloadModal.app.coverletterId);
+                            if (downloadModal.app?.coverletterId?._id || downloadModal.app?.coverletter_id || downloadModal.app?.coverletterUrl) {
+                                handleDownloadCL(
+                                    downloadModal.app?.coverletterId?._id || downloadModal.app?.coverletter_id,
+                                    downloadModal.app?.coverletterUrl
+                                );
                             } else if (downloadModal.app?.clUrl) {
                                 const link = document.createElement('a');
                                 link.href = downloadModal.app.clUrl;
@@ -385,10 +478,11 @@ const ManageCandidateTable = () => {
                 type={previewModal.type}
                 cvData={previewModal.cvData}
                 clData={previewModal.clData}
+                templateObj={previewModal.templateObj}
                 onClose={() => setPreviewModal({ open: false, type: null })}
             />
-        </div >
+        </div>
     );
 };
 
-export default ManageCandidateTable; 
+export default ManageCandidateTable;

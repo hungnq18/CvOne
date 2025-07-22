@@ -28,6 +28,7 @@ interface ManageApplyJobTableProps {
     handleViewCoverLetter: (coverLetterId: string) => void;
     handleUpdateStatus: (applyJobId: string, newStatus: "approved" | "rejected" | "reviewed", candidateId: string) => void;
     handleDeleteApplyJob?: (applyJobId: string) => void;
+    handleDownloadCL?: (clId?: string, clUrl?: string) => void;
 }
 
 const ManageApplyJobTable: React.FC<ManageApplyJobTableProps> = ({
@@ -40,6 +41,7 @@ const ManageApplyJobTable: React.FC<ManageApplyJobTableProps> = ({
     handleViewCoverLetter,
     handleUpdateStatus,
     handleDeleteApplyJob,
+    handleDownloadCL,
 }) => {
     const [allTemplates, setAllTemplates] = useState<CVTemplate[]>([]);
     const [workType, setWorkType] = useState('All');
@@ -395,7 +397,7 @@ const ManageApplyJobTable: React.FC<ManageApplyJobTableProps> = ({
                                             onViewCV={() => handleViewCV(app.cvId?._id || app.cv_id)}
                                             onDownloadCV={() => handleDownloadCV(app.cvId)}
                                             onViewCL={() => handleViewCoverLetter(app.coverletterId?._id || app.coverletter_id)}
-                                            onDownloadCL={() => { }}
+                                            onDownloadCL={() => handleDownloadCL && handleDownloadCL(app.coverletterId?._id || app.coverletter_id, app.coverletterUrl)}
                                             status={app.status}
                                             onDelete={
                                                 app.status === "rejected" && handleDeleteApplyJob
@@ -405,7 +407,7 @@ const ManageApplyJobTable: React.FC<ManageApplyJobTableProps> = ({
                                             cvId={app.cvId?._id || app.cv_id}
                                             cvUrl={app.cvUrl}
                                             clId={app.coverletterId?._id || app.coverletter_id}
-                                            clUrl={app.clUrl}
+                                            clUrl={app.coverletterUrl}
                                         />
                                     </TableCell>
                                 </TableRow>
