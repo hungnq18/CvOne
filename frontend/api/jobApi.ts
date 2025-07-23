@@ -20,9 +20,10 @@ export interface Job {
   responsibilities: string;
   company_id: string;
   user_id: string;
+  isActive: boolean;
   createdAt?: string;
   updatedAt?: string;
-   isActive?: boolean
+  applicationDeadline?: string;
 }
 
 export interface DashboardJob {
