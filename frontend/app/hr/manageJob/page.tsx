@@ -338,8 +338,6 @@ export default function ManageJobPage() {
         };
 
         try {
-            console.log('Data sent to updateJob:', jobData); // Log dữ liệu để kiểm tra
-
             // Gọi API update
             await updateJob(selectedJob._id, jobData);
 
@@ -350,14 +348,14 @@ export default function ManageJobPage() {
             // Xử lý dữ liệu jobs
             let jobsArr = Array.isArray(jobsData)
                 ? jobsData
-                : (jobsData?.data || []);
+                : ((jobsData as any)?.data || []);
 
             const applyCountMap: Record<string, number> = {};
 
             // Kiểm tra và xử lý dữ liệu apply jobs
             let applyArr = Array.isArray(applyJobsData)
                 ? applyJobsData
-                : (applyJobsData?.data || []);
+                : ((applyJobsData as any)?.data || []);
 
             if (Array.isArray(applyArr)) {
                 applyArr.forEach((apply: any) => {
