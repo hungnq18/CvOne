@@ -22,8 +22,9 @@ interface Job {
     skills: string;
     Responsibilities: string;
     user_id: string;
-    status?: "Active" | "Inactive";
+    isActive: boolean;
     applications?: number;
+    applicationDeadline: string;
 }
 
 interface JobDialogProps {
@@ -87,7 +88,7 @@ const JobDialog: React.FC<JobDialogProps> = ({ open, onOpenChange, job, onChange
                                     <SelectItem value="Full-time">Full-time</SelectItem>
                                     <SelectItem value="Part-time">Part-time</SelectItem>
                                     <SelectItem value="Intern">Intern</SelectItem>
-                                    <SelectItem value="Contract">Contract</SelectItem>
+                                    <SelectItem value="Temporary">Temporary</SelectItem>
                                 </SelectContent>
                             </Select>
                             {errors?.["Work Type"] && <div className="text-red-500 text-xs mt-1">{errors["Work Type"]}</div>}
@@ -104,6 +105,18 @@ const JobDialog: React.FC<JobDialogProps> = ({ open, onOpenChange, job, onChange
                             <Input id="country" value={job.Country || ""} onChange={e => onChange({ ...job, Country: e.target.value })} />
                             {errors?.Country && <div className="text-red-500 text-xs mt-1">{errors.Country}</div>}
                         </div>
+                    </div>
+                    <div>
+                        <Label htmlFor="application-deadline">Application Deadline</Label>
+                        <Input
+                            id="application-deadline"
+                            type="date"
+                            min={new Date().toISOString().split('T')[0]} // Đảm bảo ngày tối thiểu là hôm nay: 2025-07-24
+                            value={job.applicationDeadline || new Date().toISOString().split('T')[0]} // Mặc định là ngày hiện tại: 2025-07-24
+                            onChange={e => onChange({ ...job, applicationDeadline: e.target.value || new Date().toISOString().split('T')[0] })}
+                            required // Đảm bảo người dùng phải chọn ngày
+                        />
+                        {errors?.applicationDeadline && <div className="text-red-500 text-xs mt-1">{errors.applicationDeadline}</div>}
                     </div>
                     <div>
                         <Label htmlFor="job-description">Job Description</Label>
@@ -123,11 +136,12 @@ const JobDialog: React.FC<JobDialogProps> = ({ open, onOpenChange, job, onChange
                     <div>
                         <Label htmlFor="benefits">Benefits</Label>
                         <Textarea id="benefits" value={job.Benefits || ""} onChange={e => onChange({ ...job, Benefits: e.target.value })} rows={2} placeholder="Enter benefits separated by commas" />
+                        {errors?.Benefits && <div className="text-red-500 text-xs mt-1">{errors.Benefits}</div>}
                     </div>
                     {isEdit && (
                         <div>
                             <Label htmlFor="edit-status">Status</Label>
-                            <Select value={job.status || "Active"} onValueChange={value => onChange({ ...job, status: value as "Active" | "Inactive" })}>
+                            <Select value={job.isActive ? "Active" : "Inactive"} onValueChange={value => onChange({ ...job, isActive: value === "Active" })}>
                                 <SelectTrigger>
                                     <SelectValue />
                                 </SelectTrigger>
@@ -148,4 +162,4 @@ const JobDialog: React.FC<JobDialogProps> = ({ open, onOpenChange, job, onChange
     );
 };
 
-export default JobDialog; 
+export default JobDialog;

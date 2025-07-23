@@ -28,8 +28,8 @@ import { JobsService } from "./jobs.service";
 export class JobsController {
   constructor(
     private readonly jobsService: JobsService,
-    private readonly cvAiService: CvAiService
-  ) {}
+    private readonly cvAiService: CvAiService,
+  ) { }
 
   @Post("analyze-jd-pdf")
   @UseInterceptors(
@@ -39,12 +39,12 @@ export class JobsController {
         if (!file.mimetype || !file.mimetype.includes("pdf")) {
           return cb(
             new BadRequestException("Only PDF files are allowed!"),
-            false
+            false,
           );
         }
         cb(null, true);
       },
-    })
+    }),
   )
   async analyzeJobDescriptionPdf(@UploadedFile() file: MulterFile) {
     if (!file)
@@ -60,7 +60,7 @@ export class JobsController {
   @Get()
   async findAll(
     @Query("page") page: number = 1,
-    @Query("limit") limit: number = 10
+    @Query("limit") limit: number = 10,
   ) {
     return this.jobsService.findAll(page, limit);
   }
@@ -71,7 +71,7 @@ export class JobsController {
   async getJobsByHr(
     @Request() req,
     @Query("page") page = 1,
-    @Query("limit") limit = 10
+    @Query("limit") limit = 10,
   ) {
     const userId = req.user.user._id;
     return this.jobsService.getJobsByHr(userId, Number(page), Number(limit));
@@ -114,14 +114,14 @@ export class JobsController {
   async countJobsByPostingDate(
     @Param("month") month: number,
     @Param("year") year: number,
-    @Request() req
+    @Request() req,
   ) {
     const userId = req.user.user._id;
     return this.jobsService.countJobsByPostingDate(month, year, userId);
   }
 
   // ĐỂ ROUTE ĐỘNG Ở CUỐI CÙNG
-  @UseGuards(JwtAuthGuard)
+
   @Get(":id")
   getJobById(@Param("id") id: string) {
     return this.jobsService.getJobById(id);
