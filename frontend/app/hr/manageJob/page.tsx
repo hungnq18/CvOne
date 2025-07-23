@@ -161,6 +161,7 @@ export default function ManageJobPage() {
             { key: "Salary Range", label: "Salary Range" },
             { key: "location", label: "Location" },
             { key: "Country", label: "Country" },
+            { key: "Benefits", label: "Benefits" },
             { key: "skills", label: "Skills" },
             { key: "Responsibilities", label: "Responsibilities" },
         ];
@@ -179,23 +180,53 @@ export default function ManageJobPage() {
             return;
         }
         try {
-            await createJob({
+            // Validate benefits
+            if (!newJob.Benefits) {
+                newErrors["Benefits"] = "Benefits is required";
+                setErrors(newErrors);
+                return;
+            }
+
+            const benefitsArray = typeof newJob.Benefits === 'string'
+                ? newJob.Benefits.split(',').map(b => b.trim()).filter(Boolean)
+                : [];
+
+            if (benefitsArray.length === 0) {
+                newErrors["Benefits"] = "At least one benefit is required";
+                setErrors(newErrors);
+                return;
+            }
+
+            // Format date string to match ISO format expected by backend
+            const now = new Date();
+            const formattedDate = now.toISOString().split('T')[0];
+
+            const jobData = {
                 title: newJob["Job Title"] || "",
                 description: newJob["Job Description"] || "",
                 role: newJob.Role || "",
                 workType: newJob["Work Type"] || "",
-                postingDate: new Date().toISOString(),
+                postingDate: formattedDate,  // Send date in YYYY-MM-DD format
                 experience: newJob.Experience || "",
                 qualifications: newJob.Qualifications || "",
                 salaryRange: salary,
                 location: newJob.location || "",
                 country: newJob.Country || "",
-                benefits: typeof newJob.Benefits === 'string'
-                    ? newJob.Benefits.split(',').map(b => b.trim()).filter(Boolean)
-                    : [],
+                benefits: benefitsArray,
                 skills: newJob.skills || "",
                 responsibilities: newJob.Responsibilities || "",
-            });
+                isActive: true  // Add default isActive status
+            };
+
+            console.log('Sending job data to server:', jobData);
+            console.log('Benefits array:', benefitsArray);
+
+            try {
+                await createJob(jobData);
+            } catch (error) {
+                console.error('Server error response:', error);
+                throw error;
+            }
             // Sau khi tạo thành công, reload lại danh sách jobs
             const jobsData = await getJobsByHR();
             let jobsArr = Array.isArray(jobsData) ? jobsData : ((jobsData as any)?.data ? (jobsData as any).data : []);

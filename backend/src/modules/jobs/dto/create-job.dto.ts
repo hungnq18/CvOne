@@ -53,4 +53,8 @@ export class CreateJobDto {
   @IsString()
   @IsNotEmpty()
   responsibilities: string;
+
+  @IsDateString()
+  @IsNotEmpty()
+  applicationDeadline: string;
 }

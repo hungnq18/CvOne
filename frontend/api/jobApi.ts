@@ -233,9 +233,32 @@ export const getAppliedJobsByUser = async (page: number = 1, limit: number = 10)
  * @returns Promise with the created job
  */
 export const createJob = async (data: Partial<Job>): Promise<Job> => {
-  return fetchWithAuth(API_ENDPOINTS.JOB.CREATE, {
-    method: "POST",
-    body: JSON.stringify(data),
-    headers: { 'Content-Type': 'application/json' },
-  });
+  try {
+    console.log('Making API request with data:', data);
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/jobs`, {
+      method: "POST",
+      body: JSON.stringify(data),
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}` 
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Server error response:', {
+        status: response.status,
+        statusText: response.statusText,
+        body: errorText
+      });
+      throw new Error(errorText || 'Failed to create job');
+    }
+
+    const result = await response.json();
+    console.log('API response:', result);
+    return result;
+  } catch (error) {
+    console.error('Error creating job:', error);
+    throw error;
+  }
 };
