@@ -14,11 +14,16 @@ export default function JobPageClient() {
         const fetchJobs = async () => {
             try {
                 setLoading(true);
+                setError(null);
                 const jobs = await getLocalJobs();
-                setAllJobs(Array.isArray(jobs) ? jobs : []);
+                if (Array.isArray(jobs)) {
+                    setAllJobs(jobs);
+                } else {
+                    setError('Invalid data format received');
+                    setAllJobs([]);
+                }
             } catch (err) {
-                console.error('Error fetching jobs:', err);
-                setError('Failed to load jobs');
+                setError(err instanceof Error ? err.message : 'Failed to load jobs');
                 setAllJobs([]);
             } finally {
                 setLoading(false);
