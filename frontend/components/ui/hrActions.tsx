@@ -10,11 +10,15 @@ interface DocumentActionsProps {
     onDownloadCL?: () => void;
     status?: string;
     onDelete?: () => void;
+    cvId?: string;
+    cvUrl?: string;
+    clId?: string;
+    clUrl?: string;
 }
 
 const MENU_WIDTH = 220;
 
-const DocumentActions: React.FC<DocumentActionsProps> = ({ onViewCV, onDownloadCV, onViewCL, onDownloadCL, status, onDelete }) => {
+const DocumentActions: React.FC<DocumentActionsProps> = ({ onViewCV, onDownloadCV, onViewCL, onDownloadCL, status, onDelete, cvId, cvUrl, clId, clUrl }) => {
     const [open, setOpen] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
     const [menuPos, setMenuPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
@@ -60,25 +64,53 @@ const DocumentActions: React.FC<DocumentActionsProps> = ({ onViewCV, onDownloadC
                     }}
                 >
                     <div className={styles.card} style={{ overflow: 'visible', maxHeight: 'none', width: MENU_WIDTH }}
-                        onClick={() => { console.log('Click vào card menu'); }}
+                        onClick={e => e.stopPropagation()} // Ngăn đóng menu khi click vào menu
                     >
                         <ul className={styles.list}>
-                            <li className={styles.element} onClick={() => handleAction(onViewCV)}>
+                            <li className={styles.element} onClick={() => {
+                                if (cvId) handleAction(onViewCV);
+                                else if (cvUrl) window.open(cvUrl, '_blank');
+                            }}>
                                 <FileText style={{ color: '#1e40af' }} />
                                 <span className={styles.label}>View CV</span>
                             </li>
-                            <li className={styles.element} onClick={() => handleAction(onDownloadCV)}>
+                            <li className={styles.element} onClick={() => {
+                                if (cvId) handleAction(onDownloadCV);
+                                else if (cvUrl) {
+                                    const link = document.createElement('a');
+                                    link.href = cvUrl;
+                                    link.download = '';
+                                    document.body.appendChild(link);
+                                    link.click();
+                                    document.body.removeChild(link);
+                                    setOpen(false);
+                                }
+                            }}>
                                 <Download style={{ color: '#1e40af' }} />
                                 <span className={styles.label}>Download CV</span>
                             </li>
                         </ul>
                         <div className={styles.separator}></div>
                         <ul className={styles.list}>
-                            <li className={styles.element} onClick={() => handleAction(onViewCL)}>
+                            <li className={styles.element} onClick={() => {
+                                if (clId) handleAction(onViewCL);
+                                else if (clUrl) window.open(clUrl, '_blank');
+                            }}>
                                 <User style={{ color: '#047857' }} />
                                 <span className={styles.label}>View CL</span>
                             </li>
-                            <li className={styles.element} onClick={() => handleAction(onDownloadCL)}>
+                            <li className={styles.element} onClick={() => {
+                                if (clId) handleAction(onDownloadCL);
+                                else if (clUrl) {
+                                    const link = document.createElement('a');
+                                    link.href = clUrl;
+                                    link.download = '';
+                                    document.body.appendChild(link);
+                                    link.click();
+                                    document.body.removeChild(link);
+                                    setOpen(false);
+                                }
+                            }}>
                                 <Download style={{ color: '#047857' }} />
                                 <span className={styles.label}>Download CL</span>
                             </li>

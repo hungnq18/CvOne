@@ -2,6 +2,7 @@ import { ApiProperty } from "@nestjs/swagger";
 import { Transform } from "class-transformer";
 import {
   IsArray,
+  IsBoolean,
   IsDateString,
   IsNotEmpty,
   IsOptional,
@@ -9,7 +10,6 @@ import {
   MinLength,
   ArrayNotEmpty,
 } from "class-validator";
-import { Types } from "mongoose";
 
 export class UpdateJobDto {
   @IsString()
@@ -65,4 +65,15 @@ export class UpdateJobDto {
   @IsString()
   @IsOptional()
   responsibilities?: string;
+
+  // ✅ Thêm applicationDeadline
+  @IsDateString()
+  @IsOptional()
+  applicationDeadline?: Date;
+
+  // ✅ Thêm isActive
+  @IsOptional()
+  @Transform(({ value }) => value === "true" || value === true)
+  @IsBoolean()
+  isActive?: boolean;
 }

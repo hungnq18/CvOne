@@ -143,6 +143,10 @@ const ManageCandidateTable = () => {
         const matchName = name.includes(term);
         const matchWorkType = workType === 'All' || jobWorkType === workTypeFilter;
         return matchName && matchWorkType;
+    }).sort((a, b) => {
+        const dateA = new Date(a.updatedAt || a.createdAt || a.submit_at || 0).getTime();
+        const dateB = new Date(b.updatedAt || b.createdAt || b.submit_at || 0).getTime();
+        return dateB - dateA;
     });
 
     // Lấy danh sách work type duy nhất từ dữ liệu job
@@ -211,7 +215,7 @@ const ManageCandidateTable = () => {
                         <TableRow>
                             <TableHead>Candidate</TableHead>
                             <TableHead>Location</TableHead>
-                            <TableHead>Skill</TableHead>
+                            <TableHead>Number</TableHead>
                             <TableHead>Applied Jobs</TableHead>
                             <TableHead>Last Active</TableHead>
                             <TableHead>Actions</TableHead>
@@ -241,24 +245,10 @@ const ManageCandidateTable = () => {
                                     </div>
                                 </TableCell>
                                 <TableCell>
-                                    {app.cvId?.content?.userData?.city || '-'}, {app.cvId?.content?.userData?.country || '-'}
+                                    {app.userId?.city || '-'}, {app.userId?.country || '-'}
                                 </TableCell>
                                 <TableCell>
-                                    {(() => {
-                                        const skills = app.cvId?.content?.userData?.skills;
-                                        let skillStr = '-';
-                                        if (Array.isArray(skills)) {
-                                            const filtered = skills.filter(s => {
-                                                const name = s.name || s;
-                                                return name && !/công cụ|tool/i.test(name);
-                                            });
-                                            skillStr = filtered.length ? filtered.map(s => s.name || s).join(', ') : '-';
-                                        } else if (typeof skills === 'string') {
-                                            if (!/công cụ|tool/i.test(skills)) skillStr = skills;
-                                        }
-                                        if (skillStr.length > 40) return <>{skillStr.slice(0, 37)}...</>;
-                                        return <>{skillStr}</>;
-                                    })()}
+                                    {app.userId?.phone || '-'}
                                 </TableCell>
                                 <TableCell>
                                     {app.jobId?.title || app.job_id || '-'}
@@ -275,7 +265,13 @@ const ManageCandidateTable = () => {
                                         <Button
                                             variant="outline"
                                             size="sm"
-                                            onClick={() => setPreviewModal({ open: true, type: 'cv', cvData: app.cvId })}
+                                            onClick={() => {
+                                                if (app.cvId?._id || app.cv_id) {
+                                                    setPreviewModal({ open: true, type: 'cv', cvData: app.cvId });
+                                                } else if (app.cvUrl) {
+                                                    window.open(app.cvUrl, '_blank');
+                                                }
+                                            }}
                                             style={{ background: '#f5f5f5', color: '#1e40af', border: '1px solid #d1d5db', fontWeight: 500 }}
                                         >
                                             <FileText className="mr-1" style={{ color: '#1e40af' }} />
@@ -284,7 +280,13 @@ const ManageCandidateTable = () => {
                                         <Button
                                             variant="outline"
                                             size="sm"
-                                            onClick={() => setPreviewModal({ open: true, type: 'cl', clData: app.coverletterId })}
+                                            onClick={() => {
+                                                if (app.coverletterId?._id || app.coverletter_id) {
+                                                    setPreviewModal({ open: true, type: 'cl', clData: app.coverletterId });
+                                                } else if (app.clUrl) {
+                                                    window.open(app.clUrl, '_blank');
+                                                }
+                                            }}
                                             style={{ background: '#f5f5f5', color: '#047857', border: '1px solid #d1d5db', fontWeight: 500 }}
                                         >
                                             <User className="mr-1" style={{ color: '#047857' }} />
@@ -317,7 +319,16 @@ const ManageCandidateTable = () => {
                         style={{ width: 200 }}
                         onClick={async () => {
                             setDownloadModal({ open: false });
-                            await handleDownloadCV(downloadModal.app.cvId);
+                            if (downloadModal.app?.cvId?._id || downloadModal.app?.cv_id) {
+                                await handleDownloadCV(downloadModal.app.cvId);
+                            } else if (downloadModal.app?.cvUrl) {
+                                const link = document.createElement('a');
+                                link.href = downloadModal.app.cvUrl;
+                                link.download = '';
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                            }
                         }}
                     >
                         Tải CV
@@ -326,7 +337,16 @@ const ManageCandidateTable = () => {
                         style={{ width: 200 }}
                         onClick={() => {
                             setDownloadModal({ open: false });
-                            handleDownloadCL(downloadModal.app.coverletterId);
+                            if (downloadModal.app?.coverletterId?._id || downloadModal.app?.coverletter_id) {
+                                handleDownloadCL(downloadModal.app.coverletterId);
+                            } else if (downloadModal.app?.clUrl) {
+                                const link = document.createElement('a');
+                                link.href = downloadModal.app.clUrl;
+                                link.download = '';
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                            }
                         }}
                     >
                         Tải Cover Letter

@@ -505,6 +505,7 @@ export const SkillsForm: FC<FormProps> = ({ data, onUpdate }) => {
       if (!jobAnalysis && jobDescription) {
         setAnalyzingJD(true);
         try {
+          // console.log(jobDescription);
           const result = await analyzeJD(jobDescription);
           setJobAnalysis(result);
         } catch (err) {
