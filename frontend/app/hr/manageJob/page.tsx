@@ -29,10 +29,9 @@ interface Job {
     skills: string
     Responsibilities: string
     user_id: string
-    status?: "Active" | "Inactive"
+    isActive?: boolean
     applications?: number
 }
-
 
 export default function ManageJobPage() {
     const [jobs, setJobs] = useState<Job[]>([]);
@@ -53,28 +52,36 @@ export default function ManageJobPage() {
         "Job Description": "",
         Benefits: "",
         skills: "",
-        Responsibilities: ""
+        Responsibilities: "",
+        isActive: true
     })
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 5;
-    // State cho filter và sort
-    const [statusFilter, setStatusFilter] = useState<string>('all');
     const [workTypeFilter, setWorkTypeFilter] = useState<string>('all');
     const [sortOption, setSortOption] = useState<string>('newest');
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
+    const [statusFilter, setStatusFilter] = useState<string>('all');
+    const requiredFields = [
+        { key: "Job Title", label: "Job Title" },
+        { key: "Job Description", label: "Job Description" },
+        { key: "Role", label: "Role" },
+        { key: "Work Type", label: "Work Type" },
+        { key: "Experience", label: "Experience" },
+        { key: "Qualifications", label: "Qualifications" },
+        { key: "Salary Range", label: "Salary Range" },
+        { key: "location", label: "Location" },
+        { key: "Country", label: "Country" },
+        { key: "skills", label: "Skills" },
+        { key: "Responsibilities", label: "Responsibilities" },
+    ];
 
-    // Lấy dữ liệu thật từ API khi load trang
     useEffect(() => {
         async function fetchData() {
-            // Lấy jobs
             const jobsData = await getJobsByHR();
             let jobsArr = Array.isArray(jobsData) ? jobsData : ((jobsData as any)?.data ? (jobsData as any).data : []);
-
-            // Lấy apply jobs
             const applyJobsData = await getApplyJobByHR();
             let applyArr = Array.isArray(applyJobsData) ? applyJobsData : ((applyJobsData as any)?.data ? (applyJobsData as any).data : []);
 
-            // Đếm số lượng apply cho từng job_id
             const applyCountMap: Record<string, number> = {};
             applyArr.forEach((apply: any) => {
                 const jobId = apply.job_id || (apply.jobId && apply.jobId._id);
@@ -83,7 +90,6 @@ export default function ManageJobPage() {
                 }
             });
 
-            // Gán lại số lượng applications cho từng job
             if (Array.isArray(jobsArr)) {
                 setJobs(jobsArr.map((job: any) => ({
                     _id: job._id,
@@ -101,7 +107,7 @@ export default function ManageJobPage() {
                     skills: job.skills || '',
                     Responsibilities: job.responsibilities || '',
                     user_id: job.user_id || '',
-                    status: job.status || 'Active',
+                    isActive: job.isActive ?? true,
                     applications: applyCountMap[job._id] || 0
                 })));
             }
@@ -109,22 +115,21 @@ export default function ManageJobPage() {
         fetchData();
     }, []);
 
-    // Filter jobs
     const filteredJobs = jobs.filter(job => {
         const matchSearch =
             (job["Job Title"] || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
             (job.Role || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
             (job.location || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
             (job.Country || "").toLowerCase().includes(searchTerm.toLowerCase());
-        const matchStatus = statusFilter === 'all' || (job.status || 'Active') === statusFilter;
         const matchWorkType = workTypeFilter === 'all' || job["Work Type"] === workTypeFilter;
-        return matchSearch && matchStatus && matchWorkType;
+        const matchStatus = statusFilter === 'all' ||
+            (statusFilter === 'Active' && job.isActive === true) ||
+            (statusFilter === 'Inactive' && job.isActive === false);
+        return matchSearch && matchWorkType && matchStatus;
     });
 
-    // Sort jobs
     const sortedJobs = [...filteredJobs].sort((a, b) => {
         if (sortOption === 'newest') {
-            // Ưu tiên ngày đăng mới nhất
             const dateA = new Date(a["Job Posting Date"]).getTime();
             const dateB = new Date(b["Job Posting Date"]).getTime();
             return dateB - dateA;
@@ -137,12 +142,13 @@ export default function ManageJobPage() {
         } else if (sortOption === 'leastApplicants') {
             return (a.applications || 0) - (b.applications || 0);
         } else if (sortOption === 'activeFirst') {
-            return (b.status === 'Active' ? 1 : 0) - (a.status === 'Active' ? 1 : 0);
+            const aActive = a.isActive === true ? 1 : 0;
+            const bActive = b.isActive === true ? 1 : 0;
+            return bActive - aActive || new Date(b["Job Posting Date"]).getTime() - new Date(a["Job Posting Date"]).getTime();
         }
         return 0;
     });
 
-    // Pagination logic
     const totalPages = Math.ceil(sortedJobs.length / itemsPerPage);
     const paginatedJobs = sortedJobs.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
@@ -150,34 +156,22 @@ export default function ManageJobPage() {
         const salary = newJob["Salary Range"] || "";
         const salaryRegex = /^\$\d{1,3}K-\$\d{1,3}K$/;
         let newErrors: { [key: string]: string } = {};
-        // Validate required fields
-        const requiredFields = [
-            { key: "Job Title", label: "Job Title" },
-            { key: "Job Description", label: "Job Description" },
-            { key: "Role", label: "Role" },
-            { key: "Work Type", label: "Work Type" },
-            { key: "Experience", label: "Experience" },
-            { key: "Qualifications", label: "Qualifications" },
-            { key: "Salary Range", label: "Salary Range" },
-            { key: "location", label: "Location" },
-            { key: "Country", label: "Country" },
-            { key: "skills", label: "Skills" },
-            { key: "Responsibilities", label: "Responsibilities" },
-        ];
+
         requiredFields.forEach(f => {
             const value = (newJob as any)[f.key];
             if (!value || (typeof value === 'string' && value.trim() === '')) {
                 newErrors[f.key] = `${f.label} is required.`;
             }
         });
-        // Validate salary format
         if (salary && !salaryRegex.test(salary)) {
             newErrors["Salary Range"] = 'Salary Range must be in format: $56K-$116K';
         }
-        setErrors(newErrors);
-        if (Object.keys(newErrors).length > 0) {
-            return;
+        if (newJob.isActive === undefined) {
+            newErrors["isActive"] = "Active status is required.";
         }
+        setErrors(newErrors);
+        if (Object.keys(newErrors).length > 0) return;
+
         try {
             await createJob({
                 title: newJob["Job Title"] || "",
@@ -195,12 +189,29 @@ export default function ManageJobPage() {
                     : [],
                 skills: newJob.skills || "",
                 responsibilities: newJob.Responsibilities || "",
+                isActive: newJob.isActive ?? true,
             });
-            // Sau khi tạo thành công, reload lại danh sách jobs
             const jobsData = await getJobsByHR();
             let jobsArr = Array.isArray(jobsData) ? jobsData : ((jobsData as any)?.data ? (jobsData as any).data : []);
-            setJobs(jobsArr);
-            // Reset form
+            setJobs(jobsArr.map((job: any) => ({
+                _id: job._id,
+                "Job Title": job.title || job["Job Title"] || '',
+                Role: job.role || '',
+                Experience: job.experience || '',
+                Qualifications: job.qualifications || '',
+                "Salary Range": job.salaryRange || job["Salary Range"] || '',
+                location: job.location || '',
+                Country: job.country || '',
+                "Work Type": job.workType || job["Work Type"] || '',
+                "Job Posting Date": job.postingDate || job["Job Posting Date"] || '',
+                "Job Description": job.description || job["Job Description"] || '',
+                Benefits: Array.isArray(job.benefits) ? job.benefits.join(', ') : (job.benefits || ''),
+                skills: job.skills || '',
+                Responsibilities: job.responsibilities || '',
+                user_id: job.user_id || '',
+                isActive: job.isActive ?? true,
+                applications: 0
+            })));
             setNewJob({
                 "Job Title": "",
                 Role: "",
@@ -213,19 +224,40 @@ export default function ManageJobPage() {
                 "Job Description": "",
                 Benefits: "",
                 skills: "",
-                Responsibilities: ""
+                Responsibilities: "",
+                isActive: true
             });
             setErrors({});
             setIsAddDialogOpen(false);
-            window.location.reload();
+            toast({ title: "Success", description: "Job added successfully!" });
         } catch (error) {
             setErrors({ general: 'Failed to add job' });
+            toast({ title: "Error", description: "Failed to add job" });
         }
     }
+
     const handleEditJob = async () => {
         if (selectedJob) {
+            const salary = selectedJob["Salary Range"] || "";
+            const salaryRegex = /^\$\d{1,3}K-\$\d{1,3}K$/;
+            let newErrors: { [key: string]: string } = {};
+
+            requiredFields.forEach(f => {
+                const value = (selectedJob as any)[f.key];
+                if (!value || (typeof value === 'string' && value.trim() === '')) {
+                    newErrors[f.key] = `${f.label} is required.`;
+                }
+            });
+            if (salary && !salaryRegex.test(salary)) {
+                newErrors["Salary Range"] = 'Salary Range must be in format: $56K-$116K';
+            }
+            if (selectedJob.isActive === undefined) {
+                newErrors["isActive"] = "Active status is required.";
+            }
+            setErrors(newErrors);
+            if (Object.keys(newErrors).length > 0) return;
+
             try {
-                // Gọi API updateJob
                 await updateJob(selectedJob._id, {
                     title: selectedJob["Job Title"],
                     role: selectedJob.Role,
@@ -236,14 +268,20 @@ export default function ManageJobPage() {
                     country: selectedJob.Country,
                     workType: selectedJob["Work Type"],
                     description: selectedJob["Job Description"],
-                    benefits: selectedJob.Benefits?.split(',').map(b => b.trim()),
+                    benefits: selectedJob.Benefits?.split(',').map(b => b.trim()).filter(Boolean) || [],
                     skills: selectedJob.skills,
                     responsibilities: selectedJob.Responsibilities,
+                    isActive: selectedJob.isActive ?? true,
                 });
-                setJobs(jobs.map(job => job._id === selectedJob._id ? { ...selectedJob } : job));
+                setJobs(jobs.map(job =>
+                    job._id === selectedJob._id
+                        ? { ...selectedJob, isActive: selectedJob.isActive ?? true } as Job
+                        : job
+                ));
                 toast({ title: "Success", description: "Job updated successfully!" });
             } catch (error) {
-                alert('Failed to update job');
+                setErrors({ general: 'Failed to update job' });
+                toast({ title: "Error", description: "Failed to update job" });
             }
             setIsEditDialogOpen(false);
             setSelectedJob(null);
@@ -253,7 +291,6 @@ export default function ManageJobPage() {
     const handleDeleteJob = async () => {
         if (selectedJob) {
             try {
-                // Gọi API deleteJob
                 await deleteJob(selectedJob._id);
                 setJobs(jobs.filter(job => job._id !== selectedJob._id));
                 toast({ title: "Success", description: "Job deleted successfully!" });
@@ -265,22 +302,21 @@ export default function ManageJobPage() {
         }
     }
 
-    const getStatusColor = (status: string) => {
-        return status === "Active" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
-    }
-
     const getWorkTypeColor = (workType: string) => {
         switch (workType) {
-            case "Full-time":
-                return "bg-blue-100 text-blue-800"
-            case "Part-time":
-                return "bg-purple-100 text-purple-800"
-            case "Intern":
-                return "bg-orange-100 text-orange-800"
-            case "Contract":
-                return "bg-yellow-100 text-yellow-800"
-            default:
-                return "bg-gray-100 text-gray-800"
+            case "Full-time": return "bg-blue-100 text-blue-800"
+            case "Part-time": return "bg-purple-100 text-purple-800"
+            case "Intern": return "bg-orange-100 text-orange-800"
+            case "Contract": return "bg-yellow-100 text-yellow-800"
+            default: return "bg-gray-100 text-gray-800"
+        }
+    }
+
+    const getStatusColor = (status: string) => {
+        switch (status) {
+            case "Active": return "bg-green-100 text-green-800"
+            case "Inactive": return "bg-red-100 text-red-800"
+            default: return "bg-gray-100 text-gray-800"
         }
     }
 
@@ -365,7 +401,7 @@ export default function ManageJobPage() {
                             onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                             disabled={currentPage === 1}
                         >
-                            &lt;
+
                         </button>
                         {Array.from({ length: totalPages }, (_, i) => (
                             <button
@@ -381,7 +417,7 @@ export default function ManageJobPage() {
                             onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                             disabled={currentPage === totalPages}
                         >
-                            &gt;
+
                         </button>
                     </div>
                 </CardContent>

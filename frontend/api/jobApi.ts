@@ -22,6 +22,7 @@ export interface Job {
   user_id: string;
   createdAt?: string;
   updatedAt?: string;
+   isActive?: boolean
 }
 
 export interface DashboardJob {

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,7 +22,7 @@ interface Job {
     skills: string;
     Responsibilities: string;
     user_id: string;
-    status?: "Active" | "Inactive";
+    isActive?: boolean;
     applications?: number;
 }
 
@@ -37,6 +37,15 @@ interface JobDialogProps {
 }
 
 const JobDialog: React.FC<JobDialogProps> = ({ open, onOpenChange, job, onChange, onSave, isEdit, errors }) => {
+    const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+    const [successMessage, setSuccessMessage] = useState('');
+
+    const handleSaveWithModal = () => {
+        onSave();
+        setSuccessMessage(isEdit ? 'Job updated successfully!' : 'Job added successfully!');
+        setIsSuccessModalOpen(true);
+    };
+
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="w-full max-w-xl sm:max-w-2xl max-h-[80vh] overflow-y-auto">
@@ -126,26 +135,44 @@ const JobDialog: React.FC<JobDialogProps> = ({ open, onOpenChange, job, onChange
                     </div>
                     {isEdit && (
                         <div>
-                            <Label htmlFor="edit-status">Status</Label>
-                            <Select value={job.status || "Active"} onValueChange={value => onChange({ ...job, status: value as "Active" | "Inactive" })}>
+                            <Label htmlFor="edit-is-active">Active Status</Label>
+                            <Select
+                                value={job.isActive !== undefined ? (job.isActive ? "true" : "false") : "true"}
+                                onValueChange={value => onChange({ ...job, isActive: value === "true" })}
+                            >
                                 <SelectTrigger>
-                                    <SelectValue />
+                                    <SelectValue placeholder="Select active status" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="Active">Active</SelectItem>
-                                    <SelectItem value="Inactive">Inactive</SelectItem>
+                                    <SelectItem value="true">Active</SelectItem>
+                                    <SelectItem value="false">Inactive</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
                     )}
                     {errors?.general && <div className="text-red-500 text-xs mt-2">{errors.general}</div>}
+                    <Dialog open={isSuccessModalOpen} onOpenChange={setIsSuccessModalOpen}>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Success</DialogTitle>
+                                <DialogDescription>
+                                    {successMessage}
+                                </DialogDescription>
+                            </DialogHeader>
+                            <DialogFooter>
+                                <Button variant="outline" onClick={() => setIsSuccessModalOpen(false)}>
+                                    Close
+                                </Button>
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
                 </div>
                 <DialogFooter>
-                    <Button type="submit" onClick={onSave}>{isEdit ? "Update Job" : "Add Job"}</Button>
+                    <Button type="submit" onClick={handleSaveWithModal}>{isEdit ? "Update Job" : "Add Job"}</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
     );
 };
 
-export default JobDialog; 
+export default JobDialog;
