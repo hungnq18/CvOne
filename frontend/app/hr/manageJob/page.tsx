@@ -346,32 +346,49 @@ export default function ManageJobPage() {
             // Lấy lại danh sách jobs từ API để đồng bộ
             const jobsData = await getJobsByHR();
             const applyJobsData = await getApplyJobByHR();
-            const applyCountMap: Record<string, number> = {};
-            applyJobsData.forEach((apply: any) => {
-                const jobId = apply.job_id || (apply.jobId && apply.jobId._id);
-                if (jobId) applyCountMap[jobId] = (applyCountMap[jobId] || 0) + 1;
-            });
 
-            setJobs(jobsData.map((job: any) => ({
-                _id: job._id || '',
-                "Job Title": job.title || '',
-                Role: job.role || '',
-                Experience: job.experience || '',
-                Qualifications: job.qualifications || '',
-                "Salary Range": job.salaryRange || '',
-                location: job.location || '',
-                Country: job.country || '',
-                "Work Type": job.workType || '',
-                "Job Posting Date": job.postingDate || '',
-                "Job Description": job.description || '',
-                Benefits: Array.isArray(job.benefits) ? job.benefits.join(', ') : (job.benefits || ''),
-                skills: job.skills || '',
-                Responsibilities: job.responsibilities || '',
-                user_id: job.user_id || '',
-                isActive: job.isActive !== undefined ? job.isActive : true,
-                applications: applyCountMap[job._id] || 0,
-                applicationDeadline: job.applicationDeadline || ''
-            })));
+            // Xử lý dữ liệu jobs
+            let jobsArr = Array.isArray(jobsData)
+                ? jobsData
+                : (jobsData?.data || []);
+
+            const applyCountMap: Record<string, number> = {};
+
+            // Kiểm tra và xử lý dữ liệu apply jobs
+            let applyArr = Array.isArray(applyJobsData)
+                ? applyJobsData
+                : (applyJobsData?.data || []);
+
+            if (Array.isArray(applyArr)) {
+                applyArr.forEach((apply: any) => {
+                    const jobId = apply.job_id || (apply.jobId && apply.jobId._id);
+                    if (jobId) applyCountMap[jobId] = (applyCountMap[jobId] || 0) + 1;
+                });
+            }
+
+            // Kiểm tra jobsArr trước khi map
+            if (Array.isArray(jobsArr)) {
+                setJobs(jobsArr.map((job: any) => ({
+                    _id: job._id || '',
+                    "Job Title": job.title || '',
+                    Role: job.role || '',
+                    Experience: job.experience || '',
+                    Qualifications: job.qualifications || '',
+                    "Salary Range": job.salaryRange || '',
+                    location: job.location || '',
+                    Country: job.country || '',
+                    "Work Type": job.workType || '',
+                    "Job Posting Date": job.postingDate || '',
+                    "Job Description": job.description || '',
+                    Benefits: Array.isArray(job.benefits) ? job.benefits.join(', ') : (job.benefits || ''),
+                    skills: job.skills || '',
+                    Responsibilities: job.responsibilities || '',
+                    user_id: job.user_id || '',
+                    isActive: job.isActive !== undefined ? job.isActive : true,
+                    applications: applyCountMap[job._id] || 0,
+                    applicationDeadline: job.applicationDeadline || ''
+                })));
+            }
 
             toast({ title: "Success", description: "Job updated successfully!" });
             setIsEditDialogOpen(false);
@@ -382,7 +399,6 @@ export default function ManageJobPage() {
             toast({ title: "Error", description: errorMessage, variant: "destructive" });
         }
     };
-
     const handleDeleteJob = async () => {
         if (selectedJob) {
             try {

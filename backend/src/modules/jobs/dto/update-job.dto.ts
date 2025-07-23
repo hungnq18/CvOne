@@ -69,7 +69,7 @@ export class UpdateJobDto {
   // ✅ Thêm applicationDeadline
   @IsDateString()
   @IsOptional()
-  applicationDeadline?: Date;
+  applicationDeadline?: string;
 
   // ✅ Thêm isActive
   @IsOptional()

@@ -111,9 +111,10 @@ const JobDialog: React.FC<JobDialogProps> = ({ open, onOpenChange, job, onChange
                         <Input
                             id="application-deadline"
                             type="date"
-                            min={new Date().toISOString().split('T')[0]} // Set minimum date to today
-                            value={job.applicationDeadline || ""}
-                            onChange={e => onChange({ ...job, applicationDeadline: e.target.value })}
+                            min={new Date().toISOString().split('T')[0]} // Đảm bảo ngày tối thiểu là hôm nay: 2025-07-24
+                            value={job.applicationDeadline || new Date().toISOString().split('T')[0]} // Mặc định là ngày hiện tại: 2025-07-24
+                            onChange={e => onChange({ ...job, applicationDeadline: e.target.value || new Date().toISOString().split('T')[0] })}
+                            required // Đảm bảo người dùng phải chọn ngày
                         />
                         {errors?.applicationDeadline && <div className="text-red-500 text-xs mt-1">{errors.applicationDeadline}</div>}
                     </div>
