@@ -11,7 +11,7 @@ function ApplyOptionContent() {
     const [selectedOption, setSelectedOption] = useState('existing');
 
     const handleContinue = () => {
-        
+
         if (!jobId) {
             router.back();
             return;
@@ -21,7 +21,7 @@ function ApplyOptionContent() {
         if (selectedOption === 'existing') {
             router.push(`/user/apply?${params.toString()}`);
         } else if (selectedOption === 'new') {
-            router.push(`/createCV?${params.toString()}`);
+            router.push(`/cvTemplates`);
         }
     };
 

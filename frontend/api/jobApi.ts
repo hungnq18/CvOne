@@ -69,7 +69,7 @@ export const getJobs = async (page: number = 1, limit: number = 100): Promise<Jo
  */
 export const getJobById = async (id: string): Promise<Job | undefined> => {
   try {
-    const response = await fetchWithAuth(API_ENDPOINTS.JOB.GET_BY_ID(id));
+    const response = await fetchWithoutAuth(API_ENDPOINTS.JOB.GET_BY_ID(id));
     return response;
   } catch (error) {
     console.error('Error fetching job by ID:', error);
@@ -245,9 +245,9 @@ export const createJob = async (data: Partial<Job>): Promise<Job> => {
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/jobs`, {
       method: "POST",
       body: JSON.stringify(data),
-      headers: { 
+      headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}` 
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
       },
     });
 
