@@ -23,7 +23,7 @@ export interface Job {
   isActive: boolean;
   createdAt?: string;
   updatedAt?: string;
-  applicationDeadline?: string;
+  applicationDeadline: string
 }
 
 export interface DashboardJob {
@@ -69,7 +69,7 @@ export const getJobs = async (page: number = 1, limit: number = 100): Promise<Jo
  */
 export const getJobById = async (id: string): Promise<Job | undefined> => {
   try {
-    const response = await fetchWithoutAuth(API_ENDPOINTS.JOB.GET_BY_ID(id));
+    const response = await fetchWithAuth(API_ENDPOINTS.JOB.GET_BY_ID(id));
     return response;
   } catch (error) {
     console.error('Error fetching job by ID:', error);
@@ -241,24 +241,9 @@ export const getAppliedJobsByUser = async (page: number = 1, limit: number = 10)
  * @returns Promise with the created job
  */
 export const createJob = async (data: Partial<Job>): Promise<Job> => {
-  try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/jobs`, {
-      method: "POST",
-      body: JSON.stringify(data),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
-      },
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(errorText || 'Failed to create job');
-    }
-
-    const result = await response.json();
-    return result;
-  } catch (error) {
-    throw error;
-  }
+  return fetchWithAuth(API_ENDPOINTS.JOB.CREATE, {
+    method: "POST",
+    body: JSON.stringify(data),
+    headers: { 'Content-Type': 'application/json' },
+  });
 };

@@ -24,6 +24,7 @@ interface Job {
     user_id: string;
     isActive: boolean;
     applications?: number;
+    applicationDeadline: string;
 }
 
 interface JobDialogProps {
@@ -87,7 +88,7 @@ const JobDialog: React.FC<JobDialogProps> = ({ open, onOpenChange, job, onChange
                                     <SelectItem value="Full-time">Full-time</SelectItem>
                                     <SelectItem value="Part-time">Part-time</SelectItem>
                                     <SelectItem value="Intern">Intern</SelectItem>
-                                    <SelectItem value="Contract">Contract</SelectItem>
+                                    <SelectItem value="Temporary">Temporary</SelectItem>
                                 </SelectContent>
                             </Select>
                             {errors?.["Work Type"] && <div className="text-red-500 text-xs mt-1">{errors["Work Type"]}</div>}
@@ -104,6 +105,17 @@ const JobDialog: React.FC<JobDialogProps> = ({ open, onOpenChange, job, onChange
                             <Input id="country" value={job.Country || ""} onChange={e => onChange({ ...job, Country: e.target.value })} />
                             {errors?.Country && <div className="text-red-500 text-xs mt-1">{errors.Country}</div>}
                         </div>
+                    </div>
+                    <div>
+                        <Label htmlFor="application-deadline">Application Deadline</Label>
+                        <Input
+                            id="application-deadline"
+                            type="date"
+                            min={new Date().toISOString().split('T')[0]} // Set minimum date to today
+                            value={job.applicationDeadline || ""}
+                            onChange={e => onChange({ ...job, applicationDeadline: e.target.value })}
+                        />
+                        {errors?.applicationDeadline && <div className="text-red-500 text-xs mt-1">{errors.applicationDeadline}</div>}
                     </div>
                     <div>
                         <Label htmlFor="job-description">Job Description</Label>
@@ -123,6 +135,7 @@ const JobDialog: React.FC<JobDialogProps> = ({ open, onOpenChange, job, onChange
                     <div>
                         <Label htmlFor="benefits">Benefits</Label>
                         <Textarea id="benefits" value={job.Benefits || ""} onChange={e => onChange({ ...job, Benefits: e.target.value })} rows={2} placeholder="Enter benefits separated by commas" />
+                        {errors?.Benefits && <div className="text-red-500 text-xs mt-1">{errors.Benefits}</div>}
                     </div>
                     {isEdit && (
                         <div>
@@ -148,4 +161,4 @@ const JobDialog: React.FC<JobDialogProps> = ({ open, onOpenChange, job, onChange
     );
 };
 
-export default JobDialog; 
+export default JobDialog;

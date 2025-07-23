@@ -21,7 +21,7 @@ function ApplyOptionContent() {
         if (selectedOption === 'existing') {
             router.push(`/user/apply?${params.toString()}`);
         } else if (selectedOption === 'new') {
-            router.push(`/cvTemplates`);
+            router.push(`/cvTemplates?${params.toString()}`);
         }
     };
 
