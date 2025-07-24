@@ -45,6 +45,11 @@ const ManageApplyJobTable: React.FC<ManageApplyJobTableProps> = ({
     handleDownloadCL,
 }) => {
     const [allTemplates, setAllTemplates] = useState<CVTemplate[]>([]);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [applySort, setApplySort] = useState<'newest' | 'oldest'>('newest');
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
+
     useEffect(() => {
         getCVTemplates().then(setAllTemplates);
     }, []);
@@ -80,12 +85,7 @@ const ManageApplyJobTable: React.FC<ManageApplyJobTableProps> = ({
     });
 
     // Phân trang
-    const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 5;
-    // Thêm filter/sort theo thời gian apply
-    const [applySort, setApplySort] = useState<'newest' | 'oldest'>('newest');
-    const [startDate, setStartDate] = useState('');
-    const [endDate, setEndDate] = useState('');
 
     // Sắp xếp theo thời gian apply
     const sortedApplications = [...searchedApplications].sort((a, b) => {
@@ -122,17 +122,12 @@ const ManageApplyJobTable: React.FC<ManageApplyJobTableProps> = ({
             return;
         }
         const templateId = cvData.cvTemplateId || cvData.templateId;
-        console.log("cvData", cvData);
-        console.log("allTemplates", allTemplates);
         const template = allTemplates.find((t) => t._id === templateId);
-        console.log("template found", template);
         if (!template) {
             alert("Không tìm thấy template phù hợp để xuất PDF");
             return;
         }
         const TemplateComponent = templateComponentMap[template.title];
-        console.log("template title", template.title);
-        console.log("TemplateComponent", TemplateComponent);
         if (!TemplateComponent) {
             alert("Không tìm thấy component template để xuất PDF");
             return;
@@ -208,15 +203,7 @@ const ManageApplyJobTable: React.FC<ManageApplyJobTableProps> = ({
                     </select>
                 </div>
                 <div className="flex items-center space-x-2" style={{ marginTop: 20 }}>
-                    <label className="text-sm">Sort by:</label>
-                    <select
-                        className="border rounded px-2 py-1 text-sm"
-                        value={applySort}
-                        onChange={e => { setApplySort(e.target.value as 'newest' | 'oldest'); setCurrentPage(1); }}
-                    >
-                        <option value="newest">Newest Applied</option>
-                        <option value="oldest">Oldest Applied</option>
-                    </select>
+
                     <div className="relative">
                         <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                         <Input
