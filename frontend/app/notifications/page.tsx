@@ -19,7 +19,6 @@ import NotificationCard from "@/components/chatAndNotification/NotificationCard"
 import NotificationModal from "@/components/chatAndNotification/NotificationModal";
 import { Pagination } from "antd";
 
-
 type Notification = NotificationBase & { isRead?: boolean };
 
 const notificationTranslations = {
@@ -40,6 +39,8 @@ const notificationTranslations = {
     applicationApproved: "Application Approved",
     congratulation: (jobTitle: string, jobRole: string, jobLocation: string) =>
       `Your application for the position ${jobRole} at ${jobTitle} in ${jobLocation} has been approved!`,
+    jobExpiredNotification: (jobTitle: string) =>
+      `The job ${jobTitle} is about to expire.`,
     contactInstruction:
       "If you accept the interview, please contact HR using the email above or via chat (within 5 days).",
     statusSuccess: "Success",
@@ -71,6 +72,8 @@ const notificationTranslations = {
     applicationApproved: "Hồ sơ được duyệt",
     congratulation: (jobTitle: string, jobRole: string, jobLocation: string) =>
       `Hồ sơ của bạn cho vị trí ${jobRole} của công việc ${jobTitle} tại ${jobLocation} đã được chấp nhận!`,
+    jobExpiredNotification: (jobTitle: string) =>
+      `Công việc ${jobTitle} sẽ sắp hết hạn.`,
     contactInstruction:
       "Nếu bạn đồng ý phỏng vấn, vui lòng liên hệ HR qua email hoặc chat (trong vòng 5 ngày).",
     statusSuccess: "Thành công",
@@ -132,7 +135,7 @@ export default function NotificationCenter() {
         setNotifications((prev) =>
           prev.map((n) => (n._id === notif._id ? { ...n, isRead: true } : n))
         );
-      } catch (err) { }
+      } catch (err) {}
     }
 
     // Nếu notification có jobId, chỉ cần fetch job theo jobId
@@ -155,7 +158,7 @@ export default function NotificationCenter() {
               mod.getUserById(hrUserId)
             );
             hrPhone = hrUser?.phone ? String(hrUser.phone) : "";
-          } catch { }
+          } catch {}
         }
         setDetailInfo({
           jobTitle: job.title || jobAny["Job Title"] || "N/A",
@@ -180,8 +183,8 @@ export default function NotificationCenter() {
       let applyArr = Array.isArray(applyList)
         ? applyList
         : applyList?.data
-          ? applyList.data
-          : [];
+        ? applyList.data
+        : [];
       let apply =
         applyArr.find((a: any) => a.status === "approved") || applyArr[0];
       if (!apply) {
@@ -274,51 +277,67 @@ export default function NotificationCenter() {
           const job = await getJobById((notif as any).jobId);
           if (!job) return;
           const jobAny = job as any;
-          const hrUserId = typeof jobAny.user_id === 'object' && jobAny.user_id?.$oid ? jobAny.user_id.$oid : jobAny.user_id || '';
-          let hrPhone = '';
+          const hrUserId =
+            typeof jobAny.user_id === "object" && jobAny.user_id?.$oid
+              ? jobAny.user_id.$oid
+              : jobAny.user_id || "";
+          let hrPhone = "";
           if (hrUserId) {
             try {
-              const hrUser = await import('@/api/userApi').then(mod => mod.getUserById(hrUserId));
-              hrPhone = hrUser?.phone ? String(hrUser.phone) : '';
-            } catch { }
+              const hrUser = await import("@/api/userApi").then((mod) =>
+                mod.getUserById(hrUserId)
+              );
+              hrPhone = hrUser?.phone ? String(hrUser.phone) : "";
+            } catch {}
           }
-          setNotificationDetails(prev => ({
+          setNotificationDetails((prev) => ({
             ...prev,
             [notif._id]: {
-              jobTitle: job.title || jobAny["Job Title"] || '',
-              position: job.role || jobAny["Role"] || '',
-              location: job.location || jobAny["Location"] || '',
-              hrEmail: jobAny.hrEmail || jobAny.hr_contact || jobAny.email || '',
+              jobTitle: job.title || jobAny["Job Title"] || "",
+              position: job.role || jobAny["Role"] || "",
+              location: job.location || jobAny["Location"] || "",
+              hrEmail:
+                jobAny.hrEmail || jobAny.hr_contact || jobAny.email || "",
               hrUserId,
               hrPhone,
-            }
+            },
           }));
-        } catch { }
+        } catch {}
         return;
       }
       // Fallback: logic cũ nếu không có jobId
       try {
         let applyList = await getApplyJobByUser();
-        let applyArr = Array.isArray(applyList) ? applyList : (applyList?.data ? applyList.data : []);
-        let apply = applyArr.find((a: any) => a.status === 'approved') || applyArr[0];
+        let applyArr = Array.isArray(applyList)
+          ? applyList
+          : applyList?.data
+          ? applyList.data
+          : [];
+        let apply =
+          applyArr.find((a: any) => a.status === "approved") || applyArr[0];
         if (!apply) return;
         let job = apply.jobId || apply.job_id;
-        if (typeof job === 'string') job = await getJobById(job);
+        if (typeof job === "string") job = await getJobById(job);
         let cv = apply.cvId || apply.cv_id;
-        if (typeof cv === 'string') cv = await getCVById(cv);
-        setNotificationDetails(prev => ({
+        if (typeof cv === "string") cv = await getCVById(cv);
+        setNotificationDetails((prev) => ({
           ...prev,
           [notif._id]: {
-            jobTitle: job?.title || job?.["Job Title"] || '',
-            position: job?.role || job?.Role || '',
-            location: job?.location || job?.Location || '',
-            candidateName: cv?.content?.userData?.firstName && cv?.content?.userData?.lastName
-              ? `${cv.content.userData.firstName} ${cv.content.userData.lastName}`
-              : '',
-            hrUserId: typeof job?.user_id === 'object' && job?.user_id?.$oid ? job.user_id.$oid : job?.user_id || '',
-          }
+            jobTitle: job?.title || job?.["Job Title"] || "",
+            position: job?.role || job?.Role || "",
+            location: job?.location || job?.Location || "",
+            candidateName:
+              cv?.content?.userData?.firstName &&
+              cv?.content?.userData?.lastName
+                ? `${cv.content.userData.firstName} ${cv.content.userData.lastName}`
+                : "",
+            hrUserId:
+              typeof job?.user_id === "object" && job?.user_id?.$oid
+                ? job.user_id.$oid
+                : job?.user_id || "",
+          },
         }));
-      } catch { }
+      } catch {}
     });
   }, [notifications]);
 
