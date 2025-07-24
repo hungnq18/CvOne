@@ -30,16 +30,16 @@ export class JobsService {
   }
 
   async create(jobData: CreateJobDto, userId: string): Promise<JobDocument> {
-    // Sử dụng await để lấy user từ Promise
-
     const transformedData = {
       ...jobData,
+      applicationDeadline: new Date(jobData.applicationDeadline), // đảm bảo đúng kiểu Date
       user_id: new Types.ObjectId(userId),
     };
 
     const createdJob = new this.jobModel(transformedData);
     return createdJob.save();
   }
+
   async update(id: string, jobData: UpdateJobDto): Promise<JobDocument> {
     const updatedJob = await this.jobModel
       .findByIdAndUpdate(id, jobData, { new: true, runValidators: true })
@@ -139,7 +139,7 @@ export class JobsService {
 
       const dto: CreateNotificationDto = {
         title: "Expiring job",
-        message: `Công việc "${job.title}" sẽ hết hạn vào ${job.applicationDeadline.toLocaleDateString()}.`,
+        message: `${job.title}`,
         type: "job-expiring",
         link: `/hr/jobs/${job._id}`,
         jobId: (job._id as Types.ObjectId).toString(),
