@@ -37,6 +37,7 @@ interface Job {
   user_id: string;
   isActive: boolean;
   applications?: number;
+  applicationDeadline: string;
 }
 
 interface JobDialogProps {
@@ -164,7 +165,7 @@ const JobDialog: React.FC<JobDialogProps> = ({
                   <SelectItem value="Full-time">Full-time</SelectItem>
                   <SelectItem value="Part-time">Part-time</SelectItem>
                   <SelectItem value="Intern">Intern</SelectItem>
-                  <SelectItem value="Contract">Contract</SelectItem>
+                  <SelectItem value="Temporary">Temporary</SelectItem>
                 </SelectContent>
               </Select>
               {errors?.["Work Type"] && (
@@ -201,6 +202,31 @@ const JobDialog: React.FC<JobDialogProps> = ({
                 </div>
               )}
             </div>
+          </div>
+          <div>
+            <Label htmlFor="application-deadline">Application Deadline</Label>
+            <Input
+              id="application-deadline"
+              type="date"
+              min={new Date().toISOString().split("T")[0]} // Đảm bảo ngày tối thiểu là hôm nay: 2025-07-24
+              value={
+                job.applicationDeadline ||
+                new Date().toISOString().split("T")[0]
+              } // Mặc định là ngày hiện tại: 2025-07-24
+              onChange={(e) =>
+                onChange({
+                  ...job,
+                  applicationDeadline:
+                    e.target.value || new Date().toISOString().split("T")[0],
+                })
+              }
+              required // Đảm bảo người dùng phải chọn ngày
+            />
+            {errors?.applicationDeadline && (
+              <div className="text-red-500 text-xs mt-1">
+                {errors.applicationDeadline}
+              </div>
+            )}
           </div>
           <div>
             <Label htmlFor="job-description">Job Description</Label>
@@ -256,6 +282,9 @@ const JobDialog: React.FC<JobDialogProps> = ({
               rows={2}
               placeholder="Enter benefits separated by commas"
             />
+            {errors?.Benefits && (
+              <div className="text-red-500 text-xs mt-1">{errors.Benefits}</div>
+            )}
           </div>
           {isEdit && (
             <div>

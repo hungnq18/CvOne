@@ -23,7 +23,7 @@ export interface Job {
   isActive: boolean;
   createdAt?: string;
   updatedAt?: string;
-  applicationDeadline?: string;
+  applicationDeadline: string
 }
 
 export interface DashboardJob {
@@ -51,10 +51,13 @@ export interface ApplyJob {
 export const getJobs = async (page: number = 1, limit: number = 100): Promise<Job[]> => {
   try {
     const response = await fetchWithoutAuth(`${API_ENDPOINTS.JOB.GET_ALL}?page=${page}&limit=${limit}`);
-    // Backend returns { data: jobs[], page, limit }
-    return response?.data || [];
+    if (response && Array.isArray(response.data)) {
+      return response.data;
+    } else if (Array.isArray(response)) {
+      return response;
+    }
+    return [];
   } catch (error) {
-    console.error('Error fetching jobs:', error);
     return [];
   }
 };
@@ -121,7 +124,12 @@ export const getJobsByHR = async (): Promise<Job[]> => {
  * @returns Array of jobs
  */
 export const getLocalJobs = async (): Promise<Job[]> => {
-  return getJobs();
+  try {
+    const jobs = await getJobs();
+    return jobs;
+  } catch (error) {
+    throw error;
+  }
 };
 
 /**
@@ -233,32 +241,9 @@ export const getAppliedJobsByUser = async (page: number = 1, limit: number = 10)
  * @returns Promise with the created job
  */
 export const createJob = async (data: Partial<Job>): Promise<Job> => {
-  try {
-    console.log('Making API request with data:', data);
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/jobs`, {
-      method: "POST",
-      body: JSON.stringify(data),
-      headers: { 
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}` 
-      },
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Server error response:', {
-        status: response.status,
-        statusText: response.statusText,
-        body: errorText
-      });
-      throw new Error(errorText || 'Failed to create job');
-    }
-
-    const result = await response.json();
-    console.log('API response:', result);
-    return result;
-  } catch (error) {
-    console.error('Error creating job:', error);
-    throw error;
-  }
+  return fetchWithAuth(API_ENDPOINTS.JOB.CREATE, {
+    method: "POST",
+    body: JSON.stringify(data),
+    headers: { 'Content-Type': 'application/json' },
+  });
 };

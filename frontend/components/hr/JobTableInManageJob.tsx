@@ -22,6 +22,7 @@ interface Job {
     user_id: string;
     isActive: boolean;
     applications?: number;
+    applicationDeadline: string;
 }
 
 interface JobTableProps {
@@ -31,6 +32,15 @@ interface JobTableProps {
     getStatusColor: (status: string) => string;
     getWorkTypeColor: (workType: string) => string;
 }
+
+
+const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const day = date.getDate().toString().padStart(2, "0");
+    const month = (date.getMonth() + 1).toString().padStart(2, "0");
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+};
 
 const JobTable: React.FC<JobTableProps> = ({ jobs, onEdit, onDelete, getStatusColor, getWorkTypeColor }) => {
     return (
@@ -46,6 +56,7 @@ const JobTable: React.FC<JobTableProps> = ({ jobs, onEdit, onDelete, getStatusCo
                     <TableHead>Status</TableHead>
                     <TableHead className="hidden md:table-cell">Applications</TableHead>
                     <TableHead className="hidden lg:table-cell">Posted Date</TableHead>
+                    <TableHead className="hidden lg:table-cell">Application Deadline</TableHead>
                     <TableHead>Actions</TableHead>
                 </TableRow>
             </TableHeader>
@@ -93,7 +104,15 @@ const JobTable: React.FC<JobTableProps> = ({ jobs, onEdit, onDelete, getStatusCo
                         <TableCell className="hidden lg:table-cell">
                             <div className="flex items-center space-x-1">
                                 <Calendar className="h-4 w-4 text-muted-foreground" />
-                                <span>{job["Job Posting Date"]}</span>
+                                <span>{formatDate(job["Job Posting Date"])}</span>
+
+                            </div>
+                        </TableCell>
+                        <TableCell className="hidden lg:table-cell">
+                            <div className="flex items-center space-x-1">
+                                <Calendar className="h-4 w-4 text-muted-foreground" />
+                                <span>{formatDate(job.applicationDeadline)}</span>
+
                             </div>
                         </TableCell>
                         <TableCell>
@@ -113,4 +132,4 @@ const JobTable: React.FC<JobTableProps> = ({ jobs, onEdit, onDelete, getStatusCo
     );
 };
 
-export default JobTable; 
+export default JobTable;

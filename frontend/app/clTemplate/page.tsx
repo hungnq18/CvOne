@@ -1,39 +1,35 @@
 "use client";
+import React, { useState, useEffect } from "react";
+import Header from "@/components/sections/header-pageclTemplate-section";
+import TemplateSection from "@/components/sections/pageCLTemplate-section";
+import { getCLTemplates, CLTemplate } from "@/api/clApi";
+import { useLanguage } from "@/providers/global-provider";
 
-import { useState, useEffect } from 'react';
-import TemplateCLSection from '@/components/sections/pageCLTemplate-section';
-import HeaderCLSection from '@/components/sections/header-pageclTemplate-section';
-import { getCLTemplates, CLTemplate } from '@/api/clApi';
+export default function Page() {
+  const [clTemplates, setClTemplates] = useState<CLTemplate[]>([]);
+  const { language } = useLanguage();
 
-export default function CLTemplatePage() {
-    const [templates, setTemplates] = useState<CLTemplate[]>([]);
-    const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    const fetchTemplates = async () => {
+      try {
+        const templates = await getCLTemplates();
+        setClTemplates(templates);
+      } catch (error) {
+        console.error("Failed to fetch CL templates:", error);
+      }
+    };
 
-    useEffect(() => {
-        const fetchTemplates = async () => {
-            try {
-                const data = await getCLTemplates();
-                setTemplates(data);
-            } catch (error) {
-                console.error("Failed to fetch CL templates:", error);
-            } finally {
-                setLoading(false);
-            }
-        };
+    fetchTemplates();
+  }, []);
 
-        fetchTemplates();
-    }, []);
-
-    return (
-        <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white py-12 sm:py-16">
-            <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
-                <HeaderCLSection />
-                {loading ? (
-                    <p>Loading templates...</p>
-                ) : (
-                    <TemplateCLSection clTemplates={templates} />
-                )}
-            </div>
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <main className="py-20">
+        <div className="container mx-auto px-4">
+          <Header />
+          <TemplateSection clTemplates={clTemplates} />
         </div>
-    );
+      </main>
+    </div>
+  );
 }

@@ -31,16 +31,16 @@ interface Job {
     user_id: string
     isActive: boolean
     applications?: number
+    applicationDeadline: string
 }
-
 
 export default function ManageJobPage() {
     const [jobs, setJobs] = useState<Job[]>([]);
-    const [searchTerm, setSearchTerm] = useState("")
-    const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
-    const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
-    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
-    const [selectedJob, setSelectedJob] = useState<Job | null>(null)
+    const [searchTerm, setSearchTerm] = useState("");
+    const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+    const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+    const [selectedJob, setSelectedJob] = useState<Job | null>(null);
     const [newJob, setNewJob] = useState<Partial<Job>>({
         "Job Title": "",
         Role: "",
@@ -53,11 +53,11 @@ export default function ManageJobPage() {
         "Job Description": "",
         Benefits: "",
         skills: "",
-        Responsibilities: ""
-    })
+        Responsibilities: "",
+        applicationDeadline: ""
+    });
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 5;
-    // State cho filter và sort
     const [statusFilter, setStatusFilter] = useState<string>('all');
     const [workTypeFilter, setWorkTypeFilter] = useState<string>('all');
     const [sortOption, setSortOption] = useState<string>('newest');
@@ -86,7 +86,7 @@ export default function ManageJobPage() {
             // Gán lại số lượng applications cho từng job
             if (Array.isArray(jobsArr)) {
                 setJobs(jobsArr.map((job: any) => ({
-                    _id: job._id,
+                    _id: job._id || '',
                     "Job Title": job.title || job["Job Title"] || '',
                     Role: job.role || '',
                     Experience: job.experience || '',
@@ -102,7 +102,8 @@ export default function ManageJobPage() {
                     Responsibilities: job.responsibilities || '',
                     user_id: job.user_id || '',
                     isActive: job.isActive !== undefined ? job.isActive : true,
-                    applications: applyCountMap[job._id] || 0
+                    applications: applyCountMap[job._id] || 0,
+                    applicationDeadline: job.applicationDeadline || ''
                 })));
             }
         }
@@ -124,7 +125,6 @@ export default function ManageJobPage() {
     // Sort jobs
     const sortedJobs = [...filteredJobs].sort((a, b) => {
         if (sortOption === 'newest') {
-            // Ưu tiên ngày đăng mới nhất
             const dateA = new Date(a["Job Posting Date"]).getTime();
             const dateB = new Date(b["Job Posting Date"]).getTime();
             return dateB - dateA;
@@ -150,6 +150,7 @@ export default function ManageJobPage() {
         const salary = newJob["Salary Range"] || "";
         const salaryRegex = /^\$\d{1,3}K-\$\d{1,3}K$/;
         let newErrors: { [key: string]: string } = {};
+
         // Validate required fields
         const requiredFields = [
             { key: "Job Title", label: "Job Title" },
@@ -164,6 +165,7 @@ export default function ManageJobPage() {
             { key: "Benefits", label: "Benefits" },
             { key: "skills", label: "Skills" },
             { key: "Responsibilities", label: "Responsibilities" },
+            { key: "applicationDeadline", label: "Application Deadline" }
         ];
         requiredFields.forEach(f => {
             const value = (newJob as any)[f.key];
@@ -171,26 +173,36 @@ export default function ManageJobPage() {
                 newErrors[f.key] = `${f.label} is required.`;
             }
         });
+
         // Validate salary format
         if (salary && !salaryRegex.test(salary)) {
             newErrors["Salary Range"] = 'Salary Range must be in format: $56K-$116K';
         }
+
+        // Validate applicationDeadline format and future date
+        if (!newJob.applicationDeadline) {
+            newErrors["applicationDeadline"] = "Application Deadline is required";
+        } else {
+            const deadlineDate = new Date(newJob.applicationDeadline);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0); // Reset time part for date comparison
+
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(newJob.applicationDeadline)) {
+                newErrors["applicationDeadline"] = "Application Deadline must be in format YYYY-MM-DD";
+            } else if (deadlineDate < today) {
+                newErrors["applicationDeadline"] = "Application Deadline cannot be in the past";
+            }
+        }
+
         setErrors(newErrors);
         if (Object.keys(newErrors).length > 0) {
             return;
         }
-        try {
-            // Validate benefits
-            if (!newJob.Benefits) {
-                newErrors["Benefits"] = "Benefits is required";
-                setErrors(newErrors);
-                return;
-            }
 
+        try {
             const benefitsArray = typeof newJob.Benefits === 'string'
                 ? newJob.Benefits.split(',').map(b => b.trim()).filter(Boolean)
                 : [];
-
             if (benefitsArray.length === 0) {
                 newErrors["Benefits"] = "At least one benefit is required";
                 setErrors(newErrors);
@@ -202,35 +214,58 @@ export default function ManageJobPage() {
             const formattedDate = now.toISOString().split('T')[0];
 
             const jobData = {
-                title: newJob["Job Title"] || "",
-                description: newJob["Job Description"] || "",
-                role: newJob.Role || "",
-                workType: newJob["Work Type"] || "",
-                postingDate: formattedDate,  // Send date in YYYY-MM-DD format
-                experience: newJob.Experience || "",
-                qualifications: newJob.Qualifications || "",
+                title: newJob["Job Title"],
+                description: newJob["Job Description"],
+                role: newJob.Role,
+                workType: newJob["Work Type"],
+                postingDate: formattedDate,
+                experience: newJob.Experience,
+                qualifications: newJob.Qualifications,
                 salaryRange: salary,
-                location: newJob.location || "",
-                country: newJob.Country || "",
+                location: newJob.location,
+                country: newJob.Country,
                 benefits: benefitsArray,
-                skills: newJob.skills || "",
-                responsibilities: newJob.Responsibilities || "",
-                isActive: true  // Add default isActive status
+                skills: newJob.skills,
+                responsibilities: newJob.Responsibilities,
+                applicationDeadline: newJob.applicationDeadline
             };
 
-            console.log('Sending job data to server:', jobData);
-            console.log('Benefits array:', benefitsArray);
+            await createJob(jobData);
 
-            try {
-                await createJob(jobData);
-            } catch (error) {
-                console.error('Server error response:', error);
-                throw error;
-            }
-            // Sau khi tạo thành công, reload lại danh sách jobs
+            // Reload jobs
             const jobsData = await getJobsByHR();
             let jobsArr = Array.isArray(jobsData) ? jobsData : ((jobsData as any)?.data ? (jobsData as any).data : []);
-            setJobs(jobsArr);
+            const applyJobsData = await getApplyJobByHR();
+            let applyArr = Array.isArray(applyJobsData) ? applyJobsData : ((applyJobsData as any)?.data ? (applyJobsData as any).data : []);
+            const applyCountMap: Record<string, number> = {};
+            applyArr.forEach((apply: any) => {
+                const jobId = apply.job_id || (apply.jobId && apply.jobId._id);
+                if (jobId) {
+                    applyCountMap[jobId] = (applyCountMap[jobId] || 0) + 1;
+                }
+            });
+
+            setJobs(jobsArr.map((job: any) => ({
+                _id: job._id || '',
+                "Job Title": job.title || job["Job Title"] || '',
+                Role: job.role || '',
+                Experience: job.experience || '',
+                Qualifications: job.qualifications || '',
+                "Salary Range": job.salaryRange || job["Salary Range"] || '',
+                location: job.location || '',
+                Country: job.country || '',
+                "Work Type": job.workType || job["Work Type"] || '',
+                "Job Posting Date": job.postingDate || job["Job Posting Date"] || '',
+                "Job Description": job.description || job["Job Description"] || '',
+                Benefits: Array.isArray(job.benefits) ? job.benefits.join(', ') : (job.benefits || ''),
+                skills: job.skills || '',
+                Responsibilities: job.responsibilities || '',
+                user_id: job.user_id || '',
+                isActive: job.isActive !== undefined ? job.isActive : true,
+                applications: applyCountMap[job._id] || 0,
+                applicationDeadline: job.applicationDeadline || ''
+            })));
+
             // Reset form
             setNewJob({
                 "Job Title": "",
@@ -244,91 +279,162 @@ export default function ManageJobPage() {
                 "Job Description": "",
                 Benefits: "",
                 skills: "",
-                Responsibilities: ""
+                Responsibilities: "",
+                applicationDeadline: ""
             });
             setErrors({});
             setIsAddDialogOpen(false);
-            window.location.reload();
+            toast({ title: "Success", description: "Job added successfully!" });
         } catch (error) {
             setErrors({ general: 'Failed to add job' });
+            toast({ title: "Error", description: "Failed to add job", variant: "destructive" });
         }
-    }
+    };
+
     const handleEditJob = async () => {
-        if (selectedJob) {
+        if (!selectedJob) {
+            toast({ title: "Error", description: "No job selected", variant: "destructive" });
+            return;
+        }
+
+        // Chuẩn bị dữ liệu và xử lý định dạng
+        const benefitsArray = selectedJob.Benefits?.split(',')
+            .map(b => b.trim().replace(/^'|'$/g, '')) // Loại bỏ dấu nháy đơn thừa
+            .filter(Boolean) || [];
+
+        // Xử lý applicationDeadline
+        let applicationDeadlineISO = selectedJob.applicationDeadline; // Giá trị mặc định
+        if (applicationDeadlineISO) {
             try {
-                // Gọi API updateJob
-                await updateJob(selectedJob._id, {
-                    title: selectedJob["Job Title"],
-                    role: selectedJob.Role,
-                    experience: selectedJob.Experience,
-                    qualifications: selectedJob.Qualifications,
-                    salaryRange: selectedJob["Salary Range"],
-                    location: selectedJob.location,
-                    country: selectedJob.Country,
-                    workType: selectedJob["Work Type"],
-                    description: selectedJob["Job Description"],
-                    benefits: selectedJob.Benefits?.split(',').map(b => b.trim()),
-                    skills: selectedJob.skills,
-                    responsibilities: selectedJob.Responsibilities,
-                    isActive: selectedJob.isActive
-                });
-                setJobs(jobs.map(job => job._id === selectedJob._id ? { ...selectedJob } : job));
-                toast({ title: "Success", description: "Job updated successfully!" });
+                const date = new Date(applicationDeadlineISO);
+                if (isNaN(date.getTime())) {
+                    throw new Error("Invalid date");
+                }
+                applicationDeadlineISO = date.toISOString(); // Chuyển thành ISO 8601
             } catch (error) {
-                alert('Failed to update job');
+                toast({ title: "Error", description: "Invalid application deadline format", variant: "destructive" });
+                return;
             }
+        } else {
+            toast({ title: "Error", description: "Application deadline is required", variant: "destructive" });
+            return;
+        }
+
+        const jobData = {
+            title: selectedJob["Job Title"],
+            role: selectedJob.Role,
+            experience: selectedJob.Experience,
+            qualifications: selectedJob.Qualifications,
+            salaryRange: selectedJob["Salary Range"],
+            location: selectedJob.location,
+            country: selectedJob.Country,
+            workType: selectedJob["Work Type"],
+            description: selectedJob["Job Description"],
+            benefits: benefitsArray,
+            skills: selectedJob.skills,
+            responsibilities: selectedJob.Responsibilities,
+            applicationDeadline: applicationDeadlineISO, // Đảm bảo có giá trị
+            isActive: selectedJob.isActive
+        };
+
+        try {
+            // Gọi API update
+            await updateJob(selectedJob._id, jobData);
+
+            // Lấy lại danh sách jobs từ API để đồng bộ
+            const jobsData = await getJobsByHR();
+            const applyJobsData = await getApplyJobByHR();
+
+            // Xử lý dữ liệu jobs
+            let jobsArr = Array.isArray(jobsData)
+                ? jobsData
+                : ((jobsData as any)?.data || []);
+
+            const applyCountMap: Record<string, number> = {};
+
+            // Kiểm tra và xử lý dữ liệu apply jobs
+            let applyArr = Array.isArray(applyJobsData)
+                ? applyJobsData
+                : ((applyJobsData as any)?.data || []);
+
+            if (Array.isArray(applyArr)) {
+                applyArr.forEach((apply: any) => {
+                    const jobId = apply.job_id || (apply.jobId && apply.jobId._id);
+                    if (jobId) applyCountMap[jobId] = (applyCountMap[jobId] || 0) + 1;
+                });
+            }
+
+            // Kiểm tra jobsArr trước khi map
+            if (Array.isArray(jobsArr)) {
+                setJobs(jobsArr.map((job: any) => ({
+                    _id: job._id || '',
+                    "Job Title": job.title || '',
+                    Role: job.role || '',
+                    Experience: job.experience || '',
+                    Qualifications: job.qualifications || '',
+                    "Salary Range": job.salaryRange || '',
+                    location: job.location || '',
+                    Country: job.country || '',
+                    "Work Type": job.workType || '',
+                    "Job Posting Date": job.postingDate || '',
+                    "Job Description": job.description || '',
+                    Benefits: Array.isArray(job.benefits) ? job.benefits.join(', ') : (job.benefits || ''),
+                    skills: job.skills || '',
+                    Responsibilities: job.responsibilities || '',
+                    user_id: job.user_id || '',
+                    isActive: job.isActive !== undefined ? job.isActive : true,
+                    applications: applyCountMap[job._id] || 0,
+                    applicationDeadline: job.applicationDeadline || ''
+                })));
+            }
+
+            toast({ title: "Success", description: "Job updated successfully!" });
             setIsEditDialogOpen(false);
             setSelectedJob(null);
+        } catch (error: any) {
+            console.error('Error updating job:', error.response?.data, error.message);
+            const errorMessage = error.response?.data?.message || error.response?.data?.error || "Failed to update job";
+            toast({ title: "Error", description: errorMessage, variant: "destructive" });
         }
-    }
-
+    };
     const handleDeleteJob = async () => {
         if (selectedJob) {
             try {
-                // Gọi API deleteJob
                 await deleteJob(selectedJob._id);
                 setJobs(jobs.filter(job => job._id !== selectedJob._id));
                 toast({ title: "Success", description: "Job deleted successfully!" });
             } catch (error) {
-                alert('Failed to delete job');
+                toast({ title: "Error", description: "Failed to delete job", variant: "destructive" });
             }
             setIsDeleteDialogOpen(false);
             setSelectedJob(null);
         }
-    }
+    };
 
     const getStatusColor = (status: string) => {
-        return status === "Active" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
-    }
+        return status === "Active" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800";
+    };
 
     const getWorkTypeColor = (workType: string) => {
         switch (workType) {
             case "Full-time":
-                return "bg-blue-100 text-blue-800"
+                return "bg-blue-100 text-blue-800";
             case "Part-time":
-                return "bg-purple-100 text-purple-800"
+                return "bg-purple-100 text-purple-800";
             case "Intern":
-                return "bg-orange-100 text-orange-800"
-            case "Contract":
-                return "bg-yellow-100 text-yellow-800"
+                return "bg-orange-100 text-orange-800";
+            case "Temporary":
+                return "bg-yellow-100 text-yellow-800";
             default:
-                return "bg-gray-100 text-gray-800"
+                return "bg-gray-100 text-gray-800";
         }
-    }
+    };
 
     return (
         <div className="p-2 sm:p-4 md:p-6 space-y-6 max-w-full">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                 <h1 className="text-2xl sm:text-3xl font-bold">Manage Jobs</h1>
-                <JobEditModel
-                    open={isAddDialogOpen}
-                    onOpenChange={setIsAddDialogOpen}
-                    job={newJob}
-                    onChange={setNewJob}
-                    onSave={handleAddJob}
-                    isEdit={false}
-                    errors={errors}
-                />
+
             </div>
 
             <Card>
@@ -352,8 +458,8 @@ export default function ManageJobPage() {
                             onChange={e => { setWorkTypeFilter(e.target.value); setCurrentPage(1); }}
                         >
                             <option value="all">All Work Types</option>
-                            <option value="Full-Time">Full-time</option>
-                            <option value="Part-Time">Part-time</option>
+                            <option value="Full-time">Full-time</option>
+                            <option value="Part-time">Part-time</option>
                             <option value="Intern">Intern</option>
                             <option value="Temporary">Temporary</option>
                         </select>
@@ -419,14 +525,18 @@ export default function ManageJobPage() {
                 </CardContent>
             </Card>
 
-            {/* Edit Dialog */}
+            {/* Add/Edit Dialog */}
             <JobEditModel
-                open={isEditDialogOpen}
-                onOpenChange={setIsEditDialogOpen}
-                job={selectedJob || {}}
-                onChange={(job) => setSelectedJob(job as any)}
-                onSave={handleEditJob}
-                isEdit={true}
+                open={isAddDialogOpen || isEditDialogOpen}
+                onOpenChange={(open) => {
+                    if (isAddDialogOpen) setIsAddDialogOpen(open);
+                    if (isEditDialogOpen) setIsEditDialogOpen(open);
+                }}
+                job={isEditDialogOpen && selectedJob ? selectedJob : newJob}
+                onChange={(job) => isEditDialogOpen ? setSelectedJob(job as Job) : setNewJob(job)}
+                onSave={isEditDialogOpen ? handleEditJob : handleAddJob}
+                isEdit={isEditDialogOpen}
+                errors={errors}
             />
 
             {/* Delete Dialog */}
@@ -437,5 +547,5 @@ export default function ManageJobPage() {
                 job={selectedJob}
             />
         </div>
-    )
+    );
 }
