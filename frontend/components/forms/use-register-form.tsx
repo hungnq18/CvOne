@@ -5,6 +5,7 @@ import { useAuth } from "@/providers/auth-provider"
 import { useLanguage } from "@/providers/global-provider"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
+import { verifyEmail } from "@/api/authApi"
 
 interface RegisterFormData {
   email: string;
@@ -136,34 +137,16 @@ export function useRegisterForm() {
 
     try {
       await register(first_name, email, password, last_name)
-      
-      setIsSuccess(true)
-      setMessage(t.checkEmail)
-      
-      // Show success toast with email sent confirmation
-      toast({
-        title: t.emailSent,
-        description: t.emailSentDesc,
-        variant: "default",
-        duration: 6000, // Show for 6 seconds
-      })
-
-      // Show registration success toast
-      toast({
-        title: t.registerSuccess,
-        description: t.checkEmail,
-        variant: "default",
-      })
+      try {
+        await verifyEmail(email)
+      } catch (err) {
+      }
     } catch (error) {
       console.error("Registration error:", error)
       setMessage(error instanceof Error ? error.message : t.registerFailed)
-      toast({
-        title: t.emailError,
-        description: t.emailErrorDesc,
-        variant: "destructive",
-      })
     } finally {
       setIsLoading(false)
+      router.push("verify-email")
     }
   }
 
