@@ -76,9 +76,9 @@ export const fetchUserDataFromToken = async (): Promise<any> => {
  * Get all users in the system
  * @returns Promise with array of user data
  */
-export const getAllUsers = async (): Promise<User[]> => {
+export const getAllUsers = async (): Promise<any[]> => {
     const response = await fetchWithAuth(API_ENDPOINTS.USER.GET_ALL);
-    return response as User[];
+    return response as any[];
 };
 
 /**
@@ -96,8 +96,8 @@ export const getUserById = async (id: string): Promise<User> => {
  * @param id - The user ID to delete
  * @returns Promise with deletion result
  */
-export const deleteUser = async (id: string): Promise<void> => {
-    await fetchWithAuth(API_ENDPOINTS.USER.DELETE(id), {
+export const deleteUser = async (id: string): Promise<any> => {
+    return await fetchWithAuth(API_ENDPOINTS.USER.DELETE(id), {
         method: 'DELETE',
     });
 };
