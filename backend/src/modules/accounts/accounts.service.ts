@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   forwardRef,
   Inject,
@@ -90,6 +91,42 @@ export class AccountsService {
     }
   }
 
+  async registerByAdmin(createAccountDto: CreateAccountDto): Promise<Account> {
+    const { first_name, last_name, email, password, city, phone, country } = createAccountDto;
+
+    const existingAccount = await this.accountModel.findOne({ email: email.trim() });
+    if (existingAccount) {
+      throw new ConflictException('Email already exists');
+    }
+
+    const hashedPassword = await hashPassword(password);
+
+    const newAccount = new this.accountModel({
+      email: email.trim(),
+      password: hashedPassword,
+      isEmailVerified: true, // Directly verify the email
+      role: 'user' // Default role, can be changed later
+    });
+
+    const savedAccount = await newAccount.save();
+
+    try {
+      await this.usersService.createUser({
+        first_name,
+        last_name,
+        phone: phone ?? 0,
+        city: city ?? '',
+        country: country ?? '',
+        account_id: savedAccount._id
+      });
+    } catch (error) {
+      await this.accountModel.findByIdAndDelete(savedAccount._id);
+      throw error;
+    }
+
+    return savedAccount;
+  }
+
   async requestEmailVerification(verifyEmailDto: VerifyEmailDto) {
     const { email } = verifyEmailDto;
 
@@ -121,7 +158,7 @@ export class AccountsService {
 
   async verifyEmail(token: string) {
     console.log('Verifying email with token:', token);
-    
+
     // Tìm account với token
     const account = await this.accountModel.findOne({
       emailVerificationToken: token
@@ -144,7 +181,7 @@ export class AccountsService {
     }
 
     // Kiểm tra token hết hạn
-    if (!account.emailVerificationTokenExpires || 
+    if (!account.emailVerificationTokenExpires ||
         account.emailVerificationTokenExpires < new Date()) {
       console.log('Token is expired:', {
         tokenExpires: account.emailVerificationTokenExpires,
@@ -167,7 +204,7 @@ export class AccountsService {
       email: account.email
     });
 
-    return { 
+    return {
       success: true,
       message: 'Email verified successfully'
     };
@@ -175,5 +212,28 @@ export class AccountsService {
 
   async findByEmail(email: string): Promise<Account | null> {
     return this.accountModel.findOne({ email }).exec();
+  }
+
+  async updateRole(accountId: string, role: string): Promise<Account> {
+    const account = await this.accountModel.findById(accountId);
+    if (!account) {
+      throw new NotFoundException('Account not found');
+    }
+
+    const allowedRoles = ['admin', 'user', 'hr'];
+    if (!allowedRoles.includes(role)) {
+      throw new BadRequestException('Invalid role specified');
+    }
+
+    account.role = role;
+    return account.save();
+  }
+
+  async deleteAccount(accountId: string): Promise<{ deleted: boolean }> {
+    const result = await this.accountModel.findByIdAndDelete(accountId).exec();
+    if (!result) {
+      throw new NotFoundException('Account not found');
+    }
+    return { deleted: true };
   }
 }

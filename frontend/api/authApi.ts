@@ -23,12 +23,12 @@ export async function getProfile() {
 export async function verifyEmail(email: string): Promise<{ token: string }> {
   console.log('Calling verify email API with:', { email })
   console.log('API endpoint:', '/accounts/verify-email')
-  
+
   const response = await fetchWithAuth('/accounts/verify-email', {
     method: "POST",
     body: JSON.stringify({ email })
   })
-  
+
   console.log('Verify email response:', response)
   return response
 }
@@ -53,10 +53,31 @@ export async function forgotPassword(email: string) {
   })
 }
 
+export const createAccountByAdmin = async (data: any) => {
+    const response = await fetchWithAuth(API_ENDPOINTS.AUTH.REGISTER_BY_ADMIN, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+    });
+    return response;
+};
+
+export const updateUserRole = async (accountId: string, role: string) => {
+    const response = await fetchWithAuth(API_ENDPOINTS.AUTH.UPDATE_ROLE(accountId), {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ role }),
+    });
+    return response;
+};
+
 export async function resetPassword(token: string, newPassword: string) {
   return fetchWithAuth(API_ENDPOINTS.AUTH.RESET_PASSWORD, {
     method: "POST",
     body: JSON.stringify({ token, newPassword })
   })
 }
-

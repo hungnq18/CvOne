@@ -1,13 +1,20 @@
 export const API_URL = "http://localhost:8000/api";
 
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
 
 // API Endpoints
 export const API_ENDPOINTS = {
   AUTH: {
     LOGIN: "/auth/login",
-    REGISTER: "/auth/register",
+    REGISTER: "/accounts/register",
+    REGISTER_BY_ADMIN: "/accounts/register-by-admin",
+    UPDATE_ROLE: (id: string) => `/accounts/${id}/role`,
+    LOGOUT: "/auth/logout",
     PROFILE: "/auth/profile",
     CHANGE_PASSWORD: "/auth/change-password",
+    VERIFY_EMAIL_REQUEST: "/accounts/verify-email/request",
+    VERIFY_EMAIL: "/accounts/verify-email",
     CREATE: "/cover-letters",
     FORGOT_PASSWORD: "/auth/forgot-password",
     RESET_PASSWORD: "/auth/reset-password", // Thêm dòng này
