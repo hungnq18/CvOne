@@ -3,13 +3,10 @@ import {
   Controller,
   Post,
   Request,
-  UnauthorizedException,
-  UseGuards,
+  UseGuards
 } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { Roles } from "../../common/decorators/roles.decorator";
-import { comparePassword } from "../../utils/bcrypt.utils";
-import { generateJwtToken } from "../../utils/jwt.utils";
 import { AccountsService } from "../accounts/accounts.service";
 import { CreateAccountDto } from "../accounts/dto/create-account.dto";
 import { LoginDto } from "../accounts/dto/login.dto";
@@ -17,6 +14,7 @@ import { AuthService } from "./auth.service";
 import { Public } from "./decorators/public.decorator";
 import { ChangePasswordDto } from "./dto/change-password.dto";
 import { ForgotPasswordDto } from "./dto/forgot-password.dto";
+import { ResetPasswordDto } from "./dto/reset-password.dto";
 import { JwtAuthGuard } from "./guards/jwt-auth.guard";
 import { RolesGuard } from "./guards/roles.guard";
 
@@ -80,5 +78,10 @@ export class AuthController {
       req.user.account._id,
       changePasswordDto,
     );
+  }
+
+  @Post("reset-password")
+  async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
+    return this.authService.resetPassword(resetPasswordDto);
   }
 }

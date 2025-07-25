@@ -47,7 +47,7 @@ export async function verifyToken(token: string) {
 }
 
 export async function forgotPassword(email: string) {
-  return fetchWithAuth('/api/auth/forgot-password', {
+  return fetchWithAuth('/auth/forgot-password', {
     method: "POST",
     body: JSON.stringify({ email })
   })
@@ -75,3 +75,9 @@ export const updateUserRole = async (accountId: string, role: string) => {
     return response;
 };
 
+export async function resetPassword(token: string, newPassword: string) {
+  return fetchWithAuth(API_ENDPOINTS.AUTH.RESET_PASSWORD, {
+    method: "POST",
+    body: JSON.stringify({ token, newPassword })
+  })
+}

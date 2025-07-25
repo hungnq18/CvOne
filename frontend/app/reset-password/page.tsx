@@ -1,11 +1,11 @@
-"use client"
+"use client";
 
-import Image from "next/image"
-import React, { useState } from "react"
-import styled from "styled-components"
-import logoImg from "../../public/logo/logoCVOne.svg"
-import { forgotPassword } from "@/api/authApi"
-import { useLanguage } from "@/providers/global-provider";
+import React, { useEffect, useState } from "react";
+import styled from "styled-components";
+import { useSearchParams, useRouter } from "next/navigation";
+import { verifyToken, resetPassword } from "@/api/authApi";
+import Image from "next/image";
+import logoImg from "../../public/logo/logoCVOne.svg";
 
 const Wrapper = styled.div`
   min-height: 100vh;
@@ -14,7 +14,7 @@ const Wrapper = styled.div`
   justify-content: center;
   background: #f0f0f0;
   padding: 20px;
-`
+`;
 
 const Container = styled.div`
   display: flex;
@@ -26,7 +26,7 @@ const Container = styled.div`
   width: 100%;
   min-height: 400px;
   margin: 0 auto;
-`
+`;
 
 const LogoSide = styled.div`
   background: linear-gradient(135deg, rgb(255, 255, 255) 0%, rgb(109, 193, 235) 100%);
@@ -40,7 +40,7 @@ const LogoSide = styled.div`
   @media (max-width: 768px) {
     display: none;
   }
-`
+`;
 
 const ImageWrapper = styled.div`
   width: 100%;
@@ -49,7 +49,7 @@ const ImageWrapper = styled.div`
   max-height: 300px;
   position: relative;
   margin: auto;
-`
+`;
 
 const FormSide = styled.div`
   flex: 1;
@@ -63,7 +63,7 @@ const FormSide = styled.div`
     padding: 20px;
     width: 100%;
   }
-`
+`;
 
 const Form = styled.form`
   width: 100%;
@@ -72,7 +72,7 @@ const Form = styled.form`
   display: flex;
   flex-direction: column;
   gap: 20px;
-`
+`;
 
 const Title = styled.h2`
   text-align: center;
@@ -81,12 +81,12 @@ const Title = styled.h2`
   letter-spacing: 1px;
   font-size: 1.5rem;
   font-weight: 500;
-`
+`;
 
 const Label = styled.label`
   font-weight: 500;
   color: #222;
-`
+`;
 
 const Input = styled.input`
   padding: 10px 12px;
@@ -105,7 +105,7 @@ const Input = styled.input`
     background-color: #f5f5f5;
     cursor: not-allowed;
   }
-`
+`;
 
 const SubmitButton = styled.button`
   margin-top: 8px;
@@ -132,13 +132,13 @@ const SubmitButton = styled.button`
     transform: none;
     box-shadow: none;
   }
-`
+`;
 
 const Message = styled.div`
   font-size: 15px;
   margin-top: 8px;
   text-align: center;
-`
+`;
 
 const BackToLogin = styled.div`
   text-align: center;
@@ -149,51 +149,56 @@ const BackToLogin = styled.div`
     text-decoration: underline;
     cursor: pointer;
   }
-`
+`;
 
-const translations = {
-  en: {
-    forgotPassword: {
-      title: "Forgot Password",
-      emailLabel: "Email",
-      emailPlaceholder: "Enter your email",
-      sendButton: "Send reset password email",
-      sending: "Sending...",
-      success: "Password reset email sent. Please check your inbox.",
-      backToLogin: "Back to login",
-    },
-  },
-  vi: {
-    forgotPassword: {
-      title: "Quên mật khẩu",
-      emailLabel: "Email",
-      emailPlaceholder: "Nhập email của bạn",
-      sendButton: "Gửi email đặt lại mật khẩu",
-      sending: "Đang gửi...",
-      success: "Đã gửi email đặt lại mật khẩu. Vui lòng kiểm tra hộp thư của bạn.",
-      backToLogin: "Quay lại đăng nhập",
-    },
-  },
-};
+export default function ResetPasswordPage() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const token = searchParams.get("token") || "";
 
-export default function ForgotPasswordPage() {
-  const { language } = useLanguage ? useLanguage() : { language: "vi" };
-  const lang = (language === "en" || language === "vi") ? language : "vi";
-  const t = translations[lang as 'vi' | 'en'].forgotPassword;
-  const [email, setEmail] = useState("");
+  const [tokenValid, setTokenValid] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [success, setSuccess] = useState(false);
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+  useEffect(() => {
+    if (!token) {
+      setTokenValid(false);
+      setMessage("Token không hợp lệ hoặc đã hết hạn.");
+      return;
+    }
+    verifyToken(token)
+      .then(() => {
+        setTokenValid(true);
+      })
+      .catch(() => {
+        setTokenValid(false);
+        setMessage("Token không hợp lệ hoặc đã hết hạn.");
+      });
+  }, [token]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setMessage("");
     setSuccess(false);
+    if (password.length < 6) {
+      setMessage("Mật khẩu phải có ít nhất 6 ký tự.");
+      return;
+    }
+    if (password !== confirmPassword) {
+      setMessage("Mật khẩu xác nhận không khớp.");
+      return;
+    }
+    setLoading(true);
     try {
-      await forgotPassword(email);
-      setMessage(t.success);
+      await resetPassword(token, password);
+      setMessage("Đặt lại mật khẩu thành công! Bạn sẽ được đưa lại trang đăng nhập.");
       setSuccess(true);
+      setTimeout(() => {
+        router.push("/login");
+      }, 2000);
     } catch (err: any) {
       setMessage(err?.message || "Có lỗi xảy ra. Vui lòng thử lại.");
       setSuccess(false);
@@ -218,31 +223,50 @@ export default function ForgotPasswordPage() {
         </LogoSide>
         <FormSide>
           <Form onSubmit={handleSubmit}>
-            <Title>{t.title}</Title>
-            <div>
-              <Label htmlFor="email">{t.emailLabel}</Label>
-              <Input
-                type="email"
-                id="email"
-                placeholder={t.emailPlaceholder}
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                disabled={loading}
-                required
-              />
-            </div>
-            <SubmitButton type="submit" disabled={loading || !email}>
-              {loading ? t.sending : t.sendButton}
-            </SubmitButton>
-            {message && (
-              <Message style={{ color: success ? '#16a34a' : '#dc2626' }}>{message}</Message>
+            <Title>Đặt lại mật khẩu</Title>
+            {tokenValid === false && (
+              <Message style={{ color: '#dc2626' }}>{message}</Message>
+            )}
+            {tokenValid && (
+              <>
+                <div>
+                  <Label htmlFor="password">Mật khẩu mới</Label>
+                  <Input
+                    type="password"
+                    id="password"
+                    placeholder="Nhập mật khẩu mới"
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    disabled={loading}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="confirmPassword">Xác nhận mật khẩu</Label>
+                  <Input
+                    type="password"
+                    id="confirmPassword"
+                    placeholder="Nhập lại mật khẩu mới"
+                    value={confirmPassword}
+                    onChange={e => setConfirmPassword(e.target.value)}
+                    disabled={loading}
+                    required
+                  />
+                </div>
+                <SubmitButton type="submit" disabled={loading}>
+                  {loading ? "Đang đặt lại..." : "Đặt lại mật khẩu"}
+                </SubmitButton>
+                {message && (
+                  <Message style={{ color: success ? '#16a34a' : '#dc2626' }}>{message}</Message>
+                )}
+              </>
             )}
           </Form>
           <BackToLogin>
-            <a href="/login">{t.backToLogin}</a>
+            <a href="/login">Quay lại đăng nhập</a>
           </BackToLogin>
         </FormSide>
       </Container>
     </Wrapper>
   );
-}
+} 

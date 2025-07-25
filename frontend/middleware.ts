@@ -25,7 +25,6 @@ const userRoutes = [
   "/user/apply",
   "/user/applyOption",
   "/user/profile",
-  "/user/profile",
   "/work-history",
   "/work-style",
   "/strengths",
@@ -33,14 +32,11 @@ const userRoutes = [
   "/personal-info",
   "/job-description",
   "/job-description-cv",
-  "/fogetPassword",
-  "/job-description-cv",
   "/customize",
   "/createCV-AIManual",
   "/createCV-AI",
   "/createCLTemplate",
-  "/createCV",
-  "/chooseUploadCreateCV",
+  "/createCV",  
   "/chooseOption",
   "/chooseCreateCV",
 ];
@@ -49,7 +45,6 @@ const userRoutes = [
 const commonRoutes = [
   "/user/profile",
   "/chat",
-  "/fogetPassword",
   "/notifications"
 ];
 

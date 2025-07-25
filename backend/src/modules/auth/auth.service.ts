@@ -14,6 +14,7 @@ import { MailService } from "../mail/mail.service";
 import { User } from "../users/schemas/user.schema";
 import { ChangePasswordDto } from "./dto/change-password.dto";
 import { ForgotPasswordDto } from "./dto/forgot-password.dto";
+import { ResetPasswordDto } from "./dto/reset-password.dto";
 
 @Injectable()
 export class AuthService {
@@ -100,5 +101,28 @@ export class AuthService {
     await account.save();
 
     return { message: "Password changed successfully" };
+  }
+
+  /**
+   * Reset user's password using token
+   * @param resetPasswordDto - Contains token and new password
+   */
+  async resetPassword(resetPasswordDto: ResetPasswordDto) {
+    let payload: any;
+    try {
+      payload = this.jwtService.verify(resetPasswordDto.token);
+    } catch (e) {
+      throw new BadRequestException("Invalid or expired token");
+    }
+
+    const account = await this.accountModel.findById(payload.sub);
+    if (!account) {
+      throw new BadRequestException("User not found");
+    }
+
+    account.password = await bcrypt.hash(resetPasswordDto.newPassword, 10);
+    await account.save();
+
+    return { message: "Password reset successfully" };
   }
 }

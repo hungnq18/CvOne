@@ -17,6 +17,7 @@ export const API_ENDPOINTS = {
     VERIFY_EMAIL: "/accounts/verify-email",
     CREATE: "/cover-letters",
     FORGOT_PASSWORD: "/auth/forgot-password",
+    RESET_PASSWORD: "/auth/reset-password", // Thêm dòng này
   },
   ACCOUNTS: {
     VERIFY_EMAIL: "/accounts/verify-email",
@@ -57,7 +58,7 @@ export const API_ENDPOINTS = {
     SUGGEST_WORK_EXPERIENCE: "/cv/suggest/work-experience",
     REWRITE_WORK_DESCRIPTION: "/cv/rewrite-work-description",
     UPLOAD_AND_ANALYZE: "/cv/upload-and-analyze",
-    // UPLOAD_ANALYZE_GENERATE_PDF: "/cv/upload-analyze-generate-pdf",
+    UPLOAD_ANALYZE_GENERATE_PDF: "/cv/upload-analyze-generate-pdf",
     // UPLOAD_ANALYZE_OVERLAY_PDF: "/cv/upload-analyze-overlay-pdf",
     AI_STATUS: "/cv/ai-status"
   },
