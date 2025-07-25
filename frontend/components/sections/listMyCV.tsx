@@ -111,6 +111,7 @@ const CVList: React.FC<CVListProps> = ({ cvList, viewMode }) => {
             type="primary"
             icon={<FaPlus />}
             className="bg-blue-500 hover:bg-blue-600 border-0 shadow-md hover:shadow-lg transition-all duration-300 flex items-center gap-2 px-4 py-2 rounded-lg"
+            href="/cvTemplates"
           >
             {t.new}
           </Button>
@@ -127,6 +128,7 @@ const CVList: React.FC<CVListProps> = ({ cvList, viewMode }) => {
                 type="primary"
                 shape="circle"
                 icon={<FaPlus />}
+                href="/cvTemplates"
                 size="large"
                 className="mb-4 bg-blue-500 hover:bg-blue-600 border-0 shadow-md hover:shadow-lg transition-all duration-300"
               />

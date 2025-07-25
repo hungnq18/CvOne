@@ -33,7 +33,6 @@ const userRoutes = [
   "/personal-info",
   "/job-description",
   "/job-description-cv",
-  "/fogetPassword",
   "/job-description-cv",
   "/customize",
   "/createCV-AIManual",
@@ -49,7 +48,6 @@ const userRoutes = [
 const commonRoutes = [
   "/user/profile",
   "/chat",
-  "/fogetPassword",
   "/notifications"
 ];
 
