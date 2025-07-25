@@ -126,6 +126,7 @@ const CoverLetterList: React.FC<CoverLetterListProps> = ({ coverLetters, viewMod
                     <Button
                         type="primary"
                         icon={<FaPlus />}
+                        onClick={() => router.push('/clTemplate')}
                         className="bg-blue-500 hover:bg-blue-600 border-0 shadow-md hover:shadow-lg transition-all duration-300 flex items-center gap-2 px-4 py-2 rounded-lg"
                     >
                         {t.new}
@@ -146,7 +147,7 @@ const CoverLetterList: React.FC<CoverLetterListProps> = ({ coverLetters, viewMod
                 <Button
                     type="primary"
                     icon={<FaPlus />}
-                    onClick={() => router.push('/createCLTemplate')}
+                    onClick={() => router.push('/clTemplate')}
                     className="bg-blue-500 hover:bg-blue-600 border-0 shadow-md hover:shadow-lg transition-all duration-300 flex items-center gap-2 px-4 py-2 rounded-lg"
                 >
                     {t.new}
