@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
+import styled from "styled-components"
 
 export default function CheckEmailPage() {
   const [isLoading, setIsLoading] = useState(true)
@@ -64,29 +65,107 @@ export default function CheckEmailPage() {
   }, [token, router])
 
   return (
-    <div className="container flex items-center justify-center min-h-screen py-12">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>Email Verification</CardTitle>
-          <CardDescription>
+    <VerifyWrapper>
+      <VerifyCard>
+        <CardHeaderStyled>
+          <CardTitleStyled>Email Verification</CardTitleStyled>
+          <CardDescriptionStyled>
             {isLoading ? "Verifying your email..." : 
              isVerified ? "Email verified successfully!" :
              "Verification failed"}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isVerified && (
+          </CardDescriptionStyled>
+        </CardHeaderStyled>
+        <CardContentStyled>
+          {isLoading && (
+            <LoadingSpinner />
+          )}
+          {isVerified && !isLoading && (
             <>
-              <p className="text-center text-green-500">
+              <StyledText $success>
                 Your email has been verified successfully!
-              </p>
-              <p className="text-center mt-2">
+              </StyledText>
+              <StyledText>
                 Redirecting to login page...
-              </p>
+              </StyledText>
             </>
           )}
-        </CardContent>
-      </Card>
-    </div>
+          {!isVerified && !isLoading && (
+            <StyledText $error>
+              Verification failed. Please try again.
+            </StyledText>
+          )}
+        </CardContentStyled>
+      </VerifyCard>
+    </VerifyWrapper>
   )
-} 
+}
+
+const VerifyWrapper = styled.div`
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 0;
+`
+
+const VerifyCard = styled.div`
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+  max-width: 400px;
+  width: 100%;
+  padding: 32px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+`
+
+const CardHeaderStyled = styled.div`
+  margin-bottom: 16px;
+  text-align: center;
+`
+
+const CardTitleStyled = styled.h2`
+  color: #1976d2;
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 4px;
+  letter-spacing: 1px;
+`
+
+const CardDescriptionStyled = styled.p`
+  color: #555;
+  font-size: 1rem;
+  margin-bottom: 0;
+`
+
+const CardContentStyled = styled.div`
+  width: 100%;
+  min-height: 60px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+`
+
+const StyledText = styled.p<{$success?: boolean, $error?: boolean}>`
+  text-align: center;
+  color: ${({$success, $error}) => $success ? '#1976d2' : $error ? '#dc2626' : '#1976d2'};
+  font-size: 1.05rem;
+  margin-bottom: 16px;
+  font-weight: ${({$success, $error}) => $success ? 600 : $error ? 600 : 400};
+`
+
+const LoadingSpinner = styled.div`
+  width: 32px;
+  height: 32px;
+  border: 4px solid #e3e8ee;
+  border-top: 4px solid #1976d2;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 24px auto;
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+` 

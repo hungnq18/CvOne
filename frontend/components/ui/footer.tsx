@@ -30,16 +30,16 @@ export function Footer({ show = true }: FooterProps) {
               <Link href="https://twitter.com" className="text-gray-300 hover:text-white">
                 <FaTwitter size={18} />
               </Link>
-              <Link href="https://facebook.com" className="text-gray-300 hover:text-white">
+              <Link href="https://www.facebook.com/hungnqisme" className="text-gray-300 hover:text-white">
                 <FaFacebook size={18} />
               </Link>
-              <Link href="https://linkedin.com" className="text-gray-300 hover:text-white">
+              <Link href="https://www.linkedin.com/in/h%C6%B0ng-nguy%E1%BB%85n-8a92742ba/" className="text-gray-300 hover:text-white">
                 <FaLinkedin size={18} />
               </Link>
             </div>
             <div className="text-xs text-gray-300 space-y-1">
-              <p>Call us: 800-985-7561</p>
-              <p>Email: support@cvone.com</p>
+              <p>Call us: 968-753-736</p>
+              <p>Email: duongvdhe173014@fpt.edu.vn</p>
             </div>
           </div>
 

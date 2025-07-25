@@ -1,30 +1,63 @@
 "use client";
 import React from 'react';
 import { Carousel } from 'antd';
+import { useLanguage } from '@/providers/global-provider';
 
-const slides = [
-    {
-        title: 'Tham gia đội ngũ công nghệ hàng đầu!',
-        description: 'Khám phá các cơ hội việc làm tại các công ty công nghệ tiên phong.',
-        image: 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d',
+const translations = {
+    vi: {
+        slides: [
+            {
+                title: 'Tham gia đội ngũ công nghệ hàng đầu!',
+                description: 'Khám phá các cơ hội việc làm tại các công ty công nghệ tiên phong.',
+                image: 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d',
+            },
+            {
+                title: 'Khởi đầu sự nghiệp mơ ước của bạn!',
+                description: 'Tìm kiếm công việc phù hợp với kỹ năng và đam mê của bạn.',
+                image: 'https://images.unsplash.com/photo-1552664730-d307ca884978',
+            },
+            {
+                title: 'Phát triển cùng các chuyên gia!',
+                description: 'Làm việc với những người giỏi nhất trong lĩnh vực của bạn.',
+                image: 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d',
+            },
+        ]
     },
-    {
-        title: 'Khởi đầu sự nghiệp mơ ước của bạn!',
-        description: 'Tìm kiếm công việc phù hợp với kỹ năng và đam mê của bạn.',
-        image: 'https://images.unsplash.com/photo-1552664730-d307ca884978',
-    },
-    {
-        title: 'Phát triển cùng các chuyên gia!',
-        description: 'Làm việc với những người giỏi nhất trong lĩnh vực của bạn.',
-        image: 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d',
-    },
-];
+    en: {
+        slides: [
+            {
+                title: 'Join Leading Tech Teams!',
+                description: 'Explore job opportunities at pioneering technology companies.',
+                image: 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d',
+            },
+            {
+                title: 'Start Your Dream Career!',
+                description: 'Find jobs that match your skills and passion.',
+                image: 'https://images.unsplash.com/photo-1552664730-d307ca884978',
+            },
+            {
+                title: 'Grow with Experts!',
+                description: 'Work with the best in your field.',
+                image: 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d',
+            },
+        ]
+    }
+};
+
+interface Slide {
+    title: string;
+    description: string;
+    image: string;
+}
 
 const PromoSlider: React.FC = () => {
+    const { language } = useLanguage();
+    const currentSlides: Slide[] = translations[language === 'en' ? 'en' : 'vi'].slides;
+
     return (
         <div>
             <Carousel autoplay autoplaySpeed={5000} style={{ marginBottom: '30px', borderRadius: '8px', overflow: 'hidden' }}>
-                {slides.map((slide, index) => (
+                {currentSlides.map((slide, index) => (
                     <div key={index}>
                         <div
                             style={{

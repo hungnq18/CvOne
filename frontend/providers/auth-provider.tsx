@@ -126,7 +126,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(userData)
 
       // Step 2: Redirect to confirm email page
-      router.push('/verify-email/confirm')
+      router.push('/verify-email')
     } catch (error) {
       console.error("Registration failed:", error)
       throw error
