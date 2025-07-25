@@ -1,8 +1,7 @@
 'use client';
 import { ApplyJob, getApplyJobByHR } from "@/api/apiApplyJob";
 import { ApplyJobOverviewChart } from "@/components/hr/profit-chart";
-import { RevenueChart } from "@/components/hr/revenue-chart";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { useLanguage } from '@/providers/global-provider';
 import { Eye, Package, ShoppingCart, Users } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -173,78 +172,78 @@ export function DashboardContent() {
                             const paginatedJobs = sortedJobs.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
                             return (
                                 <>
-                                <table className="min-w-[700px] w-full divide-y divide-gray-200">
-                                    <thead className="bg-gray-50">
-                                        <tr>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">{t.jobTitle}</th>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">{t.candidate}</th>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">{t.cv}</th>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">{t.coverLetter}</th>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">{t.status}</th>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">{t.submitTime}</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="bg-white divide-y divide-gray-200">
-                                        {paginatedJobs.length === 0 ? (
+                                    <table className="min-w-[700px] w-full divide-y divide-gray-200">
+                                        <thead className="bg-gray-50">
                                             <tr>
-                                                <td colSpan={6} className="px-4 py-4 text-center text-gray-400">{t.noData}</td>
+                                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">{t.jobTitle}</th>
+                                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">{t.candidate}</th>
+                                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">{t.cv}</th>
+                                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">{t.coverLetter}</th>
+                                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">{t.status}</th>
+                                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">{t.submitTime}</th>
                                             </tr>
-                                        ) : (
-                                            paginatedJobs.map((job: any) => (
-                                                <tr key={job.id || job._id}>
-                                                    <td className="px-4 py-2 whitespace-nowrap">
-                                                        {job.jobId && job.jobId.title ? job.jobId.title : (job.job_id || (job.jobId && job.jobId._id) || '-')}
-                                                    </td>
-                                                    <td className="px-4 py-2 whitespace-nowrap">
-                                                        {job.userId && job.userId.first_name ? `${job.userId.first_name} ${job.userId.last_name}` : (job.user_id || (job.userId && job.userId._id) || '-')}
-                                                    </td>
-                                                    <td className="px-4 py-2 whitespace-nowrap">
-                                                        {job.cvId && (job.cvId.title || job.cvId._id) ? (job.cvId.title || job.cvId._id) : (job.cv_id || t.submitByFile)}
-                                                    </td>
-                                                    <td className="px-4 py-2 whitespace-nowrap">
-                                                        {job.coverletterId && (job.coverletterId.title || job.coverletterId._id) ? (job.coverletterId.title || job.coverletterId._id) : (job.coverletter_id || t.submitByFile)}
-                                                    </td>
-                                                    <td className="px-4 py-2 whitespace-nowrap">
-                                                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${job.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : job.status === 'accepted' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                                                            {job.status === 'pending' ? t.pending : job.status === 'accepted' ? t.accepted : job.status === 'rejected' ? t.rejected : job.status}
-                                                        </span>
-                                                    </td>
-                                                    <td className="px-4 py-2 whitespace-nowrap">{
-                                                        job.createdAt
-                                                            ? new Date(job.createdAt).toLocaleDateString(language === 'en' ? 'en-GB' : 'vi-VN')
-                                                            : (job.submit_at ? new Date(job.submit_at).toLocaleDateString(language === 'en' ? 'en-GB' : 'vi-VN') : '-')
-                                                    }</td>
+                                        </thead>
+                                        <tbody className="bg-white divide-y divide-gray-200">
+                                            {paginatedJobs.length === 0 ? (
+                                                <tr>
+                                                    <td colSpan={6} className="px-4 py-4 text-center text-gray-400">{t.noData}</td>
                                                 </tr>
-                                            ))
-                                        )}
-                                    </tbody>
-                                </table>
-                                {/* Pagination controls */}
-                                <div className="flex justify-center items-center gap-1 mt-2">
-                                    <button
-                                        className="px-2 py-1 rounded-full border text-xs bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
-                                        onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                                        disabled={currentPage === 1}
-                                    >
-                                        &lt;
-                                    </button>
-                                    {Array.from({ length: totalPages }, (_, i) => (
+                                            ) : (
+                                                paginatedJobs.map((job: any) => (
+                                                    <tr key={job.id || job._id}>
+                                                        <td className="px-4 py-2 whitespace-nowrap">
+                                                            {job.jobId && job.jobId.title ? job.jobId.title : (job.job_id || (job.jobId && job.jobId._id) || '-')}
+                                                        </td>
+                                                        <td className="px-4 py-2 whitespace-nowrap">
+                                                            {job.userId && job.userId.first_name ? `${job.userId.first_name} ${job.userId.last_name}` : (job.user_id || (job.userId && job.userId._id) || '-')}
+                                                        </td>
+                                                        <td className="px-4 py-2 whitespace-nowrap">
+                                                            {job.cvId && (job.cvId.title || job.cvId._id) ? (job.cvId.title || job.cvId._id) : (job.cv_id || t.submitByFile)}
+                                                        </td>
+                                                        <td className="px-4 py-2 whitespace-nowrap">
+                                                            {job.coverletterId && (job.coverletterId.title || job.coverletterId._id) ? (job.coverletterId.title || job.coverletterId._id) : (job.coverletter_id || t.submitByFile)}
+                                                        </td>
+                                                        <td className="px-4 py-2 whitespace-nowrap">
+                                                            <span className={`px-2 py-1 rounded-full text-xs font-semibold ${job.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : job.status === 'accepted' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                                                                {job.status === 'pending' ? t.pending : job.status === 'accepted' ? t.accepted : job.status === 'rejected' ? t.rejected : job.status}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-4 py-2 whitespace-nowrap">{
+                                                            job.createdAt
+                                                                ? new Date(job.createdAt).toLocaleDateString(language === 'en' ? 'en-GB' : 'vi-VN')
+                                                                : (job.submit_at ? new Date(job.submit_at).toLocaleDateString(language === 'en' ? 'en-GB' : 'vi-VN') : '-')
+                                                        }</td>
+                                                    </tr>
+                                                ))
+                                            )}
+                                        </tbody>
+                                    </table>
+                                    {/* Pagination controls */}
+                                    <div className="flex justify-center items-center gap-1 mt-2">
                                         <button
-                                            key={i + 1}
-                                            className={`px-2 py-1 rounded-full border text-xs ${currentPage === i + 1 ? 'bg-blue-500 text-white' : 'bg-gray-100 hover:bg-gray-200'}`}
-                                            onClick={() => setCurrentPage(i + 1)}
+                                            className="px-2 py-1 rounded-full border text-xs bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
+                                            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                                            disabled={currentPage === 1}
                                         >
-                                            {i + 1}
+                                            &lt;
                                         </button>
-                                    ))}
-                                    <button
-                                        className="px-2 py-1 rounded-full border text-xs bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
-                                        onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                                        disabled={currentPage === totalPages}
-                                    >
-                                        &gt;
-                                    </button>
-                                </div>
+                                        {Array.from({ length: totalPages }, (_, i) => (
+                                            <button
+                                                key={i + 1}
+                                                className={`px-2 py-1 rounded-full border text-xs ${currentPage === i + 1 ? 'bg-blue-500 text-white' : 'bg-gray-100 hover:bg-gray-200'}`}
+                                                onClick={() => setCurrentPage(i + 1)}
+                                            >
+                                                {i + 1}
+                                            </button>
+                                        ))}
+                                        <button
+                                            className="px-2 py-1 rounded-full border text-xs bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
+                                            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                                            disabled={currentPage === totalPages}
+                                        >
+                                            &gt;
+                                        </button>
+                                    </div>
                                 </>
                             );
                         })()}
@@ -252,20 +251,8 @@ export function DashboardContent() {
                 )}
             </div>
 
-            {/* Charts */}
-            <div className="grid gap-6 md:grid-cols-2">
-                <Card className="bg-white">
-                    <CardHeader>
-                        <CardTitle className="text-lg">Revenue Overview</CardTitle>
-                        <div className="flex gap-4 text-sm text-muted-foreground">
-                            <span>12.04.2022 - 12.05.2022</span>
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        <RevenueChart />
-                    </CardContent>
-                </Card>
-
+            {/* Chart */}
+            <div>
                 <Card className="bg-white">
                     <CardContent className="pt-6">
                         <ApplyJobOverviewChart />
