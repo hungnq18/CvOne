@@ -156,6 +156,26 @@ const AnalysisList: FC<{ items: string[] }> = ({ items }) => (
 );
 
 // --- HÀM formatAnalysisResult ĐÃ ĐƯỢC NÂNG CẤP ĐỂ TRẢ VỀ JSX ---
+// Hàm chuyển object phân tích thành text mô tả JD
+function analysisToText(analysis: any): string {
+  if (!analysis || typeof analysis !== "object") return "";
+  let lines: string[] = [];
+  if (analysis.experienceLevel) lines.push(`Kinh nghiệm: ${analysis.experienceLevel}`);
+  if (analysis.requiredSkills?.length)
+    lines.push(`Kỹ năng: ${analysis.requiredSkills.join(", ")}`);
+  if (analysis.technologies?.length)
+    lines.push(`Công nghệ: ${analysis.technologies.join(", ")}`);
+  if (analysis.keyResponsibilities?.length)
+    lines.push(`Trách nhiệm: ${analysis.keyResponsibilities.join(", ")}`);
+  if (analysis.industry) lines.push(`Ngành: ${analysis.industry}`);
+  if (analysis.education) lines.push(`Học vấn: ${analysis.education}`);
+  if (analysis.certifications?.length)
+    lines.push(`Chứng chỉ: ${analysis.certifications.join(", ")}`);
+  if (analysis.softSkills?.length)
+    lines.push(`Kỹ năng mềm: ${analysis.softSkills.join(", ")}`);
+  return lines.join("\n");
+}
+
 const formatAnalysisResult = (
   result: any,
   t_results: typeof translations.vi.jobDescriptionPage.analysisResults
@@ -293,13 +313,22 @@ export default function JobDescriptionPage() {
           return;
         }
         const result = await uploadJDPdfAndAnalyze(jdFile);
-        const extractedText = result?.text || "";
+        // console.log(result);
+        let extractedText = result?.text?.trim() || "";
+        if (!extractedText && result && typeof result === "object") {
+          extractedText = analysisToText(result);
+        }
+        // console.log("Extracted text from PDF:", extractedText);
         if (extractedText) {
           setJobDescription(extractedText);
           finalJobDescription = extractedText;
+        } else {
+          alert(t.alerts.jdMissing);
+          setIsCreatingCV(false); 
+          return;
         }
       }
-      if (!finalJobDescription) {
+      if (!finalJobDescription || !finalJobDescription.trim()) {
         alert(t.alerts.jdMissing);
         setIsCreatingCV(false); 
         return;
@@ -488,7 +517,7 @@ export default function JobDescriptionPage() {
                         </span>
                       </p>
                       {jdFile && (
-                        <p className="text-xs text-gray-500">
+                        <p className="text-base font-semibold text-blue-600 bg-blue-50 px-3 py-1 rounded-lg shadow-sm mt-2">
                           {t.ui.fileSelected(jdFile.name)}
                         </p>
                       )}

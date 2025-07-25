@@ -47,7 +47,7 @@ export async function verifyToken(token: string) {
 }
 
 export async function forgotPassword(email: string) {
-  return fetchWithAuth('/api/auth/forgot-password', {
+  return fetchWithAuth('/auth/forgot-password', {
     method: "POST",
     body: JSON.stringify({ email })
   })

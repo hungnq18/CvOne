@@ -45,7 +45,6 @@ const userRoutes = [
 const commonRoutes = [
   "/user/profile",
   "/chat",
-  "/fogetPassword",
   "/notifications"
 ];
 
