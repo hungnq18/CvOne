@@ -53,3 +53,10 @@ export async function forgotPassword(email: string) {
   })
 }
 
+export async function resetPassword(token: string, newPassword: string) {
+  return fetchWithAuth(API_ENDPOINTS.AUTH.RESET_PASSWORD, {
+    method: "POST",
+    body: JSON.stringify({ token, newPassword })
+  })
+}
+

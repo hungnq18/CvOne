@@ -10,6 +10,7 @@ export const API_ENDPOINTS = {
     CHANGE_PASSWORD: "/auth/change-password",
     CREATE: "/cover-letters",
     FORGOT_PASSWORD: "/auth/forgot-password",
+    RESET_PASSWORD: "/auth/reset-password", // Thêm dòng này
   },
   ACCOUNTS: {
     VERIFY_EMAIL: "/accounts/verify-email",
