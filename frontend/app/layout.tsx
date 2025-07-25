@@ -45,7 +45,7 @@ export default function RootLayout({
 }>) {
   const role = getRoleFromToken();
   return (
-    <html lang="en" className="overflow-x-hidden">
+    <html lang="en" className="overflow-x-hidden" suppressHydrationWarning>
       <body className={`${inter.className} min-h-screen flex flex-col overflow-x-hidden`}>
         <StyledComponentsRegistry>
           <GlobalProvider>
