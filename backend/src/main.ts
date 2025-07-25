@@ -8,16 +8,20 @@ date: 2025-03-06
 
 import { ValidationPipe } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
-import * as dotenv from "dotenv";
-import { AppModule } from "./app.module";
-import { IoAdapter } from "@nestjs/platform-socket.io";
-import { join } from "path";
 import { NestExpressApplication } from "@nestjs/platform-express";
+import { IoAdapter } from "@nestjs/platform-socket.io";
+import * as bodyParser from 'body-parser';
+import * as dotenv from "dotenv";
+import { join } from "path";
+import { AppModule } from "./app.module";
 
 dotenv.config();
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  // Increase payload size limit for JSON and urlencoded
+  app.use(bodyParser.json({ limit: '10mb' }));
+  app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }));
   // Enable CORS
   app.enableCors({
     origin: ["http://localhost:3000"], // Frontend URL

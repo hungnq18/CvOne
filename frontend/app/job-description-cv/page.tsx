@@ -1,15 +1,15 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
-import { useState, FC, ReactNode } from "react";
-import { ArrowLeft, ArrowRight, Wand2 } from "lucide-react";
-import { useCV } from "@/providers/cv-provider";
 import {
   analyzeJD,
   uploadAndAnalyzeCV,
   uploadJDPdfAndAnalyze,
 } from "@/api/cvapi";
+import { useCV } from "@/providers/cv-provider";
 import { useLanguage } from "@/providers/global-provider";
+import { ArrowLeft, ArrowRight, Wand2 } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { FC, ReactNode, useState } from "react";
 
 // --- ĐỐI TƯỢNG TRANSLATIONS (KHÔNG ĐỔI) ---
 const translations = {
@@ -308,7 +308,7 @@ export default function JobDescriptionPage() {
       const file = uint8ArrayToFile(pdfFile);
       const result = await uploadAndAnalyzeCV(file, finalJobDescription);
   
-      const userData = result?.analysisResult?.userData;
+      const userData = result?.optimizedCv?.userData;
       if (userData) {
         updateUserData(userData);
       }
