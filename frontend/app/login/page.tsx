@@ -299,12 +299,20 @@ export default function LoginPage() {
               {isLoading ? t.loading : t.loginButton}
             </SubmitButton>
 
+
+
             <RegisterLink>
               <span>{t.noAccount}</span>
               <Link href="/register">{t.registerLink}</Link>
             </RegisterLink>
             <RegisterLink>
               <Link href="/fogetPassword">{t.fogetPassword}</Link>
+            </RegisterLink>
+
+            <RegisterLink>
+              <span>{t.contactPrefix}</span>
+              <Link href="https://www.facebook.com/hungnqisme" target="_blank">{t.contactSupport}</Link>
+              <span>{t.contactSuffix}</span>
             </RegisterLink>
             {/* <Divider>
               <span>{t.or}</span>
