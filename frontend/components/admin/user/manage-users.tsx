@@ -67,7 +67,8 @@ export function ManageUsers() {
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
-  const handleOpenCreateDialog = () => {
+  const handleOpenCreateDialog = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
     setIsEditMode(false)
     setFormData(initialFormData)
     setIsFormOpen(true)
@@ -115,6 +116,7 @@ export function ManageUsers() {
           password: formData.password,
           first_name: formData.first_name,
           last_name: formData.last_name,
+          role: formData.role,
           phone: formData.phone,
           city: formData.city,
           country: formData.country,
@@ -167,10 +169,6 @@ export function ManageUsers() {
     }
   }
 
-  const getStatusColor = (status: string) => {
-    return status === "Active" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
-  }
-
   return (
     <div className="flex-1 space-y-6 p-6 pt-0 bg-gray-50">
       <div className="flex items-center justify-between">
@@ -189,15 +187,17 @@ export function ManageUsers() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>Users ({filteredUsers.length})</CardTitle>
-            <div className="relative w-72">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Search users..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
+            <form onSubmit={(e) => e.preventDefault()}>
+              <div className="relative w-72">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Search users..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </form>
           </div>
         </CardHeader>
         <CardContent>
@@ -285,12 +285,12 @@ export function ManageUsers() {
             </div>
             <div className="grid gap-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" value={formData.email} disabled={isEditMode} onChange={(e) => handleInputChange("email", e.target.value)} />
+              <Input id="email" type="email" value={formData.email} disabled={isEditMode} onChange={(e) => handleInputChange("email", e.target.value)} autoComplete="off" />
             </div>
             {!isEditMode && (
               <div className="grid gap-2">
                 <Label htmlFor="password">Password</Label>
-                <Input id="password" type="password" value={formData.password} onChange={(e) => handleInputChange("password", e.target.value)} />
+                <Input id="password" type="password" value={formData.password} onChange={(e) => handleInputChange("password", e.target.value)} autoComplete="new-password" />
               </div>
             )}
             <div className="grid grid-cols-2 gap-4">

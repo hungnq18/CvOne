@@ -92,7 +92,7 @@ export class AccountsService {
   }
 
   async registerByAdmin(createAccountDto: CreateAccountDto): Promise<Account> {
-    const { first_name, last_name, email, password, city, phone, country } = createAccountDto;
+    const { first_name, last_name, email, password, role, city, phone, country } = createAccountDto;
 
     const existingAccount = await this.accountModel.findOne({ email: email.trim() });
     if (existingAccount) {
@@ -105,7 +105,7 @@ export class AccountsService {
       email: email.trim(),
       password: hashedPassword,
       isEmailVerified: true, // Directly verify the email
-      role: 'user' // Default role, can be changed later
+      role: role || 'user' // Use provided role or default to 'user'
     });
 
     const savedAccount = await newAccount.save();

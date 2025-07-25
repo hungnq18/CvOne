@@ -11,12 +11,12 @@ export class CreateAccountDto {
   @IsNotEmpty()
   @ApiProperty()
   first_name: string;
- 
+
   @IsString()
   @IsNotEmpty()
   @ApiProperty()
   last_name: string;
-  
+
   @IsString()
   @IsNotEmpty()
   @MinLength(6)
@@ -39,4 +39,9 @@ export class CreateAccountDto {
   @Transform(({ value }) => value || undefined)
   @ApiProperty()
   city?: string;
-} 
+
+  @IsString()
+  @IsOptional()
+  @ApiProperty()
+  role?: string;
+}
