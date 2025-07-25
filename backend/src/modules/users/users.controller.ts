@@ -52,4 +52,11 @@ export class UsersController {
   ) {
     return this.usersService.updateProfile(userId, updateUserDto);
   }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
+  @Delete(':id')
+  async deleteUser(@Param('id') id: string) {
+    return this.usersService.deleteUser(id);
+  }
 }
