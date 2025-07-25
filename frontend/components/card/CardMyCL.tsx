@@ -88,7 +88,7 @@ const formatTimeAgo = (isoDate: string, t_timeAgo: typeof translations.vi.cardMy
   return date.toLocaleDateString(locale === 'vi' ? "vi-VN" : "en-US");
 };
 
-const CardMyCL: React.FC<{}> = ({}) => {
+const CardMyCL: React.FC<{}> = ({ }) => {
   const { language } = useLanguage();
   const t = translations[language].cardMyCL;
 
@@ -199,11 +199,10 @@ const CardMyCL: React.FC<{}> = ({}) => {
                         <button
                           onClick={() => handleDeleteCL(cl._id || '', cl.title || t.card.unnamed)}
                           disabled={deletingCLId === cl._id}
-                          className={`flex w-[90px] items-center gap-1 text-sm px-3 py-1.5 rounded-md transition-colors ${
-                            deletingCLId === cl._id
-                              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                              : "bg-gray-100 hover:bg-red-100 text-red-600 hover:text-red-700"
-                          }`}
+                          className={`flex w-[90px] items-center gap-1 text-sm px-3 py-1.5 rounded-md transition-colors ${deletingCLId === cl._id
+                            ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                            : "bg-gray-100 hover:bg-red-100 text-red-600 hover:text-red-700"
+                            }`}
                           title={t.buttons.deleteTooltip}
                         >
                           {deletingCLId === cl._id ? (

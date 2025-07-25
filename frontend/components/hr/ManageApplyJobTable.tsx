@@ -17,6 +17,7 @@ import {
 import html2pdf from "html2pdf.js";
 import { Check, Search, X } from "lucide-react";
 import React, { useEffect, useState } from "react";
+import FilterByDateHr from './filterBydateHr';
 
 interface ManageApplyJobTableProps {
     applications: any[];
@@ -28,6 +29,7 @@ interface ManageApplyJobTableProps {
     handleViewCoverLetter: (coverLetterId: string) => void;
     handleUpdateStatus: (applyJobId: string, newStatus: "approved" | "rejected" | "reviewed", candidateId: string) => void;
     handleDeleteApplyJob?: (applyJobId: string) => void;
+    handleDownloadCL?: (clId?: string, clUrl?: string) => void;
 }
 
 const ManageApplyJobTable: React.FC<ManageApplyJobTableProps> = ({
@@ -40,10 +42,14 @@ const ManageApplyJobTable: React.FC<ManageApplyJobTableProps> = ({
     handleViewCoverLetter,
     handleUpdateStatus,
     handleDeleteApplyJob,
+    handleDownloadCL,
 }) => {
     const [allTemplates, setAllTemplates] = useState<CVTemplate[]>([]);
-    const [workType, setWorkType] = useState('All');
-    const [showWorkTypeDropdown, setShowWorkTypeDropdown] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [applySort, setApplySort] = useState<'newest' | 'oldest'>('newest');
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
+
     useEffect(() => {
         getCVTemplates().then(setAllTemplates);
     }, []);
@@ -57,19 +63,21 @@ const ManageApplyJobTable: React.FC<ManageApplyJobTableProps> = ({
             ? applications.filter((app: any) => ["pending", "reviewed"].includes(app.status))
             : applications.filter((app: any) => app.status === statusFilter);
 
-    // Luôn filter theo work type và searchTerm
+    // Luôn filter theo searchTerm và ngày tháng
     const searchedApplications = filteredApplications.filter((app: any) => {
         const name =
             (app.cvId?.content?.userData?.firstName || app.userId?.first_name || "") +
             " " +
             (app.cvId?.content?.userData?.lastName || app.userId?.last_name || "");
-        const jobWorkTypeRaw = app.jobId?.workType || app.jobId?.["Work Type"] || '';
-        const jobWorkType = String(jobWorkTypeRaw).trim().toLowerCase();
-        const workTypeFilter = String(workType).trim().toLowerCase();
         const search = searchTerm.toLowerCase();
         const matchName = name.toLowerCase().includes(search);
-        const matchWorkType = workType === 'All' || jobWorkType === workTypeFilter;
-        return matchName && matchWorkType;
+        // Filter theo ngày
+        const createdAt = new Date(app.createdAt || app.updatedAt || app.submit_at || 0);
+        const start = startDate ? new Date(startDate) : null;
+        const end = endDate ? new Date(endDate) : null;
+        if (start && createdAt < start) return false;
+        if (end && createdAt > end) return false;
+        return matchName;
     }).sort((a, b) => {
         const dateA = new Date(a.createdAt || a.submit_at || 0).getTime();
         const dateB = new Date(b.createdAt || b.submit_at || 0).getTime();
@@ -77,10 +85,7 @@ const ManageApplyJobTable: React.FC<ManageApplyJobTableProps> = ({
     });
 
     // Phân trang
-    const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 5;
-    // Thêm filter/sort theo thời gian apply
-    const [applySort, setApplySort] = useState<'newest' | 'oldest'>('newest');
 
     // Sắp xếp theo thời gian apply
     const sortedApplications = [...searchedApplications].sort((a, b) => {
@@ -117,17 +122,12 @@ const ManageApplyJobTable: React.FC<ManageApplyJobTableProps> = ({
             return;
         }
         const templateId = cvData.cvTemplateId || cvData.templateId;
-        console.log("cvData", cvData);
-        console.log("allTemplates", allTemplates);
         const template = allTemplates.find((t) => t._id === templateId);
-        console.log("template found", template);
         if (!template) {
             alert("Không tìm thấy template phù hợp để xuất PDF");
             return;
         }
         const TemplateComponent = templateComponentMap[template.title];
-        console.log("template title", template.title);
-        console.log("TemplateComponent", TemplateComponent);
         if (!TemplateComponent) {
             alert("Không tìm thấy component template để xuất PDF");
             return;
@@ -203,6 +203,7 @@ const ManageApplyJobTable: React.FC<ManageApplyJobTableProps> = ({
                     </select>
                 </div>
                 <div className="flex items-center space-x-2" style={{ marginTop: 20 }}>
+
                     <div className="relative">
                         <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                         <Input
@@ -212,44 +213,12 @@ const ManageApplyJobTable: React.FC<ManageApplyJobTableProps> = ({
                             className="pl-8"
                         />
                     </div>
-                    {/* Dropdown Work Type custom */}
-                    <div className="relative inline-block">
-                        <button
-                            id="dropdownDefaultButton"
-                            type="button"
-                            className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-                            onClick={() => setShowWorkTypeDropdown((v: boolean) => !v)}
-                        >
-                            {workType === 'All' ? 'All Work Types' : workType}
-                            <svg className="w-2.5 h-2.5 ms-3" aria-hidden="true" fill="none" viewBox="0 0 10 6">
-                                <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m1 1 4 4 4-4" />
-                            </svg>
-                        </button>
-                        {showWorkTypeDropdown && (
-                            <div className="z-10 absolute bg-white divide-y divide-gray-100 rounded-lg shadow-sm w-44 dark:bg-gray-700 mt-2">
-                                <ul className="py-2 text-sm text-gray-700 dark:text-gray-200">
-                                    <li>
-                                        <button
-                                            className="block w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white"
-                                            onClick={() => { setWorkType('All'); setShowWorkTypeDropdown(false); }}
-                                        >
-                                            All Work Types
-                                        </button>
-                                    </li>
-                                    {workTypes.map(type => (
-                                        <li key={type}>
-                                            <button
-                                                className="block w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white"
-                                                onClick={() => { setWorkType(type); setShowWorkTypeDropdown(false); }}
-                                            >
-                                                {type}
-                                            </button>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                        )}
-                    </div>
+                    <FilterByDateHr
+                        startDate={startDate}
+                        endDate={endDate}
+                        setStartDate={setStartDate}
+                        setEndDate={setEndDate}
+                    />
                 </div>
             </CardHeader>
             <StatusRadioTabs statusFilter={statusFilter} setStatusFilter={setStatusFilter} />
@@ -395,7 +364,7 @@ const ManageApplyJobTable: React.FC<ManageApplyJobTableProps> = ({
                                             onViewCV={() => handleViewCV(app.cvId?._id || app.cv_id)}
                                             onDownloadCV={() => handleDownloadCV(app.cvId)}
                                             onViewCL={() => handleViewCoverLetter(app.coverletterId?._id || app.coverletter_id)}
-                                            onDownloadCL={() => { }}
+                                            onDownloadCL={() => handleDownloadCL && handleDownloadCL(app.coverletterId?._id || app.coverletter_id, app.coverletterUrl)}
                                             status={app.status}
                                             onDelete={
                                                 app.status === "rejected" && handleDeleteApplyJob
@@ -405,7 +374,7 @@ const ManageApplyJobTable: React.FC<ManageApplyJobTableProps> = ({
                                             cvId={app.cvId?._id || app.cv_id}
                                             cvUrl={app.cvUrl}
                                             clId={app.coverletterId?._id || app.coverletter_id}
-                                            clUrl={app.clUrl}
+                                            clUrl={app.coverletterUrl}
                                         />
                                     </TableCell>
                                 </TableRow>

@@ -3,9 +3,10 @@ import { jwtDecode } from "jwt-decode";
 
 
 const adminRoutes = [
-  "/admin", 
-  "/dashboard", 
-  "/settings"];
+  "/admin",
+  "/dashboard",
+  "/cv-template",
+  "/cl-template"];
 
 const hrRoutes = [
   "/hr/dashboard",
@@ -16,7 +17,43 @@ const hrRoutes = [
 
 const userRoutes = [
   "/userDashboard",
+  "/myDocuments",
+  "/myJobs",
+  "/myDocuments",
+  "/uploadCV-overlay",
+  "/uploadJD",
+  "/user/apply",
+  "/user/applyOption",
+  "/user/profile",
+  "/user/profile",
+  "/work-history",
+  "/work-style",
+  "/strengths",
+  "/recipent-info",
+  "/personal-info",
+  "/job-description",
+  "/job-description-cv",
+  "/fogetPassword",
+  "/job-description-cv",
+  "/customize",
+  "/createCV-AIManual",
+  "/createCV-AI",
+  "/createCLTemplate",
+  "/createCV",
+  "/chooseUploadCreateCV",
+  "/chooseOption",
+  "/chooseCreateCV",
 ];
+
+// Nếu có route dùng chung cho nhiều role
+const commonRoutes = [
+  "/user/profile",
+  "/chat",
+  "/fogetPassword",
+  "/notifications"
+];
+
+
 
 const roleBasedPaths: { [key: string]: string[] } = {};
 adminRoutes.forEach((route) => {
@@ -30,8 +67,9 @@ userRoutes.forEach((route) => {
 });
 
 // Nếu có route dùng chung cho nhiều role
-roleBasedPaths["/user/profile"] = ["admin", "hr", "user"];
-
+commonRoutes.forEach((route) => {
+  roleBasedPaths[route] = ["admin", "hr", "user"];
+});
 export interface DecodedToken {
   exp: number;
   role: string;

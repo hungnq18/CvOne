@@ -9,6 +9,7 @@ export const API_ENDPOINTS = {
     PROFILE: "/auth/profile",
     CHANGE_PASSWORD: "/auth/change-password",
     CREATE: "/cover-letters",
+    FORGOT_PASSWORD: "/auth/forgot-password",
   },
   ACCOUNTS: {
     VERIFY_EMAIL: "/accounts/verify-email",
@@ -49,8 +50,8 @@ export const API_ENDPOINTS = {
     SUGGEST_WORK_EXPERIENCE: "/cv/suggest/work-experience",
     REWRITE_WORK_DESCRIPTION: "/cv/rewrite-work-description",
     UPLOAD_AND_ANALYZE: "/cv/upload-and-analyze",
-    UPLOAD_ANALYZE_GENERATE_PDF: "/cv/upload-analyze-generate-pdf",
-    UPLOAD_ANALYZE_OVERLAY_PDF: "/cv/upload-analyze-overlay-pdf",
+    // UPLOAD_ANALYZE_GENERATE_PDF: "/cv/upload-analyze-generate-pdf",
+    // UPLOAD_ANALYZE_OVERLAY_PDF: "/cv/upload-analyze-overlay-pdf",
     AI_STATUS: "/cv/ai-status"
   },
   CL: {
@@ -63,6 +64,7 @@ export const API_ENDPOINTS = {
     DELETE: (id: string) => `/cover-letters/${id}`,
     EXTRACT_COVER_LETTER: "/cover-letters/extract/from-path",
     GENERATE_CL_BY_AI: "/cover-letters/generate/ai",
+
   },
   CHAT: {
     GET_MESSAGES: (convId: string) => `/chat/messages/${convId}`,

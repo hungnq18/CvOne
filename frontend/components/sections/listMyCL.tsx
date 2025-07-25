@@ -4,7 +4,6 @@ import { FaEnvelope, FaPlus, FaEdit, FaTrash, FaDownload, FaCopy, FaFileAlt } fr
 import { CL, CLTemplate } from '@/api/clApi';
 import { DownOutlined } from '@ant-design/icons';
 import { useLanguage } from '@/providers/global-provider';
-import Image from 'next/image';
 import CardMyCL from '../card/CardMyCL';
 import { useRouter } from 'next/navigation';
 
