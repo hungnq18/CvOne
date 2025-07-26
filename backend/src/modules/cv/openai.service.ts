@@ -15,11 +15,6 @@ export class OpenAiService {
     @InjectModel(User.name) private userModel: Model<User>
   ) {
     const apiKey = this.configService.get<string>("OPENAI_API_KEY");
-    console.log("DEBUG OPENAI_API_KEY (ConfigService):", apiKey);
-    console.log(
-      "DEBUG OPENAI_API_KEY (process.env):",
-      process.env.OPENAI_API_KEY
-    );
     if (!apiKey) {
       this.logger.warn("OPENAI_API_KEY not found in environment variables");
     }
