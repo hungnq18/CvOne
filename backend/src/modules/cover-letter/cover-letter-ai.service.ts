@@ -16,7 +16,7 @@ export class CoverLetterAiService {
       this.logger.warn("OPENAI_API_KEY not found in environment variables");
     }
     this.openai = new OpenAI({
-      baseURL: "https://models.github.ai/inference",
+      // baseURL: "https://models.github.ai/inference",
       apiKey: apiKey,
     });
   }
@@ -95,7 +95,7 @@ Rules:
 `;
 
       const completion = await this.openai.chat.completions.create({
-        model: "openai/gpt-4.1",
+        model: "gpt-4o",
         messages: [
           {
             role: "system",
@@ -215,7 +215,7 @@ IMPORTANT:
 
     // 3. Call OpenAI
     const completion = await this.openai.chat.completions.create({
-      model: "openai/gpt-4.1",
+      model: "gpt-4o",
       messages: [
         {
           role: "system",
