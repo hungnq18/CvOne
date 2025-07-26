@@ -39,6 +39,7 @@ const personalInfoTranslations = {
       lastName: "Last name is required",
       emailRequired: "Email address is required",
       emailInvalid: "Please enter a valid email address",
+      phoneInvalid: "Phone number must be 10 digits",
     },
   },
   vi: {
@@ -68,6 +69,7 @@ const personalInfoTranslations = {
       lastName: "Vui lòng nhập họ",
       emailRequired: "Vui lòng nhập email",
       emailInvalid: "Email không hợp lệ",
+      phoneInvalid: "Số điện thoại phải có 10 chữ số",
     },
   },
 };
@@ -246,10 +248,20 @@ function PersonalInfoContent() {
   }, [selectedProvinceCode]);
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+    if (field === "phone") {
+      const numericValue = value.replace(/[^0-9]/g, "");
+      if (numericValue.length <= 10) {
+        setFormData((prev) => ({
+          ...prev,
+          [field]: numericValue,
+        }));
+      }
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [field]: value,
+      }));
+    }
 
     // Clear error when user starts typing
     if (errors[field]) {
@@ -278,6 +290,9 @@ function PersonalInfoContent() {
     if (!formData.email.trim()) newErrors.email = "Email address is required";
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = "Please enter a valid email address";
+    }
+    if (formData.phone.trim() && !/^\d{10}$/.test(formData.phone)) {
+      newErrors.phone = t.errors.phoneInvalid;
     }
 
     setErrors(newErrors);
