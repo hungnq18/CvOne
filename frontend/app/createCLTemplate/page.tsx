@@ -100,6 +100,18 @@ const CoverLetterBuilderContent = () => {
                 }
                 const coverLetterData = JSON.parse(coverLetterDataString);
 
+                // Set template name from localStorage first
+                if (coverLetterData.templateId) {
+                    try {
+                        const templateData = await getCLTemplateById(coverLetterData.templateId);
+                        if (templateData) {
+                            setTemplateName(templateData.title.toLowerCase() as TemplateType);
+                        }
+                    } catch (error) {
+                        console.error("Failed to fetch template based on localStorage:", error);
+                    }
+                }
+
                 const dto = {
                     ...coverLetterData,
                     jobDescriptionFileName: jdFilename,
@@ -199,9 +211,10 @@ const CoverLetterBuilderContent = () => {
         };
 
         const fetchTemplateData = async () => {
-            if (templateId) {
+            const finalTemplateId = searchParams.get('templateId') || (localStorage.getItem('coverLetterData') ? JSON.parse(localStorage.getItem('coverLetterData')!).templateId : null);
+            if (finalTemplateId) {
                 try {
-                    const data = await getCLTemplateById(templateId);
+                    const data = await getCLTemplateById(finalTemplateId);
                     if (data) {
                         setSelectedTemplateData(data);
                         setTemplateName(data.title.toLowerCase() as TemplateType);
@@ -214,10 +227,14 @@ const CoverLetterBuilderContent = () => {
 
         if (clId) {
             fetchClData();
+        } else if (type === 'generate-by-ai') {
+            // In AI flow, we let generateAiCv handle template setting.
+            // We can also call fetchTemplateData here as a fallback or primary.
+            fetchTemplateData();
         } else if (templateId && !clFilename && !jdFilename) {
             fetchTemplateData();
         }
-    }, [clId, templateId, clFilename, jdFilename]);
+    }, [clId, templateId, clFilename, jdFilename, type, router]);
 
     const getInitialData = () => {
         const currentDate = new Date().toISOString().split('T')[0];
