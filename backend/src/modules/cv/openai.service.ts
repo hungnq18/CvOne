@@ -25,7 +25,7 @@ export class OpenAiService {
     }
 
     this.openai = new OpenAI({
-      baseURL: "https://models.github.ai/inference",
+      // baseURL: "https://models.github.ai/inference",
       apiKey: apiKey,
     });
   }
@@ -75,7 +75,7 @@ Return only valid JSON without any additional text.
 `;
 
       const completion = await this.openai.chat.completions.create({
-        model: "openai/gpt-4.1",
+        model: "gpt-4o",
         messages: [
           {
             role: "system",
@@ -175,7 +175,7 @@ Do not include any explanation or markdown, only valid JSON.
 `;
 
       const completion = await this.openai.chat.completions.create({
-        model: "openai/gpt-4.1",
+        model: "gpt-4o",
         messages: [
           {
             role: "system",
@@ -287,7 +287,7 @@ Return only valid JSON.
 `;
 
       const completion = await this.openai.chat.completions.create({
-        model: "openai/gpt-4.1",
+        model: "gpt-4o",
         messages: [
           {
             role: "system",
@@ -382,7 +382,7 @@ Do not include any explanation or markdown, only valid JSON.
 `;
 
       const completion = await this.openai.chat.completions.create({
-        model: "openai/gpt-4.1",
+        model: "gpt-4o",
         messages: [
           {
             role: "system",
@@ -467,7 +467,7 @@ Do not include any explanation or markdown, only valid JSON.
   }> {
     try {
       const completion = await this.openai.chat.completions.create({
-        model: "openai/gpt-4.1",
+        model: "gpt-4o",
         messages: [{ role: "user", content: "Hello" }],
         max_tokens: 10,
       });
@@ -683,7 +683,7 @@ Return only valid JSON without any additional text.
 `;
 
       const completion = await this.openai.chat.completions.create({
-        model: "openai/gpt-4.1",
+        model: "gpt-4o",
         messages: [
           {
             role: "system",
@@ -767,7 +767,7 @@ ${description}
 Return only the rewritten description, no explanation, no markdown.
 `;
       const completion = await this.openai.chat.completions.create({
-        model: "openai/gpt-4.1",
+        model: "gpt-4o",
         messages: [
           {
             role: "system",
