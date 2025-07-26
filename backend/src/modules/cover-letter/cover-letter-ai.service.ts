@@ -114,7 +114,10 @@ Rules:
         throw new Error("No response from OpenAI");
       }
 
-      const { subject, opening, body, callToAction } = JSON.parse(response);
+      const cleanedResponse = response.replace(/```json/g, "").replace(/```/g, "");
+
+      const { subject, opening, body, callToAction } =
+        JSON.parse(cleanedResponse);
 
       const coverLetter = {
         templateId: templateId,
