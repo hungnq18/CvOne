@@ -167,11 +167,10 @@ export class CvController {
     @Body("jobAnalysis") jobAnalysis: any,
     @Body("additionalRequirements") additionalRequirements?: string,
   ) {
-    return this.cvAiService.suggestProfessionalSummary(
-      user,
-      jobAnalysis,
-      additionalRequirements,
-    );
+    // Không truyền userProfile nữa, chỉ truyền jobAnalysis và additionalRequirements
+    const summary = await this.cvAiService.suggestProfessionalSummary(jobAnalysis, additionalRequirements);
+
+    return summary;
   }
 
   /**

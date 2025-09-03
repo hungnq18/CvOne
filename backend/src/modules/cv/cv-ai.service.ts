@@ -108,8 +108,7 @@ export class CvAiService {
    */
   public async suggestProfessionalSummary(jobAnalysis: any, additionalRequirements?: string) {
     // Trả về summary bằng tiếng Việt, không truyền tên người dùng
-    const prompt = `Viết một đoạn Professional Summary bằng tiếng Việt, chuyên nghiệp, phù hợp với phân tích JD sau:\n${JSON.stringify(jobAnalysis)}${additionalRequirements ? `\nYêu cầu bổ sung: ${additionalRequirements}` : ''}`;
-    const summary = await this.openAiService.generateProfessionalSummaryVi(prompt);
+    const summary = await this.openAiService.generateProfessionalSummaryVi(jobAnalysis, additionalRequirements);
     return { summaries: [summary] };
   }
 

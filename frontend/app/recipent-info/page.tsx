@@ -1,15 +1,15 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, ArrowRight, ChevronDown } from "lucide-react";
 import {
-  getProvinces,
-  getDistrictsByProvinceCode,
-  Province,
   District,
+  getDistrictsByProvinceCode,
+  getProvinces,
+  Province,
 } from "@/api/locationApi";
 import { useLanguage } from "@/providers/global-provider";
+import { ArrowLeft, ArrowRight, ChevronDown } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
 
 const recipientInfoTranslations = {
   en: {
@@ -104,7 +104,7 @@ const InputField = ({
   isDropdown?: boolean;
 }) => {
   return (
-    <div className="space-y-2">
+    <div className="space-py-8">
       <label className="block text-sm font-medium text-gray-700 uppercase tracking-wide">
         {label} {required && <span className="text-red-500">*</span>}
       </label>
@@ -306,7 +306,7 @@ function RecipentInfoContent() {
     <div className="min-h-screen bg-white flex flex-col items-center justify-center py-12 px-4">
       <div className="w-full max-w-2xl space-y-8">
         {/* Header */}
-        <div className="text-center space-y-4">
+        <div className="text-center space-pb-14">
           <h1 className="text-2xl font-bold text-gray-900">{t.heading}</h1>
           <p className="text-gray-600">{t.subheading}</p>
         </div>
