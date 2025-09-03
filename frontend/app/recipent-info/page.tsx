@@ -40,6 +40,7 @@ const recipientInfoTranslations = {
       companyName: "Company name is required",
       emailRequired: "Email address is required",
       emailInvalid: "Please enter a valid email address",
+      phoneInvalid: "Phone number must be 10 digits",
     },
   },
   vi: {
@@ -70,6 +71,7 @@ const recipientInfoTranslations = {
       companyName: "Vui lòng nhập tên công ty",
       emailRequired: "Vui lòng nhập email",
       emailInvalid: "Email không hợp lệ",
+      phoneInvalid: "Số điện thoại phải có 10 chữ số",
     },
   },
 };
@@ -244,10 +246,20 @@ function RecipentInfoContent() {
   }, [selectedProvinceCode]);
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+    if (field === "recipientPhone") {
+      const numericValue = value.replace(/[^0-9]/g, "");
+      if (numericValue.length <= 10) {
+        setFormData((prev) => ({
+          ...prev,
+          [field]: numericValue,
+        }));
+      }
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [field]: value,
+      }));
+    }
 
     // Clear error when user starts typing
     if (errors[field]) {
@@ -280,6 +292,13 @@ function RecipentInfoContent() {
       newErrors.recipientEmail = "Email address is required";
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.recipientEmail)) {
       newErrors.recipientEmail = "Please enter a valid email address";
+    }
+
+    if (
+      formData.recipientPhone.trim() &&
+      !/^\d{10}$/.test(formData.recipientPhone)
+    ) {
+      newErrors.recipientPhone = t.errors.phoneInvalid;
     }
 
     setErrors(newErrors);
