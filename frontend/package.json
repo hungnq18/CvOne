@@ -2,15 +2,17 @@
   "name": "my-v0-project",
   "version": "0.1.0",
   "private": true,
-  "scripts": {
+ "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
+    "start": "npm run build && next start",
+    "lint": "next lint",
+    "analyze": "ANALYZE=true next build"
   },
   "dependencies": {
     "@ant-design/icons": "^6.0.0",
     "@hookform/resolvers": "^3.9.1",
+    "@next/bundle-analyzer": "^15.5.2",
     "@radix-ui/react-accordion": "1.2.2",
     "@radix-ui/react-alert-dialog": "1.1.4",
     "@radix-ui/react-aspect-ratio": "1.1.1",
@@ -88,6 +90,7 @@
     "@types/node": "^22",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
+    "cross-env": "^10.0.0",
     "json-server": "^1.0.0-beta.3",
     "postcss": "^8",
     "tailwindcss": "^3.4.17",
