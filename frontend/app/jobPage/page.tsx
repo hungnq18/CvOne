@@ -1,3 +1,4 @@
+
 import PromoSlider from '@/components/ui/jobSlide';
 import JobSearch from '@/components/ui/jobSearch';
 import { getLocalJobs } from '@/api/jobApi';
