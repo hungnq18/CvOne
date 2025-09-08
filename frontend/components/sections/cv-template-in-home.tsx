@@ -1,14 +1,13 @@
-'use client';
-
-import { CVTemplate, getCVTemplates } from '@/api/cvapi'; // 💡 gọi từ fakeApi
-import { useLanguage } from '@/providers/global-provider';
-import { motion } from 'framer-motion';
-import { useEffect, useState, useRef, FC } from 'react';
-import CardCVTemplate from '../card/card-CVtemplate';
-import { templateComponentMap } from '@/components/cvTemplate/index';
-import { useRouter } from 'next/navigation';
-import { X } from 'lucide-react';
-import { useOnClickOutside } from '@/hooks/useOnClickOutside';
+import { GetServerSideProps } from "next";
+import { CVTemplate, getCVTemplates } from "@/api/cvapi"; // 💡 gọi từ fakeApi
+import { useLanguage } from "@/providers/global-provider";
+import { motion } from "framer-motion";
+import { useState, useRef, FC } from "react";
+import CardCVTemplate from "../card/card-CVtemplate";
+import { templateComponentMap } from "@/components/cvTemplate/index";
+import { useRouter } from "next/navigation";
+import { X } from "lucide-react";
+import { useOnClickOutside } from "@/hooks/useOnClickOutside";
 
 interface TemplatePreviewModalProps {
   templateId: string;
@@ -96,7 +95,7 @@ const TemplatePreviewModal: FC<TemplatePreviewModalProps> = ({
         className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col"
         ref={modalRef}
       >
-        {/* Header của Modal */}
+        {/* Header */}
         <div className="flex justify-between items-center bg-gray-100 py-3 px-5 rounded-t-lg border-b">
           <h2 className="text-xl font-bold">{templateTitle}</h2>
           <button
@@ -107,7 +106,7 @@ const TemplatePreviewModal: FC<TemplatePreviewModalProps> = ({
           </button>
         </div>
 
-        {/* Nội dung Preview Template */}
+        {/* Preview */}
         <div className="flex-grow pt-4 overflow-y-auto flex justify-center items-start">
           {!TemplateComponent ? (
             <div className=" text-red-600">
@@ -120,7 +119,7 @@ const TemplatePreviewModal: FC<TemplatePreviewModalProps> = ({
           )}
         </div>
 
-        {/* Footer của Modal */}
+        {/* Footer */}
         <div className="flex justify-center items-center py-4 px-5 rounded-b-lg border-t bg-gray-100">
           <button
             onClick={handleUseTemplate}
@@ -134,12 +133,7 @@ const TemplatePreviewModal: FC<TemplatePreviewModalProps> = ({
               viewBox="0 0 24 24"
               xmlns="http://www.w3.org/2000/svg"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 5l7 7-7 7"
-              />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
           </button>
         </div>
@@ -148,19 +142,14 @@ const TemplatePreviewModal: FC<TemplatePreviewModalProps> = ({
   );
 };
 
-const CVSection: React.FC = () => {
-  const { language } = useLanguage();
-  const [cvTemplates, setCvTemplates] = useState<CVTemplate[]>([]);
-  const [selectedTemplateForPreview, setSelectedTemplateForPreview] = useState<CVTemplate | null>(null);
+interface Props {
+  initialTemplates: CVTemplate[];
+}
 
-  // Gọi fake API khi component mount
-  useEffect(() => {
-    const fetchTemplates = async () => {
-      const data = await getCVTemplates();
-      setCvTemplates(data);
-    };
-    fetchTemplates();
-  }, []);
+const CVSection: React.FC<Props> = ({ initialTemplates }) => {
+  const { language } = useLanguage();
+  const [cvTemplates] = useState<CVTemplate[]>(initialTemplates);
+  const [selectedTemplateForPreview, setSelectedTemplateForPreview] = useState<CVTemplate | null>(null);
 
   const handlePreviewClick = (template: CVTemplate) => {
     setSelectedTemplateForPreview(template);
@@ -174,9 +163,7 @@ const CVSection: React.FC = () => {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
-      transition: {
-        staggerChildren: 1,
-      },
+      transition: { staggerChildren: 1 },
     },
   };
 
@@ -189,9 +176,7 @@ const CVSection: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          {language === 'en'
-            ? 'Explore Our CV Templates'
-            : 'Khám phá mẫu CV của chúng tôi'}
+          {language === "en" ? "Explore Our CV Templates" : "Khám phá mẫu CV của chúng tôi"}
         </motion.h2>
 
         <motion.div
@@ -206,7 +191,7 @@ const CVSection: React.FC = () => {
               _id={template._id}
               imageUrl={template.imageUrl}
               title={
-                typeof template.title === 'string'
+                typeof template.title === "string"
                   ? template.title
                   : template.title?.[language] ?? template.title
               }
@@ -215,6 +200,7 @@ const CVSection: React.FC = () => {
           ))}
         </motion.div>
       </div>
+
       {selectedTemplateForPreview && (
         <TemplatePreviewModal
           templateId={selectedTemplateForPreview._id}
@@ -227,3 +213,14 @@ const CVSection: React.FC = () => {
 };
 
 export default CVSection;
+
+// ================== SSR ==================
+export const getServerSideProps: GetServerSideProps = async () => {
+  try {
+    const data = await getCVTemplates();
+    return { props: { initialTemplates: data } };
+  } catch (error) {
+    console.error("Error fetching CV templates:", error);
+    return { props: { initialTemplates: [] } };
+  }
+};
