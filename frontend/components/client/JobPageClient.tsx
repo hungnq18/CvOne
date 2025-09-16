@@ -5,6 +5,8 @@ import JobSearch from '@/components/ui/jobSearch';
 import PromoSlider from '@/components/ui/jobSlide';
 import { getLocalJobs, Job } from '@/api/jobApi';
 
+import dynamic from 'next/dynamic';
+
 export default function JobPageClient() {
     const [allJobs, setAllJobs] = useState<Job[]>([]);
     const [loading, setLoading] = useState(true);
