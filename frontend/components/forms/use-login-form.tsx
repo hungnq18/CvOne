@@ -1,12 +1,12 @@
 "use client"
 
 import { useToast } from "@/components/ui/use-toast"
+import { DecodedToken } from "@/middleware"
 import { useLanguage } from "@/providers/global-provider"
+import axios from "axios"
+import { jwtDecode } from "jwt-decode"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
-import axios from "axios";
-import { jwtDecode } from "jwt-decode";
-import { DecodedToken } from "@/middleware";
 
 interface LoginFormData {
   email: string;
@@ -37,6 +37,7 @@ const translations = {
     loginSuccess: "Login successful!",
     loginFailed: "Login failed",
     invalidCredentials: "Invalid credentials",
+    emailNotVerified: "Email not verified. Please check your email and verify your account before logging in.",
     emailRequired: "Email is required",
     passwordRequired: "Password is required",
     loading: "Loading...",
@@ -60,6 +61,7 @@ const translations = {
     loginSuccess: "Đăng nhập thành công!",
     loginFailed: "Đăng nhập thất bại",
     invalidCredentials: "Thông tin đăng nhập không chính xác",
+    emailNotVerified: "Email chưa được xác thực. Vui lòng kiểm tra email và xác thực tài khoản trước khi đăng nhập.",
     emailRequired: "Email là bắt buộc",
     passwordRequired: "Mật khẩu là bắt buộc",
     loading: "Đang tải...",
@@ -144,8 +146,18 @@ export function useLoginForm() {
       }
 
     } catch (err: any) {
-      const msg =
-        err?.response?.status === 401 ? t.invalidCredentials : t.networkError;
+      let msg = t.networkError;
+      
+      if (err?.response?.status === 401) {
+        // Check if it's email verification error
+        const errorMessage = err?.response?.data?.message || '';
+        if (errorMessage.includes('Email not verified') || errorMessage.includes('Email chưa được xác thực')) {
+          msg = t.emailNotVerified;
+        } else {
+          msg = t.invalidCredentials;
+        }
+      }
+      
       setError(msg);
       toast({ title: t.loginFailed, description: msg, variant: "destructive" });
     } finally {

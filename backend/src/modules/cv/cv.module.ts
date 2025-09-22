@@ -11,6 +11,9 @@ import { CvController } from "./cv.controller";
 import { CvService } from "./cv.service";
 import { OpenAiService } from "./openai.service";
 import { Cv, CvSchema } from "./schemas/cv.schema";
+import { AiOptimizationService } from "./services/ai-optimization.service";
+import { CvCacheService } from "./services/cv-cache.service";
+import { CvUploadService } from "./services/cv-upload.service";
 
 @Module({
   imports: [
@@ -21,7 +24,23 @@ import { Cv, CvSchema } from "./schemas/cv.schema";
     ]),
   ],
   controllers: [CvController],
-  providers: [CvService, CvAiService, OpenAiService, CvPdfService],
-  exports: [CvService, CvAiService, OpenAiService, CvPdfService],
+  providers: [
+    CvService, 
+    CvAiService, 
+    OpenAiService, 
+    CvPdfService,
+    CvUploadService,
+    CvCacheService,
+    AiOptimizationService
+  ],
+  exports: [
+    CvService, 
+    CvAiService, 
+    OpenAiService, 
+    CvPdfService,
+    CvUploadService,
+    CvCacheService,
+    AiOptimizationService
+  ],
 })
 export class CvModule {}

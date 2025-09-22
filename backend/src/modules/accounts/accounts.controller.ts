@@ -7,12 +7,12 @@ import {
   Put,
   UseGuards,
 } from '@nestjs/common';
+import { Roles } from 'src/common/decorators/roles.decorator';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
 import { AccountsService } from './accounts.service';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../auth/guards/roles.guard';
-import { Roles } from 'src/common/decorators/roles.decorator';
 
 @Controller('accounts')
 export class AccountsController {
@@ -45,5 +45,10 @@ export class AccountsController {
   @Get('verify-email/:token')
   async verifyEmail(@Param('token') token: string) {
     return this.accountsService.verifyEmail(token);
+  }
+
+  @Post('resend-verification')
+  async resendVerification(@Body() verifyEmailDto: VerifyEmailDto) {
+    return this.accountsService.requestEmailVerification(verifyEmailDto);
   }
 }
