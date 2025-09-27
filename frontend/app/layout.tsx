@@ -70,10 +70,10 @@ export default function RootLayout({
                           </div>
                         </div>
                       )}
-                      <IconChatAndNotification />
-                      <Toaster />
+                      <IconChatAndNotification /> {/* use */}
+                      <Toaster /> {/* use */}
                     </CVProvider>
-                  </ChatProvider>
+                  </ChatProvider> {/* use */}
                 </ThemeProvider>
               </EmailVerificationProvider>
             </AuthProvider>
