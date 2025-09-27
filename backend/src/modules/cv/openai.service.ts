@@ -28,6 +28,7 @@ export class OpenAiService {
   /**
    * Analyze job description using OpenAI
    */
+
   async analyzeJobDescription(jobDescription: string): Promise<{
     requiredSkills: string[];
     experienceLevel: string;
@@ -981,8 +982,10 @@ Không giải thích, không markdown.
         error.stack
       );
       // fallback: return nhiều bản giống nhau
-      const fallback = "Ứng viên có kỹ năng và kinh nghiệm phù hợp với yêu cầu công việc, sẵn sàng đóng góp và phát triển trong môi trường chuyên nghiệp.";
+      const fallback =
+        "Ứng viên có kỹ năng và kinh nghiệm phù hợp với yêu cầu công việc, sẵn sàng đóng góp và phát triển trong môi trường chuyên nghiệp.";
       return Array(count).fill(fallback);
     }
   }
+  async test() {}
 }
