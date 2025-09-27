@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  Logger,
-  NotFoundException
-} from "@nestjs/common";
+import { Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model, ObjectId, Types } from "mongoose";
 import { AccountsService } from "../accounts/accounts.service";
@@ -24,16 +20,19 @@ export class UsersService {
       const createdUser = await this.userModel.create(createUserDto);
       return createdUser;
     } catch (error) {
-      console.error('Error creating user:', error);
+      console.error("Error creating user:", error);
       throw error;
     }
   }
 
   async getAllUsers(): Promise<User[]> {
-    return this.userModel.find().populate({
-      path: 'account_id',
-      select: 'email role'
-    }).exec();
+    return this.userModel
+      .find()
+      .populate({
+        path: "account_id",
+        select: "email role",
+      })
+      .exec();
   }
 
   async getUserById(id: string): Promise<User> {
@@ -109,15 +108,17 @@ export class UsersService {
   async deleteUser(userId: string): Promise<{ deleted: boolean }> {
     const user = await this.userModel.findById(userId);
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException("User not found");
     }
 
     const accountId = user.account_id;
 
     // Delete the user
-    const userDeletionResult = await this.userModel.deleteOne({ _id: userId }).exec();
+    const userDeletionResult = await this.userModel
+      .deleteOne({ _id: userId })
+      .exec();
     if (userDeletionResult.deletedCount === 0) {
-      throw new NotFoundException('User could not be deleted');
+      throw new NotFoundException("User could not be deleted");
     }
 
     // Delete the associated account

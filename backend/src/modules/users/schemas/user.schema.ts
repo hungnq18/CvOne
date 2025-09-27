@@ -16,7 +16,7 @@ export class User {
   @Prop({ required: true, type: String })
   last_name: string;
 
-  @Prop({ type: Number })
+  @Prop({ type: Number, max: 10, min: 10 })
   phone: number;
 
   @Prop({ type: String, default: "" })
