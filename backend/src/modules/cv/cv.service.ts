@@ -4,20 +4,22 @@ import { Model } from 'mongoose';
 import { CvTemplate } from '../cv-template/schemas/cv-template.schema';
 import { CreateCvDto } from './dto/create-cv.dto';
 import { Cv } from './schemas/cv.schema';
+import { CvCacheService } from './services/cv-cache.service';
 
 @Injectable()
 export class CvService {
   constructor(
     @InjectModel(Cv.name) private cvModel: Model<Cv>,
     @InjectModel(CvTemplate.name) private cvTemplateModel: Model<CvTemplate>,
+    private cvCacheService: CvCacheService,
   ) {}
 
   async getAllCVs(userId: string): Promise<Cv[]> {
-    return this.cvModel.find({ userId }).exec();
+    return this.cvCacheService.getCachedCVs(userId);
   }
 
   async getCVById(id: string, userId: string): Promise<Cv> {
-    const cv = await this.cvModel.findOne({ _id: id, userId }).exec();
+    const cv = await this.cvCacheService.getCachedCV(id, userId);
     if (!cv) {
       throw new NotFoundException('CV not found');
     }
@@ -44,6 +46,10 @@ export class CvService {
     });
 
     const savedCV = await newCV.save();
+    
+    // Invalidate cache for this user
+    this.cvCacheService.invalidateUserCache(userId);
+    
     return savedCV;
   }
 
@@ -56,6 +62,10 @@ export class CvService {
     if (!cv) {
       throw new NotFoundException('CV not found');
     }
+    
+    // Invalidate cache for this CV
+    this.cvCacheService.invalidateCVCache(id, userId);
+    
     return cv;
   }
 
@@ -159,10 +169,7 @@ export class CvService {
    * @param userId - The ID of the user
    */
   async getSavedCVs(userId: string) {
-    return this.cvModel.find({
-      userId,
-      isSaved: true
-    }).exec();
+    return this.cvCacheService.getCachedCVs(userId, true);
   }
 
   async getAllTemplates(): Promise<CvTemplate[]> {

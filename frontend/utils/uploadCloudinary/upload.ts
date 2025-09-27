@@ -11,10 +11,10 @@ export async function uploadFileToCloudinary(file: File): Promise<string> {
         throw new Error("Chỉ hỗ trợ file PDF");
     }
 
-    // Kiểm tra kích thước file (tối đa 5MB)
-    const maxSize = 5 * 1024 * 1024; // 5MB
+    // Kiểm tra kích thước file (tối đa 10MB để consistent với CV upload)
+    const maxSize = 10 * 1024 * 1024; // 10MB
     if (file.size > maxSize) {
-        throw new Error("File PDF quá lớn, tối đa 5MB");
+        throw new Error("File PDF quá lớn, tối đa 10MB");
     }
 
     const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;

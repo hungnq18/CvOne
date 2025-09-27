@@ -22,9 +22,9 @@ export async function getProfile() {
 
 export async function verifyEmail(email: string): Promise<{ token: string }> {
   console.log('Calling verify email API with:', { email })
-  console.log('API endpoint:', '/accounts/verify-email')
+  console.log('API endpoint:', '/accounts/verify-email/request')
 
-  const response = await fetchWithAuth('/accounts/verify-email', {
+  const response = await fetchWithAuth('/accounts/verify-email/request', {
     method: "POST",
     body: JSON.stringify({ email })
   })

@@ -74,6 +74,25 @@ export class AccountsService {
           account_id: savedAccount._id
         });
         this.logger.debug(`User profile ${userProfile ? 'created' : 'retrieved'} successfully`);
+
+        // Send verification email
+        try {
+          const verificationToken = crypto.randomBytes(32).toString('hex');
+          const tokenExpires = new Date();
+          tokenExpires.setHours(tokenExpires.getHours() + 24); // 24 hours
+
+          // Save token to account
+          savedAccount.emailVerificationToken = verificationToken;
+          savedAccount.emailVerificationTokenExpires = tokenExpires;
+          await savedAccount.save();
+
+          // Send verification email
+          await this.mailService.sendVerificationEmail(trimmedEmail, verificationToken);
+          this.logger.debug(`Verification email sent to ${trimmedEmail}`);
+        } catch (mailError) {
+          this.logger.error(`Failed to send verification email: ${mailError.message}`);
+          // Don't throw error here, just log it - user can still register
+        }
       } catch (error) {
         // If user creation fails, delete the account
         this.logger.error('Failed to create user profile, rolling back account creation');
