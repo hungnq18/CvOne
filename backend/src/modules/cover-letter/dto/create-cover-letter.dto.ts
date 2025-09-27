@@ -12,8 +12,4 @@ export class CreateCoverLetterDto {
   @IsObject()
   @IsNotEmpty()
   data: Record<string, any>;
-
-  @IsBoolean()
-  @IsNotEmpty()
-  isSaved: boolean;
 }

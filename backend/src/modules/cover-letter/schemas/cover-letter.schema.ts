@@ -15,7 +15,7 @@ export class CoverLetter extends Document {
   @Prop({ required: true, type: Object })
   data: Record<string, any>;
 
-  @Prop({ required: true })
+  @Prop({ type: Boolean, default: false })
   isSaved: boolean;
 }
 
