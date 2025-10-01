@@ -8,7 +8,7 @@ import {
   Post,
   Query,
   Request,
-  UseGuards
+  UseGuards,
 } from "@nestjs/common";
 import { Roles } from "src/common/decorators/roles.decorator";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
@@ -39,7 +39,7 @@ export class ApplyJobController {
   async getByUser(
     @Request() req,
     @Query("page") page = 1,
-    @Query("limit") limit = 10
+    @Query("limit") limit = 10,
   ) {
     const userId = req.user.user._id;
     return this.applyJobService.getByUser(userId, +page, +limit);
@@ -51,7 +51,7 @@ export class ApplyJobController {
   async getByHr(
     @Request() req,
     @Query("page") page = 1,
-    @Query("limit") limit = 10
+    @Query("limit") limit = 10,
   ) {
     const userId = req.user.user._id;
     return this.applyJobService.getByHr(userId, +page, +limit);
@@ -65,7 +65,7 @@ export class ApplyJobController {
     @Query("status") status: string,
     @Query("page") page = 1,
     @Query("limit") limit = 10,
-    @Request() req
+    @Request() req,
   ) {
     const userId = req.user.user._id;
     return this.applyJobService.getByJob(userId, jobId, status, +page, +limit);
@@ -87,7 +87,7 @@ export class ApplyJobController {
     @Param("status") status: string,
     @Param("day") day: number,
     @Param("month") month: number,
-    @Param("year") year: number
+    @Param("year") year: number,
   ) {
     const userId = req.user.user._id;
     return this.applyJobService.getCountApplyJobByStatus(
@@ -95,7 +95,7 @@ export class ApplyJobController {
       userId,
       day,
       month,
-      year
+      year,
     );
   }
 
@@ -115,7 +115,7 @@ export class ApplyJobController {
       userId,
       week,
       month,
-      year
+      year,
     );
   }
 
@@ -131,7 +131,7 @@ export class ApplyJobController {
   updateStatusByHr(
     @Param("id") id: string,
     @Body("status") status: string,
-    @Request() req
+    @Request() req,
   ) {
     const hrUserId = req.user.user._id;
     return this.applyJobService.updateStatusByHr(id, hrUserId, status);
@@ -143,7 +143,7 @@ export class ApplyJobController {
   updateCvOrCoverLetter(
     @Param("id") applyJobId: string,
     @Request() req,
-    @Body() body: { cvId?: string; coverletterId?: string }
+    @Body() body: { cvId?: string; coverletterId?: string },
   ) {
     const userId = req.user.user._id;
     return this.applyJobService.updateApplyJobByUser(applyJobId, userId, body);
@@ -154,7 +154,7 @@ export class ApplyJobController {
   async countByCreateAt(
     @Param("month") month: number,
     @Param("year") year: number,
-    @Request() req
+    @Request() req,
   ) {
     const userId = req.user.user._id;
     return this.applyJobService.countByCreateAt(month, year, userId);

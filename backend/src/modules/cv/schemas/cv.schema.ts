@@ -1,12 +1,12 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
+import { Document, Types } from "mongoose";
 
 @Schema({ timestamps: true })
 export class Cv extends Document {
-  @Prop({ required: true, type: Types.ObjectId, ref: 'User' })
+  @Prop({ required: true, type: Types.ObjectId, ref: "User" })
   userId: Types.ObjectId;
 
-  @Prop({ required: true, type: Types.ObjectId, ref: 'CvTemplate' })
+  @Prop({ required: true, type: Types.ObjectId, ref: "CvTemplate" })
   cvTemplateId: Types.ObjectId;
 
   @Prop({ required: true })
@@ -99,4 +99,4 @@ export class Cv extends Document {
   updatedAt: Date;
 }
 
-export const CvSchema = SchemaFactory.createForClass(Cv); 
+export const CvSchema = SchemaFactory.createForClass(Cv);

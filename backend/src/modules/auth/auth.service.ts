@@ -22,7 +22,7 @@ export class AuthService {
     @InjectModel(Account.name) private accountModel: Model<Account>,
     @InjectModel(User.name) private userModel: Model<User>,
     private jwtService: JwtService,
-    private mailService: MailService
+    private mailService: MailService,
   ) {}
 
   /**
@@ -37,7 +37,7 @@ export class AuthService {
 
     const isPasswordValid = await bcrypt.compare(
       loginDto.password,
-      account.password
+      account.password,
     );
     if (!isPasswordValid) {
       throw new UnauthorizedException("Invalid credentials");
@@ -66,7 +66,7 @@ export class AuthService {
         sub: account._id,
         email: account.email,
       },
-      { expiresIn: "1h" }
+      { expiresIn: "1h" },
     );
 
     // Send reset email using existing mail service
@@ -89,7 +89,7 @@ export class AuthService {
     // Verify current password
     const isPasswordValid = await bcrypt.compare(
       changePasswordDto.currentPassword,
-      account.password
+      account.password,
     );
     if (!isPasswordValid) {
       throw new UnauthorizedException("Current password is incorrect");

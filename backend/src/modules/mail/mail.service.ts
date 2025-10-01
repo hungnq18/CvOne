@@ -6,9 +6,9 @@ date: 2025-03-06
   The service retrieves configuration values from the ConfigService for email settings.
   MAIL_HOST, MAIL_PORT, MAIL_USER, MAIL_PASS, and MAIL_FROM are expected to be set in the environment variables.
 */
-import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import * as nodemailer from 'nodemailer';
+import { Injectable } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import * as nodemailer from "nodemailer";
 
 @Injectable()
 export class MailService {
@@ -16,23 +16,23 @@ export class MailService {
 
   constructor(private configService: ConfigService) {
     this.transporter = nodemailer.createTransport({
-      host: this.configService.get('MAIL_HOST'),
-      port: this.configService.get('MAIL_PORT'),
+      host: this.configService.get("MAIL_HOST"),
+      port: this.configService.get("MAIL_PORT"),
       secure: true,
       auth: {
-        user: this.configService.get('MAIL_USER'),
-        pass: this.configService.get('MAIL_PASS'),
+        user: this.configService.get("MAIL_USER"),
+        pass: this.configService.get("MAIL_PASS"),
       },
     });
   }
 
   async sendVerificationEmail(email: string, token: string) {
-    const verificationLink = `${this.configService.get('FRONTEND_URL')}/verify-email/check?token=${token}`;
-    
+    const verificationLink = `${this.configService.get("FRONTEND_URL")}/verify-email/check?token=${token}`;
+
     await this.transporter.sendMail({
-      from: this.configService.get('MAIL_FROM'),
+      from: this.configService.get("MAIL_FROM"),
       to: email,
-      subject: 'Verify your email',
+      subject: "Verify your email",
       html: `
         <h1>Email Verification</h1>
         <p>Please click the link below to verify your email:</p>
@@ -42,12 +42,12 @@ export class MailService {
   }
 
   async sendPasswordResetEmail(email: string, token: string) {
-    const resetLink = `${this.configService.get('FRONTEND_URL')}/reset-password?token=${token}`;
-    
+    const resetLink = `${this.configService.get("FRONTEND_URL")}/reset-password?token=${token}`;
+
     await this.transporter.sendMail({
-      from: this.configService.get('MAIL_FROM'),
+      from: this.configService.get("MAIL_FROM"),
       to: email,
-      subject: 'Reset Your Password',
+      subject: "Reset Your Password",
       html: `
         <h1>Password Reset</h1>
         <p>Please click the link below to reset your password:</p>
@@ -57,4 +57,4 @@ export class MailService {
       `,
     });
   }
-} 
+}

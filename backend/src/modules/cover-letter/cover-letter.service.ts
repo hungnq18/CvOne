@@ -11,12 +11,12 @@ export class CoverLetterService {
   constructor(
     @InjectModel(CoverLetter.name)
     private coverLetterModel: Model<CoverLetter>,
-    private openAiService: OpenAiService
+    private openAiService: OpenAiService,
   ) {}
 
   async create(
     dto: CreateCoverLetterDto,
-    userId: string
+    userId: string,
   ): Promise<CoverLetter> {
     const payload = {
       ...dto,

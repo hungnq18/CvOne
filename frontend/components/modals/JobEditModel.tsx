@@ -80,6 +80,7 @@ const JobDialog: React.FC<JobDialogProps> = ({
                 onChange={(e) =>
                   onChange({ ...job, "Job Title": e.target.value })
                 }
+                maxLength={200}
               />
               {errors?.["Job Title"] && (
                 <div className="text-red-500 text-xs mt-1">
@@ -93,6 +94,7 @@ const JobDialog: React.FC<JobDialogProps> = ({
                 id="role"
                 value={job.Role || ""}
                 onChange={(e) => onChange({ ...job, Role: e.target.value })}
+                maxLength={200}
               />
               {errors?.Role && (
                 <div className="text-red-500 text-xs mt-1">{errors.Role}</div>
@@ -125,6 +127,7 @@ const JobDialog: React.FC<JobDialogProps> = ({
                   onChange({ ...job, Qualifications: e.target.value })
                 }
                 placeholder="e.g., B.Tech, M.Tech"
+                maxLength={200}
               />
               {errors?.Qualifications && (
                 <div className="text-red-500 text-xs mt-1">
@@ -182,6 +185,7 @@ const JobDialog: React.FC<JobDialogProps> = ({
                 id="location"
                 value={job.location || ""}
                 onChange={(e) => onChange({ ...job, location: e.target.value })}
+                maxLength={200}
               />
               {errors?.location && (
                 <div className="text-red-500 text-xs mt-1">
@@ -195,6 +199,7 @@ const JobDialog: React.FC<JobDialogProps> = ({
                 id="country"
                 value={job.Country || ""}
                 onChange={(e) => onChange({ ...job, Country: e.target.value })}
+                maxLength={200}
               />
               {errors?.Country && (
                 <div className="text-red-500 text-xs mt-1">
@@ -230,14 +235,20 @@ const JobDialog: React.FC<JobDialogProps> = ({
           </div>
           <div>
             <Label htmlFor="job-description">Job Description</Label>
-            <Textarea
-              id="job-description"
-              value={job["Job Description"] || ""}
-              onChange={(e) =>
-                onChange({ ...job, "Job Description": e.target.value })
-              }
-              rows={3}
-            />
+            <div className="relative">
+              <Textarea
+                id="job-description"
+                value={job["Job Description"] || ""}
+                onChange={(e) =>
+                  onChange({ ...job, "Job Description": e.target.value })
+                }
+                rows={3}
+                maxLength={500}
+              />
+              <div className="absolute bottom-2 right-2 text-xs text-gray-400">
+                {(job["Job Description"] || "").length}/500
+              </div>
+            </div>
             {errors?.["Job Description"] && (
               <div className="text-red-500 text-xs mt-1">
                 {errors["Job Description"]}
@@ -246,14 +257,20 @@ const JobDialog: React.FC<JobDialogProps> = ({
           </div>
           <div>
             <Label htmlFor="responsibilities">Responsibilities</Label>
-            <Textarea
-              id="responsibilities"
-              value={job.Responsibilities || ""}
-              onChange={(e) =>
-                onChange({ ...job, Responsibilities: e.target.value })
-              }
-              rows={3}
-            />
+            <div className="relative">
+              <Textarea
+                id="responsibilities"
+                value={job.Responsibilities || ""}
+                onChange={(e) =>
+                  onChange({ ...job, Responsibilities: e.target.value })
+                }
+                rows={3}
+                maxLength={500}
+              />
+              <div className="absolute bottom-2 right-2 text-xs text-gray-400">
+                {(job.Responsibilities || "").length}/500
+              </div>
+            </div>
             {errors?.Responsibilities && (
               <div className="text-red-500 text-xs mt-1">
                 {errors.Responsibilities}
@@ -262,26 +279,38 @@ const JobDialog: React.FC<JobDialogProps> = ({
           </div>
           <div>
             <Label htmlFor="skills">Skills</Label>
-            <Textarea
-              id="skills"
-              value={job.skills || ""}
-              onChange={(e) => onChange({ ...job, skills: e.target.value })}
-              rows={2}
-              placeholder="Enter skills separated by commas"
-            />
+            <div className="relative">
+              <Textarea
+                id="skills"
+                value={job.skills || ""}
+                onChange={(e) => onChange({ ...job, skills: e.target.value })}
+                rows={2}
+                placeholder="Enter skills separated by commas"
+                maxLength={100}
+              />
+              <div className="absolute bottom-2 right-2 text-xs text-gray-400">
+                {(job.skills || "").length}/100
+              </div>
+            </div>
             {errors?.skills && (
               <div className="text-red-500 text-xs mt-1">{errors.skills}</div>
             )}
           </div>
           <div>
             <Label htmlFor="benefits">Benefits</Label>
-            <Textarea
-              id="benefits"
-              value={job.Benefits || ""}
-              onChange={(e) => onChange({ ...job, Benefits: e.target.value })}
-              rows={2}
-              placeholder="Enter benefits separated by commas"
-            />
+            <div className="relative">
+              <Textarea
+                id="benefits"
+                value={job.Benefits || ""}
+                onChange={(e) => onChange({ ...job, Benefits: e.target.value })}
+                rows={2}
+                placeholder="Enter benefits separated by commas"
+                maxLength={100}
+              />
+              <div className="absolute bottom-2 right-2 text-xs text-gray-400">
+                {(job.Benefits || "").length}/100
+              </div>
+            </div>
             {errors?.Benefits && (
               <div className="text-red-500 text-xs mt-1">{errors.Benefits}</div>
             )}

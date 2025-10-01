@@ -1,12 +1,12 @@
-import { Controller, Get, Param } from '@nestjs/common';
-import { Public } from '../auth/decorators/public.decorator';
-import { CvTemplateService } from './cv-template.service';
+import { Controller, Get, Param } from "@nestjs/common";
+import { Public } from "../auth/decorators/public.decorator";
+import { CvTemplateService } from "./cv-template.service";
 
 /**
  * Controller for handling CV template related requests
  * All endpoints in this controller are public (no authentication required)
  */
-@Controller('cv-templates')
+@Controller("cv-templates")
 export class CvTemplateController {
   constructor(private readonly cvTemplateService: CvTemplateService) {}
 
@@ -28,8 +28,8 @@ export class CvTemplateController {
    * @public - No authentication required
    */
   @Public()
-  @Get(':id')
-  async findOne(@Param('id') id: string) {
+  @Get(":id")
+  async findOne(@Param("id") id: string) {
     return this.cvTemplateService.findOne(id);
   }
 }

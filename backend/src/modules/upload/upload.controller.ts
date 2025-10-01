@@ -47,14 +47,14 @@ export class UploadController {
         if (!allowedTypes.includes(file.mimetype)) {
           return cb(
             new BadRequestException("Only image and PDF files are allowed!"),
-            false
+            false,
           );
         }
         cb(null, true);
       },
 
       limits: { fileSize: 5 * 1024 * 1024 }, // giới hạn 5MB
-    })
+    }),
   )
   uploadFile(@UploadedFile() file) {
     if (!file) {

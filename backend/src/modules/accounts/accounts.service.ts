@@ -7,16 +7,16 @@ import {
   InternalServerErrorException,
   Logger,
   NotFoundException,
-} from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import * as crypto from 'crypto';
-import { Model } from 'mongoose';
-import { hashPassword } from '../../utils/bcrypt.utils';
-import { MailService } from '../mail/mail.service';
-import { UsersService } from '../users/users.service';
-import { CreateAccountDto } from './dto/create-account.dto';
-import { VerifyEmailDto } from './dto/verify-email.dto';
-import { Account, AccountDocument } from './schemas/account.schema';
+} from "@nestjs/common";
+import { InjectModel } from "@nestjs/mongoose";
+import * as crypto from "crypto";
+import { Model } from "mongoose";
+import { hashPassword } from "../../utils/bcrypt.utils";
+import { MailService } from "../mail/mail.service";
+import { UsersService } from "../users/users.service";
+import { CreateAccountDto } from "./dto/create-account.dto";
+import { VerifyEmailDto } from "./dto/verify-email.dto";
+import { Account, AccountDocument } from "./schemas/account.schema";
 // ...existing code...
 @Injectable()
 export class AccountsService {
@@ -33,19 +33,23 @@ export class AccountsService {
       const { first_name, last_name, email, password, city, phone, country } =
         createAccountDto;
 
-      this.logger.debug(`Received registration data: ${JSON.stringify({ email, first_name, last_name })}`);
+      this.logger.debug(
+        `Received registration data: ${JSON.stringify({ email, first_name, last_name })}`,
+      );
 
-      if (!email || email.trim() === '') {
-        throw new ConflictException('Email is required');
+      if (!email || email.trim() === "") {
+        throw new ConflictException("Email is required");
       }
 
       const trimmedEmail = email.trim();
       this.logger.debug(`Processing registration for email: ${trimmedEmail}`);
 
       // Check if account already exists
-      const existingAccount = await this.accountModel.findOne({ email: trimmedEmail });
+      const existingAccount = await this.accountModel.findOne({
+        email: trimmedEmail,
+      });
       if (existingAccount) {
-        throw new ConflictException('Email already exists');
+        throw new ConflictException("Email already exists");
       }
 
       // Hash password
@@ -56,12 +60,14 @@ export class AccountsService {
         email: trimmedEmail,
         password: hashedPassword,
         isEmailVerified: false,
-        role: 'user'
+        role: "user",
       });
 
-      this.logger.debug('Saving new account...');
+      this.logger.debug("Saving new account...");
       const savedAccount = await newAccount.save();
-      this.logger.debug(`Account saved successfully with email: ${savedAccount.email}`);
+      this.logger.debug(
+        `Account saved successfully with email: ${savedAccount.email}`,
+      );
 
       try {
         // Create user profile
@@ -69,14 +75,18 @@ export class AccountsService {
           first_name,
           last_name,
           phone: phone ?? 0,
-          city: city ?? '',
-          country: country ?? '',
-          account_id: savedAccount._id
+          city: city ?? "",
+          country: country ?? "",
+          account_id: savedAccount._id,
         });
-        this.logger.debug(`User profile ${userProfile ? 'created' : 'retrieved'} successfully`);
+        this.logger.debug(
+          `User profile ${userProfile ? "created" : "retrieved"} successfully`,
+        );
       } catch (error) {
         // If user creation fails, delete the account
-        this.logger.error('Failed to create user profile, rolling back account creation');
+        this.logger.error(
+          "Failed to create user profile, rolling back account creation",
+        );
         await this.accountModel.findByIdAndDelete(savedAccount._id);
         throw error;
       }
@@ -87,16 +97,29 @@ export class AccountsService {
       if (error instanceof ConflictException) {
         throw error;
       }
-      throw new InternalServerErrorException(`Registration failed: ${error.message}`);
+      throw new InternalServerErrorException(
+        `Registration failed: ${error.message}`,
+      );
     }
   }
 
   async registerByAdmin(createAccountDto: CreateAccountDto): Promise<Account> {
-    const { first_name, last_name, email, password, role, city, phone, country } = createAccountDto;
+    const {
+      first_name,
+      last_name,
+      email,
+      password,
+      role,
+      city,
+      phone,
+      country,
+    } = createAccountDto;
 
-    const existingAccount = await this.accountModel.findOne({ email: email.trim() });
+    const existingAccount = await this.accountModel.findOne({
+      email: email.trim(),
+    });
     if (existingAccount) {
-      throw new ConflictException('Email already exists');
+      throw new ConflictException("Email already exists");
     }
 
     const hashedPassword = await hashPassword(password);
@@ -105,7 +128,7 @@ export class AccountsService {
       email: email.trim(),
       password: hashedPassword,
       isEmailVerified: true, // Directly verify the email
-      role: role || 'user' // Use provided role or default to 'user'
+      role: role || "user", // Use provided role or default to 'user'
     });
 
     const savedAccount = await newAccount.save();
@@ -115,9 +138,9 @@ export class AccountsService {
         first_name,
         last_name,
         phone: phone ?? 0,
-        city: city ?? '',
-        country: country ?? '',
-        account_id: savedAccount._id
+        city: city ?? "",
+        country: country ?? "",
+        account_id: savedAccount._id,
       });
     } catch (error) {
       await this.accountModel.findByIdAndDelete(savedAccount._id);
@@ -133,15 +156,15 @@ export class AccountsService {
     // Find account
     const account = await this.accountModel.findOne({ email });
     if (!account) {
-      throw new NotFoundException('Account not found');
+      throw new NotFoundException("Account not found");
     }
 
     if (account.isEmailVerified) {
-      throw new ConflictException('Email already verified');
+      throw new ConflictException("Email already verified");
     }
 
     // Generate verification token
-    const token = crypto.randomBytes(32).toString('hex');
+    const token = crypto.randomBytes(32).toString("hex");
     const expires = new Date();
     expires.setHours(expires.getHours() + 24); // Token expires in 24 hours
 
@@ -153,43 +176,50 @@ export class AccountsService {
     // Send verification email
     await this.mailService.sendVerificationEmail(email, token);
 
-    return { message: 'Verification email sent' };
+    return { message: "Verification email sent" };
   }
 
   async verifyEmail(token: string) {
-    console.log('Verifying email with token:', token);
+    console.log("Verifying email with token:", token);
 
     // Tìm account với token
     const account = await this.accountModel.findOne({
-      emailVerificationToken: token
+      emailVerificationToken: token,
     });
 
-    console.log('Found account:', account ? {
-      id: account._id,
-      email: account.email,
-      isVerified: account.isEmailVerified,
-      tokenExpires: account.emailVerificationTokenExpires
-    } : 'no account found');
+    console.log(
+      "Found account:",
+      account
+        ? {
+            id: account._id,
+            email: account.email,
+            isVerified: account.isEmailVerified,
+            tokenExpires: account.emailVerificationTokenExpires,
+          }
+        : "no account found",
+    );
 
     // Nếu không tìm thấy account hoặc token không khớp
     if (!account) {
-      console.log('No account found with this token');
+      console.log("No account found with this token");
       return {
         success: false,
-        message: 'Invalid verification token'
+        message: "Invalid verification token",
       };
     }
 
     // Kiểm tra token hết hạn
-    if (!account.emailVerificationTokenExpires ||
-        account.emailVerificationTokenExpires < new Date()) {
-      console.log('Token is expired:', {
+    if (
+      !account.emailVerificationTokenExpires ||
+      account.emailVerificationTokenExpires < new Date()
+    ) {
+      console.log("Token is expired:", {
         tokenExpires: account.emailVerificationTokenExpires,
-        currentTime: new Date()
+        currentTime: new Date(),
       });
       return {
         success: false,
-        message: 'Verification token has expired'
+        message: "Verification token has expired",
       };
     }
 
@@ -199,14 +229,14 @@ export class AccountsService {
     account.emailVerificationTokenExpires = null;
     await account.save();
 
-    console.log('Account verified successfully:', {
+    console.log("Account verified successfully:", {
       id: account._id,
-      email: account.email
+      email: account.email,
     });
 
     return {
       success: true,
-      message: 'Email verified successfully'
+      message: "Email verified successfully",
     };
   }
 
@@ -217,12 +247,12 @@ export class AccountsService {
   async updateRole(accountId: string, role: string): Promise<Account> {
     const account = await this.accountModel.findById(accountId);
     if (!account) {
-      throw new NotFoundException('Account not found');
+      throw new NotFoundException("Account not found");
     }
 
-    const allowedRoles = ['admin', 'user', 'hr'];
+    const allowedRoles = ["admin", "user", "hr"];
     if (!allowedRoles.includes(role)) {
-      throw new BadRequestException('Invalid role specified');
+      throw new BadRequestException("Invalid role specified");
     }
 
     account.role = role;
@@ -232,7 +262,7 @@ export class AccountsService {
   async deleteAccount(accountId: string): Promise<{ deleted: boolean }> {
     const result = await this.accountModel.findByIdAndDelete(accountId).exec();
     if (!result) {
-      throw new NotFoundException('Account not found');
+      throw new NotFoundException("Account not found");
     }
     return { deleted: true };
   }

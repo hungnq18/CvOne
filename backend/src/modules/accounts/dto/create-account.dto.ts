@@ -1,8 +1,14 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { Transform } from 'class-transformer';
-import { IsEmail, IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validator';
+import { ApiProperty } from "@nestjs/swagger";
+import { Transform } from "class-transformer";
+import {
+  IsEmail,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  MinLength,
+} from "class-validator";
 export class CreateAccountDto {
-@IsEmail()
+  @IsEmail()
   @IsNotEmpty()
   @ApiProperty()
   email: string;
@@ -34,7 +40,7 @@ export class CreateAccountDto {
   @ApiProperty()
   country?: string;
 
-   @IsString()
+  @IsString()
   @IsOptional()
   @Transform(({ value }) => value || undefined)
   @ApiProperty()

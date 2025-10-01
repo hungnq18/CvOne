@@ -27,7 +27,7 @@ export class SavedJobController {
   async getSavedJobs(
     @Request() req,
     @Query("page") page = 1,
-    @Query("limit") limit = 10
+    @Query("limit") limit = 10,
   ) {
     const userId = req.user.user._id;
     return this.savedJobService.getSavedJobs(userId, +page, +limit);

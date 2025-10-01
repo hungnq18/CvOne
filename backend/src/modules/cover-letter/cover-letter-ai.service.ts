@@ -23,7 +23,7 @@ export class CoverLetterAiService {
 
   async generateCoverLetterByAi(
     createClAi: CreateGenerateCoverLetterDto,
-    jdPath: string
+    jdPath: string,
   ) {
     try {
       const {
@@ -114,7 +114,9 @@ Rules:
         throw new Error("No response from OpenAI");
       }
 
-      const cleanedResponse = response.replace(/```json/g, "").replace(/```/g, "");
+      const cleanedResponse = response
+        .replace(/```json/g, "")
+        .replace(/```/g, "");
 
       const { subject, opening, body, callToAction } =
         JSON.parse(cleanedResponse);
@@ -158,7 +160,7 @@ Rules:
   async extractCoverLetterFromPdf(
     coverLetterPath: string,
     jdPath: string,
-    templateId: string
+    templateId: string,
   ) {
     // 1. Validate file existence
     if (!fs.existsSync(coverLetterPath)) {

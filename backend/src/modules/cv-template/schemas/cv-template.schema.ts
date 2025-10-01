@@ -1,5 +1,5 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
+import { Document } from "mongoose";
 /**s
  * Schema definition for CV Template
  * Represents the structure of a CV template in the database
@@ -36,4 +36,4 @@ export class CvTemplate extends Document {
   data: Record<string, any>;
 }
 
-export const CvTemplateSchema = SchemaFactory.createForClass(CvTemplate); 
+export const CvTemplateSchema = SchemaFactory.createForClass(CvTemplate);
