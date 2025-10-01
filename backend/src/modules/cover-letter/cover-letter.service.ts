@@ -12,18 +12,16 @@ export class CoverLetterService {
     @InjectModel(CoverLetter.name)
     private coverLetterModel: Model<CoverLetter>,
     private openAiService: OpenAiService,
-  ) {}
+  ) { }
 
-  async create(
-    dto: CreateCoverLetterDto,
-    userId: string,
-  ): Promise<CoverLetter> {
+  async create(dto: CreateCoverLetterDto, userId: string): Promise<any> {
     const payload = {
       ...dto,
       templateId: new Types.ObjectId(dto.templateId),
       userId: new Types.ObjectId(userId),
     };
-    return this.coverLetterModel.create(payload);
+    await this.coverLetterModel.create(payload);
+    return { message: "Create cover letter successfully" };
   }
 
   async findAll(userId: string): Promise<CoverLetter[]> {

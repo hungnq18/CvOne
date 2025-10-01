@@ -28,6 +28,7 @@ export class OpenAiService {
   /**
    * Analyze job description using OpenAI
    */
+
   async analyzeJobDescription(jobDescription: string): Promise<{
     requiredSkills: string[];
     experienceLevel: string;
@@ -986,4 +987,5 @@ Không giải thích, không markdown.
       return Array(count).fill(fallback);
     }
   }
+  async test() {}
 }

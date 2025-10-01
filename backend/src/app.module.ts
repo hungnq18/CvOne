@@ -21,6 +21,7 @@ import { ApplyJobModule } from "./modules/apply-job/apply-job.module";
 import { SavedJobModule } from "./modules/saved-job/saved-job.module";
 import { UploadModule } from "./modules/upload/upload.module";
 import { ScheduleModule } from "@nestjs/schedule";
+import { FilesModule } from "./modules/files/files.module";
 @Module({
   imports: [
     ScheduleModule.forRoot(),
@@ -40,6 +41,7 @@ import { ScheduleModule } from "@nestjs/schedule";
     MailModule,
     UsersModule,
     CvTemplateModule,
+    FilesModule,
     CvModule,
     JobsModule,
     ChatModule,
@@ -77,4 +79,4 @@ import { ScheduleModule } from "@nestjs/schedule";
     ApplyJobModule,
   ],
 })
-export class AppModule {}
+export class AppModule { }

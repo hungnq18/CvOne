@@ -26,7 +26,7 @@ export class AccountsService {
     @InjectModel(Account.name) private accountModel: Model<AccountDocument>,
     private mailService: MailService,
     @Inject(forwardRef(() => UsersService)) private usersService: UsersService, // Sửa ở đây
-  ) {}
+  ) { }
 
   async register(createAccountDto: CreateAccountDto): Promise<Account> {
     try {
@@ -79,9 +79,26 @@ export class AccountsService {
           country: country ?? "",
           account_id: savedAccount._id,
         });
-        this.logger.debug(
-          `User profile ${userProfile ? "created" : "retrieved"} successfully`,
-        );
+        this.logger.debug(`User profile ${userProfile ? 'created' : 'retrieved'} successfully`);
+
+        // Send verification email
+        try {
+          const verificationToken = crypto.randomBytes(32).toString('hex');
+          const tokenExpires = new Date();
+          tokenExpires.setHours(tokenExpires.getHours() + 24); // 24 hours
+
+          // Save token to account
+          savedAccount.emailVerificationToken = verificationToken;
+          savedAccount.emailVerificationTokenExpires = tokenExpires;
+          await savedAccount.save();
+
+          // Send verification email
+          await this.mailService.sendVerificationEmail(trimmedEmail, verificationToken);
+          this.logger.debug(`Verification email sent to ${trimmedEmail}`);
+        } catch (mailError) {
+          this.logger.error(`Failed to send verification email: ${mailError.message}`);
+          // Don't throw error here, just log it - user can still register
+        }
       } catch (error) {
         // If user creation fails, delete the account
         this.logger.error(
@@ -191,11 +208,11 @@ export class AccountsService {
       "Found account:",
       account
         ? {
-            id: account._id,
-            email: account.email,
-            isVerified: account.isEmailVerified,
-            tokenExpires: account.emailVerificationTokenExpires,
-          }
+          id: account._id,
+          email: account.email,
+          isVerified: account.isEmailVerified,
+          tokenExpires: account.emailVerificationTokenExpires,
+        }
         : "no account found",
     );
 

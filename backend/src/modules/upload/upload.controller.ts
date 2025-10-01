@@ -10,15 +10,15 @@ import {
   UseInterceptors,
 } from "@nestjs/common";
 import { FileInterceptor } from "@nestjs/platform-express";
-import { diskStorage } from "multer";
-import { UploadService } from "./upload.service";
-import { extname, join } from "path";
-import { existsSync } from "fs";
 import { Response } from "express";
+import { existsSync } from "fs";
+import { diskStorage } from "multer";
+import { extname, join } from "path";
+import { UploadService } from "./upload.service";
 
 @Controller("upload")
 export class UploadController {
-  constructor(private readonly uploadService: UploadService) {}
+  constructor(private readonly uploadService: UploadService) { }
 
   @Post()
   @UseInterceptors(
@@ -53,8 +53,8 @@ export class UploadController {
         cb(null, true);
       },
 
-      limits: { fileSize: 5 * 1024 * 1024 }, // giới hạn 5MB
-    }),
+      limits: { fileSize: 10 * 1024 * 1024 }, // giới hạn 10MB để consistent với CV upload
+    })
   )
   uploadFile(@UploadedFile() file) {
     if (!file) {
