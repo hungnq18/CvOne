@@ -1,10 +1,4 @@
-import {
-  Body,
-  Controller,
-  Post,
-  Request,
-  UseGuards
-} from "@nestjs/common";
+import { Body, Controller, Post, Request, UseGuards } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { Roles } from "../../common/decorators/roles.decorator";
 import { AccountsService } from "../accounts/accounts.service";

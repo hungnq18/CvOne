@@ -29,7 +29,7 @@ export class JobsController {
   constructor(
     private readonly jobsService: JobsService,
     private readonly cvAiService: CvAiService,
-  ) { }
+  ) {}
 
   @Post("analyze-jd-pdf")
   @UseInterceptors(

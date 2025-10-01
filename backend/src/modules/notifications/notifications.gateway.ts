@@ -14,7 +14,7 @@ export class NotificationsGateway {
   @SubscribeMessage("joinNotificationRoom")
   handleJoinNotificationRoom(
     @MessageBody() userId: string,
-    @ConnectedSocket() client: Socket
+    @ConnectedSocket() client: Socket,
   ) {
     client.join(`${userId}`);
   }
@@ -26,7 +26,7 @@ export class NotificationsGateway {
   @SubscribeMessage("leaveNotificationRoom")
   handleLeaveNotificationRoom(
     @MessageBody() userId: string,
-    @ConnectedSocket() client: Socket
+    @ConnectedSocket() client: Socket,
   ) {
     client.leave(`${userId}`);
   }

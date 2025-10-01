@@ -1,7 +1,7 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { CvTemplate } from './schemas/cv-template.schema';
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { InjectModel } from "@nestjs/mongoose";
+import { Model } from "mongoose";
+import { CvTemplate } from "./schemas/cv-template.schema";
 
 /**
  * Service for handling CV template business logic
@@ -34,4 +34,4 @@ export class CvTemplateService {
     }
     return template;
   }
-} 
+}

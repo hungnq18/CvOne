@@ -11,8 +11,8 @@ export class CoverLetterService {
   constructor(
     @InjectModel(CoverLetter.name)
     private coverLetterModel: Model<CoverLetter>,
-    private openAiService: OpenAiService
-  ) {}
+    private openAiService: OpenAiService,
+  ) { }
 
   async create(dto: CreateCoverLetterDto, userId: string): Promise<any> {
     const payload = {

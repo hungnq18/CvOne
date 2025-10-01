@@ -11,7 +11,7 @@ import { SavedJob, SavedJobDocument } from "./schemas/saved-job.schema";
 export class SavedJobService {
   constructor(
     @InjectModel(SavedJob.name)
-    private readonly savedJobModel: Model<SavedJobDocument>
+    private readonly savedJobModel: Model<SavedJobDocument>,
   ) {}
 
   async saveJob(userId: string, jobId: string): Promise<SavedJob> {
@@ -33,7 +33,7 @@ export class SavedJobService {
   async getSavedJobs(
     userId: string,
     page = 1,
-    limit = 10
+    limit = 10,
   ): Promise<{
     data: SavedJob[];
     total: number;
@@ -63,7 +63,7 @@ export class SavedJobService {
 
   async unsaveJob(
     userId: string,
-    jobId: string
+    jobId: string,
   ): Promise<{ message: string; status: string }> {
     const deleted = await this.savedJobModel.findOneAndDelete({
       userId: new Types.ObjectId(userId),

@@ -23,11 +23,11 @@ export class ConversationController {
   @Get(":conversationId")
   async getConversationDetail(
     @User("_id") userId: string,
-    @Param("conversationId") conversationId: string
+    @Param("conversationId") conversationId: string,
   ) {
     return this.conversationService.getConversationDetail(
       conversationId,
-      userId
+      userId,
     );
   }
 }

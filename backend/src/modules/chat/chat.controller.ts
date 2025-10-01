@@ -11,7 +11,7 @@ import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 
 @Controller("chat")
 export class ChatController {
-  constructor(private readonly chatService: ChatService) { }
+  constructor(private readonly chatService: ChatService) {}
 
   @UseGuards(JwtAuthGuard)
   @Get("messages/:conversationId")

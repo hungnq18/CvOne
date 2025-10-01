@@ -36,7 +36,7 @@ export class CvController {
     private readonly cvService: CvService,
     private readonly cvAiService: CvAiService,
     private readonly cvUploadService: CvUploadService
-  ) {}
+  ) { }
 
   /**
    * Get all CVs for the authenticated user

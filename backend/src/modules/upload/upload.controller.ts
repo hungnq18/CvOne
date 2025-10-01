@@ -1,13 +1,13 @@
 import {
-    BadRequestException,
-    Controller,
-    Get,
-    NotFoundException,
-    Param,
-    Post,
-    Res,
-    UploadedFile,
-    UseInterceptors,
+  BadRequestException,
+  Controller,
+  Get,
+  NotFoundException,
+  Param,
+  Post,
+  Res,
+  UploadedFile,
+  UseInterceptors,
 } from "@nestjs/common";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { Response } from "express";
@@ -18,7 +18,7 @@ import { UploadService } from "./upload.service";
 
 @Controller("upload")
 export class UploadController {
-  constructor(private readonly uploadService: UploadService) {}
+  constructor(private readonly uploadService: UploadService) { }
 
   @Post()
   @UseInterceptors(
@@ -47,7 +47,7 @@ export class UploadController {
         if (!allowedTypes.includes(file.mimetype)) {
           return cb(
             new BadRequestException("Only image and PDF files are allowed!"),
-            false
+            false,
           );
         }
         cb(null, true);

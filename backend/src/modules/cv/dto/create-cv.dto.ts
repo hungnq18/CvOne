@@ -1,5 +1,5 @@
-import { IsMongoId, IsNotEmpty, IsObject, IsString } from 'class-validator';
-import { Types } from 'mongoose';
+import { IsMongoId, IsNotEmpty, IsObject, IsString } from "class-validator";
+import { Types } from "mongoose";
 
 export class CreateCvDto {
   @IsMongoId()
@@ -13,4 +13,4 @@ export class CreateCvDto {
   @IsObject()
   @IsNotEmpty()
   content: Record<string, any>;
-} 
+}

@@ -12,7 +12,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
     private configService: ConfigService,
     @InjectModel(Account.name) private accountModel: Model<Account>,
-    @InjectModel(User.name) private userModel: Model<User>
+    @InjectModel(User.name) private userModel: Model<User>,
   ) {
     const secret = configService.get<string>("JWT_SECRET");
     if (!secret) {

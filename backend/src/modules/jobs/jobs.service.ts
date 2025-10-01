@@ -12,7 +12,7 @@ import { CreateNotificationDto } from "../notifications/dto/create-notification.
 export class JobsService {
   constructor(
     @InjectModel(Job.name) private jobModel: Model<JobDocument>,
-    private notificationService: NotificationsService
+    private notificationService: NotificationsService,
   ) {}
 
   async findAll(page: number = 1, limit: number = 10): Promise<JobDocument[]> {
@@ -67,7 +67,7 @@ export class JobsService {
   async countJobsByPostingDate(
     month: number,
     year: number,
-    userId: string
+    userId: string,
   ): Promise<number> {
     const startDate = new Date(year, month - 1, 1); // Ngày đầu tháng
     const endDate = new Date(year, month, 1); // Ngày đầu tháng kế tiếp
@@ -84,7 +84,7 @@ export class JobsService {
   async getJobsByHr(
     userId: string,
     page: number = 1,
-    limit: number = 10
+    limit: number = 10,
   ): Promise<{
     data: JobDocument[];
     total: number;
@@ -147,7 +147,7 @@ export class JobsService {
 
       await this.notificationService.createNotification(
         dto,
-        hrUser._id.toString()
+        hrUser._id.toString(),
       );
     }
   }

@@ -1,5 +1,5 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
+import { Document, Types } from "mongoose";
 
 export type AccountDocument = Account & Document;
 
@@ -13,7 +13,7 @@ export class Account {
   @Prop({ required: true })
   password: string;
 
-  @Prop({ default: 'user' })
+  @Prop({ default: "user" })
   role: string;
 
   @Prop({ default: false })
@@ -32,4 +32,4 @@ export class Account {
   createdAt: Date;
 }
 
-export const AccountSchema = SchemaFactory.createForClass(Account); 
+export const AccountSchema = SchemaFactory.createForClass(Account);

@@ -21,7 +21,7 @@ export class ChatGateway {
     private readonly notificationsService: NotificationsService,
     private readonly notificationsGateway: NotificationsGateway,
     private readonly convModel: ConversationService,
-  ) { }
+  ) {}
 
   @SubscribeMessage("sendMessage")
   async handleSendMessage(

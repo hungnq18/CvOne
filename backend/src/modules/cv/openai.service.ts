@@ -12,7 +12,7 @@ export class OpenAiService {
 
   constructor(
     private configService: ConfigService,
-    @InjectModel(User.name) private userModel: Model<User>
+    @InjectModel(User.name) private userModel: Model<User>,
   ) {
     const apiKey = this.configService.get<string>("OPENAI_API_KEY");
     if (!apiKey) {
@@ -114,7 +114,7 @@ Return only valid JSON without any additional text.
     } catch (error) {
       this.logger.error(
         `Error analyzing job description: ${error.message}`,
-        error.stack
+        error.stack,
       );
 
       // Check if it's a quota exceeded error
@@ -134,7 +134,7 @@ Return only valid JSON without any additional text.
   async generateProfessionalSummary(
     userProfile: any,
     jobAnalysis: any,
-    additionalRequirements?: string
+    additionalRequirements?: string,
   ): Promise<string[]> {
     try {
       const prompt = `
@@ -187,7 +187,7 @@ Do not include any explanation or markdown, only valid JSON.
         // max_tokens: 400,
       });
 
-      let response = completion.choices[0]?.message?.content;
+      const response = completion.choices[0]?.message?.content;
       if (!response) {
         throw new Error("No response from OpenAI");
       }
@@ -213,12 +213,12 @@ Do not include any explanation or markdown, only valid JSON.
     } catch (error) {
       this.logger.error(
         `Error generating professional summary: ${error.message}`,
-        error.stack
+        error.stack,
       );
       // fallback: return 3 copies of fallback summary
       const fallback = this.generateFallbackSummary(
         userProfile,
-        jobAnalysis || {}
+        jobAnalysis || {},
       );
       return [fallback, fallback, fallback];
     }
@@ -229,7 +229,7 @@ Do not include any explanation or markdown, only valid JSON.
    */
   async generateWorkExperience(
     jobAnalysis: any,
-    experienceLevel: string
+    experienceLevel: string,
   ): Promise<
     Array<{
       title: string;
@@ -247,7 +247,7 @@ Do not include any explanation or markdown, only valid JSON.
             ? 3
             : 1;
       const startDate = new Date(
-        Date.now() - years * 365 * 24 * 60 * 60 * 1000
+        Date.now() - years * 365 * 24 * 60 * 60 * 1000,
       );
       const endDate = new Date();
 
@@ -314,19 +314,19 @@ Return only valid JSON.
     } catch (error) {
       this.logger.error(
         `Error generating work experience: ${error.message}`,
-        error.stack
+        error.stack,
       );
 
       // Check if it's a quota exceeded error
       if (error.message.includes("429") || error.message.includes("quota")) {
         this.logger.warn(
-          "OpenAI quota exceeded, using fallback work experience"
+          "OpenAI quota exceeded, using fallback work experience",
         );
       }
 
       return this.generateFallbackWorkExperience(
         jobAnalysis || {},
-        experienceLevel
+        experienceLevel,
       );
     }
   }
@@ -336,7 +336,7 @@ Return only valid JSON.
    */
   async generateSkillsSection(
     jobAnalysis: any,
-    userSkills?: Array<{ name: string; rating: number }>
+    userSkills?: Array<{ name: string; rating: number }>,
   ): Promise<Array<Array<{ name: string; rating: number }>>> {
     try {
       const existingSkills =
@@ -394,7 +394,7 @@ Do not include any explanation or markdown, only valid JSON.
         // max_tokens: 1000,
       });
 
-      let response = completion.choices[0]?.message?.content;
+      const response = completion.choices[0]?.message?.content;
       if (!response) {
         throw new Error("No response from OpenAI");
       }
@@ -422,12 +422,12 @@ Do not include any explanation or markdown, only valid JSON.
         // Lọc và gán lại rating nếu có trong userSkills
         return list
           .filter((skillObj) =>
-            validSkills.includes(skillObj.name.toLowerCase())
+            validSkills.includes(skillObj.name.toLowerCase()),
           )
           .map((skillObj) => {
             if (userSkills) {
               const found = userSkills.find(
-                (s) => s.name.toLowerCase() === skillObj.name.toLowerCase()
+                (s) => s.name.toLowerCase() === skillObj.name.toLowerCase(),
               );
               if (found) {
                 return { ...skillObj, rating: found.rating };
@@ -444,7 +444,7 @@ Do not include any explanation or markdown, only valid JSON.
     } catch (error) {
       this.logger.error(
         `Error generating skills section: ${error.message}`,
-        error.stack
+        error.stack,
       );
       // fallback: return 3 copies of fallback skills
       const fallback = this.generateFallbackSkills(jobAnalysis || {});
@@ -540,7 +540,7 @@ Do not include any explanation or markdown, only valid JSON.
 
   private generateFallbackWorkExperience(
     jobAnalysis: any,
-    experienceLevel: string
+    experienceLevel: string,
   ): Array<any> {
     const years =
       experienceLevel === "senior"
@@ -564,7 +564,7 @@ Do not include any explanation or markdown, only valid JSON.
   }
 
   private generateFallbackSkills(
-    jobAnalysis: any
+    jobAnalysis: any,
   ): Array<{ name: string; rating: number }> {
     const allSkills = [
       ...(jobAnalysis?.requiredSkills || []),
@@ -722,7 +722,7 @@ Return only valid JSON without any additional text.
     } catch (error) {
       this.logger.error(
         `Error analyzing CV content: ${error.message}`,
-        error.stack
+        error.stack,
       );
 
       // Check if it's a quota exceeded error
@@ -741,7 +741,7 @@ Return only valid JSON without any additional text.
    */
   async rewriteWorkDescription(
     description: string,
-    language?: string
+    language?: string,
   ): Promise<string> {
     try {
       let languageNote = "";
@@ -778,7 +778,7 @@ Return only the rewritten description, no explanation, no markdown.
         // temperature: 0.5,
         // max_tokens: 300,
       });
-      let response = completion.choices[0]?.message?.content;
+      const response = completion.choices[0]?.message?.content;
       if (!response) {
         throw new Error("No response from OpenAI");
       }
@@ -794,7 +794,7 @@ Return only the rewritten description, no explanation, no markdown.
     } catch (error) {
       this.logger.error(
         `Error rewriting work description: ${error.message}`,
-        error.stack
+        error.stack,
       );
       throw error;
     }
@@ -850,7 +850,7 @@ Return only the rewritten description, no explanation, no markdown.
    */
   async generateProfessionalSummaryVi(
     jobAnalysis: any,
-    additionalRequirements?: string
+    additionalRequirements?: string,
   ): Promise<string> {
     try {
       const prompt = `
@@ -885,7 +885,7 @@ Chỉ trả về đoạn summary, không giải thích, không markdown.
         ],
       });
 
-      let response = completion.choices[0]?.message?.content;
+      const response = completion.choices[0]?.message?.content;
       if (!response) {
         throw new Error("No response from OpenAI");
       }
@@ -901,7 +901,7 @@ Chỉ trả về đoạn summary, không giải thích, không markdown.
     } catch (error) {
       this.logger.error(
         `Error generating Vietnamese professional summary: ${error.message}`,
-        error.stack
+        error.stack,
       );
       return "Ứng viên có kỹ năng và kinh nghiệm phù hợp với yêu cầu công việc, sẵn sàng đóng góp và phát triển trong môi trường chuyên nghiệp.";
     }
@@ -913,7 +913,7 @@ Chỉ trả về đoạn summary, không giải thích, không markdown.
   async generateProfessionalSummariesVi(
     jobAnalysis: any,
     additionalRequirements?: string,
-    count: number = 3
+    count: number = 3,
   ): Promise<string[]> {
     try {
       const prompt = `
@@ -954,7 +954,7 @@ Không giải thích, không markdown.
         ],
       });
 
-      let response = completion.choices[0]?.message?.content;
+      const response = completion.choices[0]?.message?.content;
       if (!response) {
         throw new Error("No response from OpenAI");
       }
@@ -979,7 +979,7 @@ Không giải thích, không markdown.
     } catch (error) {
       this.logger.error(
         `Error generating Vietnamese professional summaries: ${error.message}`,
-        error.stack
+        error.stack,
       );
       // fallback: return nhiều bản giống nhau
       const fallback =

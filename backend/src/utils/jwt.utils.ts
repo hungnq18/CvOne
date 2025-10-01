@@ -5,7 +5,7 @@ import { User } from "src/modules/users/schemas/user.schema";
 export const generateJwtToken = (
   jwtService: JwtService,
   account: Account,
-  user?: User | null
+  user?: User | null,
 ) => {
   const payload = {
     sub: account._id,

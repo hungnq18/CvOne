@@ -1,5 +1,5 @@
-import { IsMongoId, IsNotEmpty, IsString } from 'class-validator';
-import { Types } from 'mongoose';
+import { IsMongoId, IsNotEmpty, IsString } from "class-validator";
+import { Types } from "mongoose";
 
 export class CreateUserDto {
   @IsMongoId()
@@ -16,10 +16,10 @@ export class CreateUserDto {
 
   @IsString()
   phone: number;
-  
-  @IsString()
-  city:string;
 
   @IsString()
-  country:string;
-} 
+  city: string;
+
+  @IsString()
+  country: string;
+}

@@ -1,13 +1,13 @@
-import { Module } from '@nestjs/common';
-import { MongooseModule } from '@nestjs/mongoose';
-import { CvTemplateController } from './cv-template.controller';
-import { CvTemplateService } from './cv-template.service';
-import { CvTemplate, CvTemplateSchema } from './schemas/cv-template.schema';
+import { Module } from "@nestjs/common";
+import { MongooseModule } from "@nestjs/mongoose";
+import { CvTemplateController } from "./cv-template.controller";
+import { CvTemplateService } from "./cv-template.service";
+import { CvTemplate, CvTemplateSchema } from "./schemas/cv-template.schema";
 
 /**
  * Module for CV Template functionality
  * Registers all necessary components for CV template management
- * 
+ *
  * Components:
  * - Controller: Handles HTTP requests
  * - Service: Contains business logic
@@ -24,4 +24,4 @@ import { CvTemplate, CvTemplateSchema } from './schemas/cv-template.schema';
   providers: [CvTemplateService],
   exports: [CvTemplateService], // Export service for use in other modules
 })
-export class CvTemplateModule {} 
+export class CvTemplateModule {}

@@ -15,7 +15,7 @@ export class NotificationsService {
     @InjectModel(Notification.name)
     private notificationModel: Model<NotificationDocument>,
     private readonly notificationsGateway: NotificationsGateway, // ✅ Inject Gateway
-  ) { }
+  ) {}
 
   async createNotification(
     dto: CreateNotificationDto,

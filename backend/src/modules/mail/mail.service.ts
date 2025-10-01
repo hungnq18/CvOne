@@ -6,9 +6,9 @@ date: 2025-03-06
   The service retrieves configuration values from the ConfigService for email settings.
   MAIL_HOST, MAIL_PORT, MAIL_USER, MAIL_PASS, and MAIL_FROM are expected to be set in the environment variables.
 */
-import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import * as nodemailer from 'nodemailer';
+import { Injectable } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import * as nodemailer from "nodemailer";
 
 @Injectable()
 export class MailService {
@@ -55,7 +55,7 @@ export class MailService {
     }
 
     const verificationLink = `${this.configService.get('FRONTEND_URL')}/verify-email/check?token=${token}`;
-    
+
     try {
       await this.transporter.sendMail({
         from: this.configService.get('MAIL_FROM'),
@@ -81,7 +81,7 @@ export class MailService {
     }
 
     const resetLink = `${this.configService.get('FRONTEND_URL')}/reset-password?token=${token}`;
-    
+
     try {
       await this.transporter.sendMail({
         from: this.configService.get('MAIL_FROM'),
@@ -101,4 +101,4 @@ export class MailService {
       throw new Error('Failed to send password reset email. Please try again later.');
     }
   }
-} 
+}

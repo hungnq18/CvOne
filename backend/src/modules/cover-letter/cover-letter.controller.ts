@@ -20,7 +20,7 @@ import { UpdateCoverLetterDto } from "./dto/update-cover-letter.dto";
 export class CoverLetterController {
   constructor(
     private readonly coverLetterService: CoverLetterService,
-    private coverLetterAiService: CoverLetterAiService
+    private coverLetterAiService: CoverLetterAiService,
   ) {}
 
   @UseGuards(JwtAuthGuard)
@@ -59,7 +59,7 @@ export class CoverLetterController {
     const jdPath = path.join(
       process.cwd(),
       "uploads/",
-      dto.jobDescriptionFileName
+      dto.jobDescriptionFileName,
     );
     return this.coverLetterAiService.generateCoverLetterByAi(dto, jdPath);
   }
@@ -72,24 +72,24 @@ export class CoverLetterController {
       coverLetterFileName: string;
       jobDescriptionFileName: string;
       templateId: string;
-    }
+    },
   ) {
     const coverLetterPath = path.join(
       process.cwd(),
       "uploads/",
-      body.coverLetterFileName
+      body.coverLetterFileName,
     );
 
     const jdPath = path.join(
       process.cwd(),
       "uploads/",
-      body.jobDescriptionFileName
+      body.jobDescriptionFileName,
     );
 
     return this.coverLetterAiService.extractCoverLetterFromPdf(
       coverLetterPath,
       jdPath,
-      body.templateId
+      body.templateId,
     );
   }
 }

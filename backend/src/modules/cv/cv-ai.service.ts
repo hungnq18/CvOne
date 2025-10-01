@@ -3,15 +3,15 @@ import { InjectModel } from "@nestjs/mongoose";
 import * as fs from "fs";
 import { Model } from "mongoose";
 import * as path from "path";
-import { ColorTypes, PDFDocument } from 'pdf-lib';
+import { ColorTypes, PDFDocument } from "pdf-lib";
 import * as pdf from "pdf-parse";
-import * as puppeteer from 'puppeteer';
+import * as puppeteer from "puppeteer";
 import { CvTemplate } from "../cv-template/schemas/cv-template.schema";
 import { User } from "../users/schemas/user.schema";
 import { CvPdfService } from "./cv-pdf.service";
 import { GenerateCvDto } from "./dto/generate-cv.dto";
 import { OpenAiService } from "./openai.service";
-const PDFParser = require('pdf2json');
+const PDFParser = require("pdf2json");
 
 @Injectable()
 export class CvAiService {
@@ -21,7 +21,7 @@ export class CvAiService {
     @InjectModel(User.name) private userModel: Model<User>,
     @InjectModel(CvTemplate.name) private cvTemplateModel: Model<CvTemplate>,
     private openAiService: OpenAiService,
-    private cvPdfService: CvPdfService
+    private cvPdfService: CvPdfService,
   ) {}
 
   /**
@@ -30,13 +30,13 @@ export class CvAiService {
   private async generateCvContent(
     user: User,
     jobAnalysis: any,
-    additionalRequirements?: string
+    additionalRequirements?: string,
   ): Promise<any> {
     // Generate professional summary using OpenAI
     const summary = await this.openAiService.generateProfessionalSummary(
       user,
       jobAnalysis,
-      additionalRequirements
+      additionalRequirements,
     );
 
     // Generate skills section using OpenAI
@@ -45,7 +45,7 @@ export class CvAiService {
     // Generate work experience using OpenAI
     const workHistory = await this.openAiService.generateWorkExperience(
       jobAnalysis,
-      jobAnalysis.experienceLevel
+      jobAnalysis.experienceLevel,
     );
 
     // Generate education
@@ -106,25 +106,45 @@ export class CvAiService {
   /**
    * Public: Gợi ý Professional Summary bằng AI (Tiếng Việt, không truyền tên người dùng)
    */
-  public async suggestProfessionalSummary(jobAnalysis: any, additionalRequirements?: string) {
+  public async suggestProfessionalSummary(
+    jobAnalysis: any,
+    additionalRequirements?: string,
+  ) {
     // Trả về summary bằng tiếng Việt, không truyền tên người dùng
-    const summary = await this.openAiService.generateProfessionalSummaryVi(jobAnalysis, additionalRequirements);
+    const summary = await this.openAiService.generateProfessionalSummaryVi(
+      jobAnalysis,
+      additionalRequirements,
+    );
     return { summaries: [summary] };
   }
 
   /**
    * Public: Gợi ý Skills Section bằng AI
    */
-  public async suggestSkillsSection(jobAnalysis: any, userSkills?: Array<{ name: string; rating: number }>) {
+  public async suggestSkillsSection(
+    jobAnalysis: any,
+    userSkills?: Array<{ name: string; rating: number }>,
+  ) {
     // Now returns an array of skills lists
-    return { skillsOptions: await this.openAiService.generateSkillsSection(jobAnalysis, userSkills) };
+    return {
+      skillsOptions: await this.openAiService.generateSkillsSection(
+        jobAnalysis,
+        userSkills,
+      ),
+    };
   }
 
   /**
    * Public: Gợi ý Work Experience bằng AI
    */
-  public async suggestWorkExperience(jobAnalysis: any, experienceLevel: string) {
-    return this.openAiService.generateWorkExperience(jobAnalysis, experienceLevel);
+  public async suggestWorkExperience(
+    jobAnalysis: any,
+    experienceLevel: string,
+  ) {
+    return this.openAiService.generateWorkExperience(
+      jobAnalysis,
+      experienceLevel,
+    );
   }
 
   /**
@@ -133,21 +153,25 @@ export class CvAiService {
   public async generateCvWithJobAnalysis(
     userId: string,
     jobAnalysis: any,
-    additionalRequirements?: string
+    additionalRequirements?: string,
   ) {
     // Lấy user
     const user = await this.userModel.findById(userId);
     if (!user) throw new Error("User not found");
     // Sinh nội dung CV
-    const cvContent = await this.generateCvContent(user, jobAnalysis, additionalRequirements);
+    const cvContent = await this.generateCvContent(
+      user,
+      jobAnalysis,
+      additionalRequirements,
+    );
     // Trả về kết quả
     return {
       success: true,
       data: {
         content: cvContent,
         jobAnalysis,
-        message: "CV generated from provided job analysis"
-      }
+        message: "CV generated from provided job analysis",
+      },
     };
   }
 
@@ -157,7 +181,7 @@ export class CvAiService {
    */
   async generateCvWithAI(
     userId: string,
-    generateCvDto: GenerateCvDto
+    generateCvDto: GenerateCvDto,
   ): Promise<any> {
     try {
       // 1. Lấy thông tin user
@@ -168,14 +192,14 @@ export class CvAiService {
 
       // 2. PHÂN TÍCH JOB DESCRIPTION TRƯỚC
       const jobAnalysis = await this.openAiService.analyzeJobDescription(
-        generateCvDto.jobDescription
+        generateCvDto.jobDescription,
       );
 
       // 3. Sinh nội dung CV dựa trên kết quả phân tích JD
       const cvContent = await this.generateCvContent(
         user,
         jobAnalysis,
-        generateCvDto.additionalRequirements
+        generateCvDto.additionalRequirements,
       );
 
       // Get default template if not specified
@@ -208,7 +232,7 @@ export class CvAiService {
     } catch (error) {
       this.logger.error(
         `Error generating CV with AI: ${error.message}`,
-        error.stack
+        error.stack,
       );
       throw error;
     }
@@ -219,7 +243,7 @@ export class CvAiService {
    */
   public async uploadAndAnalyzeCv(
     userId: string,
-    filePath: string
+    filePath: string,
   ): Promise<{
     success: boolean;
     data?: {
@@ -237,46 +261,48 @@ export class CvAiService {
     error?: string;
   }> {
     try {
-      this.logger.log('Bắt đầu phân tích CV: đọc file PDF');
+      this.logger.log("Bắt đầu phân tích CV: đọc file PDF");
       // 1. Extract text from PDF
       const pdfBuffer = fs.readFileSync(filePath);
       const pdfData = await pdf(pdfBuffer);
       const cvText = pdfData.text;
-      this.logger.log('Đã trích xuất text từ PDF:', cvText?.slice(0, 200));
+      this.logger.log("Đã trích xuất text từ PDF:", cvText?.slice(0, 200));
 
       if (!cvText || cvText.trim().length === 0) {
-        this.logger.error('Không trích xuất được text từ PDF.');
-        throw new Error("Could not extract text from PDF. Please ensure the PDF contains readable text.");
+        this.logger.error("Không trích xuất được text từ PDF.");
+        throw new Error(
+          "Could not extract text from PDF. Please ensure the PDF contains readable text.",
+        );
       }
 
       // 2. Analyze CV content using AI
-      this.logger.log('Gửi text cho AI phân tích...');
+      this.logger.log("Gửi text cho AI phân tích...");
       const cvAnalysis = await this.openAiService.analyzeCvContent(cvText);
-      this.logger.log('Kết quả AI trả về:', JSON.stringify(cvAnalysis));
+      this.logger.log("Kết quả AI trả về:", JSON.stringify(cvAnalysis));
 
       // 3. Generate suggestions based on analysis
       const suggestions = await this.generateCvSuggestions(cvAnalysis);
-      this.logger.log('Gợi ý AI:', JSON.stringify(suggestions));
+      this.logger.log("Gợi ý AI:", JSON.stringify(suggestions));
 
       // 4. Generate mapping nếu có hàm createCvMapping
       let mapping: any = undefined;
-      if (typeof this.createCvMapping === 'function') {
+      if (typeof this.createCvMapping === "function") {
         mapping = this.createCvMapping(cvAnalysis);
-        this.logger.log('Mapping từ createCvMapping:', JSON.stringify(mapping));
+        this.logger.log("Mapping từ createCvMapping:", JSON.stringify(mapping));
       } else if (cvAnalysis.mapping) {
         mapping = cvAnalysis.mapping;
-        this.logger.log('Mapping từ AI:', JSON.stringify(mapping));
+        this.logger.log("Mapping từ AI:", JSON.stringify(mapping));
       } else {
-        this.logger.warn('Không tìm thấy mapping từ AI hoặc createCvMapping.');
+        this.logger.warn("Không tìm thấy mapping từ AI hoặc createCvMapping.");
       }
 
       // 5. Phân tích layout, màu sắc, ngôn ngữ
       const layout = await this.analyzeCvLayout(pdfBuffer);
       const colorScheme = await this.analyzeCvColorScheme(pdfBuffer);
       const language = this.detectLanguage(cvText);
-      this.logger.log('Layout:', JSON.stringify(layout));
-      this.logger.log('ColorScheme:', colorScheme);
-      this.logger.log('Language:', language);
+      this.logger.log("Layout:", JSON.stringify(layout));
+      this.logger.log("ColorScheme:", colorScheme);
+      this.logger.log("Language:", language);
 
       // 6. Clean up uploaded file
       try {
@@ -293,16 +319,16 @@ export class CvAiService {
           mapping,
           layout,
           colorScheme,
-          language
-        }
+          language,
+        },
       };
     } catch (error) {
       this.logger.error(
         `Error uploading and analyzing CV: ${error.message}`,
-        error.stack
+        error.stack,
       );
       // Log thêm error object nếu có
-      this.logger.error('Chi tiết lỗi:', error);
+      this.logger.error("Chi tiết lỗi:", error);
 
       // Clean up uploaded file on error
       try {
@@ -310,12 +336,14 @@ export class CvAiService {
           fs.unlinkSync(filePath);
         }
       } catch (cleanupError) {
-        this.logger.warn(`Failed to delete uploaded file: ${cleanupError.message}`);
+        this.logger.warn(
+          `Failed to delete uploaded file: ${cleanupError.message}`,
+        );
       }
 
       return {
         success: false,
-        error: error.message
+        error: error.message,
       };
     }
   }
@@ -323,7 +351,7 @@ export class CvAiService {
   // Hàm phân tích layout cơ bản (demo)
   private async analyzeCvLayout(pdfBuffer: Buffer): Promise<any> {
     // TODO: Phân tích layout thực tế, demo trả về số trang và kích thước trang
-    const pdfjsLib = require('pdfjs-dist/legacy/build/pdf.js');
+    const pdfjsLib = require("pdfjs-dist/legacy/build/pdf.js");
     const loadingTask = pdfjsLib.getDocument({ data: pdfBuffer });
     const pdfDoc = await loadingTask.promise;
     const numPages = pdfDoc.numPages;
@@ -339,19 +367,19 @@ export class CvAiService {
   private async analyzeCvColorScheme(pdfBuffer: Buffer): Promise<string> {
     // TODO: Phân tích màu sắc thực tế, demo trả về 'blue' hoặc 'default'
     // Có thể dùng thư viện pdfjs hoặc pdf-lib để lấy màu sắc, ở đây trả về mẫu
-    return 'default';
+    return "default";
   }
 
   // Hàm phát hiện ngôn ngữ (demo)
   private detectLanguage(text: string): string {
     // TODO: Dùng thư viện phát hiện ngôn ngữ, demo đơn giản
     if (/\b(the|and|of|in|to|with|for|on|by|is|as|at|from)\b/i.test(text)) {
-      return 'en';
+      return "en";
     }
     if (/\b(và|của|trong|cho|là|tại|từ|bởi|như|với|đến|bằng)\b/i.test(text)) {
-      return 'vi';
+      return "vi";
     }
-    return 'unknown';
+    return "unknown";
   }
 
   /**
@@ -364,7 +392,7 @@ export class CvAiService {
   public async uploadAnalyzeAndOverlayJson(
     pdfBuffer: Buffer,
     jobDescription: string,
-    additionalRequirements?: string
+    additionalRequirements?: string,
   ): Promise<{
     success: boolean;
     data?: {
@@ -380,14 +408,16 @@ export class CvAiService {
       // 1. Extract layout and mapping
       const mapping = await this.extractPdfLayoutAndMapping(pdfBuffer);
       if (!mapping || mapping.length === 0) {
-        throw new Error('Could not extract mapping from PDF.');
+        throw new Error("Could not extract mapping from PDF.");
       }
       // 2. Optimize content with AI
       const optimizedMapping = await this.optimizeCvBlocksWithAI(mapping);
       // 3. Render HTML with original layout and optimized content
-      const rewrittenCvHtml = this.renderOptimizedHtmlWithMapping(optimizedMapping);
+      const rewrittenCvHtml =
+        this.renderOptimizedHtmlWithMapping(optimizedMapping);
       // 4. (Optional) Analyze job description
-      const jobAnalysis = await this.openAiService.analyzeJobDescription(jobDescription);
+      const jobAnalysis =
+        await this.openAiService.analyzeJobDescription(jobDescription);
       // 5. (Optional) Generate suggestions for improvement
       const suggestions = await this.generateCvSuggestions({}); // Có thể truyền thêm phân tích nếu muốn
       return {
@@ -397,17 +427,17 @@ export class CvAiService {
           jobAnalysis,
           rewrittenCvHtml,
           suggestions,
-          mapping: optimizedMapping
-        }
+          mapping: optimizedMapping,
+        },
       };
     } catch (error) {
       this.logger.error(
         `Error in uploadAnalyzeAndOverlayJson: ${error.message}`,
-        error.stack
+        error.stack,
       );
       return {
         success: false,
-        error: error.message
+        error: error.message,
       };
     }
   }
@@ -419,7 +449,7 @@ export class CvAiService {
     userId: string,
     cvFilePath: string,
     jobDescription: string,
-    additionalRequirements?: string
+    additionalRequirements?: string,
   ): Promise<{
     success: boolean;
     data?: {
@@ -438,20 +468,23 @@ export class CvAiService {
       const cvText = pdfData.text;
 
       if (!cvText || cvText.trim().length === 0) {
-        throw new Error("Could not extract text from PDF. Please ensure the PDF contains readable text.");
+        throw new Error(
+          "Could not extract text from PDF. Please ensure the PDF contains readable text.",
+        );
       }
 
       // 2. Analyze CV content using AI
       const cvAnalysis = await this.openAiService.analyzeCvContent(cvText);
 
       // 3. Analyze job description
-      const jobAnalysis = await this.openAiService.analyzeJobDescription(jobDescription);
+      const jobAnalysis =
+        await this.openAiService.analyzeJobDescription(jobDescription);
 
       // 4. Generate optimized CV with AI (NEW STEP)
       const optimizedCv = await this.generateOptimizedCvWithAI(
         cvAnalysis,
         jobAnalysis,
-        additionalRequirements
+        additionalRequirements,
       );
 
       // 5. Generate suggestions
@@ -459,18 +492,19 @@ export class CvAiService {
 
       // 6. Generate optimized PDF with original layout preserved
       const outputFileName = `optimized-cv-${Date.now()}.pdf`;
-      const outputPath = path.join('./uploads', outputFileName);
+      const outputPath = path.join("./uploads", outputFileName);
 
-      const pdfResult = await this.cvPdfService.createOptimizedCvPdfWithOriginalLayout(
-        cvAnalysis, // Original CV analysis for layout reference
-        optimizedCv, // Optimized CV content
-        jobDescription,
-        jobAnalysis,
-        outputPath
-      );
+      const pdfResult =
+        await this.cvPdfService.createOptimizedCvPdfWithOriginalLayout(
+          cvAnalysis, // Original CV analysis for layout reference
+          optimizedCv, // Optimized CV content
+          jobDescription,
+          jobAnalysis,
+          outputPath,
+        );
 
       if (!pdfResult.success) {
-        throw new Error(pdfResult.error || 'Failed to generate PDF');
+        throw new Error(pdfResult.error || "Failed to generate PDF");
       }
 
       // 7. Clean up original uploaded file
@@ -487,13 +521,13 @@ export class CvAiService {
           jobAnalysis,
           optimizedCv,
           suggestions,
-          pdfPath: `/uploads/${outputFileName}`
-        }
+          pdfPath: `/uploads/${outputFileName}`,
+        },
       };
     } catch (error) {
       this.logger.error(
         `Error in uploadAnalyzeAndGeneratePdf: ${error.message}`,
-        error.stack
+        error.stack,
       );
 
       // Clean up uploaded file on error
@@ -502,12 +536,14 @@ export class CvAiService {
           fs.unlinkSync(cvFilePath);
         }
       } catch (cleanupError) {
-        this.logger.warn(`Failed to delete uploaded file: ${cleanupError.message}`);
+        this.logger.warn(
+          `Failed to delete uploaded file: ${cleanupError.message}`,
+        );
       }
 
       return {
         success: false,
-        error: error.message
+        error: error.message,
       };
     }
   }
@@ -519,7 +555,7 @@ export class CvAiService {
     userId: string,
     pdfBuffer: Buffer,
     jobDescription: string,
-    additionalRequirements?: string
+    additionalRequirements?: string,
   ): Promise<{
     success: boolean;
     data?: {
@@ -537,20 +573,23 @@ export class CvAiService {
       const cvText = pdfData.text;
 
       if (!cvText || cvText.trim().length === 0) {
-        throw new Error("Could not extract text from PDF. Please ensure the PDF contains readable text.");
+        throw new Error(
+          "Could not extract text from PDF. Please ensure the PDF contains readable text.",
+        );
       }
 
       // 2. Analyze CV content using AI
       const cvAnalysis = await this.openAiService.analyzeCvContent(cvText);
 
       // 3. Analyze job description
-      const jobAnalysis = await this.openAiService.analyzeJobDescription(jobDescription);
+      const jobAnalysis =
+        await this.openAiService.analyzeJobDescription(jobDescription);
 
       // 4. Generate optimized CV with AI (NEW STEP)
       const optimizedCv = await this.generateOptimizedCvWithAI(
         cvAnalysis,
         jobAnalysis,
-        additionalRequirements
+        additionalRequirements,
       );
 
       // 5. Generate suggestions
@@ -558,18 +597,19 @@ export class CvAiService {
 
       // 6. Generate optimized PDF with original layout preserved
       const outputFileName = `optimized-cv-${Date.now()}.pdf`;
-      const outputPath = path.join('./uploads', outputFileName);
+      const outputPath = path.join("./uploads", outputFileName);
 
-      const pdfResult = await this.cvPdfService.createOptimizedCvPdfWithOriginalLayout(
-        cvAnalysis, // Original CV analysis for layout reference
-        optimizedCv, // Optimized CV content
-        jobDescription,
-        jobAnalysis,
-        outputPath
-      );
+      const pdfResult =
+        await this.cvPdfService.createOptimizedCvPdfWithOriginalLayout(
+          cvAnalysis, // Original CV analysis for layout reference
+          optimizedCv, // Optimized CV content
+          jobDescription,
+          jobAnalysis,
+          outputPath,
+        );
 
       if (!pdfResult.success) {
-        throw new Error(pdfResult.error || 'Failed to generate PDF');
+        throw new Error(pdfResult.error || "Failed to generate PDF");
       }
 
       return {
@@ -579,17 +619,17 @@ export class CvAiService {
           jobAnalysis,
           optimizedCv,
           suggestions,
-          pdfPath: `/uploads/${outputFileName}`
-        }
+          pdfPath: `/uploads/${outputFileName}`,
+        },
       };
     } catch (error) {
       this.logger.error(
         `Error in uploadAnalyzeAndGeneratePdfFromBuffer: ${error.message}`,
-        error.stack
+        error.stack,
       );
       return {
         success: false,
-        error: error.message
+        error: error.message,
       };
     }
   }
@@ -601,7 +641,7 @@ export class CvAiService {
     userId: string,
     pdfBuffer: Buffer,
     jobDescription: string,
-    additionalRequirements?: string
+    additionalRequirements?: string,
   ): Promise<{
     success: boolean;
     pdfBuffer?: Buffer;
@@ -617,32 +657,36 @@ export class CvAiService {
       const cvText = pdfData.text;
 
       if (!cvText || cvText.trim().length === 0) {
-        throw new Error("Could not extract text from PDF. Please ensure the PDF contains readable text.");
+        throw new Error(
+          "Could not extract text from PDF. Please ensure the PDF contains readable text.",
+        );
       }
 
       // 2. Analyze CV content using AI
       const cvAnalysis = await this.openAiService.analyzeCvContent(cvText);
 
       // 3. Analyze job description
-      const jobAnalysis = await this.openAiService.analyzeJobDescription(jobDescription);
+      const jobAnalysis =
+        await this.openAiService.analyzeJobDescription(jobDescription);
 
       // 4. Generate optimized CV with AI
       const optimizedCv = await this.generateOptimizedCvWithAI(
         cvAnalysis,
         jobAnalysis,
-        additionalRequirements
+        additionalRequirements,
       );
 
       // 5. Generate suggestions
       const suggestions = await this.generateCvSuggestions(cvAnalysis);
 
       // 6. Generate optimized PDF as buffer
-      const pdfBufferOut = await this.cvPdfService.createOptimizedCvPdfBufferWithOriginalLayout(
-        cvAnalysis,
-        optimizedCv,
-        jobDescription,
-        jobAnalysis
-      );
+      const pdfBufferOut =
+        await this.cvPdfService.createOptimizedCvPdfBufferWithOriginalLayout(
+          cvAnalysis,
+          optimizedCv,
+          jobDescription,
+          jobAnalysis,
+        );
 
       return {
         success: true,
@@ -650,16 +694,16 @@ export class CvAiService {
         cvAnalysis,
         jobAnalysis,
         optimizedCv,
-        suggestions
+        suggestions,
       };
     } catch (error) {
       this.logger.error(
         `Error in uploadAnalyzeAndGeneratePdfBufferFromBuffer: ${error.message}`,
-        error.stack
+        error.stack,
       );
       return {
         success: false,
-        error: error.message
+        error: error.message,
       };
     }
   }
@@ -671,23 +715,27 @@ export class CvAiService {
   public async generateOptimizedCvWithAI(
     userCvAnalysis: any,
     jobAnalysis: any,
-    additionalRequirements?: string
+    additionalRequirements?: string,
   ): Promise<any> {
     try {
       // Phát hiện ngôn ngữ CV gốc
-      let language = 'unknown';
+      let language = "unknown";
       if (userCvAnalysis?.userData?.summary) {
         language = this.detectLanguage(userCvAnalysis.userData.summary);
       } else if (userCvAnalysis?.userData) {
         // Gộp các trường text lại để detect
-        const allText = Object.values(userCvAnalysis.userData).filter(v => typeof v === 'string').join(' ');
+        const allText = Object.values(userCvAnalysis.userData)
+          .filter((v) => typeof v === "string")
+          .join(" ");
         language = this.detectLanguage(allText);
       }
-      let languageNote = '';
-      if (language === 'vi') {
-        languageNote = '\nLưu ý: Hãy viết toàn bộ kết quả bằng tiếng Việt chuẩn, tự nhiên, chuyên nghiệp.';
-      } else if (language === 'en') {
-        languageNote = '\nNote: Write the entire result in professional, natural English.';
+      let languageNote = "";
+      if (language === "vi") {
+        languageNote =
+          "\nLưu ý: Hãy viết toàn bộ kết quả bằng tiếng Việt chuẩn, tự nhiên, chuyên nghiệp.";
+      } else if (language === "en") {
+        languageNote =
+          "\nNote: Write the entire result in professional, natural English.";
       }
       const prompt = `
 Bạn là chuyên gia viết CV. Dưới đây là phân tích CV gốc của ứng viên và phân tích mô tả công việc (JD):
@@ -721,7 +769,7 @@ Yêu cầu:
     "education": [ { "startDate": "YYYY-MM-DD", "endDate": "YYYY-MM-DD", "major": "", "degree": "", "institution": "" } ]
   }
 }
-${additionalRequirements ? `\nYêu cầu bổ sung: ${additionalRequirements}` : ''}${languageNote}
+${additionalRequirements ? `\nYêu cầu bổ sung: ${additionalRequirements}` : ""}${languageNote}
 
 Chỉ trả về JSON hợp lệ, không thêm giải thích, markdown hay text thừa.
 `;
@@ -744,23 +792,29 @@ Chỉ trả về JSON hợp lệ, không thêm giải thích, markdown hay text 
         max_tokens: 2000,
       });
 
-      let response = completion.choices[0]?.message?.content;
+      const response = completion.choices[0]?.message?.content;
       if (!response) {
         throw new Error("No response from OpenAI");
       }
       // Remove markdown if present
       let cleanResponse = response.trim();
-      if (cleanResponse.startsWith('```json')) {
-        cleanResponse = cleanResponse.replace(/^```json/, '').replace(/```$/, '').trim();
-      } else if (cleanResponse.startsWith('```')) {
-        cleanResponse = cleanResponse.replace(/^```/, '').replace(/```$/, '').trim();
+      if (cleanResponse.startsWith("```json")) {
+        cleanResponse = cleanResponse
+          .replace(/^```json/, "")
+          .replace(/```$/, "")
+          .trim();
+      } else if (cleanResponse.startsWith("```")) {
+        cleanResponse = cleanResponse
+          .replace(/^```/, "")
+          .replace(/```$/, "")
+          .trim();
       }
       const optimizedCv = JSON.parse(cleanResponse);
       return optimizedCv;
     } catch (error) {
       this.logger.error(
         `Error generating optimized CV with AI: ${error.message}`,
-        error.stack
+        error.stack,
       );
       throw error;
     }
@@ -781,38 +835,53 @@ Chỉ trả về JSON hợp lệ, không thêm giải thích, markdown hay text 
     } = {
       strengths: [],
       areasForImprovement: [],
-      recommendations: []
+      recommendations: [],
     };
 
     // Analyze skills
     if (cvAnalysis.skills && cvAnalysis.skills.length > 0) {
-      const highRatedSkills = cvAnalysis.skills.filter(skill => skill.rating >= 4);
+      const highRatedSkills = cvAnalysis.skills.filter(
+        (skill) => skill.rating >= 4,
+      );
       if (highRatedSkills.length > 0) {
-        suggestions.strengths.push(`Strong skills in: ${highRatedSkills.map(s => s.name).join(', ')}`);
+        suggestions.strengths.push(
+          `Strong skills in: ${highRatedSkills.map((s) => s.name).join(", ")}`,
+        );
       }
 
-      const lowRatedSkills = cvAnalysis.skills.filter(skill => skill.rating <= 2);
+      const lowRatedSkills = cvAnalysis.skills.filter(
+        (skill) => skill.rating <= 2,
+      );
       if (lowRatedSkills.length > 0) {
-        suggestions.areasForImprovement.push(`Consider improving: ${lowRatedSkills.map(s => s.name).join(', ')}`);
+        suggestions.areasForImprovement.push(
+          `Consider improving: ${lowRatedSkills.map((s) => s.name).join(", ")}`,
+        );
       }
     }
 
     // Analyze work experience
     if (cvAnalysis.workExperience && cvAnalysis.workExperience.length > 0) {
-      suggestions.strengths.push(`Good work experience with ${cvAnalysis.workExperience.length} positions`);
+      suggestions.strengths.push(
+        `Good work experience with ${cvAnalysis.workExperience.length} positions`,
+      );
 
       // Check for gaps in employment
-      const sortedExperience = cvAnalysis.workExperience.sort((a, b) =>
-        new Date(b.startDate).getTime() - new Date(a.startDate).getTime()
+      const sortedExperience = cvAnalysis.workExperience.sort(
+        (a, b) =>
+          new Date(b.startDate).getTime() - new Date(a.startDate).getTime(),
       );
 
       if (sortedExperience.length > 1) {
         const latestEndDate = new Date(sortedExperience[0].endDate);
         const now = new Date();
-        const monthsSinceLastJob = (now.getTime() - latestEndDate.getTime()) / (1000 * 60 * 60 * 24 * 30);
+        const monthsSinceLastJob =
+          (now.getTime() - latestEndDate.getTime()) /
+          (1000 * 60 * 60 * 24 * 30);
 
         if (monthsSinceLastJob > 6) {
-          suggestions.areasForImprovement.push("Consider addressing employment gap in your CV");
+          suggestions.areasForImprovement.push(
+            "Consider addressing employment gap in your CV",
+          );
         }
       }
     }
@@ -824,15 +893,21 @@ Chỉ trả về JSON hợp lệ, không thêm giải thích, markdown hay text 
 
     // Generate recommendations
     if (cvAnalysis.skills && cvAnalysis.skills.length < 5) {
-      suggestions.recommendations.push("Consider adding more skills to make your CV more comprehensive");
+      suggestions.recommendations.push(
+        "Consider adding more skills to make your CV more comprehensive",
+      );
     }
 
     if (!cvAnalysis.summary || cvAnalysis.summary.length < 50) {
-      suggestions.recommendations.push("Add a professional summary to highlight your key strengths");
+      suggestions.recommendations.push(
+        "Add a professional summary to highlight your key strengths",
+      );
     }
 
     if (cvAnalysis.certifications && cvAnalysis.certifications.length === 0) {
-      suggestions.recommendations.push("Consider adding relevant certifications to enhance your profile");
+      suggestions.recommendations.push(
+        "Consider adding relevant certifications to enhance your profile",
+      );
     }
 
     return suggestions;
@@ -840,11 +915,12 @@ Chỉ trả về JSON hợp lệ, không thêm giải thích, markdown hay text 
 
   async analyzeCvJson(pdfJson: any): Promise<any> {
     // Trích xuất toàn bộ text từ JSON giữ layout
-    const allText = pdfJson.Pages?.flatMap((page: any) =>
-      page.Texts?.flatMap((t: any) =>
-        t.R?.map((r: any) => r.T) || []
-      ) || []
-    ).join('\n') || '';
+    const allText =
+      pdfJson.Pages?.flatMap(
+        (page: any) =>
+          page.Texts?.flatMap((t: any) => t.R?.map((r: any) => r.T) || []) ||
+          [],
+      ).join("\n") || "";
 
     // Gửi cho AI (OpenAI, GPT, v.v.)
     const aiResult = await this.openAiService.analyzeCvContent(allText);
@@ -863,7 +939,7 @@ Chỉ trả về JSON hợp lệ, không thêm giải thích, markdown hay text 
     pdfBuffer: Buffer,
     jobDescription: string,
     additionalRequirements?: string,
-    mapping?: Record<string, any> // mapping từ frontend (field -> vị trí)
+    mapping?: Record<string, any>, // mapping từ frontend (field -> vị trí)
   ): Promise<{
     success: boolean;
     pdfBuffer?: Buffer;
@@ -873,31 +949,35 @@ Chỉ trả về JSON hợp lệ, không thêm giải thích, markdown hay text 
       // 1. Extract layout and mapping
       const extractedMapping = await this.extractPdfLayoutAndMapping(pdfBuffer);
       if (!extractedMapping || extractedMapping.length === 0) {
-        throw new Error('Could not extract mapping from PDF.');
+        throw new Error("Could not extract mapping from PDF.");
       }
       // 2. Optimize content with AI
-      const optimizedMapping = await this.optimizeCvBlocksWithAI(extractedMapping);
+      const optimizedMapping =
+        await this.optimizeCvBlocksWithAI(extractedMapping);
       // 3. Load original PDF and overlay optimized content
       const pdfDoc = await PDFDocument.load(pdfBuffer);
-      const fontkit = require('@pdf-lib/fontkit');
+      const fontkit = require("@pdf-lib/fontkit");
       pdfDoc.registerFontkit(fontkit);
       const pages = pdfDoc.getPages();
-      const path = require('path');
-      const fs = require('fs');
-      const fontPath = path.resolve(__dirname, '../assets/fonts/Roboto-Regular.ttf');
+      const path = require("path");
+      const fs = require("fs");
+      const fontPath = path.resolve(
+        __dirname,
+        "../assets/fonts/Roboto-Regular.ttf",
+      );
       if (!fs.existsSync(fontPath)) {
         throw new Error(`Font file not found at ${fontPath}`);
       }
       const fontBytes = fs.readFileSync(fontPath);
       if (!fontBytes || fontBytes.length === 0) {
-        throw new Error('Font file is empty or could not be read');
+        throw new Error("Font file is empty or could not be read");
       }
       let customFont;
       try {
         customFont = await pdfDoc.embedFont(fontBytes);
       } catch (err) {
-        this.logger.error('Failed to embed font:', err);
-        throw new Error('Font embedding failed. Please check the font file.');
+        this.logger.error("Failed to embed font:", err);
+        throw new Error("Font embedding failed. Please check the font file.");
       }
       // 4. Overlay text mới dựa trên mapping
       for (const block of optimizedMapping) {
@@ -911,7 +991,7 @@ Chỉ trả về JSON hợp lệ, không thêm giải thích, markdown hay text 
           color: { type: ColorTypes.RGB, red: 1, green: 1, blue: 1 },
         });
         // Điều chỉnh font size nếu text quá dài
-        let newText = block.optimizedContent || block.content;
+        const newText = block.optimizedContent || block.content;
         let fontSize = block.fontSize || 12;
         const maxWidth = (block.w || 50) * 7.5;
         const estimatedWidth = newText.length * fontSize * 0.6;
@@ -926,15 +1006,17 @@ Chỉ trả về JSON hợp lệ, không thêm giải thích, markdown hay text 
             color: { type: ColorTypes.RGB, red: 0, green: 0, blue: 0 },
             maxWidth: maxWidth,
             lineHeight: fontSize * 1.2,
-            font: customFont
+            font: customFont,
           });
         }
       }
       const newPdfBytes = await pdfDoc.save();
       return { success: true, pdfBuffer: Buffer.from(newPdfBytes) };
     } catch (error) {
-      this.logger.error(`Error in replaceContentInOriginalPdfBuffer: ${error.message}`);
-      this.logger.error('Full error object:', error);
+      this.logger.error(
+        `Error in replaceContentInOriginalPdfBuffer: ${error.message}`,
+      );
+      this.logger.error("Full error object:", error);
       return { success: false, error: error.message };
     }
   }
@@ -946,7 +1028,7 @@ Chỉ trả về JSON hợp lệ, không thêm giải thích, markdown hay text 
   //   try {
   //     // Sử dụng pdf-parse để lấy thông tin text
   //     const pdfData = await (require('pdf-parse'))(pdfBuffer);
-      
+
   //     // Phân tích text để tìm các trường quan trọng
   //     const text = pdfData.text.toLowerCase();
   //     const positions: any[] = [];
@@ -962,7 +1044,7 @@ Chỉ trả về JSON hợp lệ, không thêm giải thích, markdown hay text 
   //     // Demo: Tạo vị trí giả định dựa trên phân tích text
   //     // Trong thực tế, cần sử dụng thư viện như pdf2pic hoặc pdf.js để lấy vị trí chính xác
   //     let currentY = 800; // Bắt đầu từ top
-      
+
   //     for (const [fieldType, keywords] of Object.entries(fieldKeywords)) {
   //       const hasField = keywords.some(keyword => text.includes(keyword));
   //       if (hasField) {
@@ -1040,237 +1122,284 @@ Chỉ trả về JSON hợp lệ, không thêm giải thích, markdown hay text 
     return {
       sections: {
         header: {
-          name: { type: 'text', value: cvContent.userData.firstName + ' ' + cvContent.userData.lastName },
-          title: { type: 'text', value: cvContent.userData.professional },
+          name: {
+            type: "text",
+            value:
+              cvContent.userData.firstName + " " + cvContent.userData.lastName,
+          },
+          title: { type: "text", value: cvContent.userData.professional },
           contact: {
-            email: { type: 'text', value: cvContent.userData.email },
-            phone: { type: 'text', value: cvContent.userData.phone },
-            location: { type: 'text', value: cvContent.userData.city + ', ' + cvContent.userData.country }
-          }
+            email: { type: "text", value: cvContent.userData.email },
+            phone: { type: "text", value: cvContent.userData.phone },
+            location: {
+              type: "text",
+              value:
+                cvContent.userData.city + ", " + cvContent.userData.country,
+            },
+          },
         },
         summary: {
-          content: { type: 'textarea', value: cvContent.userData.summary }
+          content: { type: "textarea", value: cvContent.userData.summary },
         },
         skills: {
-          content: { type: 'textarea', value: cvContent.userData.skills }
+          content: { type: "textarea", value: cvContent.userData.skills },
         },
         experience: {
-          items: cvContent.userData.workHistory.map((job: any, index: number) => ({
-            title: { type: 'text', value: job.title },
-            company: { type: 'text', value: job.company },
-            period: { type: 'text', value: job.period },
-            description: { type: 'textarea', value: job.description },
-            achievements: { type: 'textarea', value: job.achievements }
-          }))
+          items: cvContent.userData.workHistory.map(
+            (job: any, index: number) => ({
+              title: { type: "text", value: job.title },
+              company: { type: "text", value: job.company },
+              period: { type: "text", value: job.period },
+              description: { type: "textarea", value: job.description },
+              achievements: { type: "textarea", value: job.achievements },
+            }),
+          ),
         },
         education: {
-          items: cvContent.userData.education.map((edu: any, index: number) => ({
-            degree: { type: 'text', value: edu.degree },
-            major: { type: 'text', value: edu.major },
-            institution: { type: 'text', value: edu.institution },
-            period: { type: 'text', value: edu.startDate + ' - ' + edu.endDate }
-          }))
-        }
-      }
+          items: cvContent.userData.education.map(
+            (edu: any, index: number) => ({
+              degree: { type: "text", value: edu.degree },
+              major: { type: "text", value: edu.major },
+              institution: { type: "text", value: edu.institution },
+              period: {
+                type: "text",
+                value: edu.startDate + " - " + edu.endDate,
+              },
+            }),
+          ),
+        },
+      },
     };
   }
 
   /**
- * Extract layout and mapping from PDF (positions, font, content)
- */
-private async extractPdfLayoutAndMapping(pdfBuffer: Buffer): Promise<any[]> {
-  return new Promise((resolve, reject) => {
-    const pdfParser = new PDFParser();
-    pdfParser.on('pdfParser_dataError', errData => reject(errData.parserError));
-    pdfParser.on('pdfParser_dataReady', pdfData => {
-      const mapping: any[] = [];
-      pdfData.Pages.forEach((page: any, pageIndex: number) => {
-        page.Texts.forEach((textBlock: any, blockIndex: number) => {
-          mapping.push({
-            blockId: `${pageIndex}_${blockIndex}`,
-            page: pageIndex,
-            x: textBlock.x,
-            y: textBlock.y,
-            w: textBlock.w,
-            sw: textBlock.sw,
-            fontSize: textBlock.R[0]?.TS?.[1] || 12,
-            font: textBlock.R[0]?.TS?.[0] || '',
-            content: decodeURIComponent(textBlock.R[0]?.T || ''),
+   * Extract layout and mapping from PDF (positions, font, content)
+   */
+  private async extractPdfLayoutAndMapping(pdfBuffer: Buffer): Promise<any[]> {
+    return new Promise((resolve, reject) => {
+      const pdfParser = new PDFParser();
+      pdfParser.on("pdfParser_dataError", (errData) =>
+        reject(errData.parserError),
+      );
+      pdfParser.on("pdfParser_dataReady", (pdfData) => {
+        const mapping: any[] = [];
+        pdfData.Pages.forEach((page: any, pageIndex: number) => {
+          page.Texts.forEach((textBlock: any, blockIndex: number) => {
+            mapping.push({
+              blockId: `${pageIndex}_${blockIndex}`,
+              page: pageIndex,
+              x: textBlock.x,
+              y: textBlock.y,
+              w: textBlock.w,
+              sw: textBlock.sw,
+              fontSize: textBlock.R[0]?.TS?.[1] || 12,
+              font: textBlock.R[0]?.TS?.[0] || "",
+              content: decodeURIComponent(textBlock.R[0]?.T || ""),
+            });
           });
         });
+        resolve(mapping);
       });
-      resolve(mapping);
+      pdfParser.parseBuffer(pdfBuffer);
     });
-    pdfParser.parseBuffer(pdfBuffer);
-  });
-}
+  }
 
-/**
- * Use AI to optimize content of each block in mapping
- */
-private async optimizeCvBlocksWithAI(mapping: any[]): Promise<any[]> {
-  // Gộp toàn bộ text từ các block
-  const allText = mapping.map(block => block.content).join(' ');
-  const prompt = `Hãy tối ưu hóa toàn bộ nội dung CV sau để gây ấn tượng với nhà tuyển dụng, giữ nguyên ý chính:\n"${allText}"`;
+  /**
+   * Use AI to optimize content of each block in mapping
+   */
+  private async optimizeCvBlocksWithAI(mapping: any[]): Promise<any[]> {
+    // Gộp toàn bộ text từ các block
+    const allText = mapping.map((block) => block.content).join(" ");
+    const prompt = `Hãy tối ưu hóa toàn bộ nội dung CV sau để gây ấn tượng với nhà tuyển dụng, giữ nguyên ý chính:\n"${allText}"`;
 
-  try {
-    const openai = this.openAiService.getOpenAI();
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [
-        { role: "system", content: "Bạn là chuyên gia tối ưu hóa CV." },
-        { role: "user", content: prompt }
-      ],
-      temperature: 0.5,
-      max_tokens: 2000,
-    });
-    let response = completion.choices[0]?.message?.content;
-    if (response) {
-      // Trả về một block duy nhất với nội dung đã tối ưu hóa
-      return [{
-        x: 0, y: 0, fontSize: 12, content: response.trim(), optimizedContent: response.trim()
-      }];
+    try {
+      const openai = this.openAiService.getOpenAI();
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          { role: "system", content: "Bạn là chuyên gia tối ưu hóa CV." },
+          { role: "user", content: prompt },
+        ],
+        temperature: 0.5,
+        max_tokens: 2000,
+      });
+      const response = completion.choices[0]?.message?.content;
+      if (response) {
+        // Trả về một block duy nhất với nội dung đã tối ưu hóa
+        return [
+          {
+            x: 0,
+            y: 0,
+            fontSize: 12,
+            content: response.trim(),
+            optimizedContent: response.trim(),
+          },
+        ];
+      }
+    } catch (err) {
+      // Nếu lỗi, trả về mapping gốc
+      return mapping;
     }
-  } catch (err) {
-    // Nếu lỗi, trả về mapping gốc
     return mapping;
   }
-  return mapping;
-}
 
-/**
- * Render HTML with original layout and optimized content
- */
-private renderOptimizedHtmlWithMapping(mapping: any[]): string {
-  let html = '<div style="position:relative;width:800px;height:1120px;">';
-  for (const block of mapping) {
-    html += `<div style="position:absolute; left:${block.x * 7.5}px; top:${block.y * 1.5}px; font-size:${block.fontSize}px;">${block.optimizedContent || block.content}</div>`;
-  }
-  html += '</div>';
-  return html;
-}
-
-/**
- * New endpoint: Upload PDF, extract layout, optimize content, return HTML with original layout and optimized content
- */
-public async uploadAnalyzeAndOverlayHtml(
-  pdfBuffer: Buffer
-): Promise<{ success: boolean; html?: string; mapping?: any[]; error?: string }> {
-  try {
-    // 1. Extract layout and mapping
-    const mapping = await this.extractPdfLayoutAndMapping(pdfBuffer);
-    if (!mapping || mapping.length === 0) {
-      throw new Error('Could not extract mapping from PDF.');
+  /**
+   * Render HTML with original layout and optimized content
+   */
+  private renderOptimizedHtmlWithMapping(mapping: any[]): string {
+    let html = '<div style="position:relative;width:800px;height:1120px;">';
+    for (const block of mapping) {
+      html += `<div style="position:absolute; left:${block.x * 7.5}px; top:${block.y * 1.5}px; font-size:${block.fontSize}px;">${block.optimizedContent || block.content}</div>`;
     }
-    // 2. Optimize content with AI
-    const optimizedMapping = await this.optimizeCvBlocksWithAI(mapping);
-    // 3. Render HTML with original layout and optimized content
-    const html = this.renderOptimizedHtmlWithMapping(optimizedMapping);
-    return { success: true, html, mapping: optimizedMapping };
-  } catch (error) {
-    this.logger.error('Error in uploadAnalyzeAndOverlayHtml:', error);
-    return { success: false, error: error.message };
+    html += "</div>";
+    return html;
   }
-}
 
-// Thêm hàm vào trong class CvAiService
-private async convertPdfToHtmlWithConvertApi(pdfBuffer: Buffer, apiKey: string): Promise<string> {
-  // ConvertAPI expects base64 string
-  const fileBase64 = pdfBuffer.toString('base64');
-  const formData = {
-    Parameters: [
+  /**
+   * New endpoint: Upload PDF, extract layout, optimize content, return HTML with original layout and optimized content
+   */
+  public async uploadAnalyzeAndOverlayHtml(pdfBuffer: Buffer): Promise<{
+    success: boolean;
+    html?: string;
+    mapping?: any[];
+    error?: string;
+  }> {
+    try {
+      // 1. Extract layout and mapping
+      const mapping = await this.extractPdfLayoutAndMapping(pdfBuffer);
+      if (!mapping || mapping.length === 0) {
+        throw new Error("Could not extract mapping from PDF.");
+      }
+      // 2. Optimize content with AI
+      const optimizedMapping = await this.optimizeCvBlocksWithAI(mapping);
+      // 3. Render HTML with original layout and optimized content
+      const html = this.renderOptimizedHtmlWithMapping(optimizedMapping);
+      return { success: true, html, mapping: optimizedMapping };
+    } catch (error) {
+      this.logger.error("Error in uploadAnalyzeAndOverlayHtml:", error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Thêm hàm vào trong class CvAiService
+  private async convertPdfToHtmlWithConvertApi(
+    pdfBuffer: Buffer,
+    apiKey: string,
+  ): Promise<string> {
+    // ConvertAPI expects base64 string
+    const fileBase64 = pdfBuffer.toString("base64");
+    const formData = {
+      Parameters: [
+        {
+          Name: "File",
+          FileValue: {
+            Name: "cv.pdf",
+            Data: fileBase64,
+          },
+        },
+      ],
+    };
+
+    // Gọi API ConvertAPI
+    const res = await require("axios").post(
+      `https://v2.convertapi.com/convert/pdf/to/html?Secret=${apiKey}`,
+      formData,
       {
-        Name: "File",
-        FileValue: {
-          Name: "cv.pdf",
-          Data: fileBase64
-        }
-      }
-    ]
-  };
-
-  // Gọi API ConvertAPI
-  const res = await require('axios').post(
-    `https://v2.convertapi.com/convert/pdf/to/html?Secret=${apiKey}`,
-    formData,
-    {
-      headers: {
-        'Content-Type': 'application/json'
-      }
+        headers: {
+          "Content-Type": "application/json",
+        },
+      },
+    );
+    const fileObj = res.data.Files && res.data.Files[0];
+    if (!fileObj) {
+      throw new Error("ConvertAPI did not return a valid file object");
     }
-  );
-  const fileObj = res.data.Files && res.data.Files[0];
-  if (!fileObj) {
-    throw new Error('ConvertAPI did not return a valid file object');
+    let htmlContent = "";
+    if (fileObj.Url) {
+      const htmlRes = await require("axios").get(fileObj.Url, {
+        responseType: "text",
+      });
+      htmlContent = htmlRes.data;
+    } else if (fileObj.FileData) {
+      // Nếu là base64 thì decode ra string
+      htmlContent = Buffer.from(fileObj.FileData, "base64").toString("utf-8");
+    } else {
+      throw new Error("ConvertAPI did not return HTML content");
+    }
+    return htmlContent;
   }
-  let htmlContent = '';
-  if (fileObj.Url) {
-    const htmlRes = await require('axios').get(fileObj.Url, { responseType: 'text' });
-    htmlContent = htmlRes.data;
-  } else if (fileObj.FileData) {
-    // Nếu là base64 thì decode ra string
-    htmlContent = Buffer.from(fileObj.FileData, 'base64').toString('utf-8');
-  } else {
-    throw new Error('ConvertAPI did not return HTML content');
+
+  public async optimizePdfCvWithHtmlAI(
+    pdfBuffer: Buffer,
+    jobDescription?: string,
+  ): Promise<{ success: boolean; pdfPath?: string; error?: string }> {
+    try {
+      const CONVERTAPI_KEY =
+        process.env.CONVERTAPI_KEY || "YOUR_CONVERTAPI_KEY";
+
+      // 1. Convert PDF to HTML using ConvertAPI
+      const originalHtml = await this.convertPdfToHtmlWithConvertApi(
+        pdfBuffer,
+        CONVERTAPI_KEY,
+      );
+
+      // 2. Optimize HTML with AI (bổ sung jobDescription vào prompt nếu có)
+      const prompt = `Đây là file HTML CV được chuyển từ PDF, layout và style đã được cố định bằng CSS.\nHãy tối ưu hóa nội dung CV trong HTML này để gây ấn tượng với nhà tuyển dụng, nhưng tuyệt đối KHÔNG thay đổi layout, style, cấu trúc HTML.\nChỉ thay đổi nội dung text (giữ nguyên các thẻ, class, style, id, v.v.).${jobDescription ? `\nMô tả công việc: ${jobDescription}` : ""}\nTrả về HTML đã tối ưu hóa.`;
+      const optimizedHtml = await (
+        this.openAiService as any
+      ).optimizeCvHtmlWithPrompt(originalHtml, prompt);
+
+      // 3. Convert optimized HTML back to PDF using Puppeteer (giữ nguyên)
+      const uploadsDir = path.join(process.cwd(), "uploads");
+      if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir);
+      const pdfPath = path.join(uploadsDir, `cv-${Date.now()}-optimized.pdf`);
+      const browser = await puppeteer.launch({
+        headless: true,
+        args: ["--no-sandbox"],
+      });
+      const page = await browser.newPage();
+      await page.setContent(optimizedHtml, { waitUntil: "networkidle0" });
+      await page.pdf({ path: pdfPath, format: "A4", printBackground: true });
+      await browser.close();
+
+      return { success: true, pdfPath };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
   }
-  return htmlContent;
-}
 
-public async optimizePdfCvWithHtmlAI(pdfBuffer: Buffer, jobDescription?: string): Promise<{ success: boolean; pdfPath?: string; error?: string }> {
-  try {
-    const CONVERTAPI_KEY = process.env.CONVERTAPI_KEY || 'YOUR_CONVERTAPI_KEY';
-
-    // 1. Convert PDF to HTML using ConvertAPI
-    const originalHtml = await this.convertPdfToHtmlWithConvertApi(pdfBuffer, CONVERTAPI_KEY);
-
-    // 2. Optimize HTML with AI (bổ sung jobDescription vào prompt nếu có)
-    const prompt = `Đây là file HTML CV được chuyển từ PDF, layout và style đã được cố định bằng CSS.\nHãy tối ưu hóa nội dung CV trong HTML này để gây ấn tượng với nhà tuyển dụng, nhưng tuyệt đối KHÔNG thay đổi layout, style, cấu trúc HTML.\nChỉ thay đổi nội dung text (giữ nguyên các thẻ, class, style, id, v.v.).${jobDescription ? `\nMô tả công việc: ${jobDescription}` : ''}\nTrả về HTML đã tối ưu hóa.`;
-    const optimizedHtml = await (this.openAiService as any).optimizeCvHtmlWithPrompt(originalHtml, prompt);
-
-    // 3. Convert optimized HTML back to PDF using Puppeteer (giữ nguyên)
-    const uploadsDir = path.join(process.cwd(), 'uploads');
-    if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir);
-    const pdfPath = path.join(uploadsDir, `cv-${Date.now()}-optimized.pdf`);
-    const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox'] });
-    const page = await browser.newPage();
-    await page.setContent(optimizedHtml, { waitUntil: 'networkidle0' });
-    await page.pdf({ path: pdfPath, format: 'A4', printBackground: true });
-    await browser.close();
-
-    return { success: true, pdfPath };
-  } catch (error) {
-    return { success: false, error: error.message };
-  }
-}
-
-public async optimizePdfCvWithOriginalLayoutAI(
+  public async optimizePdfCvWithOriginalLayoutAI(
     pdfBuffer: Buffer,
     jobDescription: string,
-    additionalRequirements?: string
+    additionalRequirements?: string,
   ): Promise<{ success: boolean; pdfBuffer?: Buffer; error?: string }> {
     try {
       // 1. Convert PDF to HTML (giữ layout gốc)
-      const CONVERTAPI_KEY = process.env.CONVERTAPI_KEY || 'YOUR_CONVERTAPI_KEY';
-      const html = await this.convertPdfToHtmlWithConvertApi(pdfBuffer, CONVERTAPI_KEY);
+      const CONVERTAPI_KEY =
+        process.env.CONVERTAPI_KEY || "YOUR_CONVERTAPI_KEY";
+      const html = await this.convertPdfToHtmlWithConvertApi(
+        pdfBuffer,
+        CONVERTAPI_KEY,
+      );
       if (!html) {
-        this.logger.error('convertPdfToHtmlWithConvertApi trả về null');
-        return { success: false, error: 'Không thể chuyển PDF sang HTML.' };
+        this.logger.error("convertPdfToHtmlWithConvertApi trả về null");
+        return { success: false, error: "Không thể chuyển PDF sang HTML." };
       }
 
       // 2. Parse HTML, tách các đoạn text (dùng cheerio)
-      const cheerio = require('cheerio');
+      const cheerio = require("cheerio");
       const $ = cheerio.load(html);
       // Giả sử các đoạn text nằm trong các thẻ p, span, div (có thể refine thêm)
-      const textNodes: { el: any, text: string }[] = [];
-      $('p, span, div').each((i, el) => {
+      const textNodes: { el: any; text: string }[] = [];
+      $("p, span, div").each((i, el) => {
         const text = $(el).text();
         if (text && text.trim().length > 0) {
           textNodes.push({ el, text });
         }
       });
       if (textNodes.length === 0) {
-        this.logger.error('Không tìm thấy đoạn text nào trong HTML');
-        return { success: false, error: 'Không tìm thấy nội dung để tối ưu.' };
+        this.logger.error("Không tìm thấy đoạn text nào trong HTML");
+        return { success: false, error: "Không tìm thấy nội dung để tối ưu." };
       }
 
       // 3. Gọi AI tối ưu hóa từng đoạn (có thể batch hoặc từng đoạn)
@@ -1280,11 +1409,11 @@ public async optimizePdfCvWithOriginalLayoutAI(
           const optimized = await this.generateOptimizedCvWithAI(
             { summary: node.text },
             jobDescription,
-            additionalRequirements
+            additionalRequirements,
           );
           optimizedTexts.push(optimized?.summary || node.text);
         } catch (err) {
-          this.logger.error('AI tối ưu đoạn text lỗi:', err);
+          this.logger.error("AI tối ưu đoạn text lỗi:", err);
           optimizedTexts.push(node.text); // fallback giữ nguyên
         }
       }
@@ -1304,40 +1433,55 @@ public async optimizePdfCvWithOriginalLayoutAI(
       body, * { font-family: 'Roboto', Arial, sans-serif !important; }
       </style>
       `;
-      optimizedHtml = optimizedHtml.replace('<head>', `<head>${fontStyle}`);
+      optimizedHtml = optimizedHtml.replace("<head>", `<head>${fontStyle}`);
 
       // 6. Convert HTML về PDF (dùng puppeteer trực tiếp)
-      const puppeteer = require('puppeteer');
-      const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox'] });
+      const puppeteer = require("puppeteer");
+      const browser = await puppeteer.launch({
+        headless: true,
+        args: ["--no-sandbox"],
+      });
       const page = await browser.newPage();
-      await page.setContent(optimizedHtml, { waitUntil: 'networkidle0' });
-      const optimizedPdfBuffer = await page.pdf({ format: 'A4', printBackground: true });
+      await page.setContent(optimizedHtml, { waitUntil: "networkidle0" });
+      const optimizedPdfBuffer = await page.pdf({
+        format: "A4",
+        printBackground: true,
+      });
       await browser.close();
       if (!optimizedPdfBuffer) {
-        this.logger.error('puppeteer trả về null khi convert HTML về PDF');
-        return { success: false, error: 'Không thể chuyển HTML tối ưu về PDF.' };
+        this.logger.error("puppeteer trả về null khi convert HTML về PDF");
+        return {
+          success: false,
+          error: "Không thể chuyển HTML tối ưu về PDF.",
+        };
       }
 
       return { success: true, pdfBuffer: optimizedPdfBuffer };
     } catch (err) {
-      this.logger.error('Error in optimizePdfCvWithOriginalLayoutAI:', err);
-      return { success: false, error: 'Failed to optimize CV: ' + err.message };
+      this.logger.error("Error in optimizePdfCvWithOriginalLayoutAI:", err);
+      return { success: false, error: "Failed to optimize CV: " + err.message };
     }
   }
 
-public getOpenAiService() {
-  return this.openAiService;
-}
+  public getOpenAiService() {
+    return this.openAiService;
+  }
 
-public async rewriteWorkDescription(description: string, language?: string): Promise<string> {
-  return this.openAiService.rewriteWorkDescription(description, language);
-}
+  public async rewriteWorkDescription(
+    description: string,
+    language?: string,
+  ): Promise<string> {
+    return this.openAiService.rewriteWorkDescription(description, language);
+  }
 }
 
 // Add a placeholder for optimizeCvHtmlWithPrompt to avoid linter error
 // TODO: Implement this method in OpenAiService
 // @ts-ignore
-(OpenAiService.prototype as any).optimizeCvHtmlWithPrompt = async function(html: string, prompt: string) {
+(OpenAiService.prototype as any).optimizeCvHtmlWithPrompt = async function (
+  html: string,
+  prompt: string,
+) {
   // This is a placeholder. Replace with real OpenAI call.
   return html;
 };

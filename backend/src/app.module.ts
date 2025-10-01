@@ -79,4 +79,4 @@ import { FilesModule } from "./modules/files/files.module";
     ApplyJobModule,
   ],
 })
-export class AppModule {}
+export class AppModule { }

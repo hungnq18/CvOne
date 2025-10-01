@@ -15,4 +15,4 @@ import { JobsModule } from "../jobs/jobs.module";
   providers: [ApplyJobService],
   controllers: [ApplyJobController],
 })
-export class ApplyJobModule { }
+export class ApplyJobModule {}

@@ -7,7 +7,7 @@ import { CreateClTemplateDto } from "./dto/create-cl-template.dto";
 @Injectable()
 export class ClTemplateService {
   constructor(
-    @InjectModel(ClTemplate.name) private clTemplateModel: Model<ClTemplate>
+    @InjectModel(ClTemplate.name) private clTemplateModel: Model<ClTemplate>,
   ) {}
 
   async create(dto: CreateClTemplateDto): Promise<ClTemplate> {

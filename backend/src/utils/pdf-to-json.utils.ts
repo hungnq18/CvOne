@@ -14,8 +14,10 @@ function decodeText(textObj: any) {
 export function pdfBufferToDecodedJson(buffer: Buffer): Promise<any> {
   return new Promise((resolve, reject) => {
     const pdfParser = new PDFParser();
-    pdfParser.on("pdfParser_dataError", errData => reject(errData.parserError));
-    pdfParser.on("pdfParser_dataReady", pdfData => {
+    pdfParser.on("pdfParser_dataError", (errData) =>
+      reject(errData.parserError),
+    );
+    pdfParser.on("pdfParser_dataReady", (pdfData) => {
       // Giải mã text
       if (pdfData && pdfData.Pages) {
         pdfData.Pages = pdfData.Pages.map((page: any) => {
@@ -31,4 +33,4 @@ export function pdfBufferToDecodedJson(buffer: Buffer): Promise<any> {
     });
     pdfParser.parseBuffer(buffer);
   });
-} 
+}
