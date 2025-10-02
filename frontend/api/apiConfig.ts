@@ -2,7 +2,6 @@ export const API_URL = "http://localhost:8000/api";
 
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-
 // API Endpoints
 export const API_ENDPOINTS = {
   AUTH: {
@@ -61,7 +60,6 @@ export const API_ENDPOINTS = {
     UPLOAD_ANALYZE_GENERATE_PDF: "/cv/upload-analyze-generate-pdf",
     // UPLOAD_ANALYZE_OVERLAY_PDF: "/cv/upload-analyze-overlay-pdf",
     AI_STATUS: "/cv/ai-status",
-    GENERATE_PDF_AND_UPLOAD_TO_CLOUDINARY: "/cv/:id/generate-pdf-uploadToCloudinary"// api để tạo pdf và upload lên cloudinary
   },
   CL: {
     TEMPLATES: "/cl-templates",
@@ -73,7 +71,6 @@ export const API_ENDPOINTS = {
     DELETE: (id: string) => `/cover-letters/${id}`,
     EXTRACT_COVER_LETTER: "/cover-letters/extract/from-path",
     GENERATE_CL_BY_AI: "/cover-letters/generate/ai",
-
   },
   CHAT: {
     GET_MESSAGES: (convId: string) => `/chat/messages/${convId}`,
@@ -114,7 +111,8 @@ export const API_ENDPOINTS = {
     UPDATE_STATUS_BY_HR: (id: string) => `/apply-job/${id}/status/by-hr`,
     UPDATE_APPLY_JOB_BY_USER: (id: string) => `/apply-job/${id}/user-update`,
     DELETE_APPLY_JOB_BY_HR: (id: string) => `/apply-job/${id}`,
-    COUNT_BY_STATUS: (status: string) => `/apply-job/count-apply-job-by-status/${status}`,
+    COUNT_BY_STATUS: (status: string) =>
+      `/apply-job/count-apply-job-by-status/${status}`,
   },
   SAVED_JOB: {
     GET_SAVE_JOB: "/saved-jobs",
@@ -125,6 +123,9 @@ export const API_ENDPOINTS = {
     UPLOAD_FILE: "/upload",
   },
   MAIL: {
-    SHARE_CV: "/mail/share-cv",// api để gửi mail chia sẻ cv
+    SHARE_CV: "/mail/share-cv", // api để gửi mail chia sẻ cv
+  },
+  CV_TEMPLATE: {
+    SUGGEST_TEMPLATE: "/cv-template/suggest",
   },
 } as const;
