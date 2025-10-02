@@ -122,7 +122,4 @@ export const API_ENDPOINTS = {
   UPLOAD: {
     UPLOAD_FILE: "/upload",
   },
-  CV_TEMPLATE: {
-    SUGGEST_TEMPLATE: "/cv-templates/suggest",
-  },
 } as const;
