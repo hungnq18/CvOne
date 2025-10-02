@@ -122,4 +122,10 @@ export const API_ENDPOINTS = {
   UPLOAD: {
     UPLOAD_FILE: "/upload",
   },
+  MAIL: {
+    SHARE_CV: "/mail/share-cv", // api để gửi mail chia sẻ cv
+  },
+  CV_TEMPLATE: {
+    SUGGEST_TEMPLATE: "/cv-template/suggest",
+  },
 } as const;
