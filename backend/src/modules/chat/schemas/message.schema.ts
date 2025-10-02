@@ -14,6 +14,17 @@ export class Message extends Document {
 
   @Prop()
   content: string;
+  @Prop({
+    type: {
+      title: { type: String },
+      imageUrl: { type: String },
+    },
+    default: null,
+  })
+  templateData?: {
+    title?: string;
+    imageUrl?: string;
+  };
 
   @Prop({ type: [Types.ObjectId], default: [] })
   readBy: Types.ObjectId[];
