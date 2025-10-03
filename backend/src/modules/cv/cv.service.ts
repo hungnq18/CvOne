@@ -1,10 +1,17 @@
-import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { CvTemplate } from '../cv-template/schemas/cv-template.schema';
-import { CreateCvDto } from './dto/create-cv.dto';
-import { Cv } from './schemas/cv.schema';
-import { CvCacheService } from './services/cv-cache.service';
+import {
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from "@nestjs/common";
+import { InjectModel } from "@nestjs/mongoose";
+import { Model } from "mongoose";
+import { CvTemplate } from "../cv-template/schemas/cv-template.schema";
+import { CreateCvDto } from "./dto/create-cv.dto";
+import { Cv } from "./schemas/cv.schema";
+import { CvCacheService } from "./services/cv-cache.service";
+import { CvPdfService } from "./cv-pdf.service";
+import { CvPdfCloudService } from "./cv-pdf-cloud.service";
+import * as cloudinary from "cloudinary";
 
 @Injectable()
 export class CvService {
@@ -12,7 +19,20 @@ export class CvService {
     @InjectModel(Cv.name) private cvModel: Model<Cv>,
     @InjectModel(CvTemplate.name) private cvTemplateModel: Model<CvTemplate>,
     private cvCacheService: CvCacheService,
+<<<<<<< HEAD
   ) { }
+=======
+    private cvPdfService: CvPdfService,
+    private cvPdfCloudService: CvPdfCloudService,
+  ) {
+    // Configure Cloudinary
+    cloudinary.v2.config({
+      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+      api_key: process.env.CLOUDINARY_API_KEY,
+      api_secret: process.env.CLOUDINARY_API_SECRET,
+    });
+  }
+>>>>>>> d4455e8b3e4f567962e0fb5d8472edb309ec5ea3
 
   async getAllCVs(userId: string): Promise<Cv[]> {
     return this.cvCacheService.getCachedCVs(userId);
@@ -191,4 +211,105 @@ export class CvService {
     }
     return template;
   }
+<<<<<<< HEAD
+=======
+
+  /**
+   * Generate PDF from CV and upload to Cloudinary
+   * @param cvId - The ID of the CV to generate PDF from
+   * @param userId - The ID of the user
+   * @returns Object containing shareUrl
+   */
+  async generatePdfAndUploadToCloudinary(
+    cvId: string,
+    userId: string,
+  ): Promise<{ success: boolean; shareUrl?: string; error?: string }> {
+    try {
+      // 1. Get CV data from database
+      const cv = await this.getCVById(cvId, userId);
+      if (!cv) {
+        throw new NotFoundException("CV not found");
+      }
+
+      // 2. Generate PDF buffer from CV only (no AI/jobAnalysis)
+      const pdfBuffer =
+        await this.cvPdfCloudService.generatePdfBufferFromCv(cv);
+
+      // 3. Upload PDF to Cloudinary
+      const uploadResult = await this.uploadPdfToCloudinary(
+        pdfBuffer,
+        cv.title,
+        userId,
+      );
+
+      if (!uploadResult.success) {
+        throw new Error(
+          uploadResult.error || "Failed to upload PDF to Cloudinary",
+        );
+      }
+
+      return {
+        success: true,
+        shareUrl: uploadResult.shareUrl,
+      };
+    } catch (error: unknown) {
+      console.error("Error in generatePdfAndUploadToCloudinary:", error);
+      const errMsg =
+        error instanceof Error
+          ? error.message
+          : "Failed to generate and upload PDF";
+      return {
+        success: false,
+        error: errMsg,
+      };
+    }
+  }
+
+  /**
+   * Upload PDF buffer to Cloudinary
+   * @param pdfBuffer - PDF buffer to upload
+   * @param cvTitle - CV title for naming
+   * @param userId - User ID for folder organization
+   * @returns Upload result with shareUrl
+   */
+  private async uploadPdfToCloudinary(
+    pdfBuffer: Buffer,
+    cvTitle: string,
+    userId: string,
+  ): Promise<{ success: boolean; shareUrl?: string; error?: string }> {
+    try {
+      // Convert buffer to base64 string for Cloudinary upload
+      const base64String = `data:application/pdf;base64,${pdfBuffer.toString("base64")}`;
+
+      // Generate unique filename
+      const timestamp = Date.now();
+      const sanitizedTitle = cvTitle.replace(/[^a-zA-Z0-9]/g, "_");
+      const filename = `cv_${sanitizedTitle}_${timestamp}`;
+
+      // Upload to Cloudinary
+      const result = await cloudinary.v2.uploader.upload(base64String, {
+        resource_type: "raw",
+        folder: `cv-pdfs/${userId}`,
+        public_id: filename,
+        format: "pdf",
+        tags: ["cv", "pdf", userId],
+      });
+
+      return {
+        success: true,
+        shareUrl: result.secure_url,
+      };
+    } catch (error: unknown) {
+      console.error("Error uploading to Cloudinary:", error);
+      const errMsg =
+        error instanceof Error
+          ? error.message
+          : "Failed to upload to Cloudinary";
+      return {
+        success: false,
+        error: errMsg,
+      };
+    }
+  }
+>>>>>>> d4455e8b3e4f567962e0fb5d8472edb309ec5ea3
 }

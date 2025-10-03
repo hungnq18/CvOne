@@ -9,6 +9,9 @@ export class Conversation extends Document {
   @Prop({ type: Types.ObjectId, ref: "Message" })
   lastMessage?: Types.ObjectId;
 
+  @Prop({ type: String, default: "user-to-hr" })
+  type: string;
+
   @Prop({
     type: [
       {

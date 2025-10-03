@@ -35,7 +35,11 @@ export class CvController {
   constructor(
     private readonly cvService: CvService,
     private readonly cvAiService: CvAiService,
+<<<<<<< HEAD
     private readonly cvUploadService: CvUploadService
+=======
+    private readonly cvUploadService: CvUploadService,
+>>>>>>> d4455e8b3e4f567962e0fb5d8472edb309ec5ea3
   ) { }
 
   /**
@@ -101,12 +105,12 @@ export class CvController {
   async generateCvWithAI(
     @User("_id") userId: string,
     @Body("jobAnalysis") jobAnalysis: any,
-    @Body("additionalRequirements") additionalRequirements?: string
+    @Body("additionalRequirements") additionalRequirements?: string,
   ) {
     return this.cvAiService.generateCvWithJobAnalysis(
       userId,
       jobAnalysis,
-      additionalRequirements
+      additionalRequirements,
     );
   }
 
@@ -119,12 +123,12 @@ export class CvController {
   @Post("generate-and-save")
   async generateAndSaveCv(
     @Body() generateCvDto: GenerateCvDto,
-    @User("_id") userId: string
+    @User("_id") userId: string,
   ) {
     // Generate CV with AI
     const aiResult = await this.cvAiService.generateCvWithAI(
       userId,
-      generateCvDto
+      generateCvDto,
     );
 
     if (!aiResult.success) {
@@ -166,12 +170,12 @@ export class CvController {
   async suggestSummary(
     @User() user: any,
     @Body("jobAnalysis") jobAnalysis: any,
-    @Body("additionalRequirements") additionalRequirements?: string
+    @Body("additionalRequirements") additionalRequirements?: string,
   ) {
     // Không truyền userProfile nữa, chỉ truyền jobAnalysis và additionalRequirements
     const summary = await this.cvAiService.suggestProfessionalSummary(
       jobAnalysis,
-      additionalRequirements
+      additionalRequirements,
     );
 
     return summary;
@@ -184,7 +188,7 @@ export class CvController {
   @Post("suggest/skills")
   async suggestSkills(
     @Body("jobAnalysis") jobAnalysis: any,
-    @Body("userSkills") userSkills?: Array<{ name: string; rating: number }>
+    @Body("userSkills") userSkills?: Array<{ name: string; rating: number }>,
   ) {
     return this.cvAiService.suggestSkillsSection(jobAnalysis, userSkills);
   }
@@ -196,7 +200,7 @@ export class CvController {
   @Post("suggest/work-experience")
   async suggestWorkExperience(
     @Body("jobAnalysis") jobAnalysis: any,
-    @Body("experienceLevel") experienceLevel: string
+    @Body("experienceLevel") experienceLevel: string,
   ) {
     return this.cvAiService.suggestWorkExperience(jobAnalysis, experienceLevel);
   }
@@ -217,22 +221,22 @@ export class CvController {
         if (!file.mimetype || !file.mimetype.includes("pdf")) {
           return cb(
             new BadRequestException("Only PDF files are allowed!"),
-            false
+            false,
           );
         }
         cb(null, true);
       },
-    })
+    }),
   )
   async uploadAndAnalyzeCv(
     @UploadedFile() file: any,
     @Body("jobDescription") jobDescription: string,
-    @Body("additionalRequirements") additionalRequirements: string
+    @Body("additionalRequirements") additionalRequirements: string,
   ) {
     return this.cvUploadService.uploadAndAnalyzeCv(
       file,
       jobDescription,
-      additionalRequirements
+      additionalRequirements,
     );
   }
 
@@ -253,12 +257,12 @@ export class CvController {
         if (!file.mimetype || !file.mimetype.includes("pdf")) {
           return cb(
             new BadRequestException("Only PDF files are allowed!"),
-            false
+            false,
           );
         }
         cb(null, true);
       },
-    })
+    }),
   )
 
   /**
@@ -273,26 +277,26 @@ export class CvController {
         if (!file.mimetype.match(/^application\/pdf$/)) {
           return cb(
             new BadRequestException(
-              "Only PDF files are allowed for CV upload!"
+              "Only PDF files are allowed for CV upload!",
             ),
-            false
+            false,
           );
         }
         cb(null, true);
       },
       limits: { fileSize: 10 * 1024 * 1024 },
-    })
+    }),
   )
   async uploadReplaceContentPdf(
     @UploadedFile() file: any,
     @Body("jobDescription") jobDescription: string,
     @User("_id") userId: string,
     @Body("additionalRequirements") additionalRequirements: string,
-    @Res() res: any
+    @Res() res: any,
   ) {
     if (!file) {
       throw new BadRequestException(
-        "No CV file uploaded or invalid file type."
+        "No CV file uploaded or invalid file type.",
       );
     }
     if (!jobDescription || jobDescription.trim().length === 0) {
@@ -306,7 +310,7 @@ export class CvController {
       userId,
       file.buffer,
       jobDescription,
-      additionalRequirements
+      additionalRequirements,
     );
     if (!result.success || !result.pdfBuffer) {
       throw new BadRequestException(result.error || "Failed to process CV");
@@ -331,17 +335,17 @@ export class CvController {
         if (!file.mimetype || !file.mimetype.includes("pdf")) {
           return cb(
             new BadRequestException("Only PDF files are allowed!"),
-            false
+            false,
           );
         }
         cb(null, true);
       },
-    })
+    }),
   )
   async autoMappingPdf(@UploadedFile() file: any, @Res() res: any) {
     if (!file) {
       throw new BadRequestException(
-        "No CV file uploaded or invalid file type."
+        "No CV file uploaded or invalid file type.",
       );
     }
     try {
@@ -389,7 +393,7 @@ export class CvController {
       res.json({ success: true, mappingCandidates: results });
     } catch (error) {
       throw new BadRequestException(
-        `Failed to extract mapping: ${error.message}`
+        `Failed to extract mapping: ${error.message}`,
       );
     }
   }
@@ -416,7 +420,7 @@ export class CvController {
   @Post()
   async createCV(
     @Body() createCvDto: CreateCvDto,
-    @User("_id") userId: string
+    @User("_id") userId: string,
   ) {
     return this.cvService.createCV(createCvDto, userId);
   }
@@ -525,29 +529,29 @@ export class CvController {
         if (!file.mimetype || !file.mimetype.includes("pdf")) {
           return cb(
             new BadRequestException("Only PDF files are allowed!"),
-            false
+            false,
           );
         }
         cb(null, true);
       },
-    })
+    }),
   )
   async overlayOptimizeCv(
     @UploadedFile() file: any,
     @Body("jobDescription") jobDescription: string,
     @Body("additionalRequirements") additionalRequirements: string,
-    @Res() res: any
+    @Res() res: any,
   ) {
     if (!file) {
       throw new BadRequestException(
-        "No CV file uploaded or invalid file type."
+        "No CV file uploaded or invalid file type.",
       );
     }
     try {
       const result = await this.cvAiService.optimizePdfCvWithOriginalLayoutAI(
         file.buffer,
         jobDescription,
-        additionalRequirements
+        additionalRequirements,
       );
       if (!result.success || !result.pdfBuffer) {
         throw new BadRequestException(result.error || "Failed to optimize CV");
@@ -572,15 +576,50 @@ export class CvController {
   @Post("rewrite-work-description")
   async rewriteWorkDescription(
     @Body("description") description: string,
-    @Body("language") language?: string
+    @Body("language") language?: string,
   ) {
     if (!description || description.trim().length === 0) {
       throw new BadRequestException("Description is required.");
     }
     const rewritten = await this.cvAiService.rewriteWorkDescription(
       description,
-      language
+      language,
     );
     return { rewritten };
+  }
+
+  /**
+   * Generate PDF from CV and upload to Cloudinary
+   * @param cvId - The ID of the CV to generate PDF from
+   * @param userId - The ID of the authenticated user
+   * @returns Object containing shareUrl for the uploaded PDF
+   * @requires Authentication
+   */
+  @UseGuards(JwtAuthGuard)
+  @Post(":id/generate-pdf-uploadToCloudinary")
+  async generatePdfAndUploadToCloudinary(
+    @Param("id") cvId: string,
+    @User("_id") userId: string,
+  ) {
+    if (!cvId) {
+      throw new BadRequestException("CV ID is required");
+    }
+
+    const result = await this.cvService.generatePdfAndUploadToCloudinary(
+      cvId,
+      userId,
+    );
+
+    if (!result.success) {
+      throw new BadRequestException(
+        result.error || "Failed to generate and upload PDF",
+      );
+    }
+
+    return {
+      success: true,
+      message: "PDF generated and uploaded successfully",
+      shareUrl: result.shareUrl,
+    };
   }
 }

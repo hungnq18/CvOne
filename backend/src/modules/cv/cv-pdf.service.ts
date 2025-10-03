@@ -14,6 +14,24 @@ export class CvPdfService {
   private readonly logger = new Logger(CvPdfService.name);
 
   /**
+   * Resolve font directory for both dev (src) and prod (dist) runs
+   */
+  private getFontDir(): string {
+    // When compiled, __dirname is .../dist/modules/cv
+    const distFonts = path.join(__dirname, "../assets/fonts");
+    // During dev or as a fallback, use src assets directory from project root
+    const srcFonts = path.join(process.cwd(), "src/assets/fonts");
+    if (fs.existsSync(distFonts)) return distFonts;
+    if (fs.existsSync(srcFonts)) return srcFonts;
+    // Last resort: try relative to current file towards src
+    const altSrcFonts = path.join(__dirname, "../../assets/fonts");
+    if (fs.existsSync(altSrcFonts)) return altSrcFonts;
+    throw new Error(
+      `Font directory not found. Checked: ${distFonts} and ${srcFonts}`,
+    );
+  }
+
+  /**
    * Generate PDF CV based on CV analysis and job description
    */
   async generateCvPdf(
@@ -444,8 +462,13 @@ export class CvPdfService {
         },
       });
 
+<<<<<<< HEAD
       // Đăng ký font Unicode
       const fontDir = path.join(__dirname, "../assets/fonts");
+=======
+      // Đăng ký font Unicode (robust path resolution)
+      const fontDir = this.getFontDir();
+>>>>>>> d4455e8b3e4f567962e0fb5d8472edb309ec5ea3
       doc.registerFont("Roboto", path.join(fontDir, "Roboto-Regular.ttf"));
       doc.registerFont("Roboto-Bold", path.join(fontDir, "Roboto-Bold.ttf"));
       doc.registerFont(
@@ -542,8 +565,13 @@ export class CvPdfService {
         size: "A4",
         margins: { top: 50, bottom: 50, left: 50, right: 50 },
       });
+<<<<<<< HEAD
       // Đăng ký font Unicode
       const fontDir = path.join(__dirname, "../assets/fonts");
+=======
+      // Đăng ký font Unicode (robust path resolution)
+      const fontDir = this.getFontDir();
+>>>>>>> d4455e8b3e4f567962e0fb5d8472edb309ec5ea3
       doc.registerFont("Roboto", path.join(fontDir, "Roboto-Regular.ttf"));
       doc.registerFont("Roboto-Bold", path.join(fontDir, "Roboto-Bold.ttf"));
       doc.registerFont(

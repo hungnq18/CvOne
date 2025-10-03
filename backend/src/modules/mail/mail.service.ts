@@ -15,16 +15,18 @@ export class MailService {
   private transporter: nodemailer.Transporter;
 
   constructor(private configService: ConfigService) {
-    const mailHost = this.configService.get('MAIL_HOST');
-    const mailPort = this.configService.get('MAIL_PORT');
-    const mailUser = this.configService.get('MAIL_USER');
-    const mailPass = this.configService.get('MAIL_PASS');
-    const mailSecure = this.configService.get('MAIL_SECURE') === 'true';
+    const mailHost = this.configService.get("MAIL_HOST");
+    const mailPort = this.configService.get("MAIL_PORT");
+    const mailUser = this.configService.get("MAIL_USER");
+    const mailPass = this.configService.get("MAIL_PASS");
+    const mailSecure = this.configService.get("MAIL_SECURE") === "true";
 
     // Check if mail configuration is available
     if (!mailHost || !mailPort || !mailUser || !mailPass) {
-      console.warn('Mail configuration is incomplete. Email sending will be disabled.');
-      console.warn('Required: MAIL_HOST, MAIL_PORT, MAIL_USER, MAIL_PASS');
+      console.warn(
+        "Mail configuration is incomplete. Email sending will be disabled.",
+      );
+      console.warn("Required: MAIL_HOST, MAIL_PORT, MAIL_USER, MAIL_PASS");
       return;
     }
 
@@ -41,26 +43,34 @@ export class MailService {
     // Verify connection configuration
     this.transporter.verify((error, success) => {
       if (error) {
-        console.error('Mail transporter verification failed:', error);
+        console.error("Mail transporter verification failed:", error);
       } else {
-        console.log('Mail transporter is ready to send emails');
+        console.log("Mail transporter is ready to send emails");
       }
     });
   }
 
   async sendVerificationEmail(email: string, token: string) {
     if (!this.transporter) {
-      console.error('Mail transporter is not configured. Cannot send verification email.');
-      throw new Error('Email service is not configured. Please contact administrator.');
+      console.error(
+        "Mail transporter is not configured. Cannot send verification email.",
+      );
+      throw new Error(
+        "Email service is not configured. Please contact administrator.",
+      );
     }
 
+<<<<<<< HEAD
     const verificationLink = `${this.configService.get('FRONTEND_URL')}/verify-email/check?token=${token}`;
+=======
+    const verificationLink = `${this.configService.get("FRONTEND_URL")}/verify-email/check?token=${token}`;
+>>>>>>> d4455e8b3e4f567962e0fb5d8472edb309ec5ea3
 
     try {
       await this.transporter.sendMail({
-        from: this.configService.get('MAIL_FROM'),
+        from: this.configService.get("MAIL_FROM"),
         to: email,
-        subject: 'Verify your email',
+        subject: "Verify your email",
         html: `
           <h1>Email Verification</h1>
           <p>Please click the link below to verify your email:</p>
@@ -69,24 +79,34 @@ export class MailService {
       });
       console.log(`Verification email sent to ${email}`);
     } catch (error) {
-      console.error('Failed to send verification email:', error);
-      throw new Error('Failed to send verification email. Please try again later.');
+      console.error("Failed to send verification email:", error);
+      throw new Error(
+        "Failed to send verification email. Please try again later.",
+      );
     }
   }
 
   async sendPasswordResetEmail(email: string, token: string) {
     if (!this.transporter) {
-      console.error('Mail transporter is not configured. Cannot send password reset email.');
-      throw new Error('Email service is not configured. Please contact administrator.');
+      console.error(
+        "Mail transporter is not configured. Cannot send password reset email.",
+      );
+      throw new Error(
+        "Email service is not configured. Please contact administrator.",
+      );
     }
 
+<<<<<<< HEAD
     const resetLink = `${this.configService.get('FRONTEND_URL')}/reset-password?token=${token}`;
+=======
+    const resetLink = `${this.configService.get("FRONTEND_URL")}/reset-password?token=${token}`;
+>>>>>>> d4455e8b3e4f567962e0fb5d8472edb309ec5ea3
 
     try {
       await this.transporter.sendMail({
-        from: this.configService.get('MAIL_FROM'),
+        from: this.configService.get("MAIL_FROM"),
         to: email,
-        subject: 'Reset Your Password',
+        subject: "Reset Your Password",
         html: `
           <h1>Password Reset</h1>
           <p>Please click the link below to reset your password:</p>
@@ -97,8 +117,45 @@ export class MailService {
       });
       console.log(`Password reset email sent to ${email}`);
     } catch (error) {
-      console.error('Failed to send password reset email:', error);
-      throw new Error('Failed to send password reset email. Please try again later.');
+      console.error("Failed to send password reset email:", error);
+      throw new Error(
+        "Failed to send password reset email. Please try again later.",
+      );
     }
   }
+<<<<<<< HEAD
+=======
+
+  async sendCvShareEmail(recipientEmail: string, shareUrl: string) {
+    if (!this.transporter) {
+      console.error(
+        "Mail transporter is not configured. Cannot send CV share email.",
+      );
+      throw new Error(
+        "Email service is not configured. Please contact administrator.",
+      );
+    }
+
+    if (!recipientEmail || !shareUrl) {
+      throw new Error("Recipient email and shareUrl are required");
+    }
+
+    try {
+      await this.transporter.sendMail({
+        from: this.configService.get("MAIL_FROM"),
+        to: recipientEmail,
+        subject: "Your shared CV link",
+        html: `
+          <h1>Share CV</h1>
+          <p>You can view or download your CV PDF using the link below:</p>
+          <p><a href="${shareUrl}">${shareUrl}</a></p>
+        `,
+      });
+      console.log(`CV share email sent to ${recipientEmail}`);
+    } catch (error) {
+      console.error("Failed to send CV share email:", error);
+      throw new Error("Failed to send CV share email. Please try again later.");
+    }
+  }
+>>>>>>> d4455e8b3e4f567962e0fb5d8472edb309ec5ea3
 }
