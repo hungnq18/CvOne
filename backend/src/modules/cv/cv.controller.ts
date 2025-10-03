@@ -14,7 +14,6 @@ import {
 } from "@nestjs/common";
 import { FileInterceptor } from "@nestjs/platform-express";
 import * as multer from "multer";
-import * as pdf from "pdf-parse";
 // @ts-ignore: No type declarations for pdfjs-dist
 import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf.js";
 import * as puppeteer from "puppeteer";
@@ -25,6 +24,7 @@ import { CvAiService } from "./cv-ai.service";
 import { CvService } from "./cv.service";
 import { CreateCvDto } from "./dto/create-cv.dto";
 import { GenerateCvDto } from "./dto/generate-cv.dto";
+import { CvUploadService } from "./services/cv-upload.service";
 /**
  * Controller for handling CV (Curriculum Vitae) related requests
  * Most endpoints require authentication using JWT
@@ -35,6 +35,7 @@ export class CvController {
   constructor(
     private readonly cvService: CvService,
     private readonly cvAiService: CvAiService,
+    private readonly cvUploadService: CvUploadService,
   ) { }
 
   /**
@@ -168,7 +169,10 @@ export class CvController {
     @Body("additionalRequirements") additionalRequirements?: string,
   ) {
     // Không truyền userProfile nữa, chỉ truyền jobAnalysis và additionalRequirements
-    const summary = await this.cvAiService.suggestProfessionalSummary(jobAnalysis, additionalRequirements);
+    const summary = await this.cvAiService.suggestProfessionalSummary(
+      jobAnalysis,
+      additionalRequirements,
+    );
 
     return summary;
   }
@@ -205,45 +209,31 @@ export class CvController {
    * @requires Authentication
    */
   @UseGuards(JwtAuthGuard)
-  @Post('upload-and-analyze')
-  @UseInterceptors(FileInterceptor('cvFile', {
-    limits: { fileSize: 10 * 1024 * 1024 },
-    fileFilter: (req, file, cb) => {
-      if (!file.mimetype || !file.mimetype.includes('pdf')) {
-        return cb(new BadRequestException('Only PDF files are allowed!'), false);
-      }
-      cb(null, true);
-    }
-  }))
-  async uploadAndAnalyzeCv(@UploadedFile() file: any, @Body('jobDescription') jobDescription: string, @Body('additionalRequirements') additionalRequirements: string) {
-    if (!file) throw new BadRequestException('No CV file uploaded or invalid file type.');
-    if (!jobDescription || jobDescription.trim().length === 0) {
-      throw new BadRequestException("Job description is required.");
-    }
-    // 1. Trích xuất text từ PDF bằng pdf-parse
-    const pdfData = await pdf(file.buffer);
-    const cvText = pdfData.text;
-    if (!cvText || cvText.trim().length === 0) {
-      throw new BadRequestException('Could not extract text from PDF.');
-    }
-    // 2. Gửi text cho AI phân tích
-    const analysisResult = await this.cvAiService.analyzeCvContent(cvText);
-    // 3. Phân tích JD
-    const jobAnalysis = await this.cvAiService
-      .getOpenAiService()
-      .analyzeJobDescription(jobDescription);
-    // 4. Viết lại CV bằng AI dựa trên phân tích CV gốc và JD
-    const optimizedCv = await this.cvAiService.generateOptimizedCvWithAI(
-      analysisResult,
-      jobAnalysis,
+  @Post("upload-and-analyze")
+  @UseInterceptors(
+    FileInterceptor("cvFile", {
+      limits: { fileSize: 10 * 1024 * 1024 },
+      fileFilter: (req, file, cb) => {
+        if (!file.mimetype || !file.mimetype.includes("pdf")) {
+          return cb(
+            new BadRequestException("Only PDF files are allowed!"),
+            false,
+          );
+        }
+        cb(null, true);
+      },
+    }),
+  )
+  async uploadAndAnalyzeCv(
+    @UploadedFile() file: any,
+    @Body("jobDescription") jobDescription: string,
+    @Body("additionalRequirements") additionalRequirements: string,
+  ) {
+    return this.cvUploadService.uploadAndAnalyzeCv(
+      file,
+      jobDescription,
       additionalRequirements,
     );
-    // 5. Trả về kết quả phân tích và CV đã viết lại
-    return {
-      analysisResult,
-      jobAnalysis,
-      optimizedCv,
-    };
   }
 
   /**
@@ -270,106 +260,6 @@ export class CvController {
       },
     }),
   )
-  async uploadAnalyzeAndOverlayPdf(
-    @UploadedFile() file: any,
-    @Body("jobDescription") jobDescription: string,
-    @Body("additionalRequirements") additionalRequirements: string,
-    @Body("mapping") mapping: string, // nhận mapping từ frontend
-    @Res() res: any,
-  ) {
-    if (!file) {
-      console.log("DEBUG upload-analyze-overlay-pdf: No file uploaded");
-      throw new BadRequestException(
-        "No CV file uploaded or invalid file type.",
-      );
-    }
-    if (!jobDescription || jobDescription.trim().length === 0) {
-      console.log("DEBUG upload-analyze-overlay-pdf: Missing jobDescription");
-      throw new BadRequestException("Job description is required.");
-    }
-    // Parse mapping nếu có
-    let mappingObj = undefined;
-    if (mapping) {
-      try {
-        mappingObj = JSON.parse(mapping);
-      } catch (e) {
-        console.log(
-          "DEBUG upload-analyze-overlay-pdf: Invalid mapping format",
-          mapping,
-        );
-        throw new BadRequestException("Invalid mapping format");
-      }
-    }
-    // Nếu không có mapping, truyền undefined để service tự extract mapping từ PDF
-    if (!mappingObj || Object.keys(mappingObj).length === 0) {
-      mappingObj = undefined;
-    }
-    try {
-      // Gọi service để tạo HTML giữ layout gốc với nội dung tối ưu hóa
-      const result = await this.cvAiService.uploadAnalyzeAndOverlayHtml(
-        file.buffer,
-      );
-      if (!result.success || !result.html) {
-        throw new BadRequestException(result.error || "Failed to process CV");
-      }
-      res.set({
-        "Content-Type": "application/json",
-      });
-      res.send({
-        html: result.html,
-        mapping: result.mapping,
-      });
-    } catch (error) {
-      console.log("DEBUG upload-analyze-overlay-pdf: Exception", error);
-      throw new BadRequestException(`Failed to process CV: ${error.message}`);
-    }
-  }
-
-  // Thêm hàm sinh mapping tự động từ buffer (dùng lại logic của autoMappingPdf)
-  // private async autoGenerateMappingFromBuffer(buffer: Buffer): Promise<any> {
-  //   const pdfjsLib = require('pdfjs-dist/legacy/build/pdf.js');
-  //   const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(buffer) });
-  //   const pdf = await loadingTask.promise;
-  //   const mapping: any = {};
-  //   const keywords = {
-  //     summary: ['summary', 'tóm tắt', 'objective', 'professional summary', 'profile'],
-  //     skills: ['skill', 'kỹ năng', 'competencies', 'technical skills'],
-  //     experience: ['experience', 'kinh nghiệm', 'work experience', 'employment'],
-  //     education: ['education', 'học vấn', 'academic', 'degree', 'bằng cấp']
-  //   };
-  //   for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-  //     const page = await pdf.getPage(pageNum);
-  //     const textContent = await page.getTextContent();
-  //     (textContent.items as any[]).forEach(item => {
-  //       let x = Number(item.transform[4]);
-  //       let y = Number(item.transform[5]);
-  //       let fontSize = Number(item.height);
-  //       let width = Number(item.width);
-  //       let height = Number(item.height);
-  //       if (!Number.isFinite(x)) x = 0;
-  //       if (!Number.isFinite(y)) y = 0;
-  //       if (!Number.isFinite(fontSize)) fontSize = 12;
-  //       if (!Number.isFinite(width)) width = 100;
-  //       if (!Number.isFinite(height)) height = 20;
-  //       if (typeof item.str === 'string') {
-  //         const str = item.str.toLowerCase();
-  //         for (const [field, keys] of Object.entries(keywords)) {
-  //           if (keys.some(k => str.includes(k))) {
-  //             // Nếu đã có mapping, chọn block có width*height lớn hơn hoặc y lớn hơn (gần đầu trang hơn)
-  //             if (
-  //               !mapping[field] ||
-  //               (height * width > mapping[field].height * mapping[field].width) ||
-  //               (y > mapping[field].y)
-  //             ) {
-  //               mapping[field] = { x, y, page: pageNum - 1, width, height, fontSize };
-  //             }
-  //           }
-  //         }
-  //       }
-  //     });
-  //   }
-  //   return mapping;
-  // }
 
   /**
    * Upload original CV PDF, replace content with AI-optimized content, and return the new PDF (preserving original layout)
@@ -667,7 +557,7 @@ export class CvController {
         "Content-Disposition": 'attachment; filename="optimized-cv.pdf"',
       });
       // Trả về file PDF dạng stream để tối ưu tốc độ load
-      const { Readable } = require('stream');
+      const { Readable } = require("stream");
       const stream = Readable.from(result.pdfBuffer);
       stream.pipe(res);
     } catch (error) {
@@ -692,5 +582,40 @@ export class CvController {
       language,
     );
     return { rewritten };
+  }
+
+  /**
+   * Generate PDF from CV and upload to Cloudinary
+   * @param cvId - The ID of the CV to generate PDF from
+   * @param userId - The ID of the authenticated user
+   * @returns Object containing shareUrl for the uploaded PDF
+   * @requires Authentication
+   */
+  @UseGuards(JwtAuthGuard)
+  @Post(":id/generate-pdf-uploadToCloudinary")
+  async generatePdfAndUploadToCloudinary(
+    @Param("id") cvId: string,
+    @User("_id") userId: string,
+  ) {
+    if (!cvId) {
+      throw new BadRequestException("CV ID is required");
+    }
+
+    const result = await this.cvService.generatePdfAndUploadToCloudinary(
+      cvId,
+      userId,
+    );
+
+    if (!result.success) {
+      throw new BadRequestException(
+        result.error || "Failed to generate and upload PDF",
+      );
+    }
+
+    return {
+      success: true,
+      message: "PDF generated and uploaded successfully",
+      shareUrl: result.shareUrl,
+    };
   }
 }

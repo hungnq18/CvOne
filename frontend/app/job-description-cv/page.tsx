@@ -286,7 +286,7 @@ export default function JobDescriptionPage() {
     fileName = "cv.pdf",
     mimeType = "application/pdf"
   ) => {
-    const blob = new Blob([uint8Array], { type: mimeType });
+    const blob = new Blob([uint8Array.buffer as ArrayBuffer], { type: mimeType });
     return new File([blob], fileName, { type: mimeType });
   };
 
@@ -345,12 +345,25 @@ export default function JobDescriptionPage() {
       router.push(`/createCV-AIManual?id=${templateId}`);
   
     } catch (error) {
-      if (error instanceof Error && error.message.includes("413")) {
-        alert(t.alerts.pdfTooLarge413);
+      console.error("Lỗi trong quá trình xử lý CV:", error);
+      
+      if (error instanceof Error) {
+        if (error.message.includes("413")) {
+          alert(t.alerts.pdfTooLarge413);
+        } else if (error.message.includes("400")) {
+          alert("Dữ liệu không hợp lệ. Vui lòng kiểm tra lại file CV và mô tả công việc.");
+        } else if (error.message.includes("401")) {
+          alert("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
+        } else if (error.message.includes("500")) {
+          alert("Lỗi máy chủ. Vui lòng thử lại sau.");
+        } else if (error.message.includes("Network")) {
+          alert("Lỗi kết nối mạng. Vui lòng kiểm tra kết nối internet.");
+        } else {
+          alert(t.alerts.cvAnalysisError);
+        }
       } else {
         alert(t.alerts.cvAnalysisError);
       }
-      console.error("Lỗi trong quá trình xử lý CV:", error);
     } finally {
       // Luôn tắt trạng thái loading ở cuối
       setIsCreatingCV(false);

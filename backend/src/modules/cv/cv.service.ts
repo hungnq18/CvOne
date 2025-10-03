@@ -1,25 +1,43 @@
-import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { CvTemplate } from '../cv-template/schemas/cv-template.schema';
-import { CreateCvDto } from './dto/create-cv.dto';
-import { Cv } from './schemas/cv.schema';
+import {
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from "@nestjs/common";
+import { InjectModel } from "@nestjs/mongoose";
+import { Model } from "mongoose";
+import { CvTemplate } from "../cv-template/schemas/cv-template.schema";
+import { CreateCvDto } from "./dto/create-cv.dto";
+import { Cv } from "./schemas/cv.schema";
+import { CvCacheService } from "./services/cv-cache.service";
+import { CvPdfService } from "./cv-pdf.service";
+import { CvPdfCloudService } from "./cv-pdf-cloud.service";
+import * as cloudinary from "cloudinary";
 
 @Injectable()
 export class CvService {
   constructor(
     @InjectModel(Cv.name) private cvModel: Model<Cv>,
     @InjectModel(CvTemplate.name) private cvTemplateModel: Model<CvTemplate>,
-  ) {}
+    private cvCacheService: CvCacheService,
+    private cvPdfService: CvPdfService,
+    private cvPdfCloudService: CvPdfCloudService,
+  ) {
+    // Configure Cloudinary
+    cloudinary.v2.config({
+      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+      api_key: process.env.CLOUDINARY_API_KEY,
+      api_secret: process.env.CLOUDINARY_API_SECRET,
+    });
+  }
 
   async getAllCVs(userId: string): Promise<Cv[]> {
-    return this.cvModel.find({ userId }).exec();
+    return this.cvCacheService.getCachedCVs(userId);
   }
 
   async getCVById(id: string, userId: string): Promise<Cv> {
-    const cv = await this.cvModel.findOne({ _id: id, userId }).exec();
+    const cv = await this.cvCacheService.getCachedCV(id, userId);
     if (!cv) {
-      throw new NotFoundException('CV not found');
+      throw new NotFoundException("CV not found");
     }
     return cv;
   }
@@ -31,9 +49,11 @@ export class CvService {
    */
   async createCV(createCvDto: CreateCvDto, userId: string) {
     // Check if template exists
-    const template = await this.cvTemplateModel.findById(createCvDto.cvTemplateId);
+    const template = await this.cvTemplateModel.findById(
+      createCvDto.cvTemplateId,
+    );
     if (!template) {
-      throw new NotFoundException('CV template not found');
+      throw new NotFoundException("CV template not found");
     }
 
     const newCV = new this.cvModel({
@@ -44,25 +64,31 @@ export class CvService {
     });
 
     const savedCV = await newCV.save();
+
+    // Invalidate cache for this user
+    this.cvCacheService.invalidateUserCache(userId);
+
     return savedCV;
   }
 
   async updateCV(id: string, userId: string, data: Partial<Cv>): Promise<Cv> {
-    const cv = await this.cvModel.findOneAndUpdate(
-      { _id: id, userId },
-      { $set: data },
-      { new: true }
-    ).exec();
+    const cv = await this.cvModel
+      .findOneAndUpdate({ _id: id, userId }, { $set: data }, { new: true })
+      .exec();
     if (!cv) {
-      throw new NotFoundException('CV not found');
+      throw new NotFoundException("CV not found");
     }
+
+    // Invalidate cache for this CV
+    this.cvCacheService.invalidateCVCache(id, userId);
+
     return cv;
   }
 
   async deleteCV(id: string, userId: string): Promise<void> {
     const result = await this.cvModel.deleteOne({ _id: id, userId }).exec();
     if (result.deletedCount === 0) {
-      throw new NotFoundException('CV not found');
+      throw new NotFoundException("CV not found");
     }
   }
 
@@ -74,18 +100,20 @@ export class CvService {
   async saveCV(cvId: string, userId: string) {
     const cv = await this.cvModel.findById(cvId);
     if (!cv) {
-      throw new NotFoundException('CV not found');
+      throw new NotFoundException("CV not found");
     }
 
     // Check if user has permission to save this CV
     if (cv.userId.toString() !== userId) {
-      throw new UnauthorizedException('You do not have permission to save this CV');
+      throw new UnauthorizedException(
+        "You do not have permission to save this CV",
+      );
     }
 
     cv.isSaved = true;
     await cv.save();
 
-    return { message: 'CV saved successfully' };
+    return { message: "CV saved successfully" };
   }
 
   /**
@@ -96,18 +124,20 @@ export class CvService {
   async unsaveCV(cvId: string, userId: string) {
     const cv = await this.cvModel.findById(cvId);
     if (!cv) {
-      throw new NotFoundException('CV not found');
+      throw new NotFoundException("CV not found");
     }
 
     // Check if user has permission to unsave this CV
     if (cv.userId.toString() !== userId) {
-      throw new UnauthorizedException('You do not have permission to unsave this CV');
+      throw new UnauthorizedException(
+        "You do not have permission to unsave this CV",
+      );
     }
 
     cv.isSaved = false;
     await cv.save();
 
-    return { message: 'CV unsaved successfully' };
+    return { message: "CV unsaved successfully" };
   }
 
   /**
@@ -118,18 +148,20 @@ export class CvService {
   async shareCV(cvId: string, userId: string) {
     const cv = await this.cvModel.findById(cvId);
     if (!cv) {
-      throw new NotFoundException('CV not found');
+      throw new NotFoundException("CV not found");
     }
 
     // Check if user has permission to share this CV
     if (cv.userId.toString() !== userId) {
-      throw new UnauthorizedException('You do not have permission to share this CV');
+      throw new UnauthorizedException(
+        "You do not have permission to share this CV",
+      );
     }
 
     cv.isPublic = true;
     await cv.save();
 
-    return { message: 'CV shared successfully' };
+    return { message: "CV shared successfully" };
   }
 
   /**
@@ -140,18 +172,20 @@ export class CvService {
   async unshareCV(cvId: string, userId: string) {
     const cv = await this.cvModel.findById(cvId);
     if (!cv) {
-      throw new NotFoundException('CV not found');
+      throw new NotFoundException("CV not found");
     }
 
     // Check if user has permission to unshare this CV
     if (cv.userId.toString() !== userId) {
-      throw new UnauthorizedException('You do not have permission to unshare this CV');
+      throw new UnauthorizedException(
+        "You do not have permission to unshare this CV",
+      );
     }
 
     cv.isPublic = false;
     await cv.save();
 
-    return { message: 'CV unshared successfully' };
+    return { message: "CV unshared successfully" };
   }
 
   /**
@@ -159,10 +193,7 @@ export class CvService {
    * @param userId - The ID of the user
    */
   async getSavedCVs(userId: string) {
-    return this.cvModel.find({
-      userId,
-      isSaved: true
-    }).exec();
+    return this.cvCacheService.getCachedCVs(userId, true);
   }
 
   async getAllTemplates(): Promise<CvTemplate[]> {
@@ -172,8 +203,106 @@ export class CvService {
   async getTemplateById(id: string): Promise<CvTemplate> {
     const template = await this.cvTemplateModel.findById(id).exec();
     if (!template) {
-      throw new NotFoundException('Template not found');
+      throw new NotFoundException("Template not found");
     }
     return template;
+  }
+
+  /**
+   * Generate PDF from CV and upload to Cloudinary
+   * @param cvId - The ID of the CV to generate PDF from
+   * @param userId - The ID of the user
+   * @returns Object containing shareUrl
+   */
+  async generatePdfAndUploadToCloudinary(
+    cvId: string,
+    userId: string,
+  ): Promise<{ success: boolean; shareUrl?: string; error?: string }> {
+    try {
+      // 1. Get CV data from database
+      const cv = await this.getCVById(cvId, userId);
+      if (!cv) {
+        throw new NotFoundException("CV not found");
+      }
+
+      // 2. Generate PDF buffer from CV only (no AI/jobAnalysis)
+      const pdfBuffer =
+        await this.cvPdfCloudService.generatePdfBufferFromCv(cv);
+
+      // 3. Upload PDF to Cloudinary
+      const uploadResult = await this.uploadPdfToCloudinary(
+        pdfBuffer,
+        cv.title,
+        userId,
+      );
+
+      if (!uploadResult.success) {
+        throw new Error(
+          uploadResult.error || "Failed to upload PDF to Cloudinary",
+        );
+      }
+
+      return {
+        success: true,
+        shareUrl: uploadResult.shareUrl,
+      };
+    } catch (error: unknown) {
+      console.error("Error in generatePdfAndUploadToCloudinary:", error);
+      const errMsg =
+        error instanceof Error
+          ? error.message
+          : "Failed to generate and upload PDF";
+      return {
+        success: false,
+        error: errMsg,
+      };
+    }
+  }
+
+  /**
+   * Upload PDF buffer to Cloudinary
+   * @param pdfBuffer - PDF buffer to upload
+   * @param cvTitle - CV title for naming
+   * @param userId - User ID for folder organization
+   * @returns Upload result with shareUrl
+   */
+  private async uploadPdfToCloudinary(
+    pdfBuffer: Buffer,
+    cvTitle: string,
+    userId: string,
+  ): Promise<{ success: boolean; shareUrl?: string; error?: string }> {
+    try {
+      // Convert buffer to base64 string for Cloudinary upload
+      const base64String = `data:application/pdf;base64,${pdfBuffer.toString("base64")}`;
+
+      // Generate unique filename
+      const timestamp = Date.now();
+      const sanitizedTitle = cvTitle.replace(/[^a-zA-Z0-9]/g, "_");
+      const filename = `cv_${sanitizedTitle}_${timestamp}`;
+
+      // Upload to Cloudinary
+      const result = await cloudinary.v2.uploader.upload(base64String, {
+        resource_type: "raw",
+        folder: `cv-pdfs/${userId}`,
+        public_id: filename,
+        format: "pdf",
+        tags: ["cv", "pdf", userId],
+      });
+
+      return {
+        success: true,
+        shareUrl: result.secure_url,
+      };
+    } catch (error: unknown) {
+      console.error("Error uploading to Cloudinary:", error);
+      const errMsg =
+        error instanceof Error
+          ? error.message
+          : "Failed to upload to Cloudinary";
+      return {
+        success: false,
+        error: errMsg,
+      };
+    }
   }
 }

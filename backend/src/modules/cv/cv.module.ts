@@ -7,10 +7,14 @@ import {
 import { User, UserSchema } from "../users/schemas/user.schema";
 import { CvAiService } from "./cv-ai.service";
 import { CvPdfService } from "./cv-pdf.service";
+import { CvPdfCloudService } from "./cv-pdf-cloud.service";
 import { CvController } from "./cv.controller";
 import { CvService } from "./cv.service";
 import { OpenAiService } from "./openai.service";
 import { Cv, CvSchema } from "./schemas/cv.schema";
+import { AiOptimizationService } from "./services/ai-optimization.service";
+import { CvCacheService } from "./services/cv-cache.service";
+import { CvUploadService } from "./services/cv-upload.service";
 
 @Module({
   imports: [
@@ -21,7 +25,25 @@ import { Cv, CvSchema } from "./schemas/cv.schema";
     ]),
   ],
   controllers: [CvController],
-  providers: [CvService, CvAiService, OpenAiService, CvPdfService],
-  exports: [CvService, CvAiService, OpenAiService, CvPdfService],
+  providers: [
+    CvService,
+    CvAiService,
+    OpenAiService,
+    CvPdfService,
+    CvPdfCloudService,
+    CvUploadService,
+    CvCacheService,
+    AiOptimizationService,
+  ],
+  exports: [
+    CvService,
+    CvAiService,
+    OpenAiService,
+    CvPdfService,
+    CvPdfCloudService,
+    CvUploadService,
+    CvCacheService,
+    AiOptimizationService,
+  ],
 })
-export class CvModule {}
+export class CvModule { }
