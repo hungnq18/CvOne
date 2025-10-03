@@ -1,30 +1,24 @@
 import React from "react";
-import { Table, Card, Row, Col, Dropdown, Menu, Button } from "antd";
+import { Table, Card, Row, Col, Button, Menu } from "antd";
 import { FaFileAlt, FaPlus } from "react-icons/fa";
 import { CV } from "@/api/cvapi";
-import { DownOutlined } from "@ant-design/icons";
 import { useLanguage } from "@/providers/global-provider";
-
 import dynamic from "next/dynamic";
 
-// Dynamic import giúp tránh lỗi hydration mismatch
 const CardMyCV = dynamic(() => import("@/components/card/card-MyCV"), {
   ssr: false,
 });
 
 interface CVListProps {
   cvList: CV[];
-  viewMode: "grid" | "list";
+  viewMode?: "grid" | "list";
 }
 
 const translations = {
   en: {
     title: "CV List",
     new: "New CV",
-    status: {
-      final: "Final",
-      draft: "Draft",
-    },
+    status: { final: "Final", draft: "Draft" },
     actions: {
       edit: "Edit",
       duplicate: "Duplicate",
@@ -36,17 +30,13 @@ const translations = {
       title: "Title",
       createdAt: "Creation",
       status: "Status",
-      edited: "Edited {hours} hours ago",
     },
     tip: "TIP: Did you know that if you tailor your CV to the job description, you double your chances to get an interview?",
   },
   vi: {
     title: "Danh sách CV",
     new: "CV mới",
-    status: {
-      final: "Hoàn thành",
-      draft: "Bản nháp",
-    },
+    status: { final: "Hoàn thành", draft: "Bản nháp" },
     actions: {
       edit: "Chỉnh sửa",
       duplicate: "Nhân bản",
@@ -58,9 +48,8 @@ const translations = {
       title: "Tiêu đề",
       createdAt: "Ngày tạo",
       status: "Trạng thái",
-      edited: "Chỉnh sửa {hours} giờ trước",
     },
-    tip: "MẸO: Bạn có biết rằng nếu bạn điều chỉnh CV của mình theo mô tả công việc, bạn sẽ tăng gấp đôi cơ hội được phỏng vấn?",
+    tip: "MẸO: Nếu bạn điều chỉnh CV theo mô tả công việc, bạn tăng gấp đôi cơ hội được phỏng vấn!",
   },
 };
 
@@ -90,15 +79,6 @@ const CVList: React.FC<CVListProps> = ({ cvList, viewMode }) => {
     },
   ];
 
-  const menu = (cv: CV) => (
-    <Menu>
-      <Menu.Item key="edit">{t.actions.edit}</Menu.Item>
-      <Menu.Item key="tailor">{t.actions.tailor}</Menu.Item>
-      <Menu.Item key="download">{t.actions.download}</Menu.Item>
-      <Menu.Item key="delete">{t.actions.delete}</Menu.Item>
-    </Menu>
-  );
-
   if (viewMode === "grid") {
     return (
       <div className="bg-white p-6 shadow-md hover:shadow-lg transition-shadow duration-300">
@@ -117,7 +97,6 @@ const CVList: React.FC<CVListProps> = ({ cvList, viewMode }) => {
           </Button>
         </div>
         <Row gutter={[16, 16]}>
-          {/* New Resume Card */}
           <Col xs={24} sm={12} md={8} lg={8}>
             <Card
               hoverable

@@ -1,13 +1,10 @@
-import { hover } from "framer-motion";
 import Image from "next/image";
 import React from "react";
-// BƯỚC 1: Import hook để lấy ngôn ngữ
 import { Avatar } from "antd";
 
 // --- BƯỚC 2: TẠO ĐỐI TƯỢNG TRANSLATIONS ---
 const translations = {
   en: {
-    // Labels for HoverableWrapper
     avatarLabel: "Avatar",
     fullNameAndTitleLabel: "Full Name & Title",
     personalInfoLabel: "PERSONAL INFORMATION",
@@ -15,7 +12,6 @@ const translations = {
     skillsLabel: "SKILLS",
     experienceLabel: "WORK EXPERIENCE",
     educationLabel: "EDUCATION",
-    // Content
     phone: "Phone:",
     email: "Email:",
     address: "Address:",
@@ -25,7 +21,6 @@ const translations = {
     defaultProfessional: "Professional",
   },
   vi: {
-    // Labels for HoverableWrapper
     avatarLabel: "Ảnh đại diện",
     fullNameAndTitleLabel: "Họ tên & Chức danh",
     personalInfoLabel: "THÔNG TIN CÁ NHÂN",
@@ -33,8 +28,6 @@ const translations = {
     skillsLabel: "KỸ NĂNG",
     experienceLabel: "KINH NGHIỆM LÀM VIỆC",
     educationLabel: "HỌC VẤN",
-
-    // Content
     phone: "Điện thoại:",
     email: "Email:",
     address: "Địa chỉ:",
@@ -45,7 +38,6 @@ const translations = {
   },
 };
 
-// --- PROPS INTERFACES (Không đổi) ---
 interface HoverableWrapperProps {
   children: React.ReactNode;
   label: string;
@@ -69,8 +61,6 @@ interface ModernCV1Props {
   language?: string;
 }
 
-// --- COMPONENTS (Được cập nhật) ---
-
 const HoverableWrapper: React.FC<HoverableWrapperProps> = ({
   children,
   label,
@@ -81,8 +71,7 @@ const HoverableWrapper: React.FC<HoverableWrapperProps> = ({
   if (isPdfMode) {
     return <>{children}</>;
   }
-  
-  // Sửa logic để không phụ thuộc vào chuỗi text
+
   const hoverEffectMap: { [key: string]: string } = {
     info: "hover:scale-105 hover:bg-white hover:shadow-lg",
     experience: "hover:scale-105 hover:bg-white hover:shadow-lg",
@@ -92,18 +81,15 @@ const HoverableWrapper: React.FC<HoverableWrapperProps> = ({
     skills: "hover:scale-105 hover:bg-[#004d40] hover:shadow-lg",
     avatar: "hover:scale-105 hover:bg-[#004D3F] hover:shadow-lg ",
   };
-  
+
   const hoverClass = hoverEffectMap[sectionId] || "";
-
-  const finalClassName = `
-    relative group cursor-pointer rounded-lg transition-all duration-300 ease-in-out
-    ${hoverClass}
-  `;
-
   const borderRadiusClass = sectionId === "avatar" ? "rounded-full" : "rounded-lg";
 
   return (
-    <div className={finalClassName} onClick={() => onClick?.(sectionId)}>
+    <div
+      className={`relative group cursor-pointer rounded-lg transition-all duration-300 ease-in-out ${hoverClass}`}
+      onClick={() => onClick?.(sectionId)}
+    >
       {children}
       <div
         className={`absolute inset-0 ${borderRadiusClass} border-4 border-[#8BAAFC] opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none`}
@@ -111,9 +97,9 @@ const HoverableWrapper: React.FC<HoverableWrapperProps> = ({
       <div
         className={`absolute top-0 left-4 -translate-y-1/2 bg-[#8BAAFC] text-white text-sm font-bold tracking-wide px-3 py-1 opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none`}
         style={{
-          borderRadius: sectionId === 'avatar' ? "4px 10px 4px 10px" : "4px 10px 0 0",
+          borderRadius: sectionId === "avatar" ? "4px 10px 4px 10px" : "4px 10px 0 0",
           marginTop: "-2%",
-          left: sectionId === 'avatar' ? "-4%" : "1%",
+          left: sectionId === "avatar" ? "-4%" : "1%",
         }}
       >
         {label}
@@ -156,23 +142,19 @@ const Section: React.FC<SectionProps> = ({
           <h2 className="text-gray-800 text-xl lg:text-2xl font-bold tracking-wider mb-1">
             {title}
           </h2>
-          <div className="pt-3 border-t-2 border-[#004d40] leading-relaxed">
-            {children}
-          </div>
+          <div className="pt-3 border-t-2 border-[#004d40] leading-relaxed">{children}</div>
         </div>
       </HoverableWrapper>
     </div>
   );
 };
 
-// --- MAIN COMPONENT ---
 const ModernCV1: React.FC<ModernCV1Props> = ({
   data,
   onSectionClick,
   isPdfMode = false,
   language,
 }) => {
-  // BƯỚC 3: LẤY ĐÚNG BỘ TỪ ĐIỂN TỪ PROP
   const lang = language || "en";
   const t = translations[lang as "en" | "vi"];
 
@@ -180,7 +162,7 @@ const ModernCV1: React.FC<ModernCV1Props> = ({
   const professionalTitle = userData.professional || t.defaultProfessional;
 
   const sectionMap = {
-    avatar:"avatar",
+    avatar: "avatar",
     info: "info",
     contact: "contact",
     summary: "summary",
@@ -191,8 +173,9 @@ const ModernCV1: React.FC<ModernCV1Props> = ({
 
   return (
     <div className="bg-white font-sans text-gray-800 flex flex-col lg:flex-row min-h-screen">
-      {/* --- CỘT TRÁI (MÀU XANH) --- */}
+      {/* LEFT COLUMN */}
       <div className="w-full lg:w-[38%] bg-[#004d40] text-white flex flex-col gap-8 py-8 lg:py-12">
+        {/* Avatar */}
         <div className="px-8 lg:px-12">
           <div className="flex justify-center">
             <HoverableWrapper
@@ -205,18 +188,14 @@ const ModernCV1: React.FC<ModernCV1Props> = ({
                 {isPdfMode ? (
                   <img
                     src={userData.avatar || "/avatar-female.png"}
-                    alt={`${userData.firstName || ""} ${
-                      userData.lastName || ""
-                    }`}
+                    alt={`${userData.firstName || ""} ${userData.lastName || ""}`}
                     crossOrigin="anonymous"
                     className="w-full h-full object-cover"
                   />
                 ) : (
                   <Image
                     src={userData.avatar || "/avatar-female.png"}
-                    alt={`${userData.firstName || ""} ${
-                      userData.lastName || ""
-                    }`}
+                    alt={`${userData.firstName || ""} ${userData.lastName || ""}`}
                     width={300}
                     height={375}
                     className="w-full h-full object-cover"
@@ -227,6 +206,7 @@ const ModernCV1: React.FC<ModernCV1Props> = ({
           </div>
         </div>
 
+        {/* Contact Info */}
         <HoverableWrapper
           label={t.personalInfoLabel}
           sectionId={sectionMap.contact}
@@ -239,21 +219,15 @@ const ModernCV1: React.FC<ModernCV1Props> = ({
             </h2>
             <div className="space-y-4 text-lg lg:text-xl">
               <div>
-                <strong className="w-32 shrink-0 block text-base font-bold text-white/70">
-                  {t.phone}
-                </strong>
+                <strong className="block text-base font-bold text-white/70">{t.phone}</strong>
                 <span className="text-lg break-words">{userData.phone}</span>
               </div>
               <div>
-                <strong className="w-32 shrink-0 block text-base font-bold text-white/70">
-                  {t.email}
-                </strong>
+                <strong className="block text-base font-bold text-white/70">{t.email}</strong>
                 <span className="text-lg break-words">{userData.email}</span>
               </div>
               <div>
-                <strong className="w-32 shrink-0 block text-base font-bold text-white/70">
-                  {t.address}
-                </strong>
+                <strong className="block text-base font-bold text-white/70">{t.address}</strong>
                 <span className="text-lg break-words">
                   {userData.city}, {userData.country}
                 </span>
@@ -262,6 +236,7 @@ const ModernCV1: React.FC<ModernCV1Props> = ({
           </div>
         </HoverableWrapper>
 
+        {/* Summary */}
         <HoverableWrapper
           label={t.careerObjectiveLabel}
           sectionId={sectionMap.summary}
@@ -272,12 +247,11 @@ const ModernCV1: React.FC<ModernCV1Props> = ({
             <h2 className="text-xl lg:text-2xl font-bold mb-6 pb-3 border-b border-white/50 pt-3">
               {t.careerObjectiveLabel}
             </h2>
-            <p className="text-lg lg:text-xl leading-loose">
-              {userData.summary}
-            </p>
+            <p className="text-lg lg:text-xl leading-loose">{userData.summary}</p>
           </div>
         </HoverableWrapper>
 
+        {/* Skills */}
         {userData.skills?.length > 0 && (
           <HoverableWrapper
             label={t.skillsLabel}
@@ -286,7 +260,7 @@ const ModernCV1: React.FC<ModernCV1Props> = ({
             isPdfMode={isPdfMode}
           >
             <div className="px-8 lg:px-12">
-              <h2 className="text-xl lg:text-2xl font-bold mb-6 pb-3 border-b border-white/50  pt-3">
+              <h2 className="text-xl lg:text-2xl font-bold mb-6 pb-3 border-b border-white/50 pt-3">
                 {t.skillsLabel}
               </h2>
               <ul className="list-disc pl-6 space-y-3 text-lg lg:text-xl">
@@ -299,7 +273,7 @@ const ModernCV1: React.FC<ModernCV1Props> = ({
         )}
       </div>
 
-      {/* --- CỘT PHẢI (MÀU TRẮNG) --- */}
+      {/* RIGHT COLUMN */}
       <div className="w-full lg:w-[62%]">
         <HoverableWrapper
           label={t.fullNameAndTitleLabel}
@@ -311,7 +285,7 @@ const ModernCV1: React.FC<ModernCV1Props> = ({
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-gray-800 uppercase">
               {userData.firstName} {userData.lastName}
             </h1>
-            <div className="mt-3 inline-block h-max-100 mt-8">
+            <div className="mt-8 inline-block">
               <span className="bg-[#4db6ac] text-white text-xl lg:text-2xl font-bold tracking-wider px-5 py-2">
                 {professionalTitle.toUpperCase()}
               </span>
@@ -320,6 +294,7 @@ const ModernCV1: React.FC<ModernCV1Props> = ({
         </HoverableWrapper>
 
         <div className="pb-8 lg:pb-12">
+          {/* Work History */}
           <Section
             title={t.experienceLabel}
             sectionId={sectionMap.experience}
@@ -336,20 +311,16 @@ const ModernCV1: React.FC<ModernCV1Props> = ({
                     job.endDate == "Present" ||
                     job.endDate == "Hiện tại"
                       ? t.present
-                      : `${job.endDate?.slice(5, 7)}/${job.endDate?.slice(
-                          0,
-                          4
-                        )}`}
+                      : `${job.endDate?.slice(5, 7)}/${job.endDate?.slice(0, 4)}`}
                   </span>
                 </div>
-                <h4 className="font-bold text-lg text-gray-700 mb-3">
-                  {job.company}
-                </h4>
+                <h4 className="font-bold text-lg text-gray-700 mb-3">{job.company}</h4>
                 {renderDescription(job.description)}
               </div>
             ))}
           </Section>
 
+          {/* Education */}
           <Section
             title={t.educationLabel}
             sectionId={sectionMap.education}
@@ -367,7 +338,9 @@ const ModernCV1: React.FC<ModernCV1Props> = ({
                 <h4 className="font-bold text-lg text-gray-700">
                   {t.major} {edu.major}
                 </h4>
-                <p className="text-lg">{t.degree} {edu.degree}</p>
+                <p className="text-lg">
+                  {t.degree} {edu.degree}
+                </p>
               </div>
             ))}
           </Section>

@@ -1,16 +1,16 @@
-"use client";
-
+import { GetServerSideProps } from "next";
 import { CVTemplate, getCVTemplates } from "@/api/cvapi";
 import CardCVTemplate from "@/components/card/card-CVtemplate";
 import { useLanguage } from "@/providers/global-provider";
 import { motion } from "framer-motion";
-import { useEffect, useState, FC, ReactNode, useRef } from "react";
+import { FC, useState } from "react";
+import { X } from "lucide-react";
 import { templateComponentMap } from "@/components/cvTemplate/index";
 import { useRouter } from "next/navigation";
-import { X } from "lucide-react";
 import { useOnClickOutside } from "@/hooks/useOnClickOutside";
+import { useRef } from "react";
 
-
+// ================== MODAL ==================
 interface TemplatePreviewModalProps {
   templateId: string;
   templateTitle: string;
@@ -26,8 +26,6 @@ const TemplatePreviewModal: FC<TemplatePreviewModalProps> = ({
   useOnClickOutside(modalRef, onClose);
 
   const { language } = useLanguage();
-
-
   const router = useRouter();
 
   const defaultPreviewData = {
@@ -100,7 +98,7 @@ const TemplatePreviewModal: FC<TemplatePreviewModalProps> = ({
         className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col"
         ref={modalRef}
       >
-        {/* Header của Modal */}
+        {/* Header */}
         <div className="flex justify-between items-center bg-gray-100 py-3 px-5 rounded-t-lg border-b">
           <h2 className="text-xl font-bold">{templateTitle}</h2>
           <button
@@ -111,7 +109,7 @@ const TemplatePreviewModal: FC<TemplatePreviewModalProps> = ({
           </button>
         </div>
 
-        {/* Nội dung Preview Template */}
+        {/* Preview */}
         <div className="flex-grow pt-4 overflow-y-auto flex justify-center items-start">
           {!TemplateComponent ? (
             <div className=" text-red-600">
@@ -119,12 +117,12 @@ const TemplatePreviewModal: FC<TemplatePreviewModalProps> = ({
             </div>
           ) : (
             <div className="mt-8 w-full max-w-[1050px] shadow-2xl origin-top scale-[0.6] md:scale-[0.7] lg:scale-[0.8]">
-              <TemplateComponent data={defaultPreviewData} language={language}/>
+              <TemplateComponent data={defaultPreviewData} language={language} />
             </div>
           )}
         </div>
 
-        {/* Footer của Modal */}
+        {/* Footer */}
         <div className="flex justify-center items-center py-4 px-5 rounded-b-lg border-t bg-gray-100">
           <button
             onClick={handleUseTemplate}
@@ -138,12 +136,7 @@ const TemplatePreviewModal: FC<TemplatePreviewModalProps> = ({
               viewBox="0 0 24 24"
               xmlns="http://www.w3.org/2000/svg"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 5l7 7-7 7"
-              />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
           </button>
         </div>
@@ -152,61 +145,30 @@ const TemplatePreviewModal: FC<TemplatePreviewModalProps> = ({
   );
 };
 
+// ================== MAIN PAGE ==================
+interface Props {
+  initialTemplates: CVTemplate[];
+}
+
 const containerVariants = {
   hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.2,
-    },
-  },
+  visible: { opacity: 1, transition: { staggerChildren: 0.2 } },
 };
 
-const CvTemplatesPage: React.FC = () => {
+const CvTemplatesPage: FC<Props> = ({ initialTemplates }) => {
   const { language } = useLanguage();
-  const [cvTemplates, setCvTemplates] = useState<CVTemplate[]>([]);
-  const [viewMode, setViewMode] = useState<"recommended" | "all">(
-    "recommended"
-  );
-
+  const [cvTemplates] = useState<CVTemplate[]>(initialTemplates);
+  const [viewMode, setViewMode] = useState<"recommended" | "all">("recommended");
   const [selectedTemplateForPreview, setSelectedTemplateForPreview] =
     useState<CVTemplate | null>(null);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const data = await getCVTemplates();
-      const parsedData = data.map((template) => {
-        if (typeof template.data === "string") {
-          try {
-            return { ...template, content: JSON.parse(template.data) };
-          } catch (e) {
-            console.error("Failed to parse CV content in template list:", e);
-            return { ...template, content: {} }; // Fallback
-          }
-        }
-        return template;
-      });
-      setCvTemplates(parsedData);
-    };
-    fetchData();
-  }, []);
-
-  const recommendedTemplates = cvTemplates.filter(
-    (template) => template.isRecommended
-  );
+  const recommendedTemplates = cvTemplates.filter((t) => t.isRecommended);
   const displayedTemplates =
     viewMode === "recommended" ? recommendedTemplates : cvTemplates;
 
-  const handleCardPreviewClick = (template: CVTemplate) => {
-    setSelectedTemplateForPreview(template);
-  };
-
-  const handleClosePreviewModal = () => {
-    setSelectedTemplateForPreview(null);
-  };
-
   return (
     <>
+      {/* Filter */}
       <motion.div
         className="flex justify-center gap-4 mb-10"
         initial={{ opacity: 0, y: -20 }}
@@ -216,10 +178,9 @@ const CvTemplatesPage: React.FC = () => {
         <button
           onClick={() => setViewMode("recommended")}
           className={`w-40 h-12 rounded-lg border font-medium transition-all duration-200 text-base shadow-sm
-            ${
-              viewMode === "recommended"
-                ? "bg-blue-600 text-white border-blue-600 hover:bg-blue-700"
-                : "bg-blue-50 text-blue-600 border-blue-600 hover:bg-blue-100"
+            ${viewMode === "recommended"
+              ? "bg-blue-600 text-white border-blue-600 hover:bg-blue-700"
+              : "bg-blue-50 text-blue-600 border-blue-600 hover:bg-blue-100"
             }`}
         >
           {language === "vi" ? "Được Đề Xuất" : "Recommended"}
@@ -227,16 +188,16 @@ const CvTemplatesPage: React.FC = () => {
         <button
           onClick={() => setViewMode("all")}
           className={`w-40 h-12 rounded-lg border font-medium transition-all duration-200 text-base shadow-sm
-            ${
-              viewMode === "all"
-                ? "bg-blue-600 text-white border-blue-600 hover:bg-blue-700"
-                : "bg-blue-50 text-blue-600 border-blue-600 hover:bg-blue-100"
+            ${viewMode === "all"
+              ? "bg-blue-600 text-white border-blue-600 hover:bg-blue-700"
+              : "bg-blue-50 text-blue-600 border-blue-600 hover:bg-blue-100"
             }`}
         >
           {language === "vi" ? "Tất Cả" : "All"}
         </button>
       </motion.div>
 
+      {/* Cards */}
       <motion.div
         className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-8 bg-white rounded-lg p-6 sm:p-8 shadow-sm border border-blue-100"
         variants={containerVariants}
@@ -250,15 +211,17 @@ const CvTemplatesPage: React.FC = () => {
             _id={template._id}
             imageUrl={template.imageUrl}
             title={template.title}
-            onPreviewClick={handleCardPreviewClick} 
+            onPreviewClick={() => setSelectedTemplateForPreview(template)}
           />
         ))}
       </motion.div>
+
+      {/* Modal */}
       {selectedTemplateForPreview && (
         <TemplatePreviewModal
           templateId={selectedTemplateForPreview._id}
           templateTitle={selectedTemplateForPreview.title}
-          onClose={handleClosePreviewModal}
+          onClose={() => setSelectedTemplateForPreview(null)}
         />
       )}
     </>
@@ -266,3 +229,26 @@ const CvTemplatesPage: React.FC = () => {
 };
 
 export default CvTemplatesPage;
+
+// ================== SSR ==================
+export const getServerSideProps: GetServerSideProps = async () => {
+  try {
+    const data = await getCVTemplates();
+    const parsedData = data.map((template) => {
+      if (typeof template.data === "string") {
+        try {
+          return { ...template, content: JSON.parse(template.data) };
+        } catch (e) {
+          console.error("Failed to parse CV content:", e);
+          return { ...template, content: {} };
+        }
+      }
+      return template;
+    });
+
+    return { props: { initialTemplates: parsedData } };
+  } catch (error) {
+    console.error("Error fetching CV templates:", error);
+    return { props: { initialTemplates: [] } };
+  }
+};
