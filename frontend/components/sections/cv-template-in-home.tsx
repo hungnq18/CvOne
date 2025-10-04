@@ -1,3 +1,4 @@
+"use client";
 import { GetServerSideProps } from "next";
 import { CVTemplate, getCVTemplates } from "@/api/cvapi"; // 💡 gọi từ fakeApi
 import { useLanguage } from "@/providers/global-provider";

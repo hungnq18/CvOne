@@ -1,3 +1,4 @@
+"use client";
 import { GetServerSideProps } from "next";
 import { CVTemplate, getCVTemplates } from "@/api/cvapi";
 import CardCVTemplate from "@/components/card/card-CVtemplate";
