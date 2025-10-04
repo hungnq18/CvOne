@@ -4,6 +4,7 @@ import Header from "@/components/sections/header-pageclTemplate-section";
 import TemplateSection from "@/components/sections/pageCLTemplate-section";
 import { getCLTemplates, CLTemplate } from "@/api/clApi";
 import { useLanguage } from "@/providers/global-provider";
+import AdvertisementSection from "@/components/sections/advertisement-section";
 
 export default function Page() {
   const [clTemplates, setClTemplates] = useState<CLTemplate[]>([]);
@@ -28,8 +29,10 @@ export default function Page() {
         <div className="container mx-auto px-4">
           <Header />
           <TemplateSection clTemplates={clTemplates} />
+
         </div>
       </main>
+      <AdvertisementSection />
     </div>
   );
 }

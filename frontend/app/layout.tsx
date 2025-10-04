@@ -5,7 +5,7 @@ import { EmailVerificationProvider } from "@/providers/email-verification-provid
 import { GlobalProvider } from "@/providers/global-provider";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import type React from "react";
+import React from "react";
 import "./globals.css";
 import { Header } from "@/components/ui/header";
 import { ThemeProvider } from "@/providers/theme-provider";

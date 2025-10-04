@@ -1,12 +1,7 @@
-"use client";
+import { GetServerSideProps } from "next";
+import Link from "next/link";
+import { useLanguage } from "@/providers/global-provider";
 
-import React from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useLanguage } from "@/providers/global-provider"; // Giả định hook này tồn tại
-
-// --- ĐỐI TƯỢNG TRANSLATIONS ---
-// Để dễ dàng sao chép, đối tượng này được đặt trực tiếp ở đây.
-// Trong dự án thực tế, bạn có thể tách ra một tệp riêng.
 const translations = {
   en: {
     chooseCreate: {
@@ -32,51 +27,69 @@ const translations = {
   }
 };
 
-export default function CreateMethodSection() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const { language } = useLanguage();
-  const t = translations[language].chooseCreate; // Lấy "từ điển" cho component này
-  
-  const templateId = searchParams.get("id") || "";
+interface Props {
+  templateId: string;
+}
 
-  // Các hàm điều hướng không thay đổi
-  const handleManualCreate = () => router.push(`/createCV?id=${templateId}`);
-  const handleAiCreate = () => router.push(`/createCV-AI?id=${templateId}`);
-  const handleUploadAndEditWithAi = () => router.push(`/uploadCV?id=${templateId}`);
+export default function CreateMethodSection({ templateId }: Props) {
+  const { language } = useLanguage();
+  const t = translations[language].chooseCreate;
 
   return (
     <div className="bg-white py-24 sm:py-32">
-      <div className="mx-auto max-w-5xl  px-6 lg:px-8 text-center">
+      <div className="mx-auto max-w-5xl px-6 lg:px-8 text-center">
         <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
           {t.title}
         </h2>
-        <p className="mt-4 text-lg leading-8 text-gray-600">
-          {t.subtitle}
-        </p>
+        <p className="mt-4 text-lg leading-8 text-gray-600">{t.subtitle}</p>
         <div className="mt-10 grid grid-cols-1 gap-8 sm:grid-cols-3 sm:gap-x-6">
           {/* Nút Tạo thủ công */}
-          <button type="button" onClick={handleManualCreate} className="flex min-h-[160px] flex-col items-center justify-center rounded-lg border border-gray-300 bg-white p-6 text-base font-semibold text-blue-600 shadow-sm transition-all hover:border-blue-500 hover:bg-blue-50 hover:scale-105">
+          <Link
+            href={`/createCV?id=${templateId}`}
+            className="flex min-h-[160px] flex-col items-center justify-center rounded-lg border border-gray-300 bg-white p-6 text-base font-semibold text-blue-600 shadow-sm transition-all hover:border-blue-500 hover:bg-blue-50 hover:scale-105"
+          >
             <span className="text-xl">✍️</span>
             <span className="mt-2">{t.buttons.manual.label}</span>
-            <span className="mt-1 text-sm font-normal text-gray-500">{t.buttons.manual.description}</span>
-          </button>
+            <span className="mt-1 text-sm font-normal text-gray-500">
+              {t.buttons.manual.description}
+            </span>
+          </Link>
 
           {/* Nút Tạo với AI */}
-          <button type="button" onClick={handleAiCreate} className="flex flex-col items-center justify-center rounded-lg border border-gray-300 bg-white p-6 text-base font-semibold text-blue-600 shadow-sm transition-all hover:border-blue-500 hover:bg-blue-50 hover:scale-105">
+          <Link
+            href={`/createCV-AI?id=${templateId}`}
+            className="flex flex-col items-center justify-center rounded-lg border border-gray-300 bg-white p-6 text-base font-semibold text-blue-600 shadow-sm transition-all hover:border-blue-500 hover:bg-blue-50 hover:scale-105"
+          >
             <span className="text-xl">✨</span>
             <span className="mt-2">{t.buttons.ai.label}</span>
-            <span className="mt-1 text-sm font-normal text-gray-500">{t.buttons.ai.description}</span>
-          </button>
-          
+            <span className="mt-1 text-sm font-normal text-gray-500">
+              {t.buttons.ai.description}
+            </span>
+          </Link>
+
           {/* Nút Tải lên & Chỉnh sửa */}
-          <button type="button" onClick={handleUploadAndEditWithAi} className="flex flex-col items-center justify-center rounded-lg border border-gray-300 bg-white p-6 text-base font-semibold text-blue-600 shadow-sm transition-all hover:border-blue-500 hover:bg-blue-50 hover:scale-105">
+          <Link
+            href={`/uploadCV?id=${templateId}`}
+            className="flex flex-col items-center justify-center rounded-lg border border-gray-300 bg-white p-6 text-base font-semibold text-blue-600 shadow-sm transition-all hover:border-blue-500 hover:bg-blue-50 hover:scale-105"
+          >
             <span className="text-xl">🤖</span>
             <span className="mt-2">{t.buttons.upload.label}</span>
-            <span className="mt-1 text-sm font-normal text-gray-500">{t.buttons.upload.description}</span>
-          </button>
+            <span className="mt-1 text-sm font-normal text-gray-500">
+              {t.buttons.upload.description}
+            </span>
+          </Link>
         </div>
       </div>
     </div>
   );
 }
+
+// ✅ Lấy templateId từ query bằng SSR
+export const getServerSideProps: GetServerSideProps = async (context) => {
+  const { id } = context.query;
+  return {
+    props: {
+      templateId: typeof id === "string" ? id : "",
+    },
+  };
+};
