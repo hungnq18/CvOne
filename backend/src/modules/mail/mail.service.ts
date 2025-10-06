@@ -116,35 +116,47 @@ export class MailService {
     }
   }
 
-  async sendCvShareEmail(recipientEmail: string, shareUrl: string) {
+  async sendCvPdfEmail(
+    recipientEmail: string,
+    pdfBuffer: Buffer,
+    cvTitle: string,
+  ) {
     if (!this.transporter) {
       console.error(
-        "Mail transporter is not configured. Cannot send CV share email.",
+        "Mail transporter is not configured. Cannot send CV PDF email.",
       );
       throw new Error(
         "Email service is not configured. Please contact administrator.",
       );
     }
 
-    if (!recipientEmail || !shareUrl) {
-      throw new Error("Recipient email and shareUrl are required");
+    if (!recipientEmail || !pdfBuffer) {
+      throw new Error("Recipient email and PDF buffer are required");
     }
 
     try {
       await this.transporter.sendMail({
         from: this.configService.get("MAIL_FROM"),
         to: recipientEmail,
-        subject: "Your shared CV link",
+        subject: `Your CV - ${cvTitle}`,
         html: `
-          <h1>Share CV</h1>
-          <p>You can view or download your CV PDF using the link below:</p>
-          <p><a href="${shareUrl}">${shareUrl}</a></p>
+          <h1>Your CV is ready!</h1>
+          <p>Please find your CV PDF attached to this email.</p>
+          <p>You can download and view the PDF file directly.</p>
+          <p>If you did not request this, please ignore this email.</p>
         `,
+        attachments: [
+          {
+            filename: `${cvTitle.replace(/[^a-zA-Z0-9]/g, "_")}.pdf`,
+            content: pdfBuffer,
+            contentType: "application/pdf",
+          },
+        ],
       });
-      console.log(`CV share email sent to ${recipientEmail}`);
+      console.log(`CV PDF email sent to ${recipientEmail}`);
     } catch (error) {
-      console.error("Failed to send CV share email:", error);
-      throw new Error("Failed to send CV share email. Please try again later.");
+      console.error("Failed to send CV PDF email:", error);
+      throw new Error("Failed to send CV PDF email. Please try again later.");
     }
   }
 }
