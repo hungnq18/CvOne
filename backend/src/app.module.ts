@@ -23,6 +23,7 @@ import { UploadModule } from "./modules/upload/upload.module";
 import { ScheduleModule } from "@nestjs/schedule";
 import { CategoryCvController } from "./modules/category-cv/category-cv.controller";
 import { CategoryCvModule } from "./modules/category-cv/category-cv.module";
+import { BannerModule } from "./modules/banner/banner.module";
 @Module({
   imports: [
     ScheduleModule.forRoot(),
@@ -43,6 +44,7 @@ import { CategoryCvModule } from "./modules/category-cv/category-cv.module";
     UsersModule,
     CvTemplateModule,
     CvModule,
+    BannerModule,
     JobsModule,
     ChatModule,
     ConversationModule,

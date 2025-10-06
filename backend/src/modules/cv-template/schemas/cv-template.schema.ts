@@ -36,9 +36,6 @@ export class CvTemplate extends Document {
   @Prop({ type: Object, required: true })
   data: Record<string, any>;
 
-  @Prop({ type: Types.ObjectId, ref: "CategoryCV", required: true })
-  categoryId: Types.ObjectId;
-
   @Prop({ type: Types.Array })
   tags: string[];
 }
