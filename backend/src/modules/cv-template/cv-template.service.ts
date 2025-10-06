@@ -35,44 +35,18 @@ export class CvTemplateService {
     return tags;
   }
 
-  async getCategories(): Promise<any> {
-    const categories = await this.cvTemplateModel
-      .find()
-      .populate("categoryId", "name")
-      .select("categoryId")
-      .lean()
-      .exec();
-
-    const result = categories.map((c) => (c.categoryId as any).name);
-    return result;
-  }
-
   async getSuggestTemplateCv(message: string): Promise<CvTemplate[]> {
-    const suggestCategory = await this.cvTemplateAiService.suggestCategoryByAi(
-      message,
-      await this.getCategories()
-    );
-    console.log("suggestCategory", suggestCategory);
-
     const suggestTags = await this.cvTemplateAiService.suggestTagsByAi(
       message,
       await this.getTags()
     );
     console.log("suggestTags", suggestTags);
 
-    if (suggestCategory && suggestTags && suggestTags.length > 0) {
-      // 1. Tìm category theo name
-      const category = await this.categoryCvService.findByName(suggestCategory);
-
-      if (!category) return [];
-
-      // 2. Query template theo category._id + tags
+    if (suggestTags && suggestTags.length > 0) {
       const templates = await this.cvTemplateModel
         .find({
-          categoryId: category._id,
           tags: { $in: suggestTags }, // chỉ cần 1 tag match là được
         })
-        .populate("categoryId", "name")
         .lean()
         .exec();
 
