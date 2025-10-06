@@ -35,13 +35,20 @@ export class MailController {
     };
   }
 
-  @Post("share-cv")
-  async shareCv(@Body() body: { email: string; shareUrl: string }) {
-    const { email, shareUrl } = body || ({} as any);
-    if (!email || !shareUrl) {
-      throw new BadRequestException("email and shareUrl are required");
+  @Post("send-cv-pdf")
+  async sendCvPdf(
+    @Body() body: { email: string; pdfBuffer: string; cvTitle: string },
+  ) {
+    const { email, pdfBuffer, cvTitle } = body || ({} as any);
+    if (!email || !pdfBuffer || !cvTitle) {
+      throw new BadRequestException(
+        "email, pdfBuffer, and cvTitle are required",
+      );
     }
-    await this.mailService.sendCvShareEmail(email, shareUrl);
-    return { message: "CV share email sent successfully" };
+
+    // Convert base64 string back to Buffer
+    const buffer = Buffer.from(pdfBuffer, "base64");
+    await this.mailService.sendCvPdfEmail(email, buffer, cvTitle);
+    return { message: "CV PDF email sent successfully" };
   }
 }

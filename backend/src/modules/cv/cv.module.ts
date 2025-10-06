@@ -15,6 +15,7 @@ import { Cv, CvSchema } from "./schemas/cv.schema";
 import { AiOptimizationService } from "./services/ai-optimization.service";
 import { CvCacheService } from "./services/cv-cache.service";
 import { CvUploadService } from "./services/cv-upload.service";
+import { MailModule } from "../mail/mail.module";
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { CvUploadService } from "./services/cv-upload.service";
       { name: CvTemplate.name, schema: CvTemplateSchema },
       { name: User.name, schema: UserSchema },
     ]),
+    MailModule,
   ],
   controllers: [CvController],
   providers: [

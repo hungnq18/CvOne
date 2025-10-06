@@ -60,6 +60,8 @@ export const API_ENDPOINTS = {
     UPLOAD_ANALYZE_GENERATE_PDF: "/cv/upload-analyze-generate-pdf",
     // UPLOAD_ANALYZE_OVERLAY_PDF: "/cv/upload-analyze-overlay-pdf",
     AI_STATUS: "/cv/ai-status",
+    GENERATE_PDF_AND_UPLOAD_TO_CLOUDINARY: "/cv/:id/generate-pdf-uploadToCloudinary",// api để tạo pdf và upload lên cloudinary
+    GENERATE_PDF_AND_SEND_EMAIL: "/cv/:id/send-pdf-email"// api để tạo pdf và gửi mail
   },
   CL: {
     TEMPLATES: "/cl-templates",
@@ -123,9 +125,6 @@ export const API_ENDPOINTS = {
     UPLOAD_FILE: "/upload",
   },
   MAIL: {
-    SHARE_CV: "/mail/share-cv", // api để gửi mail chia sẻ cv
-  },
-  CV_TEMPLATE: {
-    SUGGEST_TEMPLATE: "/cv-template/suggest",
+    SHARE_CV: "/mail/send-cv-pdf",// api để gửi pdf có sẵn qua mail
   },
 } as const;
