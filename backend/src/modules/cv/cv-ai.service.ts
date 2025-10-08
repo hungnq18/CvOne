@@ -22,7 +22,7 @@ export class CvAiService {
     @InjectModel(CvTemplate.name) private cvTemplateModel: Model<CvTemplate>,
     private openAiService: OpenAiService,
     private cvPdfService: CvPdfService
-  ) {}
+  ) { }
 
   /**
    * Generate CV content based on user profile and job analysis
@@ -946,7 +946,7 @@ Chỉ trả về JSON hợp lệ, không thêm giải thích, markdown hay text 
   //   try {
   //     // Sử dụng pdf-parse để lấy thông tin text
   //     const pdfData = await (require('pdf-parse'))(pdfBuffer);
-      
+
   //     // Phân tích text để tìm các trường quan trọng
   //     const text = pdfData.text.toLowerCase();
   //     const positions: any[] = [];
@@ -962,7 +962,7 @@ Chỉ trả về JSON hợp lệ, không thêm giải thích, markdown hay text 
   //     // Demo: Tạo vị trí giả định dựa trên phân tích text
   //     // Trong thực tế, cần sử dụng thư viện như pdf2pic hoặc pdf.js để lấy vị trí chính xác
   //     let currentY = 800; // Bắt đầu từ top
-      
+
   //     for (const [fieldType, keywords] of Object.entries(fieldKeywords)) {
   //       const hasField = keywords.some(keyword => text.includes(keyword));
   //       if (hasField) {
@@ -1078,172 +1078,172 @@ Chỉ trả về JSON hợp lệ, không thêm giải thích, markdown hay text 
   /**
  * Extract layout and mapping from PDF (positions, font, content)
  */
-private async extractPdfLayoutAndMapping(pdfBuffer: Buffer): Promise<any[]> {
-  return new Promise((resolve, reject) => {
-    const pdfParser = new PDFParser();
-    pdfParser.on('pdfParser_dataError', errData => reject(errData.parserError));
-    pdfParser.on('pdfParser_dataReady', pdfData => {
-      const mapping: any[] = [];
-      pdfData.Pages.forEach((page: any, pageIndex: number) => {
-        page.Texts.forEach((textBlock: any, blockIndex: number) => {
-          mapping.push({
-            blockId: `${pageIndex}_${blockIndex}`,
-            page: pageIndex,
-            x: textBlock.x,
-            y: textBlock.y,
-            w: textBlock.w,
-            sw: textBlock.sw,
-            fontSize: textBlock.R[0]?.TS?.[1] || 12,
-            font: textBlock.R[0]?.TS?.[0] || '',
-            content: decodeURIComponent(textBlock.R[0]?.T || ''),
+  private async extractPdfLayoutAndMapping(pdfBuffer: Buffer): Promise<any[]> {
+    return new Promise((resolve, reject) => {
+      const pdfParser = new PDFParser();
+      pdfParser.on('pdfParser_dataError', errData => reject(errData.parserError));
+      pdfParser.on('pdfParser_dataReady', pdfData => {
+        const mapping: any[] = [];
+        pdfData.Pages.forEach((page: any, pageIndex: number) => {
+          page.Texts.forEach((textBlock: any, blockIndex: number) => {
+            mapping.push({
+              blockId: `${pageIndex}_${blockIndex}`,
+              page: pageIndex,
+              x: textBlock.x,
+              y: textBlock.y,
+              w: textBlock.w,
+              sw: textBlock.sw,
+              fontSize: textBlock.R[0]?.TS?.[1] || 12,
+              font: textBlock.R[0]?.TS?.[0] || '',
+              content: decodeURIComponent(textBlock.R[0]?.T || ''),
+            });
           });
         });
+        resolve(mapping);
       });
-      resolve(mapping);
+      pdfParser.parseBuffer(pdfBuffer);
     });
-    pdfParser.parseBuffer(pdfBuffer);
-  });
-}
+  }
 
-/**
- * Use AI to optimize content of each block in mapping
- */
-private async optimizeCvBlocksWithAI(mapping: any[]): Promise<any[]> {
-  // Gộp toàn bộ text từ các block
-  const allText = mapping.map(block => block.content).join(' ');
-  const prompt = `Hãy tối ưu hóa toàn bộ nội dung CV sau để gây ấn tượng với nhà tuyển dụng, giữ nguyên ý chính:\n"${allText}"`;
+  /**
+   * Use AI to optimize content of each block in mapping
+   */
+  private async optimizeCvBlocksWithAI(mapping: any[]): Promise<any[]> {
+    // Gộp toàn bộ text từ các block
+    const allText = mapping.map(block => block.content).join(' ');
+    const prompt = `Hãy tối ưu hóa toàn bộ nội dung CV sau để gây ấn tượng với nhà tuyển dụng, giữ nguyên ý chính:\n"${allText}"`;
 
-  try {
-    const openai = this.openAiService.getOpenAI();
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [
-        { role: "system", content: "Bạn là chuyên gia tối ưu hóa CV." },
-        { role: "user", content: prompt }
-      ],
-      temperature: 0.5,
-      max_tokens: 2000,
-    });
-    let response = completion.choices[0]?.message?.content;
-    if (response) {
-      // Trả về một block duy nhất với nội dung đã tối ưu hóa
-      return [{
-        x: 0, y: 0, fontSize: 12, content: response.trim(), optimizedContent: response.trim()
-      }];
+    try {
+      const openai = this.openAiService.getOpenAI();
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          { role: "system", content: "Bạn là chuyên gia tối ưu hóa CV." },
+          { role: "user", content: prompt }
+        ],
+        temperature: 0.5,
+        max_tokens: 2000,
+      });
+      let response = completion.choices[0]?.message?.content;
+      if (response) {
+        // Trả về một block duy nhất với nội dung đã tối ưu hóa
+        return [{
+          x: 0, y: 0, fontSize: 12, content: response.trim(), optimizedContent: response.trim()
+        }];
+      }
+    } catch (err) {
+      // Nếu lỗi, trả về mapping gốc
+      return mapping;
     }
-  } catch (err) {
-    // Nếu lỗi, trả về mapping gốc
     return mapping;
   }
-  return mapping;
-}
 
-/**
- * Render HTML with original layout and optimized content
- */
-private renderOptimizedHtmlWithMapping(mapping: any[]): string {
-  let html = '<div style="position:relative;width:800px;height:1120px;">';
-  for (const block of mapping) {
-    html += `<div style="position:absolute; left:${block.x * 7.5}px; top:${block.y * 1.5}px; font-size:${block.fontSize}px;">${block.optimizedContent || block.content}</div>`;
-  }
-  html += '</div>';
-  return html;
-}
-
-/**
- * New endpoint: Upload PDF, extract layout, optimize content, return HTML with original layout and optimized content
- */
-public async uploadAnalyzeAndOverlayHtml(
-  pdfBuffer: Buffer
-): Promise<{ success: boolean; html?: string; mapping?: any[]; error?: string }> {
-  try {
-    // 1. Extract layout and mapping
-    const mapping = await this.extractPdfLayoutAndMapping(pdfBuffer);
-    if (!mapping || mapping.length === 0) {
-      throw new Error('Could not extract mapping from PDF.');
+  /**
+   * Render HTML with original layout and optimized content
+   */
+  private renderOptimizedHtmlWithMapping(mapping: any[]): string {
+    let html = '<div style="position:relative;width:800px;height:1120px;">';
+    for (const block of mapping) {
+      html += `<div style="position:absolute; left:${block.x * 7.5}px; top:${block.y * 1.5}px; font-size:${block.fontSize}px;">${block.optimizedContent || block.content}</div>`;
     }
-    // 2. Optimize content with AI
-    const optimizedMapping = await this.optimizeCvBlocksWithAI(mapping);
-    // 3. Render HTML with original layout and optimized content
-    const html = this.renderOptimizedHtmlWithMapping(optimizedMapping);
-    return { success: true, html, mapping: optimizedMapping };
-  } catch (error) {
-    this.logger.error('Error in uploadAnalyzeAndOverlayHtml:', error);
-    return { success: false, error: error.message };
+    html += '</div>';
+    return html;
   }
-}
 
-// Thêm hàm vào trong class CvAiService
-private async convertPdfToHtmlWithConvertApi(pdfBuffer: Buffer, apiKey: string): Promise<string> {
-  // ConvertAPI expects base64 string
-  const fileBase64 = pdfBuffer.toString('base64');
-  const formData = {
-    Parameters: [
+  /**
+   * New endpoint: Upload PDF, extract layout, optimize content, return HTML with original layout and optimized content
+   */
+  public async uploadAnalyzeAndOverlayHtml(
+    pdfBuffer: Buffer
+  ): Promise<{ success: boolean; html?: string; mapping?: any[]; error?: string }> {
+    try {
+      // 1. Extract layout and mapping
+      const mapping = await this.extractPdfLayoutAndMapping(pdfBuffer);
+      if (!mapping || mapping.length === 0) {
+        throw new Error('Could not extract mapping from PDF.');
+      }
+      // 2. Optimize content with AI
+      const optimizedMapping = await this.optimizeCvBlocksWithAI(mapping);
+      // 3. Render HTML with original layout and optimized content
+      const html = this.renderOptimizedHtmlWithMapping(optimizedMapping);
+      return { success: true, html, mapping: optimizedMapping };
+    } catch (error) {
+      this.logger.error('Error in uploadAnalyzeAndOverlayHtml:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Thêm hàm vào trong class CvAiService
+  private async convertPdfToHtmlWithConvertApi(pdfBuffer: Buffer, apiKey: string): Promise<string> {
+    // ConvertAPI expects base64 string
+    const fileBase64 = pdfBuffer.toString('base64');
+    const formData = {
+      Parameters: [
+        {
+          Name: "File",
+          FileValue: {
+            Name: "cv.pdf",
+            Data: fileBase64
+          }
+        }
+      ]
+    };
+
+    // Gọi API ConvertAPI
+    const res = await require('axios').post(
+      `https://v2.convertapi.com/convert/pdf/to/html?Secret=${apiKey}`,
+      formData,
       {
-        Name: "File",
-        FileValue: {
-          Name: "cv.pdf",
-          Data: fileBase64
+        headers: {
+          'Content-Type': 'application/json'
         }
       }
-    ]
-  };
-
-  // Gọi API ConvertAPI
-  const res = await require('axios').post(
-    `https://v2.convertapi.com/convert/pdf/to/html?Secret=${apiKey}`,
-    formData,
-    {
-      headers: {
-        'Content-Type': 'application/json'
-      }
+    );
+    const fileObj = res.data.Files && res.data.Files[0];
+    if (!fileObj) {
+      throw new Error('ConvertAPI did not return a valid file object');
     }
-  );
-  const fileObj = res.data.Files && res.data.Files[0];
-  if (!fileObj) {
-    throw new Error('ConvertAPI did not return a valid file object');
+    let htmlContent = '';
+    if (fileObj.Url) {
+      const htmlRes = await require('axios').get(fileObj.Url, { responseType: 'text' });
+      htmlContent = htmlRes.data;
+    } else if (fileObj.FileData) {
+      // Nếu là base64 thì decode ra string
+      htmlContent = Buffer.from(fileObj.FileData, 'base64').toString('utf-8');
+    } else {
+      throw new Error('ConvertAPI did not return HTML content');
+    }
+    return htmlContent;
   }
-  let htmlContent = '';
-  if (fileObj.Url) {
-    const htmlRes = await require('axios').get(fileObj.Url, { responseType: 'text' });
-    htmlContent = htmlRes.data;
-  } else if (fileObj.FileData) {
-    // Nếu là base64 thì decode ra string
-    htmlContent = Buffer.from(fileObj.FileData, 'base64').toString('utf-8');
-  } else {
-    throw new Error('ConvertAPI did not return HTML content');
+
+  public async optimizePdfCvWithHtmlAI(pdfBuffer: Buffer, jobDescription?: string): Promise<{ success: boolean; pdfPath?: string; error?: string }> {
+    try {
+      const CONVERTAPI_KEY = process.env.CONVERTAPI_KEY || 'YOUR_CONVERTAPI_KEY';
+
+      // 1. Convert PDF to HTML using ConvertAPI
+      const originalHtml = await this.convertPdfToHtmlWithConvertApi(pdfBuffer, CONVERTAPI_KEY);
+
+      // 2. Optimize HTML with AI (bổ sung jobDescription vào prompt nếu có)
+      const prompt = `Đây là file HTML CV được chuyển từ PDF, layout và style đã được cố định bằng CSS.\nHãy tối ưu hóa nội dung CV trong HTML này để gây ấn tượng với nhà tuyển dụng, nhưng tuyệt đối KHÔNG thay đổi layout, style, cấu trúc HTML.\nChỉ thay đổi nội dung text (giữ nguyên các thẻ, class, style, id, v.v.).${jobDescription ? `\nMô tả công việc: ${jobDescription}` : ''}\nTrả về HTML đã tối ưu hóa.`;
+      const optimizedHtml = await (this.openAiService as any).optimizeCvHtmlWithPrompt(originalHtml, prompt);
+
+      // 3. Convert optimized HTML back to PDF using Puppeteer (giữ nguyên)
+      const uploadsDir = path.join(process.cwd(), 'uploads');
+      if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir);
+      const pdfPath = path.join(uploadsDir, `cv-${Date.now()}-optimized.pdf`);
+      const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox'] });
+      const page = await browser.newPage();
+      await page.setContent(optimizedHtml, { waitUntil: 'networkidle0' });
+      await page.pdf({ path: pdfPath, format: 'A4', printBackground: true });
+      await browser.close();
+
+      return { success: true, pdfPath };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
   }
-  return htmlContent;
-}
 
-public async optimizePdfCvWithHtmlAI(pdfBuffer: Buffer, jobDescription?: string): Promise<{ success: boolean; pdfPath?: string; error?: string }> {
-  try {
-    const CONVERTAPI_KEY = process.env.CONVERTAPI_KEY || 'YOUR_CONVERTAPI_KEY';
-
-    // 1. Convert PDF to HTML using ConvertAPI
-    const originalHtml = await this.convertPdfToHtmlWithConvertApi(pdfBuffer, CONVERTAPI_KEY);
-
-    // 2. Optimize HTML with AI (bổ sung jobDescription vào prompt nếu có)
-    const prompt = `Đây là file HTML CV được chuyển từ PDF, layout và style đã được cố định bằng CSS.\nHãy tối ưu hóa nội dung CV trong HTML này để gây ấn tượng với nhà tuyển dụng, nhưng tuyệt đối KHÔNG thay đổi layout, style, cấu trúc HTML.\nChỉ thay đổi nội dung text (giữ nguyên các thẻ, class, style, id, v.v.).${jobDescription ? `\nMô tả công việc: ${jobDescription}` : ''}\nTrả về HTML đã tối ưu hóa.`;
-    const optimizedHtml = await (this.openAiService as any).optimizeCvHtmlWithPrompt(originalHtml, prompt);
-
-    // 3. Convert optimized HTML back to PDF using Puppeteer (giữ nguyên)
-    const uploadsDir = path.join(process.cwd(), 'uploads');
-    if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir);
-    const pdfPath = path.join(uploadsDir, `cv-${Date.now()}-optimized.pdf`);
-    const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox'] });
-    const page = await browser.newPage();
-    await page.setContent(optimizedHtml, { waitUntil: 'networkidle0' });
-    await page.pdf({ path: pdfPath, format: 'A4', printBackground: true });
-    await browser.close();
-
-    return { success: true, pdfPath };
-  } catch (error) {
-    return { success: false, error: error.message };
-  }
-}
-
-public async optimizePdfCvWithOriginalLayoutAI(
+  public async optimizePdfCvWithOriginalLayoutAI(
     pdfBuffer: Buffer,
     jobDescription: string,
     additionalRequirements?: string
@@ -1325,19 +1325,23 @@ public async optimizePdfCvWithOriginalLayoutAI(
     }
   }
 
-public getOpenAiService() {
-  return this.openAiService;
-}
+  public getOpenAiService() {
+    return this.openAiService;
+  }
 
-public async rewriteWorkDescription(description: string, language?: string): Promise<string> {
-  return this.openAiService.rewriteWorkDescription(description, language);
-}
+  public async rewriteWorkDescription(description: string, language?: string): Promise<string> {
+    return this.openAiService.rewriteWorkDescription(description, language);
+  }
+
+  public async translateCvContent(content: any, targetLanguage: string): Promise<any> {
+    return this.openAiService.translateCvContent(content, targetLanguage);
+  }
 }
 
 // Add a placeholder for optimizeCvHtmlWithPrompt to avoid linter error
 // TODO: Implement this method in OpenAiService
 // @ts-ignore
-(OpenAiService.prototype as any).optimizeCvHtmlWithPrompt = async function(html: string, prompt: string) {
+(OpenAiService.prototype as any).optimizeCvHtmlWithPrompt = async function (html: string, prompt: string) {
   // This is a placeholder. Replace with real OpenAI call.
   return html;
 };
