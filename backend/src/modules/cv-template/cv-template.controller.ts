@@ -1,10 +1,19 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Req,
+  UseGuards,
+} from "@nestjs/common";
 import { Public } from "../auth/decorators/public.decorator";
 import { CvTemplateService } from "./cv-template.service";
 import { CvTemplateAiService } from "./cv-template-ai.service";
 import { RolesGuard } from "../auth/guards/roles.guard";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { Roles } from "src/common/decorators/roles.decorator";
+import { User } from "src/common/decorators/user.decorator";
 
 /**
  * Controller for handling CV template related requests
@@ -27,8 +36,8 @@ export class CvTemplateController {
 
   @UseGuards(JwtAuthGuard)
   @Post("suggest")
-  async getSuggestTemplateCv(@Body("message") message: string) {
-    return this.cvTemplateService.getSuggestTemplateCv(message);
+  async getSuggestTemplateCv(@User("_id") userId: string) {
+    return this.cvTemplateService.getSuggestTemplateCv(userId);
   }
 
   @Public()

@@ -3,8 +3,7 @@ import { InjectModel } from "@nestjs/mongoose";
 import { Model, ObjectId } from "mongoose";
 import { CvTemplate } from "./schemas/cv-template.schema";
 import { CvTemplateAiService } from "./cv-template-ai.service";
-import { CategoryCvService } from "../category-cv/category-cv.service";
-import { ConfigService } from "@nestjs/config";
+import { UsersService } from "../users/users.service";
 
 /**
  * Service for handling CV template business logic
@@ -14,9 +13,8 @@ import { ConfigService } from "@nestjs/config";
 export class CvTemplateService {
   constructor(
     @InjectModel(CvTemplate.name) private cvTemplateModel: Model<CvTemplate>,
-
     private cvTemplateAiService: CvTemplateAiService,
-    private readonly categoryCvService: CategoryCvService
+    private readonly userService: UsersService
   ) {}
 
   async findAll(): Promise<CvTemplate[]> {
@@ -30,15 +28,13 @@ export class CvTemplateService {
     }
     return template;
   }
-  async getTags(): Promise<any> {
-    const tags = await this.cvTemplateModel.distinct("tags").exec();
-    return tags;
-  }
 
-  async getSuggestTemplateCv(message: string): Promise<CvTemplate[]> {
+  async getSuggestTemplateCv(userId: string): Promise<CvTemplate[]> {
+    const infoUser = await this.userService.getUserById(userId);
+    const tags = await this.cvTemplateModel.distinct("tags").exec();
     const suggestTags = await this.cvTemplateAiService.suggestTagsByAi(
-      message,
-      await this.getTags()
+      infoUser,
+      tags
     );
     console.log("suggestTags", suggestTags);
 
