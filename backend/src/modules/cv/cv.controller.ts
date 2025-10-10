@@ -566,6 +566,30 @@ export class CvController {
   }
 
   /**
+   * Translate CV content to a target language using AI
+   * Accepts JSON `content` following the CV schema and `targetLanguage` (e.g., "vi", "en").
+   * Returns translated JSON with the same structure.
+   */
+  @UseGuards(JwtAuthGuard)
+  @Post("translate")
+  async translateCv(
+    @Body("content") content: any,
+    @Body("targetLanguage") targetLanguage: string,
+  ) {
+    if (!content || typeof content !== "object") {
+      throw new BadRequestException("content (CV JSON) is required");
+    }
+    if (!targetLanguage || typeof targetLanguage !== "string") {
+      throw new BadRequestException("targetLanguage is required");
+    }
+    const translated = await this.cvAiService.translateCvContent(
+      content,
+      targetLanguage,
+    );
+    return { success: true, data: translated };
+  }
+
+  /**
    * Viết lại mô tả công việc trong work experience cho chuyên nghiệp hơn
    */
   @UseGuards(JwtAuthGuard)
