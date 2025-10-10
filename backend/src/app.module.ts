@@ -21,8 +21,7 @@ import { ApplyJobModule } from "./modules/apply-job/apply-job.module";
 import { SavedJobModule } from "./modules/saved-job/saved-job.module";
 import { UploadModule } from "./modules/upload/upload.module";
 import { ScheduleModule } from "@nestjs/schedule";
-import { CategoryCvController } from "./modules/category-cv/category-cv.controller";
-import { CategoryCvModule } from "./modules/category-cv/category-cv.module";
+
 import { BannerModule } from "./modules/banner/banner.module";
 @Module({
   imports: [
@@ -50,7 +49,6 @@ import { BannerModule } from "./modules/banner/banner.module";
     ConversationModule,
     SavedJobModule,
     UploadModule,
-    CategoryCvModule,
     MailerModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
@@ -81,6 +79,5 @@ import { BannerModule } from "./modules/banner/banner.module";
     CoverLetterModule,
     ApplyJobModule,
   ],
-  controllers: [CategoryCvController],
 })
 export class AppModule {}
