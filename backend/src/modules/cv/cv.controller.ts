@@ -21,6 +21,7 @@ import { User } from "../../common/decorators/user.decorator";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { CvTemplate } from "../cv-template/schemas/cv-template.schema";
 import { CvAiService } from "./cv-ai.service";
+import { CvPdfCloudService } from "./cv-pdf-cloud.service";
 import { CvService } from "./cv.service";
 import { CreateCvDto } from "./dto/create-cv.dto";
 import { GenerateCvDto } from "./dto/generate-cv.dto";
@@ -36,6 +37,7 @@ export class CvController {
     private readonly cvService: CvService,
     private readonly cvAiService: CvAiService,
     private readonly cvUploadService: CvUploadService,
+    private readonly cvPdfCloudService: CvPdfCloudService,
   ) { }
 
   /**
@@ -228,10 +230,12 @@ export class CvController {
     @UploadedFile() file: any,
     @Body("jobDescription") jobDescription: string,
     @Body("additionalRequirements") additionalRequirements: string,
+    @User("_id") userId: string,
   ) {
-    return this.cvUploadService.uploadAndAnalyzeCv(
+    return this.cvUploadService.uploadCvToCloudAndAnalyze(
       file,
       jobDescription,
+      userId,
       additionalRequirements,
     );
   }
@@ -301,22 +305,40 @@ export class CvController {
     if (!userId) {
       throw new BadRequestException("User ID is required.");
     }
-    // Gọi service để thay thế nội dung trong PDF gốc
-    const result = await this.cvAiService.replaceContentInOriginalPdfBuffer(
-      userId,
-      file.buffer,
-      jobDescription,
-      additionalRequirements,
-    );
-    if (!result.success || !result.pdfBuffer) {
-      throw new BadRequestException(result.error || "Failed to process CV");
+    
+    try {
+      // Gọi service để thay thế nội dung trong PDF gốc
+      const result = await this.cvAiService.replaceContentInOriginalPdfBuffer(
+        userId,
+        file.buffer,
+        jobDescription,
+        additionalRequirements,
+      );
+      if (!result.success || !result.pdfBuffer) {
+        throw new BadRequestException(result.error || "Failed to process CV");
+      }
+
+      // Upload to Cloudinary instead of returning buffer
+      const cvTitle = `optimized-cv-${Date.now()}`;
+      const uploadResult = await this.cvPdfCloudService.uploadPdfToCloudinary(
+        result.pdfBuffer,
+        cvTitle,
+        userId
+      );
+
+      if (!uploadResult.success) {
+        throw new BadRequestException(uploadResult.error || "Failed to upload to cloud");
+      }
+
+      // Return the cloud URL instead of the PDF buffer
+      res.json({
+        success: true,
+        shareUrl: uploadResult.shareUrl,
+        message: "CV processed and uploaded to cloud successfully"
+      });
+    } catch (error) {
+      throw new BadRequestException(error.message || "Failed to process CV");
     }
-    res.set({
-      "Content-Type": "application/pdf",
-      "Content-Disposition":
-        'attachment; filename="optimized-original-layout.pdf"',
-    });
-    res.send(result.pdfBuffer);
   }
 
   /**

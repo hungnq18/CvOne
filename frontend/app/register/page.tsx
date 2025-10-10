@@ -1,12 +1,11 @@
-"use client"
+"use client";
 
-import Image from "next/image"
-import Link from "next/link"
-import React from "react"
-import { FaEye, FaEyeSlash } from "react-icons/fa"
-import styled from "styled-components"
-import logoImg from "../../public/logo/logoCVOne.svg"
-import { useRegisterForm } from "@/components/forms/use-register-form"
+import { useRegisterForm } from "@/components/forms/use-register-form";
+import Image from "next/image";
+import Link from "next/link";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
+import styled from "styled-components";
+import logoImg from "../../public/logo/logoCVOne.svg";
 
 const RegisterWrapper = styled.div`
   min-height: 100vh;

@@ -1,7 +1,7 @@
-"use client"
+"use client";
 
-import Image from "next/image"
-import type React from "react"
+import Image from "next/image";
+import type React from "react";
 
 // BƯỚC 1: Import hook để lấy ngôn ngữ
 const translations = {

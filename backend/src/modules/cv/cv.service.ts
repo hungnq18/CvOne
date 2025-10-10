@@ -6,12 +6,12 @@ import {
 import { InjectModel } from "@nestjs/mongoose";
 import { Model } from "mongoose";
 import { CvTemplate } from "../cv-template/schemas/cv-template.schema";
+import { MailService } from "../mail/mail.service";
+import { CvPdfCloudService } from "./cv-pdf-cloud.service";
+import { CvPdfService } from "./cv-pdf.service";
 import { CreateCvDto } from "./dto/create-cv.dto";
 import { Cv } from "./schemas/cv.schema";
 import { CvCacheService } from "./services/cv-cache.service";
-import { CvPdfService } from "./cv-pdf.service";
-import { MailService } from "../mail/mail.service";
-import * as cloudinary from "cloudinary";
 
 @Injectable()
 export class CvService {
@@ -20,15 +20,9 @@ export class CvService {
     @InjectModel(CvTemplate.name) private cvTemplateModel: Model<CvTemplate>,
     private cvCacheService: CvCacheService,
     private cvPdfService: CvPdfService,
+    private cvPdfCloudService: CvPdfCloudService,
     private mailService: MailService,
-  ) {
-    // Configure Cloudinary
-    cloudinary.v2.config({
-      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-      api_key: process.env.CLOUDINARY_API_KEY,
-      api_secret: process.env.CLOUDINARY_API_SECRET,
-    });
-  }
+  ) {}
 
   async getAllCVs(userId: string): Promise<Cv[]> {
     return this.cvCacheService.getCachedCVs(userId);
@@ -260,7 +254,7 @@ export class CvService {
   }
 
   /**
-   * Upload PDF buffer to Cloudinary
+   * Upload PDF buffer to Cloudinary using CvPdfCloudService
    * @param pdfBuffer - PDF buffer to upload
    * @param cvTitle - CV title for naming
    * @param userId - User ID for folder organization
@@ -271,39 +265,7 @@ export class CvService {
     cvTitle: string,
     userId: string,
   ): Promise<{ success: boolean; shareUrl?: string; error?: string }> {
-    try {
-      // Convert buffer to base64 string for Cloudinary upload
-      const base64String = `data:application/pdf;base64,${pdfBuffer.toString("base64")}`;
-
-      // Generate unique filename
-      const timestamp = Date.now();
-      const sanitizedTitle = cvTitle.replace(/[^a-zA-Z0-9]/g, "_");
-      const filename = `cv_${sanitizedTitle}_${timestamp}`;
-
-      // Upload to Cloudinary
-      const result = await cloudinary.v2.uploader.upload(base64String, {
-        resource_type: "raw",
-        folder: `cv-pdfs/${userId}`,
-        public_id: filename,
-        format: "pdf",
-        tags: ["cv", "pdf", userId],
-      });
-
-      return {
-        success: true,
-        shareUrl: result.secure_url,
-      };
-    } catch (error: unknown) {
-      console.error("Error uploading to Cloudinary:", error);
-      const errMsg =
-        error instanceof Error
-          ? error.message
-          : "Failed to upload to Cloudinary";
-      return {
-        success: false,
-        error: errMsg,
-      };
-    }
+    return this.cvPdfCloudService.uploadPdfToCloudinary(pdfBuffer, cvTitle, userId);
   }
 
   /**

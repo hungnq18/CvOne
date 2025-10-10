@@ -1,8 +1,8 @@
-"use client"
+"use client";
 
-import Image from "next/image"
-import type React from "react"
-import { Mail, Phone, MapPin, Globe, Award, Briefcase } from "lucide-react"
+import { Award, Briefcase, Globe, Mail, MapPin, Phone } from "lucide-react";
+import Image from "next/image";
+import type React from "react";
 
 // --- TRANSLATIONS ---
 const translations = {

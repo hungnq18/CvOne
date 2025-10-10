@@ -1,14 +1,13 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { Progress } from "antd";
-import { FaUserEdit } from "react-icons/fa";
-import { useRouter } from "next/navigation";
-import styles from "@/app/userDashboard/page.module.css";
-import useAnimatedButtons from "@/app/userDashboard/page.modunle";
-import { useLanguage } from "@/providers/global-provider";
 import { CVTemplate, getCVTemplates } from "@/api/cvapi";
+import useAnimatedButtons from "@/app/userDashboard/page.module";
+import styles from "@/app/userDashboard/page.module.css";
 import { templateComponentMap } from "@/components/cvTemplate/index";
+import { useLanguage } from "@/providers/global-provider";
+import { useRouter } from "next/navigation";
+import React, { useEffect, useState } from "react";
+import { FaUserEdit } from "react-icons/fa";
 
 const translations = {
   vi: {

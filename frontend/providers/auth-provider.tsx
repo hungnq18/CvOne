@@ -1,14 +1,14 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { API_ENDPOINTS } from "@/api/apiConfig"
-import { login as apiLogin, register as apiRegister } from "@/api/authApi"
-import type { User } from "@/types/auth"
-import { useRouter } from "next/navigation"
-import { createContext, useContext, useEffect, useState } from "react"
-import { getUserIdFromToken } from "@/api/userApi"
-import { fetchWithAuth } from "@/api/apiClient"
+import { fetchWithAuth } from "@/api/apiClient";
+import { API_ENDPOINTS } from "@/api/apiConfig";
+import { login as apiLogin, register as apiRegister } from "@/api/authApi";
+import { getUserIdFromToken } from "@/api/userApi";
+import type { User } from "@/types/auth";
+import { useRouter } from "next/navigation";
+import { createContext, useContext, useEffect, useState } from "react";
 
 interface AuthContextType {
   user: User | null

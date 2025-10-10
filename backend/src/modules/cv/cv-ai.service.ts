@@ -8,9 +8,10 @@ import * as pdf from "pdf-parse";
 import * as puppeteer from 'puppeteer';
 import { CvTemplate } from "../cv-template/schemas/cv-template.schema";
 import { User } from "../users/schemas/user.schema";
+import { CvPdfCloudService } from "./cv-pdf-cloud.service";
 import { CvPdfService } from "./cv-pdf.service";
 import { GenerateCvDto } from "./dto/generate-cv.dto";
-import { OpenAiService } from "./openai.service";
+import { OpenAiService } from "./services/openai.service";
 const PDFParser = require('pdf2json');
 
 @Injectable()
@@ -21,7 +22,8 @@ export class CvAiService {
     @InjectModel(User.name) private userModel: Model<User>,
     @InjectModel(CvTemplate.name) private cvTemplateModel: Model<CvTemplate>,
     private openAiService: OpenAiService,
-    private cvPdfService: CvPdfService
+    private cvPdfService: CvPdfService,
+    private cvPdfCloudService: CvPdfCloudService
   ) {}
 
   /**
@@ -528,6 +530,7 @@ export class CvAiService {
       optimizedCv: any;
       suggestions: any;
       pdfPath: string;
+      cloudUrl: string;
     };
     error?: string;
   }> {
@@ -572,6 +575,24 @@ export class CvAiService {
         throw new Error(pdfResult.error || 'Failed to generate PDF');
       }
 
+      // 7. Upload optimized PDF to cloud storage
+      const cvTitle = `optimized-cv-${Date.now()}`;
+      const generatedPdfBuffer = fs.readFileSync(outputPath);
+      const uploadResult = await this.cvPdfCloudService.uploadPdfToCloudinary(
+        generatedPdfBuffer,
+        cvTitle,
+        userId
+      );
+
+      // Clean up local file
+      if (fs.existsSync(outputPath)) {
+        fs.unlinkSync(outputPath);
+      }
+
+      if (!uploadResult.success || !uploadResult.shareUrl) {
+        throw new Error(uploadResult.error || 'Failed to upload PDF to cloud');
+      }
+
       return {
         success: true,
         data: {
@@ -579,7 +600,8 @@ export class CvAiService {
           jobAnalysis,
           optimizedCv,
           suggestions,
-          pdfPath: `/uploads/${outputFileName}`
+          pdfPath: uploadResult.shareUrl,
+          cloudUrl: uploadResult.shareUrl
         }
       };
     } catch (error) {

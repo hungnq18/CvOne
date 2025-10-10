@@ -1,10 +1,10 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model, Types } from "mongoose";
-import { CoverLetter } from "./schemas/cover-letter.schema";
+import { OpenAiService } from "../cv/services/openai.service";
 import { CreateCoverLetterDto } from "./dto/create-cover-letter.dto";
 import { UpdateCoverLetterDto } from "./dto/update-cover-letter.dto";
-import { OpenAiService } from "../cv/openai.service";
+import { CoverLetter } from "./schemas/cover-letter.schema";
 
 @Injectable()
 export class CoverLetterService {
