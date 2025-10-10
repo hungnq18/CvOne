@@ -2,7 +2,7 @@
 
 import Image from "next/image"
 import Link from "next/link"
-import React from "react"
+import React, { useState } from "react"
 import { FaEye, FaEyeSlash } from "react-icons/fa"
 import styled from "styled-components"
 import logoImg from "../../public/logo/logoCVOne.svg"
@@ -177,6 +177,17 @@ export default function RegisterPage() {
     setShowConfirmPassword
   } = useRegisterForm()
 
+  const [hrData, setHrData] = useState({
+    company_name: "",
+    tax_code: "",
+    company_address: ""
+  })
+
+  const handleHrInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target
+    setHrData(prev => ({ ...prev, [id]: value }))
+  }
+
   return (
     <RegisterWrapper>
       <RegisterContainer>
@@ -193,7 +204,7 @@ export default function RegisterPage() {
         </LogoSide>
         <FormSide>
           <RegisterForm onSubmit={handleRegister}>
-            <Title>{t.title}</Title>
+            <Title>Đăng ký Nhà tuyển dụng</Title>
             {!isSuccess && (
               <>
                 <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
@@ -216,6 +227,42 @@ export default function RegisterPage() {
                     placeholder={t.lastNamePlaceholder}
                     value={formData.last_name}
                     onChange={handleInputChange}
+                    required
+                    style={{ backgroundColor: "#f5f5f5" }}
+                  />
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  <Label>Tên công ty</Label>
+                  <Input
+                    id="company_name"
+                    type="text"
+                    placeholder="Nhập tên công ty"
+                    value={hrData.company_name}
+                    onChange={handleHrInputChange}
+                    required
+                    style={{ backgroundColor: "#f5f5f5" }}
+                  />
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  <Label>Mã số thuế</Label>
+                  <Input
+                    id="tax_code"
+                    type="text"
+                    placeholder="Nhập mã số thuế"
+                    value={hrData.tax_code}
+                    onChange={handleHrInputChange}
+                    required
+                    style={{ backgroundColor: "#f5f5f5" }}
+                  />
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  <Label>Địa chỉ công ty</Label>
+                  <Input
+                    id="company_address"
+                    type="text"
+                    placeholder="Nhập địa chỉ công ty"
+                    value={hrData.company_address}
+                    onChange={handleHrInputChange}
                     required
                     style={{ backgroundColor: "#f5f5f5" }}
                   />
@@ -270,7 +317,7 @@ export default function RegisterPage() {
                   {isLoading ? (
                     <LoadingSpinner />
                   ) : (
-                    t.registerButton
+                    "Đăng ký"
                   )}
                 </SubmitButton>
               </>
@@ -280,10 +327,16 @@ export default function RegisterPage() {
             )}
           </RegisterForm>
           {!isSuccess && (
-            <LoginPrompt>
-              <span>{t.haveAccount}</span>
-              <Link href="/login">{t.loginLink}</Link>
-            </LoginPrompt>
+            <>
+              <LoginPrompt>
+                <span>{t.haveAccount}</span>
+                <Link href="/login">{t.loginLink}</Link>
+              </LoginPrompt>
+              <LoginPrompt>
+                <span>Bạn là ứng viên? </span>
+                <Link href="/register">Đăng ký tại đây</Link>
+              </LoginPrompt>
+            </>
           )}
         </FormSide>
       </RegisterContainer>

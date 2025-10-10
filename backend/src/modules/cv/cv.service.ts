@@ -19,9 +19,6 @@ export class CvService {
     @InjectModel(Cv.name) private cvModel: Model<Cv>,
     @InjectModel(CvTemplate.name) private cvTemplateModel: Model<CvTemplate>,
     private cvCacheService: CvCacheService,
-<<<<<<< HEAD
-  ) { }
-=======
     private cvPdfService: CvPdfService,
     private cvPdfCloudService: CvPdfCloudService,
   ) {
@@ -32,7 +29,6 @@ export class CvService {
       api_secret: process.env.CLOUDINARY_API_SECRET,
     });
   }
->>>>>>> d4455e8b3e4f567962e0fb5d8472edb309ec5ea3
 
   async getAllCVs(userId: string): Promise<Cv[]> {
     return this.cvCacheService.getCachedCVs(userId);
@@ -211,8 +207,6 @@ export class CvService {
     }
     return template;
   }
-<<<<<<< HEAD
-=======
 
   /**
    * Generate PDF from CV and upload to Cloudinary
@@ -311,5 +305,4 @@ export class CvService {
       };
     }
   }
->>>>>>> d4455e8b3e4f567962e0fb5d8472edb309ec5ea3
 }

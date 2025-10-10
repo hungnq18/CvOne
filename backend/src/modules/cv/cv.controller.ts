@@ -35,11 +35,7 @@ export class CvController {
   constructor(
     private readonly cvService: CvService,
     private readonly cvAiService: CvAiService,
-<<<<<<< HEAD
-    private readonly cvUploadService: CvUploadService
-=======
     private readonly cvUploadService: CvUploadService,
->>>>>>> d4455e8b3e4f567962e0fb5d8472edb309ec5ea3
   ) { }
 
   /**

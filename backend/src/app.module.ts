@@ -15,13 +15,11 @@ import { join } from "path";
 import { HandlebarsAdapter } from "@nestjs-modules/mailer/dist/adapters/handlebars.adapter";
 import { NotificationsModule } from "./modules/notifications/notifications.module";
 import { ClTemplateModule } from "./modules/cl-template/cl-template.module";
-import { CoverLetter } from "./modules/cover-letter/schemas/cover-letter.schema";
 import { CoverLetterModule } from "./modules/cover-letter/cover-letter.module";
 import { ApplyJobModule } from "./modules/apply-job/apply-job.module";
 import { SavedJobModule } from "./modules/saved-job/saved-job.module";
 import { UploadModule } from "./modules/upload/upload.module";
 import { ScheduleModule } from "@nestjs/schedule";
-import { FilesModule } from "./modules/files/files.module";
 @Module({
   imports: [
     ScheduleModule.forRoot(),
@@ -41,7 +39,6 @@ import { FilesModule } from "./modules/files/files.module";
     MailModule,
     UsersModule,
     CvTemplateModule,
-    FilesModule,
     CvModule,
     JobsModule,
     ChatModule,

@@ -1,4 +1,4 @@
-/* 
+/*
 author: HungNQ
 date: 2025-03-06
   The MailService is responsible for sending verification emails to users.
@@ -60,11 +60,7 @@ export class MailService {
       );
     }
 
-<<<<<<< HEAD
-    const verificationLink = `${this.configService.get('FRONTEND_URL')}/verify-email/check?token=${token}`;
-=======
     const verificationLink = `${this.configService.get("FRONTEND_URL")}/verify-email/check?token=${token}`;
->>>>>>> d4455e8b3e4f567962e0fb5d8472edb309ec5ea3
 
     try {
       await this.transporter.sendMail({
@@ -96,11 +92,7 @@ export class MailService {
       );
     }
 
-<<<<<<< HEAD
-    const resetLink = `${this.configService.get('FRONTEND_URL')}/reset-password?token=${token}`;
-=======
     const resetLink = `${this.configService.get("FRONTEND_URL")}/reset-password?token=${token}`;
->>>>>>> d4455e8b3e4f567962e0fb5d8472edb309ec5ea3
 
     try {
       await this.transporter.sendMail({
@@ -123,8 +115,6 @@ export class MailService {
       );
     }
   }
-<<<<<<< HEAD
-=======
 
   async sendCvShareEmail(recipientEmail: string, shareUrl: string) {
     if (!this.transporter) {
@@ -157,5 +147,4 @@ export class MailService {
       throw new Error("Failed to send CV share email. Please try again later.");
     }
   }
->>>>>>> d4455e8b3e4f567962e0fb5d8472edb309ec5ea3
 }

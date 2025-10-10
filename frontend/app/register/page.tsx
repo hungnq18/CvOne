@@ -280,10 +280,16 @@ export default function RegisterPage() {
             )}
           </RegisterForm>
           {!isSuccess && (
-            <LoginPrompt>
-              <span>{t.haveAccount}</span>
-              <Link href="/login">{t.loginLink}</Link>
-            </LoginPrompt>
+            <>
+              <LoginPrompt>
+                <span>{t.haveAccount}</span>
+                <Link href="/login">{t.loginLink}</Link>
+              </LoginPrompt>
+              <LoginPrompt>
+                <span>Bạn là nhà tuyển dụng? </span>
+                <Link href="/hr-register">Đăng ký tại đây</Link>
+              </LoginPrompt>
+            </>
           )}
         </FormSide>
       </RegisterContainer>

@@ -1,15 +1,10 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
-<<<<<<< HEAD
-import { Model } from "mongoose";
-import { CvTemplate } from "./schemas/cv-template.schema";
-=======
 import { Model, ObjectId } from "mongoose";
 import { CvTemplate } from "./schemas/cv-template.schema";
 import { CvTemplateAiService } from "./cv-template-ai.service";
 import { CategoryCvService } from "../category-cv/category-cv.service";
 import { ConfigService } from "@nestjs/config";
->>>>>>> d4455e8b3e4f567962e0fb5d8472edb309ec5ea3
 
 /**
  * Service for handling CV template business logic
@@ -35,8 +30,6 @@ export class CvTemplateService {
     }
     return template;
   }
-<<<<<<< HEAD
-=======
   async getTags(): Promise<any> {
     const tags = await this.cvTemplateModel.distinct("tags").exec();
     return tags;
@@ -88,5 +81,4 @@ export class CvTemplateService {
 
     return this.cvTemplateModel.find().exec();
   }
->>>>>>> d4455e8b3e4f567962e0fb5d8472edb309ec5ea3
 }

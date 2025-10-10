@@ -355,9 +355,9 @@ export class CvPdfService {
       jobAnalysis.requiredSkills?.slice(0, 3).join(", ") || "";
     const experienceLevel = jobAnalysis.experienceLevel || "professional";
 
-    return `Experienced ${experienceLevel} professional with expertise in ${relevantSkills}. 
-    Demonstrated success in ${cvAnalysis.workExperience?.length || 0} positions with strong focus on 
-    ${jobAnalysis.industry || "technology"} industry. Proven track record of delivering high-quality 
+    return `Experienced ${experienceLevel} professional with expertise in ${relevantSkills}.
+    Demonstrated success in ${cvAnalysis.workExperience?.length || 0} positions with strong focus on
+    ${jobAnalysis.industry || "technology"} industry. Proven track record of delivering high-quality
     solutions and collaborating effectively with cross-functional teams.`;
   }
 
@@ -462,13 +462,8 @@ export class CvPdfService {
         },
       });
 
-<<<<<<< HEAD
-      // Đăng ký font Unicode
-      const fontDir = path.join(__dirname, "../assets/fonts");
-=======
       // Đăng ký font Unicode (robust path resolution)
       const fontDir = this.getFontDir();
->>>>>>> d4455e8b3e4f567962e0fb5d8472edb309ec5ea3
       doc.registerFont("Roboto", path.join(fontDir, "Roboto-Regular.ttf"));
       doc.registerFont("Roboto-Bold", path.join(fontDir, "Roboto-Bold.ttf"));
       doc.registerFont(
@@ -565,13 +560,8 @@ export class CvPdfService {
         size: "A4",
         margins: { top: 50, bottom: 50, left: 50, right: 50 },
       });
-<<<<<<< HEAD
-      // Đăng ký font Unicode
-      const fontDir = path.join(__dirname, "../assets/fonts");
-=======
       // Đăng ký font Unicode (robust path resolution)
       const fontDir = this.getFontDir();
->>>>>>> d4455e8b3e4f567962e0fb5d8472edb309ec5ea3
       doc.registerFont("Roboto", path.join(fontDir, "Roboto-Regular.ttf"));
       doc.registerFont("Roboto-Bold", path.join(fontDir, "Roboto-Bold.ttf"));
       doc.registerFont(

@@ -13,13 +13,6 @@ import { VerifyEmailDto } from "./dto/verify-email.dto";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { RolesGuard } from "../auth/guards/roles.guard";
 import { Roles } from "src/common/decorators/roles.decorator";
-} from "@nestjs/common";
-import { AccountsService } from "./accounts.service";
-import { CreateAccountDto } from "./dto/create-account.dto";
-import { VerifyEmailDto } from "./dto/verify-email.dto";
-import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
-import { RolesGuard } from "../auth/guards/roles.guard";
-import { Roles } from "../../common/decorators/roles.decorator";
 
 @Controller("accounts")
 export class AccountsController {
