@@ -17,6 +17,7 @@ import { AppSidebar } from "@/components/hr/hrSideBar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { jwtDecode } from "jwt-decode";
 import { cookies } from "next/headers"
+import { CVChatbot } from "@/components/cv-chatbot"
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -66,6 +67,7 @@ export default function RootLayout({
                           <Header />
                           <main className="flex-1 min-h-0">{children}</main>
                           <div className="relative z-10">
+                            {/* <CVChatbot /> */}
                             <FooterWrapper />
                           </div>
                         </div>

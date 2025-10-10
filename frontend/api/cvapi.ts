@@ -12,7 +12,7 @@
  */
 
 import Cookies from 'js-cookie';
-import { fetchWithAuth } from './apiClient';
+import { fetchWithAuth, fetchWithoutAuth } from './apiClient';
 import { API_ENDPOINTS, API_URL } from './apiConfig';
 
 export type CVTemplate = {
@@ -21,6 +21,7 @@ export type CVTemplate = {
   title: string;
   isRecommended?: boolean;
   data?: any;
+  tags?: string[];
 };
 
 
@@ -44,8 +45,8 @@ export interface CV {
  * @returns Promise with array of CV templates
  */
 export const getCVTemplates = async (): Promise<CVTemplate[]> => {
-  // Đổi fetchWithoutAuth thành fetchWithAuth để luôn truyền token
-  return fetchWithAuth(API_ENDPOINTS.CV.TEMPLATES);
+  // Lấy template là API public -> dùng fetchWithoutAuth để hoạt động cả trên server
+  return fetchWithoutAuth(API_ENDPOINTS.CV.TEMPLATES);
 };
 
 /**
