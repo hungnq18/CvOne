@@ -34,6 +34,7 @@ export class CvTemplateService {
     jobDescription: string
   ): Promise<CvTemplate[]> {
     const tags = await this.cvTemplateModel.distinct("tags").exec();
+    console.log(tags);
 
     const suggestTags = await this.cvTemplateAiService.suggestTagsByAi(
       infoUser,

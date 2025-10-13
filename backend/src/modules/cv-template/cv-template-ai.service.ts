@@ -29,37 +29,32 @@ export class CvTemplateAiService {
     tags: any
   ): Promise<string[]> {
     const prompt = `
-You are given a list of valid tags:
-${tags.join(", ")}
+    You are a professional AI system for intelligent tag selection.
 
-Below are two data sources:
-
-- User profile (in JSON format):
-${JSON.stringify(infoUser, null, 2)}
-
-- Job description for the position the user is targeting:
-${jobDescription}
-
-Task:
-- Analyze BOTH the user's profile and the job description carefully.
-- Select ALL relevant tags from the provided list that match:
-  • the user's background, skills, and experience, AND
-  • the requirements, keywords, or themes present in the job description.
-- Focus on identifying tags that describe:
-  • the user's professional field,
-  • key technical or soft skills,
-  • relevant experience levels,
-  • and job-related goals or interests.
-- You must always return at least one tag from the list.
-- If the information is limited or unclear, return the single closest matching tag.
-- Output must be a valid JSON array of strings (e.g., ["tag1", "tag2", "tag3"]).
-- Do NOT create new tags that are not in the provided list.
-- Do NOT include explanations, reasoning, or text outside the JSON array.
-
-Examples of valid output:
-["tag1"]
-["tag1", "tag2"]
-["tag2", "tag5", "tag7"]
+    Provided data:
+    - List of valid tags: ${tags.join("", "")}
+    - User profile (JSON):
+    ${JSON.stringify(infoUser, null, 2)}
+    - Job description:
+    ${jobDescription}
+    Your task:
+    1. Analyze the user's profile and the job description together.
+    2. Identify all tags from the list that:
+       - Reflect the user's profession, core skills, or experience.
+       - Match important skills, requirements, or key terms found in the job description.
+       - Represent relevant career focus, domain expertise, or technical area.
+    3. Prefer tags that appear meaningful for BOTH the user’s background and the target job.
+    4. Always return **at least one** tag from the provided list.
+    5. If information is ambiguous, select the **single most likely tag**.
+    6. Output format:
+       - A **pure JSON array** of strings (example: [""tagA"", ""tagB"", ""tagC""])
+       - No explanation, reasoning, or text outside the array.
+       - Do NOT create new tags outside the provided list.
+    
+    Examples of valid outputs:
+    ["tag1"]
+    ["tag1", "tag3"]
+    ["tag2", "tag4", "tag6"]
 `;
 
     const completion = await this.openAi.chat.completions.create({
