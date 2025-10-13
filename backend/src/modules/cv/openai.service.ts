@@ -810,20 +810,27 @@ Return only the rewritten description, no explanation, no markdown.
         : "Target language: same as input";
 
       const prompt = `
-        You will receive a JSON object representing a CV. 
-        Translate all human-readable text values into **${targetLanguage}** while keeping the exact same JSON structure, keys, and non-text values.
+        You are a professional CV translator. Understand CV tone, structure, and terminology.
         
-        Guidelines:
-        - Only translate string values that are natural language text.
-        - DO NOT translate keys, field names, dates, phone numbers, emails, or URLs.
-        - Preserve JSON structure and order.
-        - Return ONLY valid JSON.
+        Translate all human-readable text values to ${targetLanguage}. Keep keys, structure, and non-text values unchanged.
+        
+        TRANSLATE: Natural language text (descriptions, titles, summaries).
+        DO NOT TRANSLATE: Keys, dates, numbers, emails, URLs, tech names, brand/company names, personal names, null.
+        
+        RULES:
+        - Translate accurately, preserving full meaning and CV tone
+        - Correct grammar: past tense for work history, present for skills. Include all articles/prepositions
+        - Professional CV style: formal language, strong action verbs
+        - Clear, natural phrasing - no awkward machine translations
+        - Verify ALL text is in ${targetLanguage}. No untranslated fragments
+        - Return ONLY valid JSON, Preserve JSON structure and order (no comments, markdown, explanations)
         
         Input JSON:
         ${JSON.stringify(content, null, 2)}
         
-        Now output the translated JSON in ${targetLanguage}.
+        Output: Translated JSON in ${targetLanguage}.
         `;
+
       const completion = await this.openai.chat.completions.create({
         model: "gpt-4o",
         messages: [
@@ -835,7 +842,7 @@ Return only the rewritten description, no explanation, no markdown.
           { role: "user", content: prompt },
         ],
         temperature: 0.2,
-        max_tokens: 2000,
+        max_tokens: 500,
       });
 
       let response = completion.choices[0]?.message?.content?.trim();
