@@ -8,6 +8,7 @@ import {
   getCVById,
   createCV,
   updateCV,
+  translateCV,
   CVTemplate,
   CV,
 } from "@/api/cvapi";
@@ -19,12 +20,14 @@ import {
   ArrowLeft,
   CheckCircle2,
   Loader2,
+  Languages,
 } from "lucide-react";
 import Image from "next/image";
 import { useCV } from "@/providers/cv-provider";
 import { useOnClickOutside } from "@/hooks/useOnClickOutside";
 import { jwtDecode } from "jwt-decode";
 import { CVAIEditorPopupsManager } from "@/components/forms/CV-AIEditorPopup";
+import TranslateCVModal from "@/components/modals/TranslateCVModal";
 // BƯỚC 1: Import hook để lấy ngôn ngữ
 import { useLanguage } from "@/providers/global-provider";
 
@@ -56,6 +59,7 @@ const translations = {
     download: "Download",
     print: "Print CV",
     email: "Email",
+    translate: "Translate CV",
     
     // Alerts & Messages
     errorDecodingToken: "Error decoding token:",
@@ -97,6 +101,7 @@ const translations = {
     download: "Tải về",
     print: "In CV",
     email: "Email",
+    translate: "Dịch CV",
 
     // Alerts & Messages
     errorDecodingToken: "Lỗi giải mã token:",
@@ -155,6 +160,8 @@ const PageCreateCVAIContent = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [cvTitle, setCvTitle] = useState<string>("");
   const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [showTranslateModal, setShowTranslateModal] = useState(false);
+  const [isTranslating, setIsTranslating] = useState(false);
 
   const templateDropdownRef = useRef(null);
   const previewRef = useRef<HTMLDivElement>(null);
@@ -440,6 +447,38 @@ const PageCreateCVAIContent = () => {
     setCvTitle(e.target.value);
   };
 
+  const handleTranslateCV = async (targetLanguage: string) => {
+    if (!userData || !currentTemplate) {
+      alert(t.noDataToSave);
+      return;
+    }
+
+    setIsTranslating(true);
+    try {
+      const translatedData = await translateCV(userData, targetLanguage);
+      // console.log("[translateCV] response:", translatedData);
+
+      // Accept both shapes: { data: { userData } } or { content: { userData } }
+      const nextUserData = translatedData?.data?.userData ?? translatedData?.content?.userData;
+      // console.log("[translateCV] nextUserData:", nextUserData);
+      
+      if (nextUserData) {
+        updateUserData(nextUserData);
+        setIsDirty(true);
+        setShowTranslateModal(false);
+        alert(language === "vi" ? "Dịch CV thành công!" : "CV translated successfully!");
+      } else {
+        console.warn("[translateCV] missing content.userData in response", translatedData);
+        setShowTranslateModal(false);
+      }
+    } catch (error) {
+      console.error("[translateCV] error:", error);
+      alert(language === "vi" ? "Có lỗi xảy ra khi dịch CV" : "Error occurred while translating CV");
+    } finally {
+      setIsTranslating(false);
+    }
+  };
+
   return (
     <div className="h-screen w-full bg-slate-50 flex flex-col overflow-x-hidden mb-4">
       <header
@@ -591,6 +630,12 @@ const PageCreateCVAIContent = () => {
             <button className="w-full flex items-center gap-3 p-3 rounded-md text-slate-700 hover:bg-slate-100 font-medium">
               <Mail size={20} /> {t.email}
             </button>
+            <button
+              className="w-full flex items-center gap-3 p-3 rounded-md text-slate-700 hover:bg-slate-100 font-medium"
+              onClick={() => setShowTranslateModal(true)}
+            >
+              <Languages size={20} /> {t.translate}
+            </button>
           </div>
         </aside>
       </main>
@@ -610,6 +655,13 @@ const PageCreateCVAIContent = () => {
             router.push(`/cvTemplates`);
           }
         }}
+      />
+
+      <TranslateCVModal
+        isOpen={showTranslateModal}
+        onClose={() => setShowTranslateModal(false)}
+        onTranslate={handleTranslateCV}
+        isTranslating={isTranslating}
       />
     </div>
   );

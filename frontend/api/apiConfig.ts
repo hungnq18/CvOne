@@ -62,7 +62,7 @@ export const API_ENDPOINTS = {
     AI_STATUS: "/cv/ai-status",
     GENERATE_PDF_AND_UPLOAD_TO_CLOUDINARY: "/cv/:id/generate-pdf-uploadToCloudinary",// api để tạo pdf và upload lên cloudinary. nhận vào base64 pdf
     GENERATE_PDF_AND_SEND_EMAIL: "/cv/:id/send-pdf-email",// api để tạo pdf và gửi mail. nhận vào base64 pdf và email
-    TRANSLATE_CV: "/cv/translate-cv",//nhận vào json cv và target language trả về json cv đã được translate
+    TRANSLATE_CV: "/cv/translate",//nhận vào json cv và target language trả về json cv đã được translate
   },
   CL: {
     TEMPLATES: "/cl-templates",
