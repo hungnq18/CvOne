@@ -29,11 +29,15 @@ export class CvTemplateService {
     return template;
   }
 
-  async getSuggestTemplateCv(userId: string): Promise<CvTemplate[]> {
-    const infoUser = await this.userService.getUserById(userId);
+  async getSuggestTemplateCv(
+    infoUser: any,
+    jobDescription: string
+  ): Promise<CvTemplate[]> {
     const tags = await this.cvTemplateModel.distinct("tags").exec();
+
     const suggestTags = await this.cvTemplateAiService.suggestTagsByAi(
       infoUser,
+      jobDescription,
       tags
     );
     console.log("suggestTags", suggestTags);
