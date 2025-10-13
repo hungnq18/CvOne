@@ -40,7 +40,7 @@ const translations = {
     personalInfoLower: "Thông tin cá nhân",
     careerObjectiveLower: "Mục tiêu sự nghiệp",
     skillsLower: "Kỹ năng",
-    
+
     // Hover Labels
     avatarLabel: "Ảnh đại diện",
     fullNameAndTitleLabel: "Họ tên & Chức danh",
@@ -74,7 +74,7 @@ interface SectionWrapperProps {
 
 interface CVTemplateProps {
   data: any;
-  onSectionClick?: (sectionId:string) => void;
+  onSectionClick?: (sectionId: string) => void;
   isPdfMode?: boolean;
   language?: string;
 }
@@ -92,7 +92,7 @@ const HoverableWrapper: React.FC<HoverableWrapperProps> = ({
   if (isPdfMode) {
     return <>{children}</>;
   }
-  
+
   // Cải tiến: Dùng sectionId để quyết định style, không phụ thuộc vào ngôn ngữ
   const hoverEffectMap: { [key: string]: string } = {
     experience: "hover:scale-105 hover:bg-gray-50 hover:shadow-lg",
@@ -115,20 +115,36 @@ const HoverableWrapper: React.FC<HoverableWrapperProps> = ({
     ${className || ""}
   `;
 
-  const isAvatar = sectionId === 'avatar';
+  const isAvatar = sectionId === "avatar";
   const showBorder = !isPdfMode;
 
   return (
     <div className={finalClassName} onClick={() => onClick?.(sectionId)}>
       {children}
       {showBorder && (
-         <>
-          <div className={`absolute inset-0 border-4 border-[#8BAAFC] opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none ${isAvatar ? 'rounded-full' : 'rounded-lg'}`}></div>
+        <>
+          <div
+            className={`absolute inset-0 border-4 border-[#8BAAFC] opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none ${
+              isAvatar ? "rounded-full" : "rounded-lg"
+            }`}
+          ></div>
           <div
             className="absolute bg-[#8BAAFC] text-white text-sm font-bold tracking-wide px-3 py-1 opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none"
-            style={isAvatar ? 
-              { top: '-2px', left: '-15%', borderRadius: "4px 10px 4px 10px", marginTop: "-6%" } : 
-              { top: '0', left: '1%', transform: 'translateY(-50%)', borderRadius: "4px 10px 0 0", marginTop: "-2%" }
+            style={
+              isAvatar
+                ? {
+                    top: "-2px",
+                    left: "-15%",
+                    borderRadius: "4px 10px 4px 10px",
+                    marginTop: "-6%",
+                  }
+                : {
+                    top: "0",
+                    left: "1%",
+                    transform: "translateY(-50%)",
+                    borderRadius: "4px 10px 0 0",
+                    marginTop: "-2%",
+                  }
             }
           >
             {label}
@@ -220,14 +236,18 @@ const CVTemplateInspired: React.FC<CVTemplateProps> = ({
                   {isPdfMode ? (
                     <img
                       src={userData.avatar || "/avatar-female.png"}
-                      alt={`${userData.firstName || ""} ${userData.lastName || ""}`}
+                      alt={`${userData.firstName || ""} ${
+                        userData.lastName || ""
+                      }`}
                       crossOrigin="anonymous"
                       className="rounded-full w-full h-full object-cover"
                     />
                   ) : (
                     <Image
                       src={userData.avatar || "/avatar-female.png"}
-                      alt={`${userData.firstName || ""} ${userData.lastName || ""}`}
+                      alt={`${userData.firstName || ""} ${
+                        userData.lastName || ""
+                      }`}
                       fill
                       style={{ objectFit: "cover" }}
                       className="rounded-full"
@@ -269,13 +289,15 @@ const CVTemplateInspired: React.FC<CVTemplateProps> = ({
                 <span className="text-sm font-medium text-gray-600 shrink-0 ml-4">
                   {job.startDate?.slice(5, 7)}/{job.startDate?.slice(0, 4)} -{" "}
                   {job.isCurrent ||
-                    job.endDate == "Present" ||
-                    job.endDate == "Hiện tại"
-                      ? t.present
-                      : `${job.endDate?.slice(5, 7)}/${job.endDate?.slice(0, 4)}`}
+                  job.endDate == "Present" ||
+                  job.endDate == "Hiện tại"
+                    ? t.present
+                    : `${job.endDate?.slice(5, 7)}/${job.endDate?.slice(0, 4)}`}
                 </span>
               </div>
-              <h4 className="font-semibold text-md text-gray-700 mb-1">{job.company}</h4>
+              <h4 className="font-semibold text-md text-gray-700 mb-1">
+                {job.company}
+              </h4>
               {renderDescription(job.description)}
             </div>
           ))}
@@ -326,7 +348,9 @@ const CVTemplateInspired: React.FC<CVTemplateProps> = ({
               </div>
               <div>
                 <strong className="font-semibold block">{t.address}</strong>
-                <span>{userData.city}, {userData.country}</span>
+                <span>
+                  {userData.city}, {userData.country}
+                </span>
               </div>
             </div>
           </HoverableWrapper>
@@ -343,11 +367,13 @@ const CVTemplateInspired: React.FC<CVTemplateProps> = ({
             <h2 className="pt-4 pl-4 text-xl font-bold text-gray-800 uppercase tracking-wider mb-3 pb-2 border-b-2 border-gray-300">
               {t.careerObjectiveLower}
             </h2>
-            <p className="pl-4 pr-4 pb-4 text-gray-700 leading-relaxed">{userData.summary}</p>
-
+            <p className="pl-4 pr-4 pb-4 text-gray-700 leading-relaxed">
+              {userData.summary}
+            </p>
           </HoverableWrapper>
         </div>
 
+        {/* Skills */}
         {userData.skills?.length > 0 && (
           <div className="mb-10 w-[calc(100%+48px)] -ml-6">
             <HoverableWrapper
@@ -357,14 +383,38 @@ const CVTemplateInspired: React.FC<CVTemplateProps> = ({
               className="p-4 relative"
               isPdfMode={isPdfMode}
             >
-              <h2 className="pl-4 pt-4 text-xl font-bold text-gray-800 uppercase tracking-wider mb-4 pb-2 border-b-2 border-gray-300">
+              <h2 className="pl-4 pt-4 text-xl font-bold text-gray-900 uppercase tracking-wider mb-4 pb-2 border-b border-gray-300">
                 {t.skillsLower}
               </h2>
-              <ul className="pl-4 pr-4 pb-4 list-inside list-disc space-y-2 text-gray-700">
-                {userData.skills.map((skill: any, i: number) => (
-                  <li key={i}>{skill.name}</li>
-                ))}
-              </ul>
+
+              <div className="pl-4 pr-4 pb-4 space-y-6 text-gray-700">
+                {userData.skills.map((skill: any, i: number) => {
+                  const rating = Math.max(
+                    0,
+                    Math.min(5, Number(skill.rating || 0))
+                  );
+                  const width = `${(rating / 5) * 100}%`;
+                  return (
+                    <div key={i} className="group">
+                      <div className="flex items-center justify-between gap-6 mb-2">
+                        <span className="text-gray-800 font-medium transition-colors group-hover:text--600">
+                          {skill.name}
+                        </span>
+                        <span className="text-gray-900 text-sm font-semibold bg-gray-100 px-3 py-1 rounded-full flex-shrink-0">
+                          {rating}/5
+                        </span>
+                      </div>
+
+                      <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-gray-500 to-gray-600 rounded-full transition-all duration-300 group-hover:from-gray-600 group-hover:to-gray-700 group-hover:shadow-lg group-hover:shadow-gray-500/50"
+                          style={{ width }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </HoverableWrapper>
           </div>
         )}

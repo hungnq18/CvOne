@@ -365,3 +365,17 @@ export async function uploadJDPdfAndAnalyze(file: File) {
     // KHÔNG thêm headers Content-Type ở đây!
   });
 }
+
+/**
+ * Translate CV content to target language
+ * @param cvData - CV data object to translate
+ * @param targetLanguage - Target language code (e.g., 'en', 'vi')
+ * @returns Promise with translated CV data
+ */
+export async function translateCV(userData: any, targetLanguage: string) {
+  return fetchWithAuth(API_ENDPOINTS.CV.TRANSLATE_CV, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ targetLanguage, content: { userData } })
+  });
+}
