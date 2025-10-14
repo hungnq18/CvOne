@@ -1,9 +1,8 @@
-import React, { useState, FC, ChangeEvent, useEffect } from "react";
-import { Edit, PlusCircle, Trash2, X, Check } from "lucide-react";
-import { suggestSummary, suggestSkills, analyzeJD } from "@/api/cvapi";
+import { analyzeJD, suggestSkills, suggestSummary } from "@/api/cvapi";
 import { useCV } from "@/providers/cv-provider";
-import { Wand2 } from "lucide-react";
-import { useLanguage } from "@/providers/global-provider";
+import { useLanguage } from "@/providers/global_provider";
+import { Check, Edit, PlusCircle, Trash2, Wand2, X } from "lucide-react";
+import { ChangeEvent, FC, useEffect, useState } from "react";
 
 // --- ĐỐI TƯỢNG TRANSLATIONS CHO TOÀN BỘ FILE ---
 const translations = {

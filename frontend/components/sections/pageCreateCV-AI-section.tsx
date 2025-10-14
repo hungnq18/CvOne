@@ -1,32 +1,32 @@
 "use client";
 
-import { useSearchParams, useRouter } from "next/navigation";
-import React, { useEffect, useState, useRef } from "react";
 import {
+  createCV,
+  CV,
+  CVTemplate,
+  getCVById,
   getCVTemplateById,
   getCVTemplates,
-  getCVById,
-  createCV,
   updateCV,
-  CVTemplate,
-  CV,
 } from "@/api/cvapi";
 import { templateComponentMap } from "@/components/cvTemplate/index";
+import { CVAIEditorPopupsManager } from "@/components/forms/CV-AIEditorPopup";
+import { useOnClickOutside } from "@/hooks/useOnClickOutside";
+import { useCV } from "@/providers/cv-provider";
+import { jwtDecode } from "jwt-decode";
 import {
-  FileDown,
-  Printer,
-  Mail,
   ArrowLeft,
   CheckCircle2,
+  FileDown,
   Loader2,
+  Mail,
+  Printer,
 } from "lucide-react";
 import Image from "next/image";
-import { useCV } from "@/providers/cv-provider";
-import { useOnClickOutside } from "@/hooks/useOnClickOutside";
-import { jwtDecode } from "jwt-decode";
-import { CVAIEditorPopupsManager } from "@/components/forms/CV-AIEditorPopup";
+import { useRouter, useSearchParams } from "next/navigation";
+import React, { useEffect, useRef, useState } from "react";
 // BƯỚC 1: Import hook để lấy ngôn ngữ
-import { useLanguage } from "@/providers/global-provider";
+import { useLanguage } from "@/providers/global_provider";
 
 // BƯỚC 2: TẠO ĐỐI TƯỢNG TRANSLATIONS ---
 const translations = {

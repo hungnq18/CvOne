@@ -1,9 +1,8 @@
+import { CustomRadioGroup } from '@/components/ui/CustomRadioGroup';
+import { useLanguage } from '@/providers/global_provider';
+import { FolderOpenOutlined } from '@ant-design/icons';
 import { Modal, message } from 'antd';
 import React from 'react';
-import { UiverseFileUpload } from '@/components/ui/UiverseFileUpload';
-import { CustomRadioGroup } from '@/components/ui/CustomRadioGroup';
-import { FolderOpenOutlined } from '@ant-design/icons';
-import { useLanguage } from '@/providers/global-provider';
 
 interface FastApplyModalProps {
     open: boolean;

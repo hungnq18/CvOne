@@ -1,6 +1,6 @@
 'use client';
 
-import { useLanguage } from '@/providers/global-provider';
+import { useLanguage } from '@/providers/global_provider';
 import { motion } from 'framer-motion';
 
 

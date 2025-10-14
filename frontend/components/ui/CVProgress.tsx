@@ -4,7 +4,7 @@ import { CVTemplate, getCVTemplates } from "@/api/cvapi";
 import useAnimatedButtons from "@/app/userDashboard/page.module";
 import styles from "@/app/userDashboard/page.module.css";
 import { templateComponentMap } from "@/components/cvTemplate/index";
-import { useLanguage } from "@/providers/global-provider";
+import { useLanguage } from "@/providers/global_provider";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { FaUserEdit } from "react-icons/fa";

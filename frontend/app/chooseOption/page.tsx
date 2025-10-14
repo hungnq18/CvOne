@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, Suspense, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useLanguage } from "@/providers/global_provider";
 import { ArrowLeft, ArrowRight, Bot, FileUp, Smile } from "lucide-react";
-import { useLanguage } from "@/providers/global-provider";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
 
 const chooseOptionTranslations = {
   en: {

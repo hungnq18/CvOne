@@ -1,10 +1,8 @@
 "use client";
 
+import { useLanguage } from '@/providers/global_provider';
 import React from 'react';
-import { ApplyJob } from '@/api/jobApi';
-import { Card, Tag } from 'antd';
 import { FaBriefcase } from 'react-icons/fa';
-import { useLanguage } from '@/providers/global-provider';
 
 const translations = {
     vi: {

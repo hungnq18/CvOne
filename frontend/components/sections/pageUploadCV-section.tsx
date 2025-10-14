@@ -1,11 +1,10 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import React from "react";
-import { pdfjs, Document, Page } from "react-pdf";
 import { useCV } from "@/providers/cv-provider";
-import { useSearchParams, useRouter } from "next/navigation";
-import { useLanguage } from "@/providers/global-provider";
+import { useLanguage } from "@/providers/global_provider";
+import { useRouter, useSearchParams } from "next/navigation";
+import React, { useMemo, useState } from "react";
+import { Document, Page, pdfjs } from "react-pdf";
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 

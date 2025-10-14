@@ -1,33 +1,33 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import dynamic from 'next/dynamic';
+import { useEffect, useRef, useState } from 'react';
 
-import {
-    getLocalJobById,
-    findRelatedLocalJobs,
-    saveJob,
-    Job,
-} from '@/api/jobApi';
-import { getAllCVs, CV } from '@/api/cvapi';
-import { getCLs, CL } from '@/api/clApi';
 import { createApplyJob } from '@/api/apiApplyJob';
-import { uploadFileToCloudinary } from '@/utils/uploadCloudinary/upload';
-import { useLanguage } from '@/providers/global-provider';
+import { CL, getCLs } from '@/api/clApi';
+import { CV, getAllCVs } from '@/api/cvapi';
+import {
+    Job,
+    findRelatedLocalJobs,
+    getLocalJobById,
+    saveJob,
+} from '@/api/jobApi';
 import { useCV } from '@/providers/cv-provider';
+import { useLanguage } from '@/providers/global_provider';
+import { uploadFileToCloudinary } from '@/utils/uploadCloudinary/upload';
 
-import { Card, Tag, message } from 'antd';
 import {
     ArrowLeftOutlined,
-    EnvironmentOutlined,
-    DollarCircleOutlined,
     CalendarOutlined,
-    ThunderboltOutlined,
     CheckCircleOutlined,
+    DollarCircleOutlined,
+    EnvironmentOutlined,
     ProfileOutlined,
+    ThunderboltOutlined,
 } from '@ant-design/icons';
+import { Card, Tag, message } from 'antd';
 
 import '../../styles/job-detail-apply.css';
 

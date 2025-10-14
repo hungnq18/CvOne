@@ -1,23 +1,23 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { getUserIdFromToken } from "@/api/userApi";
+import { getApplyJobByUser } from "@/api/apiApplyJob";
 import {
+    deleteNotification,
     getNotifications,
-    Notification as NotificationBase,
     markAllNotificationsAsRead,
     markNotificationAsRead,
-    deleteNotification,
+    Notification as NotificationBase,
 } from "@/api/apiNotification";
-import socket from "@/utils/socket/client";
-import { getApplyJobByUser } from "@/api/apiApplyJob";
-import { getJobById } from "@/api/jobApi";
 import { getCVById } from "@/api/cvapi";
-import { useLanguage } from "@/providers/global-provider";
-import NotificationHeader from "@/components/chatAndNotification/NotificationHeader";
+import { getJobById } from "@/api/jobApi";
+import { getUserIdFromToken } from "@/api/userApi";
 import NotificationCard from "@/components/chatAndNotification/NotificationCard";
+import NotificationHeader from "@/components/chatAndNotification/NotificationHeader";
 import NotificationModal from "@/components/chatAndNotification/NotificationModal";
+import { useLanguage } from "@/providers/global_provider";
+import socket from "@/utils/socket/client";
 import { Pagination } from "antd";
+import { useEffect, useState } from "react";
 
 type Notification = NotificationBase & { isRead?: boolean };
 

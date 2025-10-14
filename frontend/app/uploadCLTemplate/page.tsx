@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, ArrowRight, UploadCloud, FileText } from "lucide-react";
-import { toast } from "react-hot-toast";
 import { API_ENDPOINTS, API_URL } from "@/api/apiConfig";
+import { useLanguage } from "@/providers/global_provider";
 import Cookies from "js-cookie";
-import { useLanguage } from "@/providers/global-provider";
+import { ArrowLeft, ArrowRight, FileText, UploadCloud } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useState } from "react";
+import { toast } from "react-hot-toast";
 
 const uploadCLTranslations = {
   en: {

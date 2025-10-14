@@ -2,9 +2,9 @@
 "use client";
 
 import { useOnClickOutside } from "@/hooks/useOnClickOutside";
-import { CheckCircle2, Edit, Loader2, PlusCircle, Trash2, X } from "lucide-react";
+import { useLanguage } from "@/providers/global_provider";
+import { Edit, Loader2, PlusCircle, Trash2, X } from "lucide-react";
 import { ChangeEvent, FC, ReactNode, useRef, useState } from "react";
-import { useLanguage } from "@/providers/global-provider";
 
 // --- ĐỐI TƯỢNG TRANSLATIONS CHO TOÀN BỘ FILE ---
 const translations = {

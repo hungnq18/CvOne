@@ -6,7 +6,7 @@ import {
   uploadJDPdfAndAnalyze,
 } from "@/api/cvapi";
 import { useCV } from "@/providers/cv-provider";
-import { useLanguage } from "@/providers/global-provider";
+import { useLanguage } from "@/providers/global_provider";
 import { ArrowLeft, ArrowRight, Wand2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FC, ReactNode, useState } from "react";

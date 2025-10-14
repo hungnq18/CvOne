@@ -1,9 +1,9 @@
 'use client';
 
-import Link from 'next/link';
-import Image from 'next/image';
-import { useLanguage } from '@/providers/global-provider';
+import { useLanguage } from '@/providers/global_provider';
 import { motion } from 'framer-motion';
+import Image from 'next/image';
+import Link from 'next/link';
 import styles from './hero-section.module.css';
 
 const heroTranslations = {

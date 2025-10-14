@@ -2,9 +2,9 @@
 
 import { uploadAndAnalyzeCV } from "@/api/cvapi";
 import { useCV } from "@/providers/cv-provider";
+import { useLanguage } from "@/providers/global_provider"; // Giả định hook này tồn tại
 import { useRouter, useSearchParams } from "next/navigation";
-import React, { useState } from "react";
-import { useLanguage } from "@/providers/global-provider"; // Giả định hook này tồn tại
+import { useState } from "react";
 
 // --- ĐỐI TƯỢNG TRANSLATIONS ---
 const translations = {
@@ -67,7 +67,7 @@ export default function PageChooseUploadCreateCVSection() {
   const templateId = searchParams.get("id") || "";
 
   const uint8ArrayToFile = (uint8Array: Uint8Array, fileName = "cv.pdf", mimeType = "application/pdf"): File => {
-    const blob = new Blob([uint8Array], { type: mimeType });
+    const blob = new Blob([uint8Array as BlobPart], { type: mimeType });
     return new File([blob], fileName, { type: mimeType });
   };
 

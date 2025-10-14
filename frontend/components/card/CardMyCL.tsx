@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
-import Link from "next/link";
-import { CL, getCLs, CLTemplate, deleteCL } from "@/api/clApi";
-import { Edit, Trash2 } from "lucide-react";
-import { Card } from "antd";
+import { CL, CLTemplate, deleteCL, getCLs } from "@/api/clApi";
 import { templates as clTemplateComponents } from "@/app/createCLTemplate/templates";
-import { useLanguage } from "@/providers/global-provider";
+import { useLanguage } from "@/providers/global_provider";
+import { Card } from "antd";
+import { motion } from "framer-motion";
+import { Edit, Trash2 } from "lucide-react";
+import Link from "next/link";
+import { useEffect, useState } from "react";
 
 const translations = {
   en: {

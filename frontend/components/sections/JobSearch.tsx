@@ -1,5 +1,5 @@
+import { useLanguage } from '@/providers/global_provider';
 import React from 'react';
-import { useLanguage } from '@/providers/global-provider';
 
 interface JobSearchProps {
     searchValue: string;

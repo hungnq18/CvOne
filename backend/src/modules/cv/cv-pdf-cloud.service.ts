@@ -7,10 +7,19 @@ export class CvPdfCloudService {
 
   constructor() {
     // Configure Cloudinary
+    const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+    const apiKey = process.env.CLOUDINARY_API_KEY;
+    const apiSecret = process.env.CLOUDINARY_API_SECRET;
+
+    if (!cloudName || !apiKey || !apiSecret) {
+      this.logger.warn('Cloudinary credentials not found. PDF uploads will be disabled.');
+      return;
+    }
+
     cloudinary.v2.config({
-      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-      api_key: process.env.CLOUDINARY_API_KEY,
-      api_secret: process.env.CLOUDINARY_API_SECRET,
+      cloud_name: cloudName,
+      api_key: apiKey,
+      api_secret: apiSecret,
     });
   }
 
@@ -27,6 +36,14 @@ export class CvPdfCloudService {
     userId: string,
   ): Promise<{ success: boolean; shareUrl?: string; error?: string }> {
     try {
+      // Check if Cloudinary is configured
+      if (!this.getCloudinaryConfig().configured) {
+        return {
+          success: false,
+          error: 'Cloudinary not configured. Please set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET environment variables.',
+        };
+      }
+
       // Convert buffer to base64 string for Cloudinary upload
       const base64String = `data:application/pdf;base64,${pdfBuffer.toString('base64')}`;
 
@@ -107,7 +124,7 @@ export class CvPdfCloudService {
         error instanceof Error
           ? error.message
           : 'Failed to upload to Cloudinary';
-      return {
+      return {  
         success: false,
         error: errMsg,
       };
@@ -151,8 +168,10 @@ export class CvPdfCloudService {
    */
   getCloudinaryConfig(): { configured: boolean; cloudName?: string } {
     const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+    const apiKey = process.env.CLOUDINARY_API_KEY;
+    const apiSecret = process.env.CLOUDINARY_API_SECRET;
     return {
-      configured: !!cloudName,
+      configured: !!(cloudName && apiKey && apiSecret),
       cloudName,
     };
   }

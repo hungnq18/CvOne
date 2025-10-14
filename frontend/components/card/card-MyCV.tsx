@@ -1,19 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
-import Link from "next/link";
 import {
-  CV,
-  getAllCVs,
-  CVTemplate,
-  getCVTemplates,
-  deleteCV,
+    CV,
+    CVTemplate,
+    deleteCV,
+    getAllCVs,
+    getCVTemplates,
 } from "@/api/cvapi";
-import { Edit, Trash2 } from "lucide-react";
-import { Card } from "antd";
 import { templateComponentMap } from "@/components/cvTemplate/index";
-import { useLanguage } from "@/providers/global-provider";
+import { useLanguage } from "@/providers/global_provider";
+import { Card } from "antd";
+import { motion } from "framer-motion";
+import { Edit, Trash2 } from "lucide-react";
+import Link from "next/link";
+import { useEffect, useState } from "react";
 
 // --- ĐỐI TƯỢNG TRANSLATIONS ---
 const translations = {

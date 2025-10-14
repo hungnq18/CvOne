@@ -2,11 +2,11 @@
 
 "use client";
 
-import Image from "next/image";
-import { useState } from "react";
-import { useLanguage } from "@/providers/global-provider";
+import { useLanguage } from "@/providers/global_provider";
 import { motion } from "framer-motion";
+import Image from "next/image";
 import { useRouter } from "next/navigation"; // Đã có
+import { useState } from "react";
 
 // THÊM id vào props
 type CVCardProps = {

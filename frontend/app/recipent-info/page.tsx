@@ -6,7 +6,7 @@ import {
   getProvinces,
   Province,
 } from "@/api/locationApi";
-import { useLanguage } from "@/providers/global-provider";
+import { useLanguage } from "@/providers/global_provider";
 import { ArrowLeft, ArrowRight, ChevronDown } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";

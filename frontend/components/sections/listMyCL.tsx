@@ -1,8 +1,8 @@
-import React from "react";
-import { Table, Card, Row, Col, Button } from "antd";
-import { FaFileAlt, FaPlus } from "react-icons/fa";
 import { CL } from "@/api/clApi";
-import { useLanguage } from "@/providers/global-provider";
+import { useLanguage } from "@/providers/global_provider";
+import { Button, Card, Col, Row, Table } from "antd";
+import React from "react";
+import { FaFileAlt, FaPlus } from "react-icons/fa";
 
 interface CLListProps {
   coverLetters: CL[];

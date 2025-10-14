@@ -45,17 +45,19 @@ export function useGlobal() {
   return context;
 }
 
-// Export as const arrow function
-export const useLanguage = () => {
+// Simple useLanguage hook
+export function useLanguage() {
   const context = useContext(GlobalContext);
+  
   if (context === undefined) {
+    // Return default values when context is not available
     return { 
       language: 'en' as Language, 
       setLanguage: () => {} 
     };
   }
-  return { language: context.language, setLanguage: context.setLanguage };
-};
+  
+  return context;
+}
 
 export default GlobalProvider;
-

@@ -3,16 +3,15 @@
 
 import { useAuth } from "@/hooks/use-auth";
 import { DecodedToken } from "@/middleware";
-import { useLanguage } from "@/providers/global-provider";
+import { useLanguage } from "@/providers/global_provider";
 import { jwtDecode } from "jwt-decode";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import styled from "styled-components";
-import logo from "../../public/logo/logoCVOne.svg";
 import { FaBars } from "react-icons/fa";
-import { createGlobalStyle } from "styled-components";
+import styled, { createGlobalStyle } from "styled-components";
+import logo from "../../public/logo/logoCVOne.svg";
 
 const DropdownHoverStyle = createGlobalStyle`
   .dropdown-item:hover {

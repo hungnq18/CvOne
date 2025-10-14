@@ -1,8 +1,8 @@
 "use client";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { LayoutGrid, Palette, Zap } from "lucide-react"
-import { useLanguage } from "@/providers/global-provider"
-import { motion } from "framer-motion"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useLanguage } from "@/providers/global_provider";
+import { motion } from "framer-motion";
+import { LayoutGrid, Palette, Zap } from "lucide-react";
 
 const featuresTranslations = {
   en: [
