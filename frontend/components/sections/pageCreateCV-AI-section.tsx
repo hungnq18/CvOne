@@ -9,6 +9,7 @@ import {
   createCV,
   updateCV,
   translateCV,
+  suggestTemplateByAI,
   CVTemplate,
   CV,
 } from "@/api/cvapi";
@@ -148,7 +149,7 @@ const PageCreateCVAIContent = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
   const id = searchParams.get("id");
-  const { currentTemplate, userData, loadTemplate, updateUserData } = useCV();
+  const { currentTemplate, userData, loadTemplate, updateUserData, jobDescription } = useCV();
 
   const [loading, setLoading] = useState(true);
   const [activeSection, setActiveSection] = useState("info");
@@ -162,6 +163,18 @@ const PageCreateCVAIContent = () => {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [showTranslateModal, setShowTranslateModal] = useState(false);
   const [isTranslating, setIsTranslating] = useState(false);
+  const [showSuggestModal, setShowSuggestModal] = useState(false);
+  const [isSuggesting, setIsSuggesting] = useState(false);
+  const [suggestedTemplate, setSuggestedTemplate] = useState<CVTemplate | null>(null);
+  const [hasAutoSuggested, setHasAutoSuggested] = useState(false);
+  const [suppressAutoSuggest, setSuppressAutoSuggest] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    try {
+      return sessionStorage.getItem('suppressAISuggest') === '1';
+    } catch {
+      return false;
+    }
+  });
 
   const templateDropdownRef = useRef(null);
   const previewRef = useRef<HTMLDivElement>(null);
@@ -207,6 +220,14 @@ const PageCreateCVAIContent = () => {
   }, [id, loadTemplate, updateUserData, userData, t]);
 
   const handleTemplateSelect = (selectedTemplate: CVTemplate) => {
+    // Khi người dùng đổi template thủ công, không auto-suggest nữa trong phiên hiện tại
+    try {
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('suppressAISuggest', '1');
+      }
+    } catch {}
+    setSuppressAutoSuggest(true);
+    setHasAutoSuggested(true);
     // Sửa lại URL cho đúng với trang AI
     router.push(
       `/createCV-AIManual?id=${selectedTemplate._id}`
@@ -458,7 +479,6 @@ const PageCreateCVAIContent = () => {
       const translatedData = await translateCV(userData, targetLanguage);
       // console.log("[translateCV] response:", translatedData);
 
-      // Accept both shapes: { data: { userData } } or { content: { userData } }
       const nextUserData = translatedData?.data?.userData ?? translatedData?.content?.userData;
       // console.log("[translateCV] nextUserData:", nextUserData);
       
@@ -478,6 +498,55 @@ const PageCreateCVAIContent = () => {
       setIsTranslating(false);
     }
   };
+
+  const handleAISuggestTemplate = async () => {
+    if (!userData || !jobDescription) {
+      // Still allow suggestion with empty JD but warn
+    }
+    setIsSuggesting(true);
+    try {
+      console.log("[AI Suggest] payload:", {
+        infoUser: userData || {},
+        jobDescription: jobDescription || "",
+      });
+      const result = await suggestTemplateByAI(userData || {}, jobDescription || "");
+      console.log("[AI Suggest] raw result:", result);
+      // Always use ONLY the first suggestion from the API response
+      const first = Array.isArray(result)
+        ? result[0]
+        : Array.isArray(result?.templates)
+          ? result.templates[0]
+          : Array.isArray(result?.data)
+            ? result.data[0]
+            : result;
+      // Accept shapes: string id | {_id} | {templateId} | full template
+      const templateId = typeof first === 'string' ? first : (first?.templateId || first?._id);
+      console.log("[AI Suggest] first item:", first);
+      console.log("[AI Suggest] templateId:", templateId);
+      let found: CVTemplate | undefined;
+      if (templateId) {
+        found = (allTemplates || []).find((t) => t._id === templateId);
+      }
+      const finalTemplate: CVTemplate | null = found || (first && first.imageUrl && first.title ? first : null);
+      console.log("[AI Suggest] resolved template:", finalTemplate);
+      setSuggestedTemplate(finalTemplate);
+      setShowSuggestModal(true);
+    } catch (e) {
+      console.error("[AI Suggest] error:", e);
+      alert(language === "vi" ? "AI đề xuất mẫu thất bại" : "AI suggestion failed");
+    } finally {
+      setIsSuggesting(false);
+    }
+  };
+
+  // Auto-trigger suggestion once when data is ready
+  useEffect(() => {
+    if (hasAutoSuggested) return;
+    const ready = (allTemplates && allTemplates.length > 0) && (userData != null) && !suppressAutoSuggest;
+    if (!ready) return;
+    setHasAutoSuggested(true);
+    handleAISuggestTemplate();
+  }, [allTemplates, userData, hasAutoSuggested, suppressAutoSuggest]);
 
   return (
     <div className="h-screen w-full bg-slate-50 flex flex-col overflow-x-hidden mb-4">
@@ -526,7 +595,7 @@ const PageCreateCVAIContent = () => {
               {showTemplatePopup && (
                 <div
                   className="absolute top-full mt-3 bg-white rounded-md shadow-lg z-20 p-4 w-[450px]"
-                  style={{ left: "-200%" }}
+                  style={{ left: "-110%" }}
                 >
                   <DropdownArrow />
                   <div className="grid grid-cols-3 gap-4">
@@ -624,6 +693,14 @@ const PageCreateCVAIContent = () => {
             >
               <FileDown size={20} /> {t.download}
             </button>
+            <button
+              className="w-full flex items-center gap-3 p-3 rounded-md text-slate-700 hover:bg-slate-100 font-medium"
+              onClick={handleAISuggestTemplate}
+              disabled={isSuggesting}
+            >
+              {isSuggesting ? <Loader2 className="animate-spin" size={20} /> : <CheckCircle2 size={20} />}
+              {language === "vi" ? "AI gợi ý mẫu" : "AI suggest template"}
+            </button>
             <button className="w-full flex items-center gap-3 p-3 rounded-md text-slate-700 hover:bg-slate-100 font-medium">
               <Printer size={20} /> {t.print}
             </button>
@@ -663,6 +740,116 @@ const PageCreateCVAIContent = () => {
         onTranslate={handleTranslateCV}
         isTranslating={isTranslating}
       />
+
+      {showSuggestModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-4xl rounded-lg shadow-xl overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-3 border-b">
+              <h3 className="text-lg font-semibold">
+                {language === "vi" ? "AI gợi ý mẫu phù hợp cho bạn" : "AI suggested template for you"}
+              </h3>
+              <button onClick={() => setShowSuggestModal(false)} className="text-slate-500 hover:text-slate-800">
+                ×
+              </button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
+              <div className="p-5 border-r">
+                <div className="font-medium mb-2 text-slate-700">
+                  {language === "vi" ? "Đề xuất của AI (bên trái)" : "AI suggestion (left)"}
+                </div>
+                {suggestedTemplate ? (
+                  <div className="space-y-3">
+                    <div className="bg-white rounded-md overflow-hidden flex items-start justify-center">
+                      {(() => {
+                        const TemplateComponent = templateComponentMap?.[suggestedTemplate.title];
+                        if (!TemplateComponent) return (
+                          <div className="aspect-[210/297] w-full bg-slate-100 flex items-center justify-center text-slate-500 text-sm">
+                            {language === "vi" ? "Không tìm thấy component" : "Component not found"}
+                          </div>
+                        );
+                        const componentData = { ...(suggestedTemplate.data || {}), userData };
+                        const templateOriginalWidth = 794;
+                        const templateOriginalHeight = templateOriginalWidth * (297 / 210);
+                        const containerWidth = 300; // preview width in modal
+                        const containerHeight = containerWidth * (297 / 210);
+                        const scaleFactor = containerWidth / templateOriginalWidth;
+                        return (
+                          <div className="relative" style={{ width: `${containerWidth}px`, height: `${containerHeight}px` }}>
+                            <div
+                              className="absolute top-0 left-0 origin-top-left"
+                              style={{ width: `${templateOriginalWidth}px`, height: `${templateOriginalHeight}px`, transform: `scale(${scaleFactor})` }}
+                            >
+                              <TemplateComponent data={componentData} language={language} />
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                    <div className="text-base font-semibold">{suggestedTemplate.title}</div>
+                    <button
+                      onClick={() => {
+                        setShowSuggestModal(false);
+                        router.push(`/createCV-AIManual?id=${suggestedTemplate!._id}`);
+                      }}
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-md"
+                    >
+                      {language === "vi" ? "Chọn mẫu AI đề xuất" : "Use AI suggested template"}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="text-slate-500 text-sm">
+                    {language === "vi" ? "AI chưa tìm thấy mẫu phù hợp." : "AI did not return a template."}
+                  </div>
+                )}
+              </div>
+              <div className="p-5">
+                <div className="font-medium mb-2 text-slate-700">
+                  {language === "vi" ? "Mẫu bạn đang chọn (bên phải)" : "Your currently selected template (right)"}
+                </div>
+                {currentTemplate ? (
+                  <div className="space-y-3">
+                    <div className="bg-white rounded-md overflow-hidden flex items-start justify-center">
+                      {(() => {
+                        const TemplateComponent = templateComponentMap?.[currentTemplate.title];
+                        if (!TemplateComponent) return (
+                          <div className="aspect-[210/297] w-full bg-slate-100" />
+                        );
+                        const componentData = { ...(currentTemplate.data || {}), userData };
+                        const templateOriginalWidth = 794;
+                        const templateOriginalHeight = templateOriginalWidth * (297 / 210);
+                        const containerWidth = 300;
+                        const containerHeight = containerWidth * (297 / 210);
+                        const scaleFactor = containerWidth / templateOriginalWidth;
+                        return (
+                          <div className="relative" style={{ width: `${containerWidth}px`, height: `${containerHeight}px` }}>
+                            <div
+                              className="absolute top-0 left-0 origin-top-left"
+                              style={{ width: `${templateOriginalWidth}px`, height: `${templateOriginalHeight}px`, transform: `scale(${scaleFactor})` }}
+                            >
+                              <TemplateComponent data={componentData} language={language} />
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                    <div className="text-base font-semibold">{currentTemplate.title}</div>
+                    <button
+                      onClick={() => setShowSuggestModal(false)}
+                      className="w-full bg-slate-700 hover:bg-slate-800 text-white font-semibold py-2 rounded-md"
+                    >
+                      {language === "vi" ? "Giữ nguyên mẫu hiện tại" : "Keep my current template"}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="text-slate-500 text-sm">
+                    {language === "vi" ? "Bạn chưa chọn mẫu nào." : "No template is selected yet."}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

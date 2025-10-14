@@ -379,3 +379,18 @@ export async function translateCV(userData: any, targetLanguage: string) {
     body: JSON.stringify({ targetLanguage, content: { userData } })
   });
 }
+
+/**
+ * Ask AI to suggest the best CV template based on user info and job description
+ * @param infoUser userData object from CV context
+ * @param jobDescription job description text from CV context
+ * @param tags optional list of tags to narrow down
+ * @returns Promise with suggestion result, expected shape: { templateId: string } or full template
+ */
+export async function suggestTemplateByAI(infoUser: any, jobDescription: string, tags?: string[]) {
+  return fetchWithAuth(API_ENDPOINTS.CV.SUGGEST_TEMPLATE, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ infoUser, jobDescription, tags })
+  });
+}
