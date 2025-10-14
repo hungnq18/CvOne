@@ -801,6 +801,75 @@ Return only the rewritten description, no explanation, no markdown.
   }
 
   /**
+   * Translate CV JSON content to a target language while preserving structure and keys
+   */
+  async translateCvContent(content: any, targetLanguage: string): Promise<any> {
+    try {
+      const languageNote = targetLanguage
+        ? `Target language: ${targetLanguage}`
+        : "Target language: same as input";
+
+      const prompt = `
+        You are a professional CV translator. Understand CV tone, structure, and terminology.
+        
+        Translate all human-readable text values to ${targetLanguage}. Keep keys, structure, and non-text values unchanged.
+        
+        TRANSLATE: Natural language text (descriptions, titles, summaries).
+        DO NOT TRANSLATE: Keys, dates, numbers, emails, URLs, tech names, brand/company names, personal names, null.
+        
+        RULES:
+        - Translate accurately, preserving full meaning and CV tone
+        - Correct grammar: past tense for work history, present for skills. Include all articles/prepositions
+        - Professional CV style: formal language, strong action verbs
+        - Clear, natural phrasing - no awkward machine translations
+        - Verify ALL text is in ${targetLanguage}. No untranslated fragments
+        - Return ONLY valid JSON, Preserve JSON structure and order (no comments, markdown, explanations)
+        
+        Input JSON:
+        ${JSON.stringify(content, null, 2)}
+        
+        Output: Translated JSON in ${targetLanguage}.
+        `;
+
+      const completion = await this.openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are a precise JSON translator. You translate only string values and preserve JSON structure and keys.",
+          },
+          { role: "user", content: prompt },
+        ],
+        temperature: 0.2,
+        max_tokens: 500,
+      });
+
+      let response = completion.choices[0]?.message?.content?.trim();
+      if (!response) {
+        throw new Error("No response from OpenAI");
+      }
+      if (response.startsWith("```json")) {
+        response = response
+          .replace(/^```json/, "")
+          .replace(/```$/, "")
+          .trim();
+      } else if (response.startsWith("```")) {
+        response = response.replace(/^```/, "").replace(/```$/, "").trim();
+      }
+      const translated = JSON.parse(response);
+      return translated;
+    } catch (error) {
+      this.logger.error(
+        `Error translating CV content: ${error.message}`,
+        error.stack,
+      );
+      // Surface error instead of silently returning original so callers can handle it
+      throw new Error(`Translate failed: ${error.message}`);
+    }
+  }
+
+  /**
    * Fallback CV analysis when OpenAI is not available
    */
   private fallbackCvAnalysis(cvText: string) {
@@ -987,5 +1056,5 @@ Không giải thích, không markdown.
       return Array(count).fill(fallback);
     }
   }
-  async test() {}
+  async test() { }
 }

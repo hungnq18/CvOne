@@ -175,12 +175,13 @@ const CardMyCV: React.FC<{}> = ({}) => {
           const TemplateComponent =
             templateComponentMap?.[template?.title || ""];
 
-          if (!TemplateComponent || !cv.content?.userData) return null;
-
-          const componentData = {
-            ...template?.data,
-            userData: cv.content.userData,
-          };
+          const hasUserData = !!cv.content?.userData;
+          const componentData = hasUserData
+            ? {
+                ...template?.data,
+                userData: cv.content!.userData,
+              }
+            : undefined;
 
           return (
             <Card key={cv._id} hoverable>
@@ -199,7 +200,22 @@ const CardMyCV: React.FC<{}> = ({}) => {
                       }}
                     >
                       <div className="pointer-events-none ">
-                        <TemplateComponent data={componentData}  language={language}/>
+                        {TemplateComponent && componentData ? (
+                          <TemplateComponent data={componentData} language={language} />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-sm text-gray-500">
+                            {template?.imageUrl ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={template.imageUrl}
+                                alt={template?.title || "CV template"}
+                                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                              />
+                            ) : (
+                              <span>Preview unavailable</span>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>

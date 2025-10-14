@@ -566,6 +566,30 @@ export class CvController {
   }
 
   /**
+   * Translate CV content to a target language using AI
+   * Accepts JSON `content` following the CV schema and `targetLanguage` (e.g., "vi", "en").
+   * Returns translated JSON with the same structure.
+   */
+  @UseGuards(JwtAuthGuard)
+  @Post("translate")
+  async translateCv(
+    @Body("content") content: any,
+    @Body("targetLanguage") targetLanguage: string,
+  ) {
+    if (!content || typeof content !== "object") {
+      throw new BadRequestException("content (CV JSON) is required");
+    }
+    if (!targetLanguage || typeof targetLanguage !== "string") {
+      throw new BadRequestException("targetLanguage is required");
+    }
+    const translated = await this.cvAiService.translateCvContent(
+      content,
+      targetLanguage,
+    );
+    return { success: true, data: translated };
+  }
+
+  /**
    * Viết lại mô tả công việc trong work experience cho chuyên nghiệp hơn
    */
   @UseGuards(JwtAuthGuard)
@@ -596,14 +620,23 @@ export class CvController {
   async generatePdfAndUploadToCloudinary(
     @Param("id") cvId: string,
     @User("_id") userId: string,
+    @Body("pdfBase64") pdfBase64: string,
   ) {
     if (!cvId) {
       throw new BadRequestException("CV ID is required");
+    }
+    if (
+      !pdfBase64 ||
+      typeof pdfBase64 !== "string" ||
+      pdfBase64.trim().length === 0
+    ) {
+      throw new BadRequestException("pdfBase64 is required");
     }
 
     const result = await this.cvService.generatePdfAndUploadToCloudinary(
       cvId,
       userId,
+      pdfBase64,
     );
 
     if (!result.success) {
@@ -616,6 +649,56 @@ export class CvController {
       success: true,
       message: "PDF generated and uploaded successfully",
       shareUrl: result.shareUrl,
+    };
+  }
+
+  /**
+   * Generate PDF from CV and send via email
+   * @param cvId - The ID of the CV to generate PDF from
+   * @param userId - The ID of the authenticated user
+   * @param recipientEmail - Email address to send the PDF to
+   * @returns Object containing success status
+   * @requires Authentication
+   */
+  @UseGuards(JwtAuthGuard)
+  @Post(":id/send-pdf-email")
+  async generatePdfAndSendEmail(
+    @Param("id") cvId: string,
+    @User("_id") userId: string,
+    @Body("recipientEmail") recipientEmail: string,
+    @Body("pdfBase64") pdfBase64: string,
+  ) {
+    if (!cvId) {
+      throw new BadRequestException("CV ID is required");
+    }
+
+    if (!recipientEmail) {
+      throw new BadRequestException("Recipient email is required");
+    }
+    if (
+      !pdfBase64 ||
+      typeof pdfBase64 !== "string" ||
+      pdfBase64.trim().length === 0
+    ) {
+      throw new BadRequestException("pdfBase64 is required");
+    }
+
+    const result = await this.cvService.generatePdfAndSendEmail(
+      cvId,
+      userId,
+      recipientEmail,
+      pdfBase64,
+    );
+
+    if (!result.success) {
+      throw new BadRequestException(
+        result.error || "Failed to generate PDF and send email",
+      );
+    }
+
+    return {
+      success: true,
+      message: "PDF generated and sent via email successfully",
     };
   }
 }

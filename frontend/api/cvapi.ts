@@ -12,7 +12,7 @@
  */
 
 import Cookies from 'js-cookie';
-import { fetchWithAuth } from './apiClient';
+import { fetchWithAuth, fetchWithoutAuth } from './apiClient';
 import { API_ENDPOINTS, API_URL } from './apiConfig';
 
 export type CVTemplate = {
@@ -21,6 +21,7 @@ export type CVTemplate = {
   title: string;
   isRecommended?: boolean;
   data?: any;
+  tags?: string[];
 };
 
 
@@ -44,8 +45,8 @@ export interface CV {
  * @returns Promise with array of CV templates
  */
 export const getCVTemplates = async (): Promise<CVTemplate[]> => {
-  // Đổi fetchWithoutAuth thành fetchWithAuth để luôn truyền token
-  return fetchWithAuth(API_ENDPOINTS.CV.TEMPLATES);
+  // Lấy template là API public -> dùng fetchWithoutAuth để hoạt động cả trên server
+  return fetchWithoutAuth(API_ENDPOINTS.CV.TEMPLATES);
 };
 
 /**
@@ -362,5 +363,34 @@ export async function uploadJDPdfAndAnalyze(file: File) {
     method: 'POST',
     body: formData
     // KHÔNG thêm headers Content-Type ở đây!
+  });
+}
+
+/**
+ * Translate CV content to target language
+ * @param cvData - CV data object to translate
+ * @param targetLanguage - Target language code (e.g., 'en', 'vi')
+ * @returns Promise with translated CV data
+ */
+export async function translateCV(userData: any, targetLanguage: string) {
+  return fetchWithAuth(API_ENDPOINTS.CV.TRANSLATE_CV, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ targetLanguage, content: { userData } })
+  });
+}
+
+/**
+ * Ask AI to suggest the best CV template based on user info and job description
+ * @param infoUser userData object from CV context
+ * @param jobDescription job description text from CV context
+ * @param tags optional list of tags to narrow down
+ * @returns Promise with suggestion result, expected shape: { templateId: string } or full template
+ */
+export async function suggestTemplateByAI(infoUser: any, jobDescription: string, tags?: string[]) {
+  return fetchWithAuth(API_ENDPOINTS.CV.SUGGEST_TEMPLATE, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ infoUser, jobDescription, tags })
   });
 }

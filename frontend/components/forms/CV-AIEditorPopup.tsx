@@ -227,7 +227,10 @@ export const Modal: FC<{
                 {t.cancel}
               </button>
               <button
-                onClick={onSave}
+                onClick={() => {
+                  onSave();
+                  onClose();
+                }}
                 disabled={isSaving}
                 className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-md focus:outline-none focus:shadow-outline flex items-center justify-center disabled:opacity-50"
               >
@@ -296,7 +299,6 @@ export const InfoPopup: FC<{
 
   const handleSaveChanges = () => {
     onSave(formData);
-    onClose();
   };
 
   return (
@@ -403,7 +405,6 @@ export const ContactPopup: FC<{
 
   const handleSaveChanges = () => {
     onSave(formData);
-    onClose();
   };
 
   return (
@@ -514,7 +515,6 @@ export const TargetPopup: FC<{
 
   const handleSaveChanges = () => {
     onSave({ summary });
-    onClose();
   };
 
   return (
@@ -664,7 +664,6 @@ export const ExperiencePopup: FC<{
 
   const handleSaveChanges = () => {
     onSave({ workHistory: experiences });
-    onClose();
   };
 
   return (
@@ -1014,7 +1013,7 @@ export const SkillsPopup: FC<{
   const { language } = useLanguage();
   const t = translations[language].skillsPopup;
 
-  const [skills, setSkills] = useState(initialData.skills || []);
+  const [skills, setSkills] = useState((initialData.skills || []).map((s: any) => ({ name: s.name, rating: s.rating ?? 0 })));
   const [newSkill, setNewSkill] = useState("");
   const [aiSkillSuggestions, setAiSkillSuggestions] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
@@ -1061,7 +1060,7 @@ export const SkillsPopup: FC<{
   const addSkill = (skillName?: string) => {
     const skillToAdd = (skillName || newSkill).trim();
     if (skillToAdd && !skills.find((s: any) => s.name === skillToAdd)) {
-      setSkills([...skills, { name: skillToAdd }]);
+      setSkills([...skills, { name: skillToAdd, rating: 0 }]);
       setNewSkill("");
     }
   };
@@ -1107,19 +1106,22 @@ export const SkillsPopup: FC<{
               {t.addButton}
             </button>
           </div>
-          <div className="flex flex-wrap gap-2 flex-1 overflow-y-auto pr-1">
+          <div className="flex flex-col gap-2 flex-1 overflow-y-auto pr-1">
             {skills.map((skill: any, index: number) => (
-              <div
-                key={index}
-                className="bg-blue-100 text-blue-800 text-sm font-medium h-fit px-3 py-1 rounded-full flex items-center gap-2"
-              >
-                {skill.name}
-                <button
-                  onClick={() => removeSkill(skill.name)}
-                  className="hover:text-red-500"
-                >
-                  <X size={14} />
-                </button>
+              <div key={index} className="flex items-center w-full bg-blue-50/60 border border-blue-100 px-3 py-2 rounded-lg hover:shadow-sm">
+                <span className="text-blue-900 font-medium truncate pr-3 max-w-[55%]">{skill.name}</span>
+                <div className="ml-auto flex items-center gap-1">
+                  {[1,2,3,4,5].map((n) => (
+                    <button
+                      key={n}
+                      type="button"
+                      onClick={() => setSkills((prev:any[]) => prev.map((s, i) => i === index ? { ...s, rating: n } : s))}
+                      className={`${(skill.rating||0) >= n ? 'bg-blue-600' : 'bg-blue-200'} w-6 h-2 rounded transition-colors`}
+                      aria-label={`rating ${n}`}
+                    />
+                  ))}
+                </div>
+                <button onClick={() => removeSkill(skill.name)} className="pl-3 text-blue-900 hover:text-red-500"><X size={16} /></button>
               </div>
             ))}
           </div>

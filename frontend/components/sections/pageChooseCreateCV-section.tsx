@@ -1,6 +1,7 @@
-import { GetServerSideProps } from "next";
+"use client";
 import Link from "next/link";
 import { useLanguage } from "@/providers/global-provider";
+import { useSearchParams } from "next/navigation";
 
 const translations = {
   en: {
@@ -27,11 +28,9 @@ const translations = {
   }
 };
 
-interface Props {
-  templateId: string;
-}
-
-export default function CreateMethodSection({ templateId }: Props) {
+export default function CreateMethodSection() {
+  const searchParams = useSearchParams();
+  const templateId = searchParams.get("id") ?? "";
   const { language } = useLanguage();
   const t = translations[language].chooseCreate;
 
@@ -83,13 +82,3 @@ export default function CreateMethodSection({ templateId }: Props) {
     </div>
   );
 }
-
-// ✅ Lấy templateId từ query bằng SSR
-export const getServerSideProps: GetServerSideProps = async (context) => {
-  const { id } = context.query;
-  return {
-    props: {
-      templateId: typeof id === "string" ? id : "",
-    },
-  };
-};

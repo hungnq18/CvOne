@@ -3,8 +3,7 @@ import { InjectModel } from "@nestjs/mongoose";
 import { Model, ObjectId } from "mongoose";
 import { CvTemplate } from "./schemas/cv-template.schema";
 import { CvTemplateAiService } from "./cv-template-ai.service";
-import { CategoryCvService } from "../category-cv/category-cv.service";
-import { ConfigService } from "@nestjs/config";
+import { UsersService } from "../users/users.service";
 
 /**
  * Service for handling CV template business logic
@@ -14,9 +13,8 @@ import { ConfigService } from "@nestjs/config";
 export class CvTemplateService {
   constructor(
     @InjectModel(CvTemplate.name) private cvTemplateModel: Model<CvTemplate>,
-
     private cvTemplateAiService: CvTemplateAiService,
-    private readonly categoryCvService: CategoryCvService
+    private readonly userService: UsersService
   ) {}
 
   async findAll(): Promise<CvTemplate[]> {
@@ -30,49 +28,26 @@ export class CvTemplateService {
     }
     return template;
   }
-  async getTags(): Promise<any> {
+
+  async getSuggestTemplateCv(
+    infoUser: any,
+    jobDescription: string
+  ): Promise<CvTemplate[]> {
     const tags = await this.cvTemplateModel.distinct("tags").exec();
-    return tags;
-  }
-
-  async getCategories(): Promise<any> {
-    const categories = await this.cvTemplateModel
-      .find()
-      .populate("categoryId", "name")
-      .select("categoryId")
-      .lean()
-      .exec();
-
-    const result = categories.map((c) => (c.categoryId as any).name);
-    return result;
-  }
-
-  async getSuggestTemplateCv(message: string): Promise<CvTemplate[]> {
-    const suggestCategory = await this.cvTemplateAiService.suggestCategoryByAi(
-      message,
-      await this.getCategories()
-    );
-    console.log("suggestCategory", suggestCategory);
+    console.log(tags);
 
     const suggestTags = await this.cvTemplateAiService.suggestTagsByAi(
-      message,
-      await this.getTags()
+      infoUser,
+      jobDescription,
+      tags
     );
     console.log("suggestTags", suggestTags);
 
-    if (suggestCategory && suggestTags && suggestTags.length > 0) {
-      // 1. Tìm category theo name
-      const category = await this.categoryCvService.findByName(suggestCategory);
-
-      if (!category) return [];
-
-      // 2. Query template theo category._id + tags
+    if (suggestTags && suggestTags.length > 0) {
       const templates = await this.cvTemplateModel
         .find({
-          categoryId: category._id,
           tags: { $in: suggestTags }, // chỉ cần 1 tag match là được
         })
-        .populate("categoryId", "name")
         .lean()
         .exec();
 

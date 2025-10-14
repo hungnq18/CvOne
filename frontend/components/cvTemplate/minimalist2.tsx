@@ -1,8 +1,8 @@
-"use client"
+"use client";
 
-import Image from "next/image"
-import type React from "react"
-import { Mail, Phone, MapPin, Globe, Award, Briefcase } from "lucide-react"
+import Image from "next/image";
+import type React from "react";
+import { Mail, Phone, MapPin, Globe, Award, Briefcase } from "lucide-react";
 
 // --- TRANSLATIONS ---
 const translations = {
@@ -44,22 +44,22 @@ const translations = {
     defaultProfessional: "Chuyên gia",
     introLabel: "Giới thiệu",
   },
-}
+};
 
 // --- PROPS INTERFACES ---
 interface HoverableWrapperProps {
-  children: React.ReactNode
-  label: string
-  sectionId: string
-  onClick?: (sectionId: string) => void
-  isPdfMode?: boolean
+  children: React.ReactNode;
+  label: string;
+  sectionId: string;
+  onClick?: (sectionId: string) => void;
+  isPdfMode?: boolean;
 }
 
 interface Minimalist2Props {
-  data: any
-  onSectionClick?: (sectionId: string) => void
-  isPdfMode?: boolean
-  language?: string
+  data: any;
+  onSectionClick?: (sectionId: string) => void;
+  isPdfMode?: boolean;
+  language?: string;
 }
 
 // --- HOVERABLE WRAPPER COMPONENT ---
@@ -71,7 +71,7 @@ const HoverableWrapper: React.FC<HoverableWrapperProps> = ({
   isPdfMode = false,
 }) => {
   if (isPdfMode) {
-    return <>{children}</>
+    return <>{children}</>;
   }
 
   const hoverEffectMap: { [key: string]: string } = {
@@ -83,19 +83,22 @@ const HoverableWrapper: React.FC<HoverableWrapperProps> = ({
     intro: "hover:shadow-lg",
     experience: "hover:shadow-lg",
     education: "hover:shadow-lg",
-  }
+  };
 
-  const hoverClass = hoverEffectMap[sectionId] || ""
-  const borderRadiusClass = sectionId === "avatar" ? "rounded-full" : "rounded-lg"
+  const hoverClass = hoverEffectMap[sectionId] || "";
+  const borderRadiusClass =
+    sectionId === "avatar" ? "rounded-full" : "rounded-lg";
   const labelPositionClass =
-    sectionId === "avatar" ? "top-0 left-1/2 -translate-x-1/2 -translate-y-[calc(100%+8px)]" : "top-2 right-2"
+    sectionId === "avatar"
+      ? "top-0 left-1/2 -translate-x-1/2 -translate-y-[calc(100%+8px)]"
+      : "top-2 right-2";
 
-  const labelRoundedClass = sectionId === "avatar" ? "rounded-lg" : "rounded"
+  const labelRoundedClass = sectionId === "avatar" ? "rounded-lg" : "rounded";
 
   const finalClassName = `
     relative group cursor-pointer transition-all duration-300 ease-in-out
     ${hoverClass}
-  `
+  `;
 
   return (
     <div className={finalClassName} onClick={() => onClick?.(sectionId)}>
@@ -109,16 +112,21 @@ const HoverableWrapper: React.FC<HoverableWrapperProps> = ({
         {label}
       </div>
     </div>
-  )
-}
+  );
+};
 
 // --- MAIN COMPONENT ---
-const Minimalist2: React.FC<Minimalist2Props> = ({ data, onSectionClick, isPdfMode = false, language }) => {
-  const lang = language || "en"
-  const t = translations[lang as "en" | "vi"]
+const Minimalist2: React.FC<Minimalist2Props> = ({
+  data,
+  onSectionClick,
+  isPdfMode = false,
+  language,
+}) => {
+  const lang = language || "en";
+  const t = translations[lang as "en" | "vi"];
 
-  const userData = data?.userData || {}
-  const professionalTitle = userData.professional || t.defaultProfessional
+  const userData = data?.userData || {};
+  const professionalTitle = userData.professional || t.defaultProfessional;
 
   const sectionMap = {
     avatar: "avatar",
@@ -128,27 +136,27 @@ const Minimalist2: React.FC<Minimalist2Props> = ({ data, onSectionClick, isPdfMo
     skills: "skills",
     experience: "experience",
     education: "education",
-  }
+  };
 
   const renderDescription = (desc: string) => {
-    if (!desc) return null
+    if (!desc) return null;
     const lines = desc
       .split(".")
       .map((line) => line.trim())
-      .filter((line) => line.length > 0)
+      .filter((line) => line.length > 0);
     return (
       <ul className="list-disc pl-4 space-y-1 text-xs leading-snug text-gray-700">
         {lines.map((line, idx) => (
           <li key={idx}>{line}</li>
         ))}
       </ul>
-    )
-  }
+    );
+  };
 
   return (
     <div className="bg-white font-sans text-gray-800 flex flex-col lg:flex-row shadow-2xl  mx-auto">
-        {/* --- LEFT SIDEBAR (BEIGE) --- */}
-        <div className="w-full lg:w-[38%] bg-gradient-to-br from-green-50 to-green-100/50 flex flex-col gap-8 py-10 relative border-r-4 border-green-700">
+      {/* --- LEFT SIDEBAR (BEIGE) --- */}
+      <div className="w-full lg:w-[38%] bg-gradient-to-br from-green-50 to-green-100/50 flex flex-col gap-8 py-10 relative border-r-4 border-green-700">
         {/* Avatar Section */}
         <div className="px-8 lg:px-10">
           <div className="flex justify-center mb-2">
@@ -162,14 +170,18 @@ const Minimalist2: React.FC<Minimalist2Props> = ({ data, onSectionClick, isPdfMo
                 {isPdfMode ? (
                   <img
                     src={userData.avatar || "/avatar-female.png"}
-                    alt={`${userData.firstName || ""} ${userData.lastName || ""}`}
+                    alt={`${userData.firstName || ""} ${
+                      userData.lastName || ""
+                    }`}
                     crossOrigin="anonymous"
                     className="w-full h-full object-cover"
                   />
                 ) : (
                   <Image
                     src={userData.avatar || "/avatar-female.png"}
-                    alt={`${userData.firstName || ""} ${userData.lastName || ""}`}
+                    alt={`${userData.firstName || ""} ${
+                      userData.lastName || ""
+                    }`}
                     width={200}
                     height={200}
                     className="w-full h-full object-cover"
@@ -190,7 +202,9 @@ const Minimalist2: React.FC<Minimalist2Props> = ({ data, onSectionClick, isPdfMo
           <div className="px-8 lg:px-10">
             <div className="flex items-center gap-2 mb-3">
               <div className="h-1 w-8 bg-green-700 rounded-full"></div>
-              <h2 className="text-lg font-bold tracking-wider text-green-900">{t.contactLabel}</h2>
+              <h2 className="text-lg font-bold tracking-wider text-green-900">
+                {t.contactLabel}
+              </h2>
             </div>
             <div className="space-y-3 bg-white/60 backdrop-blur-sm p-4 rounded-xl shadow-md">
               <div className="flex items-start gap-3">
@@ -198,7 +212,9 @@ const Minimalist2: React.FC<Minimalist2Props> = ({ data, onSectionClick, isPdfMo
                   <Mail className="w-4 h-4 text-white" />
                 </div>
                 <div className="flex-1 pt-1">
-                  <span className="text-sm break-words text-gray-800 font-medium">{userData.email}</span>
+                  <span className="text-sm break-words text-gray-800 font-medium">
+                    {userData.email}
+                  </span>
                 </div>
               </div>
               <div className="flex items-start gap-3">
@@ -206,7 +222,9 @@ const Minimalist2: React.FC<Minimalist2Props> = ({ data, onSectionClick, isPdfMo
                   <Phone className="w-4 h-4 text-white" />
                 </div>
                 <div className="flex-1 pt-1">
-                  <span className="text-sm text-gray-800 font-medium">{userData.phone}</span>
+                  <span className="text-sm text-gray-800 font-medium">
+                    {userData.phone}
+                  </span>
                 </div>
               </div>
               <div className="flex items-start gap-3">
@@ -225,7 +243,9 @@ const Minimalist2: React.FC<Minimalist2Props> = ({ data, onSectionClick, isPdfMo
                     <Globe className="w-4 h-4 text-white" />
                   </div>
                   <div className="flex-1 pt-1">
-                    <span className="text-sm break-words text-gray-800 font-medium">{userData.website}</span>
+                    <span className="text-sm break-words text-gray-800 font-medium">
+                      {userData.website}
+                    </span>
                   </div>
                 </div>
               )}
@@ -233,8 +253,8 @@ const Minimalist2: React.FC<Minimalist2Props> = ({ data, onSectionClick, isPdfMo
           </div>
         </HoverableWrapper>
 
-         {/* Career Objective Section */}
-         {userData.summary && (
+        {/* Career Objective Section */}
+        {userData.summary && (
           <HoverableWrapper
             label={t.careerObjectiveLabel}
             sectionId={sectionMap.summary}
@@ -244,12 +264,14 @@ const Minimalist2: React.FC<Minimalist2Props> = ({ data, onSectionClick, isPdfMo
             <div className="px-8 lg:px-10">
               <div className="flex items-center gap-2 mb-3">
                 <div className="h-1 w-8 bg-green-700 rounded-full"></div>
-                <h2 className="text-lg font-bold tracking-wider text-green-900">{t.careerObjectiveLabel}</h2>
+                <h2 className="text-lg font-bold tracking-wider text-green-900">
+                  {t.careerObjectiveLabel}
+                </h2>
               </div>
               <div className="bg-white/60 backdrop-blur-sm p-4 rounded-xl shadow-md">
-                 <p className="text-sm text-gray-800 leading-relaxed font-medium">
-                   {userData.summary}
-                 </p>
+                <p className="text-sm text-gray-800 leading-relaxed font-medium">
+                  {userData.summary}
+                </p>
               </div>
             </div>
           </HoverableWrapper>
@@ -263,25 +285,48 @@ const Minimalist2: React.FC<Minimalist2Props> = ({ data, onSectionClick, isPdfMo
             onClick={onSectionClick}
             isPdfMode={isPdfMode}
           >
-            <div className="px-8 lg:px-10">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="h-1 w-8 bg-green-700 rounded-full"></div>
-                <h2 className="text-lg font-bold tracking-wider text-green-900">{t.skillsLabel}</h2>
+            <div className="w-full max-w-4xl mx-auto p-6">
+              <div className="mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="h-1 w-8 bg-green-700 rounded-full" />
+                  <h2 className="text-lg font-bold tracking-wider text-green-900">
+                    SKILLS
+                  </h2>
+                </div>
               </div>
-              <div className="bg-white/60 backdrop-blur-sm p-4 rounded-xl shadow-md">
-                <ul className="space-y-2">
-                  {userData.skills.map((skill: any, i: number) => (
-                    <li key={i} className="flex items-start gap-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-lime-500 shrink-0 mt-1.5"></div>
-                      <span className="text-sm text-gray-800 font-medium leading-relaxed">{skill.name}</span>
-                    </li>
-                  ))}
-                </ul>
+
+              <div className="bg-white/60 backdrop-blur-sm p-6 rounded-xl shadow-md">
+                <div className="space-y-4">
+                  {userData.skills.map((skill: any, i: number) => {
+                    const rating = Math.max(
+                      0,
+                      Math.min(5, Number(skill.rating || 0))
+                    );
+                    const width = `${(rating / 5) * 100}%`;
+                    return (
+                      <div key={i} className="group">
+                        <div className="flex items-start justify-between gap-6 mb-3">
+                          <span className="text-sm text-gray-800 font-medium leading-relaxed">
+                            {skill.name}
+                          </span>
+                          <span className="text-green-800 text-xs font-semibold whitespace-nowrap">
+                            {rating}/5
+                          </span>
+                        </div>
+                        <div className="relative h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                          <div
+                            className="absolute inset-y-0 left-0 bg-gradient-to-r from-green-500 to-green-600 rounded-full transition-all duration-500 ease-out group-hover:from-green-600 group-hover:to-green-700 group-hover:shadow-[0_0_12px_rgba(34,197,94,0.5)]"
+                            style={{ width }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           </HoverableWrapper>
         )}
-
       </div>
 
       {/* --- RIGHT CONTENT AREA (WHITE) --- */}
@@ -320,7 +365,7 @@ const Minimalist2: React.FC<Minimalist2Props> = ({ data, onSectionClick, isPdfMo
           onClick={onSectionClick}
           isPdfMode={isPdfMode}
         >
-            <div className="px-8 lg:px-12 py-6">
+          <div className="px-8 lg:px-12 py-6">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-xl bg-green-700 flex items-center justify-center">
                 <Briefcase className="w-5 h-5 text-white" />
@@ -331,16 +376,27 @@ const Minimalist2: React.FC<Minimalist2Props> = ({ data, onSectionClick, isPdfMo
             </div>
             <div className="space-y-4">
               {(userData.workHistory || []).map((job: any, i: number) => (
-                <div key={i} className="relative pl-6 pb-4 last:pb-0 border-l-2 border-green-200 last:border-l-0">
+                <div
+                  key={i}
+                  className="relative pl-6 pb-4 last:pb-0 border-l-2 border-green-200 last:border-l-0"
+                >
                   <div className="absolute left-0 top-0 w-3 h-3 rounded-full bg-lime-500 -translate-x-[7px] ring-4 ring-white"></div>
                   <div className="bg-white p-5 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 border border-gray-100">
                     <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-1 mb-2">
-                      <h3 className="font-bold text-lg text-green-900">{job.title}</h3>
+                      <h3 className="font-bold text-lg text-green-900">
+                        {job.title}
+                      </h3>
                       <span className="text-sm font-semibold text-gray-600 bg-green-50 px-3 py-1 rounded-full shrink-0">
-                        {job.startDate?.slice(5, 7)}/{job.startDate?.slice(0, 4)} -{" "}
-                        {job.isCurrent || job.endDate === "Present" || job.endDate === "Hiện tại"
+                        {job.startDate?.slice(5, 7)}/
+                        {job.startDate?.slice(0, 4)} -{" "}
+                        {job.isCurrent ||
+                        job.endDate === "Present" ||
+                        job.endDate === "Hiện tại"
                           ? t.present
-                          : `${job.endDate?.slice(5, 7)}/${job.endDate?.slice(0, 4)}`}
+                          : `${job.endDate?.slice(5, 7)}/${job.endDate?.slice(
+                              0,
+                              4
+                            )}`}
                       </span>
                     </div>
                     <h4 className="font-semibold text-base text-gray-700 mb-3 flex items-center gap-2">
@@ -381,7 +437,8 @@ const Minimalist2: React.FC<Minimalist2Props> = ({ data, onSectionClick, isPdfMo
                     {edu.major} - {edu.institution}
                   </p>
                   <p className="text-sm text-gray-600 mb-1">
-                    <span className="font-semibold">{t.degree}</span> {edu.degree}
+                    <span className="font-semibold">{t.degree}</span>{" "}
+                    {edu.degree}
                   </p>
                   <p className="text-sm font-medium text-green-700">
                     {edu.startDate?.slice(0, 4)} - {edu.endDate?.slice(0, 4)}
@@ -393,7 +450,7 @@ const Minimalist2: React.FC<Minimalist2Props> = ({ data, onSectionClick, isPdfMo
         </HoverableWrapper>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Minimalist2
+export default Minimalist2;

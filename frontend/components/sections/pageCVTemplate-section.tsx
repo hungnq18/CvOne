@@ -158,8 +158,8 @@ const containerVariants = {
 
 const CvTemplatesPage: FC<Props> = ({ initialTemplates }) => {
   const { language } = useLanguage();
-  const [cvTemplates] = useState<CVTemplate[]>(initialTemplates);
-  const [viewMode, setViewMode] = useState<"recommended" | "all">("recommended");
+  const [cvTemplates] = useState<CVTemplate[]>(initialTemplates ?? []);
+  const [viewMode, setViewMode] = useState<"recommended" | "all">("all");
   const [selectedTemplateForPreview, setSelectedTemplateForPreview] =
     useState<CVTemplate | null>(null);
 

@@ -14,10 +14,8 @@ import { CvTemplate, CvTemplateSchema } from "./schemas/cv-template.schema";
  * - Schema: Defines database structure
  */
 import { CvTemplateAiService } from "./cv-template-ai.service";
-
-
-import { CategoryCvModule } from "../category-cv/category-cv.module";
 import { ConfigModule } from "@nestjs/config";
+import { UsersModule } from "../users/users.module";
 
 @Module({
   imports: [
@@ -25,7 +23,7 @@ import { ConfigModule } from "@nestjs/config";
     MongooseModule.forFeature([
       { name: CvTemplate.name, schema: CvTemplateSchema },
     ]),
-    CategoryCvModule,
+    UsersModule,
   ],
   controllers: [CvTemplateController],
   providers: [CvTemplateService, CvTemplateAiService],

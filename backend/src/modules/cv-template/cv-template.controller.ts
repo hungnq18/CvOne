@@ -1,7 +1,19 @@
-import { Body, Controller, Get, Param, Post } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Req,
+  UseGuards,
+} from "@nestjs/common";
 import { Public } from "../auth/decorators/public.decorator";
 import { CvTemplateService } from "./cv-template.service";
 import { CvTemplateAiService } from "./cv-template-ai.service";
+import { RolesGuard } from "../auth/guards/roles.guard";
+import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
+import { Roles } from "src/common/decorators/roles.decorator";
+import { User } from "src/common/decorators/user.decorator";
 /**
  * Controller for handling CV template related requests
  * All endpoints in this controller are public (no authentication required)
@@ -21,16 +33,16 @@ export class CvTemplateController {
     return this.cvTemplateService.findAll();
   }
 
-  @Public()
-  @Get("test")
-  async test() {
-    return this.cvTemplateService.getCategories();
-  }
-
-  @Public()
+  @UseGuards(JwtAuthGuard)
   @Post("suggest")
-  async getSuggestTemplateCv(@Body("message") message: string) {
-    return this.cvTemplateService.getSuggestTemplateCv(message);
+  async getSuggestTemplateCv(
+    @Body("infoUser") infoUser: any,
+    @Body("jobDescription") jobDescription: string
+  ) {
+    return this.cvTemplateService.getSuggestTemplateCv(
+      infoUser,
+      jobDescription
+    );
   }
 
   @Public()
