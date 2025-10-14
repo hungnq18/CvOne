@@ -49,6 +49,7 @@ export const API_ENDPOINTS = {
     UNSAVE: (id: string) => `/cv/${id}/unsave`,
     GET_SAVED: "/cv/saved",
     TEMPLATES: "/cv/templates",
+    SUGGEST_TEMPLATE: "/cv-templates/suggest",
     ANALYZE_JD: "/cv/analyze-jd",
     GENERATE_WITH_AI: "/cv/generate-with-ai",
     GENERATE_AND_SAVE: "/cv/generate-and-save",
