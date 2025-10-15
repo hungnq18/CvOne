@@ -453,35 +453,127 @@ Do not include any explanation or markdown, only valid JSON.
   }
 
   /**
-   * Translate CV JSON content to a target language while preserving structure and keys
+   * Translate CV JSON content to a target language while preserving structure
+   * but also translate field (key) names intelligently using AI mapping.
    */
   async translateCvContent(content: any, targetLanguage: string): Promise<any> {
     try {
-      const languageNote = targetLanguage
-        ? `Target language: ${targetLanguage}`
-        : "Target language: same as input";
+      // Input validation
+      if (!content || typeof content !== "object") {
+        throw new Error("Invalid content: must be a valid object");
+      }
 
+      if (!targetLanguage || typeof targetLanguage !== "string") {
+        throw new Error("Invalid target language: must be a non-empty string");
+      }
+
+      // Check if content is too large for single request
+      const contentSize = JSON.stringify(content).length;
+      if (contentSize > 50000) {
+        // ~50KB limit
+        this.logger.warn(
+          "Large content detected, may need chunking for better results",
+        );
+      }
+
+      // Step 1: Generate key name mapping (AI translation for field names)
+      // Collect all keys that need translation (both container and leaf keys)
+      const getAllKeys = (obj: any): string[] => {
+        const keys: string[] = [];
+        if (obj && typeof obj === "object") {
+          if (Array.isArray(obj)) {
+            // For arrays, get keys from the first element
+            if (obj.length > 0 && obj[0] && typeof obj[0] === "object") {
+              keys.push(...getAllKeys(obj[0]));
+            }
+          } else {
+            // For objects, get all keys
+            Object.keys(obj).forEach((key) => {
+              // Add the key itself
+              keys.push(key);
+
+              if (obj[key] && typeof obj[key] === "object") {
+                if (Array.isArray(obj[key])) {
+                  // For arrays, get keys from first element
+                  if (
+                    obj[key].length > 0 &&
+                    obj[key][0] &&
+                    typeof obj[key][0] === "object"
+                  ) {
+                    keys.push(...getAllKeys(obj[key][0]));
+                  }
+                } else {
+                  // For nested objects, recurse
+                  keys.push(...getAllKeys(obj[key]));
+                }
+              }
+            });
+          }
+        }
+        return keys;
+      };
+
+      const allKeys = getAllKeys(content);
+      const keyPrompt = `
+      You are an expert technical translator.
+      Translate these JSON field names to ${targetLanguage}, preserving meaning but keeping them short and professional.
+
+      Field names:
+      ${allKeys.join(", ")}
+
+      Return ONLY valid JSON of format:
+      { "originalKey": "translatedKey", ... }
+    `;
+
+      const keyCompletion = await this.openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [{ role: "user", content: keyPrompt }],
+        temperature: 0.2,
+        max_tokens: 500,
+      });
+
+      let keyResponse =
+        keyCompletion.choices[0]?.message?.content?.trim() || "{}";
+      if (keyResponse.startsWith("```")) {
+        keyResponse = keyResponse.replace(/```(json)?/g, "").trim();
+      }
+
+      let keyMap: Record<string, string> = {};
+      try {
+        keyMap = JSON.parse(keyResponse);
+        // Validate key map structure
+        if (typeof keyMap !== "object" || keyMap === null) {
+          throw new Error("Invalid key map structure");
+        }
+      } catch (parseError) {
+        this.logger.warn(
+          "Invalid key map format, skipping key translation.",
+          parseError,
+        );
+        keyMap = {};
+      }
+
+      // Step 2: Translate all values with improved error handling
       const prompt = `
-        You are a professional CV translator. Understand CV tone, structure, and terminology.
-        
-        Translate all human-readable text values to ${targetLanguage}. Keep keys, structure, and non-text values unchanged.
-        
-        TRANSLATE: Natural language text (descriptions, titles, summaries).
-        DO NOT TRANSLATE: Keys, dates, numbers, emails, URLs, tech names, brand/company names, personal names, null.
-        
-        RULES:
-        - Translate accurately, preserving full meaning and CV tone
-        - Correct grammar: past tense for work history, present for skills. Include all articles/prepositions
-        - Professional CV style: formal language, strong action verbs
-        - Clear, natural phrasing - no awkward machine translations
-        - Verify ALL text is in ${targetLanguage}. No untranslated fragments
-        - Return ONLY valid JSON, Preserve JSON structure and order
-        
-        Input JSON:
-        ${JSON.stringify(content, null, 2)}
-        
-        Output: Translated JSON in ${targetLanguage}.
-        `;
+      You are a professional CV translator. Understand CV tone, structure, and terminology.
+      
+      Translate all human-readable text values to ${targetLanguage}. Keep keys, structure, and non-text values unchanged.
+      
+      TRANSLATE: Natural language text (descriptions, titles, summaries).
+      DO NOT TRANSLATE: Keys, dates, numbers, emails, URLs, tech names, brand/company names, personal names, null.
+      
+      RULES:
+      - Translate accurately, preserving full meaning and CV tone
+      - Correct grammar: past tense for work history, present for skills
+      - Professional CV style: formal, polished, strong action verbs
+      - Verify ALL text is in ${targetLanguage}
+      - Return ONLY valid JSON, Preserve structure and order
+
+      Input JSON:
+      ${JSON.stringify(content, null, 2)}
+      
+      Output: Translated JSON in ${targetLanguage}.
+    `;
 
       const completion = await this.openai.chat.completions.create({
         model: "gpt-4o",
@@ -494,30 +586,96 @@ Do not include any explanation or markdown, only valid JSON.
           { role: "user", content: prompt },
         ],
         temperature: 0.2,
-        max_tokens: 1000,
+        max_tokens: Math.min(4000, Math.max(2000, contentSize / 10)), // Dynamic token limit
       });
 
       let response = completion.choices[0]?.message?.content?.trim();
       if (!response) {
         throw new Error("No response from OpenAI");
       }
-      if (response.startsWith("```json")) {
-        response = response
-          .replace(/^```json/, "")
-          .replace(/```$/, "")
-          .trim();
-      } else if (response.startsWith("```")) {
-        response = response.replace(/^```/, "").replace(/```$/, "").trim();
+
+      if (response.startsWith("```")) {
+        response = response.replace(/```(json)?/g, "").trim();
       }
-      const translated = JSON.parse(response);
-      return translated;
-    } catch (error) {
+
+      let translated: any;
+      try {
+        translated = JSON.parse(response);
+      } catch (parseError) {
+        this.logger.error(
+          "Failed to parse translated JSON response",
+          parseError,
+        );
+        throw new Error("Invalid JSON response from translation service");
+      }
+
+      // Step 3: Apply key name mapping with improved logic
+      const remapKeys = (obj: any, currentPath = ""): any => {
+        if (Array.isArray(obj)) {
+          return obj.map((item) => {
+            // For array elements, use the same path as the array itself
+            return remapKeys(item, currentPath);
+          });
+        }
+        if (obj && typeof obj === "object") {
+          const remapped: Record<string, any> = {};
+          Object.entries(obj).forEach(([k, v]) => {
+            // Look for translation in keyMap using just the key name
+            const newKey = keyMap[k] || k;
+
+            // Recursively process nested objects and arrays
+            const processedValue = remapKeys(v, currentPath);
+
+            // Handle key conflicts more intelligently
+            if (remapped[newKey] !== undefined && newKey !== k) {
+              // If there's a conflict, append a suffix to make it unique
+              let uniqueKey = newKey;
+              let counter = 1;
+              while (remapped[uniqueKey] !== undefined) {
+                uniqueKey = `${newKey}_${counter}`;
+                counter++;
+              }
+              this.logger.warn(
+                `Key conflict detected: ${newKey} already exists, using ${uniqueKey} instead`,
+              );
+              remapped[uniqueKey] = processedValue;
+            } else {
+              remapped[newKey] = processedValue;
+            }
+          });
+          return remapped;
+        }
+        return obj;
+      };
+
+      const finalTranslated = remapKeys(translated);
+
+      // Validate final result
+      if (!finalTranslated || typeof finalTranslated !== "object") {
+        throw new Error("Translation resulted in invalid object structure");
+      }
+
+      return finalTranslated;
+    } catch (error: any) {
       this.logger.error(
         `Error translating CV content: ${error.message}`,
         error.stack,
       );
-      // Surface error instead of silently returning original so callers can handle it
-      throw new Error(`Translate failed: ${error.message}`);
+
+      // Provide more specific error messages
+      if (error.message.includes("quota") || error.message.includes("429")) {
+        throw new Error(
+          "Translation service quota exceeded. Please try again later.",
+        );
+      } else if (error.message.includes("timeout")) {
+        throw new Error("Translation request timed out. Please try again.");
+      } else if (error.message.includes("Invalid")) {
+        throw new Error(
+          `Translation failed due to invalid input: ${error.message}`,
+        );
+      }
+
+      throw new Error(`Translation failed: ${error.message}`);
     }
   }
 }
