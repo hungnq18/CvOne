@@ -495,7 +495,7 @@ Do not include any explanation or markdown, only valid JSON.
           { role: "user", content: prompt },
         ],
         temperature: 0.2,
-        max_tokens: 500,
+        max_tokens: 1000,
       });
 
       let response = completion.choices[0]?.message?.content?.trim();

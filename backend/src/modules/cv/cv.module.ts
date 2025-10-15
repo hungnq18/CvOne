@@ -6,10 +6,12 @@ import {
 } from "../cv-template/schemas/cv-template.schema";
 import { MailModule } from "../mail/mail.module";
 import { User, UserSchema } from "../users/schemas/user.schema";
+import { AiInterviewController } from "./ai-interview.controller";
 import { CvPdfCloudService } from "./cv-pdf-cloud.service";
 import { CvController } from "./cv.controller";
 import { CvService } from "./cv.service";
 import { Cv, CvSchema } from "./schemas/cv.schema";
+import { AiInterviewService } from "./services/ai-interview.service";
 import { AiOptimizationService } from "./services/ai-optimization.service";
 import { CvAnalysisService } from "./services/cv-analysis.service";
 import { CvCacheService } from "./services/cv-cache.service";
@@ -29,7 +31,7 @@ import { VietnameseContentService } from "./services/vietnamese-content.service"
     ]),
     MailModule,
   ],
-  controllers: [CvController],
+  controllers: [CvController, AiInterviewController],
   providers: [
     CvService,
     CvPdfCloudService,
@@ -42,6 +44,7 @@ import { VietnameseContentService } from "./services/vietnamese-content.service"
     CvUploadService,
     CvCacheService,
     AiOptimizationService,
+    AiInterviewService,
   ],
   exports: [
     CvService,
@@ -55,6 +58,7 @@ import { VietnameseContentService } from "./services/vietnamese-content.service"
     CvUploadService,
     CvCacheService,
     AiOptimizationService,
+    AiInterviewService,
   ],
 })
 export class CvModule { }
