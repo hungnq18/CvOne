@@ -20,7 +20,7 @@ import * as pdf from "pdf-parse";
 import { Roles } from "src/common/decorators/roles.decorator";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { RolesGuard } from "../auth/guards/roles.guard";
-import { CvAiService } from "../cv/cv-ai.service";
+import { JobAnalysisService } from "../cv/services/job-analysis.service";
 import { CreateJobDto } from "./dto/create-job.dto";
 import { UpdateJobDto } from "./dto/update-job.dto";
 import { JobsService } from "./jobs.service";
@@ -28,7 +28,7 @@ import { JobsService } from "./jobs.service";
 export class JobsController {
   constructor(
     private readonly jobsService: JobsService,
-    private readonly cvAiService: CvAiService,
+    private readonly jobAnalysisService: JobAnalysisService,
   ) { }
 
   @Post("analyze-jd-pdf")
@@ -54,7 +54,7 @@ export class JobsController {
     if (!jdText || jdText.trim().length === 0) {
       throw new BadRequestException("Could not extract text from PDF.");
     }
-    return this.cvAiService.analyzeJobDescription(jdText);
+    return this.jobAnalysisService.analyzeJobDescription(jdText);
   }
 
   @Get()

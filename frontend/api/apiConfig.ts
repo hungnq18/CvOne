@@ -49,6 +49,7 @@ export const API_ENDPOINTS = {
     UNSAVE: (id: string) => `/cv/${id}/unsave`,
     GET_SAVED: "/cv/saved",
     TEMPLATES: "/cv/templates",
+    SUGGEST_TEMPLATE: "/cv-templates/suggest",
     ANALYZE_JD: "/cv/analyze-jd",
     GENERATE_WITH_AI: "/cv/generate-with-ai",
     GENERATE_AND_SAVE: "/cv/generate-and-save",
@@ -60,8 +61,9 @@ export const API_ENDPOINTS = {
     UPLOAD_ANALYZE_GENERATE_PDF: "/cv/upload-analyze-generate-pdf",
     // UPLOAD_ANALYZE_OVERLAY_PDF: "/cv/upload-analyze-overlay-pdf",
     AI_STATUS: "/cv/ai-status",
-    GENERATE_PDF_AND_UPLOAD_TO_CLOUDINARY: "/cv/:id/generate-pdf-uploadToCloudinary",// api để tạo pdf và upload lên cloudinary
-    GENERATE_PDF_AND_SEND_EMAIL: "/cv/:id/send-pdf-email"// api để tạo pdf và gửi mail
+    GENERATE_PDF_AND_UPLOAD_TO_CLOUDINARY: "/cv/:id/generate-pdf-uploadToCloudinary",// api để tạo pdf và upload lên cloudinary. nhận vào base64 pdf
+    GENERATE_PDF_AND_SEND_EMAIL: "/cv/:id/send-pdf-email",// api để tạo pdf và gửi mail. nhận vào base64 pdf và email
+    TRANSLATE_CV: "/cv/translate",//nhận vào json cv và target language trả về json cv đã được translate
   },
   CL: {
     TEMPLATES: "/cl-templates",

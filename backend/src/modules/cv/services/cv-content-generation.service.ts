@@ -387,4 +387,138 @@ Do not include any explanation or markdown, only valid JSON.
       rating: Math.floor(Math.random() * 3) + 3,
     }));
   }
+  /**
+   * Generate CV content based on user profile and job analysis
+   */
+  async generateCvContent(
+    user: any,
+    jobAnalysis: any,
+    additionalRequirements?: string
+  ): Promise<any> {
+    // Generate professional summary using OpenAI
+    const summary = await this.generateProfessionalSummary(
+      user,
+      jobAnalysis,
+      additionalRequirements
+    );
+
+    // Generate skills section using OpenAI
+    const skills = await this.generateSkillsSection(jobAnalysis);
+
+    // Generate work experience using OpenAI
+    const workHistory = await this.generateWorkExperience(
+      jobAnalysis,
+      jobAnalysis.experienceLevel
+    );
+
+    // Generate education
+    const education = this.generateEducation(user);
+
+    return {
+      userData: {
+        firstName: user.first_name || "",
+        lastName: user.last_name || "",
+        professional: this.generateProfessionalTitle(jobAnalysis),
+        city: user.city || "",
+        country: user.country || "",
+        province: user.city || "",
+        phone: user.phone?.toString() || "",
+        email: "", // Will be filled from account
+        avatar: "",
+        summary: summary[0] || summary, // Take first summary if array
+        skills: skills[0] || skills, // Take first skills list if array
+        workHistory: workHistory[0] || workHistory, // Take first work experience if array
+        education: [education],
+      },
+    };
+  }
+
+  private generateEducation(user: any): any {
+    return {
+      startDate: "2016-09-01",
+      endDate: "2020-06-30",
+      major: "Computer Science",
+      degree: "Bachelor",
+      institution: "University",
+    };
+  }
+
+  private generateProfessionalTitle(jobAnalysis: any): string {
+    const titles = {
+      senior: "Senior Software Developer",
+      "mid-level": "Software Developer",
+      junior: "Junior Software Developer",
+    };
+    return titles[jobAnalysis.experienceLevel] || "Software Developer";
+  }
+
+
+  /**
+   * Translate CV JSON content to a target language while preserving structure and keys
+   */
+  async translateCvContent(content: any, targetLanguage: string): Promise<any> {
+    try {
+      const languageNote = targetLanguage
+        ? `Target language: ${targetLanguage}`
+        : "Target language: same as input";
+
+      const prompt = `
+        You are a professional CV translator. Understand CV tone, structure, and terminology.
+        
+        Translate all human-readable text values to ${targetLanguage}. Keep keys, structure, and non-text values unchanged.
+        
+        TRANSLATE: Natural language text (descriptions, titles, summaries).
+        DO NOT TRANSLATE: Keys, dates, numbers, emails, URLs, tech names, brand/company names, personal names, null.
+        
+        RULES:
+        - Translate accurately, preserving full meaning and CV tone
+        - Correct grammar: past tense for work history, present for skills. Include all articles/prepositions
+        - Professional CV style: formal language, strong action verbs
+        - Clear, natural phrasing - no awkward machine translations
+        - Verify ALL text is in ${targetLanguage}. No untranslated fragments
+        - Return ONLY valid JSON, Preserve JSON structure and order (no comments, markdown, explanations)
+        
+        Input JSON:
+        ${JSON.stringify(content, null, 2)}
+        
+        Output: Translated JSON in ${targetLanguage}.
+        `;
+
+      const completion = await this.openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are a precise JSON translator. You translate only string values and preserve JSON structure and keys.",
+          },
+          { role: "user", content: prompt },
+        ],
+        temperature: 0.2,
+        max_tokens: 500,
+      });
+
+      let response = completion.choices[0]?.message?.content?.trim();
+      if (!response) {
+        throw new Error("No response from OpenAI");
+      }
+      if (response.startsWith("```json")) {
+        response = response
+          .replace(/^```json/, "")
+          .replace(/```$/, "")
+          .trim();
+      } else if (response.startsWith("```")) {
+        response = response.replace(/^```/, "").replace(/```$/, "").trim();
+      }
+      const translated = JSON.parse(response);
+      return translated;
+    } catch (error) {
+      this.logger.error(
+        `Error translating CV content: ${error.message}`,
+        error.stack,
+      );
+      // Surface error instead of silently returning original so callers can handle it
+      throw new Error(`Translate failed: ${error.message}`);
+    }
+  }
 }

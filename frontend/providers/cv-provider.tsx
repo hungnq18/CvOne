@@ -48,7 +48,11 @@ export const CVProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const updateUserData = useCallback((newData: any) => {
-    setUserData((prevData: any) => ({ ...prevData, ...newData }));
+    setUserData((prevData: any) => {
+      if (prevData == null) return newData;
+      if (newData == null) return prevData;
+      return { ...prevData, ...newData };
+    });
   }, []);
 
   const [jobDescription, setJobDescription] = useState<string>("");

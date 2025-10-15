@@ -23,27 +23,38 @@ export class CvTemplateAiService {
     });
   }
 
-  async suggestTagsByAi(infoUser: any, tags: any): Promise<string[]> {
+  async suggestTagsByAi(
+    infoUser: any,
+    jobDescription: string,
+    tags: any
+  ): Promise<string[]> {
     const prompt = `
-    You are given a list of valid tags:
-    ${tags.join(", ")}
-    
-    Below is the user's profile information (in JSON format):
+    You are a professional AI system for intelligent tag selection.
+
+    Provided data:
+    - List of valid tags: ${tags.join("", "")}
+    - User profile (JSON):
     ${JSON.stringify(infoUser, null, 2)}
+    - Job description:
+    ${jobDescription}
+    Your task:
+    1. Analyze the user's profile and the job description together.
+    2. Identify all tags from the list that:
+       - Reflect the user's profession, core skills, or experience.
+       - Match important skills, requirements, or key terms found in the job description.
+       - Represent relevant career focus, domain expertise, or technical area.
+    3. Prefer tags that appear meaningful for BOTH the user’s background and the target job.
+    4. Always return **at least one** tag from the provided list.
+    5. If information is ambiguous, select the **single most likely tag**.
+    6. Output format:
+       - A **pure JSON array** of strings (example: [""tagA"", ""tagB"", ""tagC""])
+       - No explanation, reasoning, or text outside the array.
+       - Do NOT create new tags outside the provided list.
     
-    Task:
-    - Analyze the user's profile and select ALL relevant tags from the provided list.
-    - Consider factors such as career, skills, experience level, and interests.
-    - If multiple tags apply, return ALL that are relevant.
-    - You must always return at least one tag from the list.
-    - If the user's information is limited or unclear, return the single closest matching tag.
-    - Only return a valid JSON array of strings containing tag names from the list.
-    - Never invent new tags that are not in the list.
-    - Never include explanations, reasoning, or text outside the JSON array.
-Examples of valid output:
-["tag1"]
-["tag1", "tag2"]
-["tag2", "tag5", "tag7"]
+    Examples of valid outputs:
+    ["tag1"]
+    ["tag1", "tag3"]
+    ["tag2", "tag4", "tag6"]
 `;
 
     const completion = await this.openAi.chat.completions.create({
@@ -52,18 +63,22 @@ Examples of valid output:
         {
           role: "system",
           content: `
-          You are an intelligent tag recommender that analyzes a user's profile (JSON data) and suggests the most relevant tags from a predefined list.
-
-          Rules:
-          - Carefully analyze the user's profile, including details such as career, skills, experience, goals, and interests.
-          - Select ALL tags from the provided list that accurately describe or relate to the user.
-          - If multiple tags apply, return ALL of them (not just one).
-          - You must always return at least one tag from the list.
-          - If the user's profile is incomplete or unclear, return the single closest matching tag.
-          - The output must be a valid JSON array of strings (e.g., ["tag1", "tag2"]).
-          - Never invent new tags that are not in the list.
-          - Never include explanations, reasoning, formatting, or any text outside the JSON array.
-`,
+        You are an intelligent tag recommender that analyzes both a user's profile and a job description to suggest the most relevant tags from a predefined list.
+        
+        Rules:
+        - Carefully analyze BOTH the user's profile (JSON data) and the job description text.
+        - Consider factors such as:
+          • the user's career, education, and experience,
+          • their skills and interests,
+          • and the requirements, responsibilities, or keywords from the job description.
+        - Select ALL tags from the provided list that accurately reflect both the user's background and the job they are targeting.
+        - If multiple tags apply, return ALL of them (not just one).
+        - You must always return at least one tag from the list.
+        - If the information is limited or unclear, return the single closest matching tag.
+        - The output must be a valid JSON array of strings (e.g., ["tag1", "tag2", "tag3"]).
+        - Never invent new tags that are not in the list.
+        - Never include explanations, reasoning, or any text outside the JSON array.
+        `,
         },
 
         {

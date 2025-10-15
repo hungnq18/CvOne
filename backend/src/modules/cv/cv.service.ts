@@ -8,7 +8,6 @@ import { Model } from "mongoose";
 import { CvTemplate } from "../cv-template/schemas/cv-template.schema";
 import { MailService } from "../mail/mail.service";
 import { CvPdfCloudService } from "./cv-pdf-cloud.service";
-import { CvPdfService } from "./cv-pdf.service";
 import { CreateCvDto } from "./dto/create-cv.dto";
 import { Cv } from "./schemas/cv.schema";
 import { CvCacheService } from "./services/cv-cache.service";
@@ -19,7 +18,6 @@ export class CvService {
     @InjectModel(Cv.name) private cvModel: Model<Cv>,
     @InjectModel(CvTemplate.name) private cvTemplateModel: Model<CvTemplate>,
     private cvCacheService: CvCacheService,
-    private cvPdfService: CvPdfService,
     private cvPdfCloudService: CvPdfCloudService,
     private mailService: MailService,
   ) {}

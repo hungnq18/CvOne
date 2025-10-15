@@ -90,7 +90,9 @@ export class OpenAiService {
   getOpenAiService() {
     return this;
   }
-
+  public async translateCvContent(content: any, targetLanguage: string): Promise<any> {
+    return this.cvContentGenerationService.translateCvContent(content, targetLanguage);
+  }
   getOpenAI() {
     return this.openaiApiService.getOpenAI();
   }

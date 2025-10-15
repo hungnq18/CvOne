@@ -1,9 +1,11 @@
 import { getCVTemplates } from '@/api/cvapi';
 import HeaderCVSection from '@/components/sections/header-pagecvTemplate-section';
-import dynamic from 'next/dynamic';
+import NextDynamic from 'next/dynamic';
 import AdvertisementSection from '@/components/sections/advertisement-section';
 
-const TemplateCVSection = dynamic(
+export const dynamic = 'force-dynamic';
+
+const TemplateCVSection = NextDynamic(
   () => import('@/components/sections/pageCVTemplate-section'),
   { ssr: false }
 );

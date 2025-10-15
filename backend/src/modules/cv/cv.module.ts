@@ -6,9 +6,7 @@ import {
 } from "../cv-template/schemas/cv-template.schema";
 import { MailModule } from "../mail/mail.module";
 import { User, UserSchema } from "../users/schemas/user.schema";
-import { CvAiService } from "./cv-ai.service";
 import { CvPdfCloudService } from "./cv-pdf-cloud.service";
-import { CvPdfService } from "./cv-pdf.service";
 import { CvController } from "./cv.controller";
 import { CvService } from "./cv.service";
 import { Cv, CvSchema } from "./schemas/cv.schema";
@@ -34,30 +32,26 @@ import { VietnameseContentService } from "./services/vietnamese-content.service"
   controllers: [CvController],
   providers: [
     CvService,
-    CvAiService,
+    CvPdfCloudService,
     OpenAiService,
     JobAnalysisService,
     CvContentGenerationService,
     CvAnalysisService,
     VietnameseContentService,
     OpenaiApiService,
-    CvPdfService,
-    CvPdfCloudService,
     CvUploadService,
     CvCacheService,
     AiOptimizationService,
   ],
   exports: [
     CvService,
-    CvAiService,
+    CvPdfCloudService,
     OpenAiService,
     JobAnalysisService,
     CvContentGenerationService,
     CvAnalysisService,
     VietnameseContentService,
     OpenaiApiService,
-    CvPdfService,
-    CvPdfCloudService,
     CvUploadService,
     CvCacheService,
     AiOptimizationService,

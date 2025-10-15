@@ -31,7 +31,8 @@ const translations = {
 
 export default function CreateMethodSection() {
   const searchParams = useSearchParams();
-  const templateId = searchParams.get("id") || "";
+
+  const templateId = searchParams.get("id") ?? "";
   const { language } = useLanguage();
   const t = translations[language].chooseCreate;
 

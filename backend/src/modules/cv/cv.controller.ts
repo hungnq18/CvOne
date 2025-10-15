@@ -7,25 +7,25 @@ import {
   Param,
   Patch,
   Post,
-  Res,
   UploadedFile,
   UseGuards,
-  UseInterceptors,
+  UseInterceptors
 } from "@nestjs/common";
+import { InjectModel } from "@nestjs/mongoose";
 import { FileInterceptor } from "@nestjs/platform-express";
-import * as multer from "multer";
-// @ts-ignore: No type declarations for pdfjs-dist
-import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf.js";
-import * as puppeteer from "puppeteer";
+import { Model, Types } from "mongoose";
 import { User } from "../../common/decorators/user.decorator";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { CvTemplate } from "../cv-template/schemas/cv-template.schema";
-import { CvAiService } from "./cv-ai.service";
-import { CvPdfCloudService } from "./cv-pdf-cloud.service";
+import { User as UserSchema } from "../users/schemas/user.schema";
 import { CvService } from "./cv.service";
 import { CreateCvDto } from "./dto/create-cv.dto";
 import { GenerateCvDto } from "./dto/generate-cv.dto";
+import { CvAnalysisService } from "./services/cv-analysis.service";
+import { CvContentGenerationService } from "./services/cv-content-generation.service";
 import { CvUploadService } from "./services/cv-upload.service";
+import { JobAnalysisService } from "./services/job-analysis.service";
+import { OpenAiService } from "./services/openai.service";
 /**
  * Controller for handling CV (Curriculum Vitae) related requests
  * Most endpoints require authentication using JWT
@@ -35,10 +35,50 @@ import { CvUploadService } from "./services/cv-upload.service";
 export class CvController {
   constructor(
     private readonly cvService: CvService,
-    private readonly cvAiService: CvAiService,
     private readonly cvUploadService: CvUploadService,
-    private readonly cvPdfCloudService: CvPdfCloudService,
+    private readonly cvAnalysisService: CvAnalysisService,
+    private readonly cvContentGenerationService: CvContentGenerationService,
+    private readonly jobAnalysisService: JobAnalysisService,
+    private readonly openAiService: OpenAiService,
+    @InjectModel(UserSchema.name) private userModel: Model<UserSchema>,
   ) { }
+
+  /**
+   * Upload and analyze CV PDF using AI
+   * @param file - The uploaded PDF file
+   * @param userId - The ID of the authenticated user
+   * @returns Analysis results and suggestions
+   * @requires Authentication
+   */
+  @UseGuards(JwtAuthGuard)
+  @Post("upload-and-analyze")
+  @UseInterceptors(
+    FileInterceptor("cvFile", {
+      limits: { fileSize: 10 * 1024 * 1024 },
+      fileFilter: (req, file, cb) => {
+        if (!file.mimetype || !file.mimetype.includes("pdf")) {
+          return cb(
+            new BadRequestException("Only PDF files are allowed!"),
+            false,
+          );
+        }
+        cb(null, true);
+      },
+    }),
+  )
+  async uploadAndAnalyzeCv(
+    @UploadedFile() file: any,
+    @Body("jobDescription") jobDescription: string,
+    @Body("additionalRequirements") additionalRequirements: string,
+    @User("_id") userId: string,
+  ) {
+    return this.cvUploadService.uploadCvToCloudAndAnalyze(
+      file,
+      jobDescription,
+      userId,
+      additionalRequirements,
+    );
+  }
 
   /**
    * Get all CVs for the authenticated user
@@ -89,7 +129,7 @@ export class CvController {
   @UseGuards(JwtAuthGuard)
   @Post("analyze-jd")
   async analyzeJobDescription(@Body("jobDescription") jobDescription: string) {
-    return this.cvAiService.analyzeJobDescription(jobDescription);
+    return this.jobAnalysisService.analyzeJobDescription(jobDescription);
   }
 
   /**
@@ -105,11 +145,25 @@ export class CvController {
     @Body("jobAnalysis") jobAnalysis: any,
     @Body("additionalRequirements") additionalRequirements?: string,
   ) {
-    return this.cvAiService.generateCvWithJobAnalysis(
-      userId,
+    // Get user data
+    const user = await this.userModel.findById(userId);
+    if (!user) throw new Error("User not found");
+    
+    // Generate CV content
+    const cvContent = await this.cvContentGenerationService.generateCvContent(
+      user,
       jobAnalysis,
-      additionalRequirements,
+      additionalRequirements
     );
+    
+    return {
+      success: true,
+      data: {
+        content: cvContent,
+        jobAnalysis,
+        message: "CV generated from provided job analysis"
+      }
+    };
   }
 
   /**
@@ -123,32 +177,60 @@ export class CvController {
     @Body() generateCvDto: GenerateCvDto,
     @User("_id") userId: string,
   ) {
-    // Generate CV with AI
-    const aiResult = await this.cvAiService.generateCvWithAI(
-      userId,
-      generateCvDto,
-    );
+    try {
+      // 1. Get user data
+      const user = await this.userModel.findById(userId);
+      if (!user) {
+        throw new Error("User not found");
+      }
 
-    if (!aiResult.success) {
-      throw new Error("Failed to generate CV with AI");
+      // 2. Analyze job description
+      const jobAnalysis = await this.jobAnalysisService.analyzeJobDescription(
+        generateCvDto.jobDescription
+      );
+
+      // 3. Generate CV content
+      const cvContent = await this.cvContentGenerationService.generateCvContent(
+        user,
+        jobAnalysis,
+        generateCvDto.additionalRequirements
+      );
+
+      // Get default template if not specified
+      let templateId: string = generateCvDto.cvTemplateId || "";
+      if (!templateId) {
+        const defaultTemplate = await this.cvService.getAllTemplates();
+        templateId = defaultTemplate[0]?._id?.toString() || "";
+      }
+
+      // Check if we're using fallback methods
+      const isUsingFallback =
+        !jobAnalysis.softSkills || jobAnalysis.softSkills.length === 0;
+      const message = isUsingFallback
+        ? "CV generated using basic analysis (OpenAI quota exceeded). Please check your OpenAI billing to enable AI-powered features."
+        : "CV generated successfully using AI analysis";
+
+      // Create CV using the generated content
+      const createCvDto: CreateCvDto = {
+        cvTemplateId: new Types.ObjectId(templateId),
+        title: generateCvDto.title || `AI Generated CV - ${new Date().toLocaleDateString()}`,
+        content: cvContent,
+      };
+
+      // Save the generated CV
+      const savedCv = await this.cvService.createCV(createCvDto, userId);
+
+      return {
+        success: true,
+        message: "CV generated and saved successfully",
+        cv: savedCv,
+        jobAnalysis,
+        aiMessage: message,
+        isUsingFallback,
+      };
+    } catch (error) {
+      throw new Error(`Failed to generate CV with AI: ${error.message}`);
     }
-
-    // Create CV using the generated content
-    const createCvDto: CreateCvDto = {
-      cvTemplateId: aiResult.data.cvTemplateId,
-      title: aiResult.data.title,
-      content: aiResult.data.content,
-    };
-
-    // Save the generated CV
-    const savedCv = await this.cvService.createCV(createCvDto, userId);
-
-    return {
-      success: true,
-      message: "CV generated and saved successfully",
-      cv: savedCv,
-      jobAnalysis: aiResult.data.jobAnalysis,
-    };
   }
 
   /**
@@ -157,7 +239,7 @@ export class CvController {
   @UseGuards(JwtAuthGuard)
   @Get("ai-status")
   async checkAiStatus() {
-    return this.cvAiService.checkOpenAiStatus();
+    return this.openAiService.checkApiStatus();
   }
 
   /**
@@ -171,12 +253,12 @@ export class CvController {
     @Body("additionalRequirements") additionalRequirements?: string,
   ) {
     // Không truyền userProfile nữa, chỉ truyền jobAnalysis và additionalRequirements
-    const summary = await this.cvAiService.suggestProfessionalSummary(
+    const summary = await this.openAiService.generateProfessionalSummaryVi(
       jobAnalysis,
       additionalRequirements,
     );
 
-    return summary;
+    return { summaries: [summary] };
   }
 
   /**
@@ -188,7 +270,7 @@ export class CvController {
     @Body("jobAnalysis") jobAnalysis: any,
     @Body("userSkills") userSkills?: Array<{ name: string; rating: number }>,
   ) {
-    return this.cvAiService.suggestSkillsSection(jobAnalysis, userSkills);
+    return { skillsOptions: await this.cvContentGenerationService.generateSkillsSection(jobAnalysis, userSkills) };
   }
 
   /**
@@ -200,221 +282,12 @@ export class CvController {
     @Body("jobAnalysis") jobAnalysis: any,
     @Body("experienceLevel") experienceLevel: string,
   ) {
-    return this.cvAiService.suggestWorkExperience(jobAnalysis, experienceLevel);
+    return this.cvContentGenerationService.generateWorkExperience(jobAnalysis, experienceLevel);
   }
 
-  /**
-   * Upload and analyze CV PDF using AI
-   * @param file - The uploaded PDF file
-   * @param userId - The ID of the authenticated user
-   * @returns Analysis results and suggestions
-   * @requires Authentication
-   */
-  @UseGuards(JwtAuthGuard)
-  @Post("upload-and-analyze")
-  @UseInterceptors(
-    FileInterceptor("cvFile", {
-      limits: { fileSize: 10 * 1024 * 1024 },
-      fileFilter: (req, file, cb) => {
-        if (!file.mimetype || !file.mimetype.includes("pdf")) {
-          return cb(
-            new BadRequestException("Only PDF files are allowed!"),
-            false,
-          );
-        }
-        cb(null, true);
-      },
-    }),
-  )
-  async uploadAndAnalyzeCv(
-    @UploadedFile() file: any,
-    @Body("jobDescription") jobDescription: string,
-    @Body("additionalRequirements") additionalRequirements: string,
-    @User("_id") userId: string,
-  ) {
-    return this.cvUploadService.uploadCvToCloudAndAnalyze(
-      file,
-      jobDescription,
-      userId,
-      additionalRequirements,
-    );
-  }
 
-  /**
-   * Upload CV PDF, analyze with AI, and return JSON HTML with rewritten CV content
-   * @param file - The uploaded PDF file
-   * @param jobDescription - Job description for optimization
-   * @param additionalRequirements - Additional requirements (optional)
-   * @returns JSON object with HTML content and analysis
-   * @requires Authentication
-   */
-  @UseGuards(JwtAuthGuard)
-  @Post("upload-analyze-overlay-pdf")
-  @UseInterceptors(
-    FileInterceptor("cvFile", {
-      limits: { fileSize: 10 * 1024 * 1024 },
-      fileFilter: (req, file, cb) => {
-        if (!file.mimetype || !file.mimetype.includes("pdf")) {
-          return cb(
-            new BadRequestException("Only PDF files are allowed!"),
-            false,
-          );
-        }
-        cb(null, true);
-      },
-    }),
-  )
 
-  /**
-   * Upload original CV PDF, replace content with AI-optimized content, and return the new PDF (preserving original layout)
-   */
-  @UseGuards(JwtAuthGuard)
-  @Post("upload-replace-content-pdf")
-  @UseInterceptors(
-    FileInterceptor("cvFile", {
-      storage: multer.memoryStorage(),
-      fileFilter: (req, file, cb) => {
-        if (!file.mimetype.match(/^application\/pdf$/)) {
-          return cb(
-            new BadRequestException(
-              "Only PDF files are allowed for CV upload!",
-            ),
-            false,
-          );
-        }
-        cb(null, true);
-      },
-      limits: { fileSize: 10 * 1024 * 1024 },
-    }),
-  )
-  async uploadReplaceContentPdf(
-    @UploadedFile() file: any,
-    @Body("jobDescription") jobDescription: string,
-    @User("_id") userId: string,
-    @Body("additionalRequirements") additionalRequirements: string,
-    @Res() res: any,
-  ) {
-    if (!file) {
-      throw new BadRequestException(
-        "No CV file uploaded or invalid file type.",
-      );
-    }
-    if (!jobDescription || jobDescription.trim().length === 0) {
-      throw new BadRequestException("Job description is required.");
-    }
-    if (!userId) {
-      throw new BadRequestException("User ID is required.");
-    }
-    
-    try {
-      // Gọi service để thay thế nội dung trong PDF gốc
-      const result = await this.cvAiService.replaceContentInOriginalPdfBuffer(
-        userId,
-        file.buffer,
-        jobDescription,
-        additionalRequirements,
-      );
-      if (!result.success || !result.pdfBuffer) {
-        throw new BadRequestException(result.error || "Failed to process CV");
-      }
 
-      // Upload to Cloudinary instead of returning buffer
-      const cvTitle = `optimized-cv-${Date.now()}`;
-      const uploadResult = await this.cvPdfCloudService.uploadPdfToCloudinary(
-        result.pdfBuffer,
-        cvTitle,
-        userId
-      );
-
-      if (!uploadResult.success) {
-        throw new BadRequestException(uploadResult.error || "Failed to upload to cloud");
-      }
-
-      // Return the cloud URL instead of the PDF buffer
-      res.json({
-        success: true,
-        shareUrl: uploadResult.shareUrl,
-        message: "CV processed and uploaded to cloud successfully"
-      });
-    } catch (error) {
-      throw new BadRequestException(error.message || "Failed to process CV");
-    }
-  }
-
-  /**
-   * Auto-mapping: Nhận file PDF, trả về danh sách đoạn text và vị trí để AI hoặc frontend phân loại
-   */
-  @UseGuards(JwtAuthGuard)
-  @Post("auto-mapping-pdf")
-  @UseInterceptors(
-    FileInterceptor("cvFile", {
-      limits: { fileSize: 10 * 1024 * 1024 },
-      fileFilter: (req, file, cb) => {
-        if (!file.mimetype || !file.mimetype.includes("pdf")) {
-          return cb(
-            new BadRequestException("Only PDF files are allowed!"),
-            false,
-          );
-        }
-        cb(null, true);
-      },
-    }),
-  )
-  async autoMappingPdf(@UploadedFile() file: any, @Res() res: any) {
-    if (!file) {
-      throw new BadRequestException(
-        "No CV file uploaded or invalid file type.",
-      );
-    }
-    try {
-      const loadingTask = pdfjsLib.getDocument({
-        data: new Uint8Array(file.buffer),
-      });
-      const pdf = await loadingTask.promise;
-      const results: any[] = [];
-      for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-        const page = await pdf.getPage(pageNum);
-        const textContent = await page.getTextContent();
-        (textContent.items as any[]).forEach((item) => {
-          // Đảm bảo các giá trị là số hợp lệ, nếu không thì gán mặc định
-          const x =
-            typeof item.transform[4] === "number" && !isNaN(item.transform[4])
-              ? item.transform[4]
-              : 0;
-          const y =
-            typeof item.transform[5] === "number" && !isNaN(item.transform[5])
-              ? item.transform[5]
-              : 0;
-          const fontSize =
-            typeof item.height === "number" && !isNaN(item.height)
-              ? item.height
-              : 12;
-          const width =
-            typeof item.width === "number" && !isNaN(item.width)
-              ? item.width
-              : 100;
-          const height =
-            typeof item.height === "number" && !isNaN(item.height)
-              ? item.height
-              : 20;
-          results.push({
-            text: item.str,
-            page: pageNum - 1,
-            x,
-            y,
-            fontSize,
-            width,
-            height,
-          });
-        });
-      }
-      res.json({ success: true, mappingCandidates: results });
-    } catch (error) {
-      throw new BadRequestException(
-        `Failed to extract mapping: ${error.message}`,
-      );
-    }
-  }
 
   /**
    * Get a specific CV by ID
@@ -514,77 +387,30 @@ export class CvController {
     return this.cvService.unshareCV(id, userId);
   }
 
-  @Post("html-to-pdf")
-  async htmlToPdf(@Body("html") html: string, @Res() res: any) {
-    if (!html || html.trim().length === 0) {
-      throw new BadRequestException("HTML content is required.");
-    }
-    try {
-      const browser = await puppeteer.launch({
-        headless: true,
-        args: ["--no-sandbox"],
-      });
-      const page = await browser.newPage();
-      await page.setContent(html, { waitUntil: "networkidle0" });
-      const pdfBuffer = await page.pdf({ format: "A4", printBackground: true });
-      await browser.close();
 
-      res.set({
-        "Content-Type": "application/pdf",
-        "Content-Disposition": 'attachment; filename="final-cv.pdf"',
-      });
-      res.send(pdfBuffer);
-    } catch (error) {
-      throw new BadRequestException("Failed to generate PDF: " + error.message);
-    }
-  }
 
-  @Post("overlay-optimize-cv")
-  @UseInterceptors(
-    FileInterceptor("cvFile", {
-      limits: { fileSize: 10 * 1024 * 1024 },
-      fileFilter: (req, file, cb) => {
-        if (!file.mimetype || !file.mimetype.includes("pdf")) {
-          return cb(
-            new BadRequestException("Only PDF files are allowed!"),
-            false,
-          );
-        }
-        cb(null, true);
-      },
-    }),
-  )
-  async overlayOptimizeCv(
-    @UploadedFile() file: any,
-    @Body("jobDescription") jobDescription: string,
-    @Body("additionalRequirements") additionalRequirements: string,
-    @Res() res: any,
+  /**
+   * Translate CV content to a target language using AI
+   * Accepts JSON `content` following the CV schema and `targetLanguage` (e.g., "vi", "en").
+   * Returns translated JSON with the same structure.
+   */
+  @UseGuards(JwtAuthGuard)
+  @Post("translate")
+  async translateCv(
+    @Body("content") content: any,
+    @Body("targetLanguage") targetLanguage: string,
   ) {
-    if (!file) {
-      throw new BadRequestException(
-        "No CV file uploaded or invalid file type.",
-      );
+    if (!content || typeof content !== "object") {
+      throw new BadRequestException("content (CV JSON) is required");
     }
-    try {
-      const result = await this.cvAiService.optimizePdfCvWithOriginalLayoutAI(
-        file.buffer,
-        jobDescription,
-        additionalRequirements,
-      );
-      if (!result.success || !result.pdfBuffer) {
-        throw new BadRequestException(result.error || "Failed to optimize CV");
-      }
-      res.set({
-        "Content-Type": "application/pdf",
-        "Content-Disposition": 'attachment; filename="optimized-cv.pdf"',
-      });
-      // Trả về file PDF dạng stream để tối ưu tốc độ load
-      const { Readable } = require("stream");
-      const stream = Readable.from(result.pdfBuffer);
-      stream.pipe(res);
-    } catch (error) {
-      throw new BadRequestException(`Failed to optimize CV: ${error.message}`);
+    if (!targetLanguage || typeof targetLanguage !== "string") {
+      throw new BadRequestException("targetLanguage is required");
     }
+    const translated = await this.cvContentGenerationService.translateCvContent(
+      content,
+      targetLanguage,
+    );
+    return { success: true, data: translated };
   }
 
   /**
@@ -599,104 +425,12 @@ export class CvController {
     if (!description || description.trim().length === 0) {
       throw new BadRequestException("Description is required.");
     }
-    const rewritten = await this.cvAiService.rewriteWorkDescription(
+    const rewritten = await this.cvAnalysisService.rewriteWorkDescription(
       description,
       language,
     );
     return { rewritten };
   }
 
-  /**
-   * Generate PDF from CV and upload to Cloudinary
-   * @param cvId - The ID of the CV to generate PDF from
-   * @param userId - The ID of the authenticated user
-   * @returns Object containing shareUrl for the uploaded PDF
-   * @requires Authentication
-   */
-  @UseGuards(JwtAuthGuard)
-  @Post(":id/generate-pdf-uploadToCloudinary")
-  async generatePdfAndUploadToCloudinary(
-    @Param("id") cvId: string,
-    @User("_id") userId: string,
-    @Body("pdfBase64") pdfBase64: string,
-  ) {
-    if (!cvId) {
-      throw new BadRequestException("CV ID is required");
-    }
-    if (
-      !pdfBase64 ||
-      typeof pdfBase64 !== "string" ||
-      pdfBase64.trim().length === 0
-    ) {
-      throw new BadRequestException("pdfBase64 is required");
-    }
 
-    const result = await this.cvService.generatePdfAndUploadToCloudinary(
-      cvId,
-      userId,
-      pdfBase64,
-    );
-
-    if (!result.success) {
-      throw new BadRequestException(
-        result.error || "Failed to generate and upload PDF",
-      );
-    }
-
-    return {
-      success: true,
-      message: "PDF generated and uploaded successfully",
-      shareUrl: result.shareUrl,
-    };
-  }
-
-  /**
-   * Generate PDF from CV and send via email
-   * @param cvId - The ID of the CV to generate PDF from
-   * @param userId - The ID of the authenticated user
-   * @param recipientEmail - Email address to send the PDF to
-   * @returns Object containing success status
-   * @requires Authentication
-   */
-  @UseGuards(JwtAuthGuard)
-  @Post(":id/send-pdf-email")
-  async generatePdfAndSendEmail(
-    @Param("id") cvId: string,
-    @User("_id") userId: string,
-    @Body("recipientEmail") recipientEmail: string,
-    @Body("pdfBase64") pdfBase64: string,
-  ) {
-    if (!cvId) {
-      throw new BadRequestException("CV ID is required");
-    }
-
-    if (!recipientEmail) {
-      throw new BadRequestException("Recipient email is required");
-    }
-    if (
-      !pdfBase64 ||
-      typeof pdfBase64 !== "string" ||
-      pdfBase64.trim().length === 0
-    ) {
-      throw new BadRequestException("pdfBase64 is required");
-    }
-
-    const result = await this.cvService.generatePdfAndSendEmail(
-      cvId,
-      userId,
-      recipientEmail,
-      pdfBase64,
-    );
-
-    if (!result.success) {
-      throw new BadRequestException(
-        result.error || "Failed to generate PDF and send email",
-      );
-    }
-
-    return {
-      success: true,
-      message: "PDF generated and sent via email successfully",
-    };
-  }
 }
