@@ -24,7 +24,7 @@ export class CvContentGenerationService {
   async generateProfessionalSummary(
     userProfile: any,
     jobAnalysis: any,
-    additionalRequirements?: string
+    additionalRequirements?: string,
   ): Promise<string[]> {
     try {
       const prompt = `
@@ -75,7 +75,7 @@ Do not include any explanation or markdown, only valid JSON.
         ],
       });
 
-      let response = completion.choices[0]?.message?.content;
+      const response = completion.choices[0]?.message?.content;
       if (!response) {
         throw new Error("No response from OpenAI");
       }
@@ -101,12 +101,12 @@ Do not include any explanation or markdown, only valid JSON.
     } catch (error) {
       this.logger.error(
         `Error generating professional summary: ${error.message}`,
-        error.stack
+        error.stack,
       );
       // fallback: return 3 copies of fallback summary
       const fallback = this.generateFallbackSummary(
         userProfile,
-        jobAnalysis || {}
+        jobAnalysis || {},
       );
       return [fallback, fallback, fallback];
     }
@@ -117,7 +117,7 @@ Do not include any explanation or markdown, only valid JSON.
    */
   async generateWorkExperience(
     jobAnalysis: any,
-    experienceLevel: string
+    experienceLevel: string,
   ): Promise<
     Array<{
       title: string;
@@ -135,7 +135,7 @@ Do not include any explanation or markdown, only valid JSON.
             ? 3
             : 1;
       const startDate = new Date(
-        Date.now() - years * 365 * 24 * 60 * 60 * 1000
+        Date.now() - years * 365 * 24 * 60 * 60 * 1000,
       );
       const endDate = new Date();
 
@@ -200,19 +200,19 @@ Return only valid JSON.
     } catch (error) {
       this.logger.error(
         `Error generating work experience: ${error.message}`,
-        error.stack
+        error.stack,
       );
 
       // Check if it's a quota exceeded error
       if (error.message.includes("429") || error.message.includes("quota")) {
         this.logger.warn(
-          "OpenAI quota exceeded, using fallback work experience"
+          "OpenAI quota exceeded, using fallback work experience",
         );
       }
 
       return this.generateFallbackWorkExperience(
         jobAnalysis || {},
-        experienceLevel
+        experienceLevel,
       );
     }
   }
@@ -222,7 +222,7 @@ Return only valid JSON.
    */
   async generateSkillsSection(
     jobAnalysis: any,
-    userSkills?: Array<{ name: string; rating: number }>
+    userSkills?: Array<{ name: string; rating: number }>,
   ): Promise<Array<Array<{ name: string; rating: number }>>> {
     try {
       const existingSkills =
@@ -278,7 +278,7 @@ Do not include any explanation or markdown, only valid JSON.
         ],
       });
 
-      let response = completion.choices[0]?.message?.content;
+      const response = completion.choices[0]?.message?.content;
       if (!response) {
         throw new Error("No response from OpenAI");
       }
@@ -306,12 +306,12 @@ Do not include any explanation or markdown, only valid JSON.
         // Filter and reassign rating if found in userSkills
         return list
           .filter((skillObj) =>
-            validSkills.includes(skillObj.name.toLowerCase())
+            validSkills.includes(skillObj.name.toLowerCase()),
           )
           .map((skillObj) => {
             if (userSkills) {
               const found = userSkills.find(
-                (s) => s.name.toLowerCase() === skillObj.name.toLowerCase()
+                (s) => s.name.toLowerCase() === skillObj.name.toLowerCase(),
               );
               if (found) {
                 return { ...skillObj, rating: found.rating };
@@ -328,7 +328,7 @@ Do not include any explanation or markdown, only valid JSON.
     } catch (error) {
       this.logger.error(
         `Error generating skills section: ${error.message}`,
-        error.stack
+        error.stack,
       );
       // fallback: return 3 copies of fallback skills
       const fallback = this.generateFallbackSkills(jobAnalysis || {});
@@ -350,7 +350,7 @@ Do not include any explanation or markdown, only valid JSON.
 
   private generateFallbackWorkExperience(
     jobAnalysis: any,
-    experienceLevel: string
+    experienceLevel: string,
   ): Array<any> {
     const years =
       experienceLevel === "senior"
@@ -374,7 +374,7 @@ Do not include any explanation or markdown, only valid JSON.
   }
 
   private generateFallbackSkills(
-    jobAnalysis: any
+    jobAnalysis: any,
   ): Array<{ name: string; rating: number }> {
     const allSkills = [
       ...(jobAnalysis?.requiredSkills || []),
@@ -393,13 +393,13 @@ Do not include any explanation or markdown, only valid JSON.
   async generateCvContent(
     user: any,
     jobAnalysis: any,
-    additionalRequirements?: string
+    additionalRequirements?: string,
   ): Promise<any> {
     // Generate professional summary using OpenAI
     const summary = await this.generateProfessionalSummary(
       user,
       jobAnalysis,
-      additionalRequirements
+      additionalRequirements,
     );
 
     // Generate skills section using OpenAI
@@ -408,7 +408,7 @@ Do not include any explanation or markdown, only valid JSON.
     // Generate work experience using OpenAI
     const workHistory = await this.generateWorkExperience(
       jobAnalysis,
-      jobAnalysis.experienceLevel
+      jobAnalysis.experienceLevel,
     );
 
     // Generate education
@@ -452,17 +452,21 @@ Do not include any explanation or markdown, only valid JSON.
     return titles[jobAnalysis.experienceLevel] || "Software Developer";
   }
 
-
   /**
    * Translate CV JSON content to a target language while preserving structure and keys
    */
-  async translateCvContent(content: any, targetLanguage: string): Promise<any> {
+  async translateCvContent(
+    content: any,
+    uiTexts: any,
+    targetLanguage: string,
+  ): Promise<any> {
     try {
       const languageNote = targetLanguage
         ? `Target language: ${targetLanguage}`
         : "Target language: same as input";
 
-      const prompt = `
+      // Prompt cho phần content (giữ nguyên phong cách cũ)
+      const contentPrompt = `
         You are a professional CV translator. Understand CV tone, structure, and terminology.
         
         Translate all human-readable text values to ${targetLanguage}. Keep keys, structure, and non-text values unchanged.
@@ -482,42 +486,109 @@ Do not include any explanation or markdown, only valid JSON.
         ${JSON.stringify(content, null, 2)}
         
         Output: Translated JSON in ${targetLanguage}.
-        `;
+      `;
 
-      const completion = await this.openai.chat.completions.create({
-        model: "gpt-4o",
-        messages: [
-          {
-            role: "system",
-            content:
-              "You are a precise JSON translator. You translate only string values and preserve JSON structure and keys.",
-          },
-          { role: "user", content: prompt },
-        ],
-        temperature: 0.2,
-        max_tokens: 1000,
-      });
+      // Prompt cho phần uiTexts (dịch đơn giản, dạng object)
+      const uiTextPrompt = `
+ You are a translator.
+      Translate all values of the following object into ${targetLanguage}, but keep the keys unchanged, Professional style: formal language, strong action verbs
+Clear, natural phrasing - no awkward machine translations
+      Return only valid JSON object with the same structure (no extra text, no markdown).
+        Example:
+        Input: { "home": "Home", "about": "About Us" }
+        Output: { "home": "Startseite", "about": "Über uns" }
+        
+        Input:
+        ${JSON.stringify(uiTexts, null, 2)}
+        
+        Output:
+      `;
 
-      let response = completion.choices[0]?.message?.content?.trim();
-      if (!response) {
-        throw new Error("No response from OpenAI");
+      // Gọi OpenAI song song cho cả 2 phần
+      const [contentResponse, uiTextResponse] = await Promise.all([
+        this.openai.chat.completions.create({
+          model: "gpt-4o",
+          messages: [
+            {
+              role: "system",
+              content:
+                "You are a precise JSON translator. You translate only string values and preserve JSON structure and keys.",
+            },
+            { role: "user", content: contentPrompt },
+          ],
+          temperature: 0.2,
+          max_tokens: 2000,
+        }),
+        this.openai.chat.completions.create({
+          model: "gpt-4o",
+          messages: [
+            {
+              role: "system",
+              content:
+                "You are a JSON key-value translator. Preserve keys, translate only values.",
+            },
+            { role: "user", content: uiTextPrompt },
+          ],
+          temperature: 0.2,
+          max_tokens: 500,
+        }),
+      ]);
+
+      // ======= Xử lý phần content =======
+      let contentTranslated =
+        contentResponse.choices[0]?.message?.content?.trim();
+      if (!contentTranslated)
+        throw new Error("Empty response for content translation");
+
+      // loại bỏ ```json ``` nếu có
+      contentTranslated = contentTranslated
+        .replace(/^```json/, "")
+        .replace(/^```/, "")
+        .replace(/```$/, "")
+        .trim();
+
+      const translatedContent = JSON.parse(contentTranslated);
+
+      // ======= Xử lý phần uiTexts =======
+      let uiTranslated = uiTextResponse.choices[0]?.message?.content?.trim();
+      if (!uiTranslated)
+        throw new Error("Empty response for uiTexts translation");
+
+      uiTranslated = uiTranslated
+        .replace(/^```json/, "")
+        .replace(/^```/, "")
+        .replace(/```$/, "")
+        .trim();
+
+      // Tránh lỗi nếu OpenAI trả ra string JSON hoặc text
+      let translatedUiTexts: Record<string, string> = {};
+      try {
+        const parsed = JSON.parse(uiTranslated);
+        if (typeof parsed === "object" && !Array.isArray(parsed)) {
+          translatedUiTexts = parsed;
+        } else {
+          this.logger.warn(
+            "UI Texts translation is not object, fallback to empty object",
+          );
+        }
+      } catch {
+        this.logger.warn(
+          "Invalid JSON returned for uiTexts, fallback to empty object",
+        );
       }
-      if (response.startsWith("```json")) {
-        response = response
-          .replace(/^```json/, "")
-          .replace(/```$/, "")
-          .trim();
-      } else if (response.startsWith("```")) {
-        response = response.replace(/^```/, "").replace(/```$/, "").trim();
-      }
-      const translated = JSON.parse(response);
-      return translated;
+
+      return {
+        success: true,
+        data: {
+          content: translatedContent,
+          uiTexts: translatedUiTexts,
+        },
+      };
     } catch (error) {
       this.logger.error(
         `Error translating CV content: ${error.message}`,
         error.stack,
       );
-      // Surface error instead of silently returning original so callers can handle it
       throw new Error(`Translate failed: ${error.message}`);
     }
   }
