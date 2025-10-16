@@ -43,10 +43,10 @@ export class CvTemplateService {
     );
     console.log("suggestTags", suggestTags);
 
-    if (suggestTags && suggestTags.length > 0) {
+    if (suggestTags && suggestTags.tags.length > 0) {
       const templates = await this.cvTemplateModel
         .find({
-          tags: { $in: suggestTags }, // chỉ cần 1 tag match là được
+          tags: { $in: suggestTags.tags }, // chỉ cần 1 tag match là được
         })
         .lean()
         .exec();
