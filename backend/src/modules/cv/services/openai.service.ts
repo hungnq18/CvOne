@@ -12,8 +12,8 @@ export class OpenAiService {
     private cvContentGenerationService: CvContentGenerationService,
     private cvAnalysisService: CvAnalysisService,
     private vietnameseContentService: VietnameseContentService,
-    private openaiApiService: OpenaiApiService
-  ) {}
+    private openaiApiService: OpenaiApiService,
+  ) { }
 
   // Job Analysis methods
   async analyzeJobDescription(jobDescription: string) {
@@ -24,29 +24,29 @@ export class OpenAiService {
   async generateProfessionalSummary(
     userProfile: any,
     jobAnalysis: any,
-    additionalRequirements?: string
+    additionalRequirements?: string,
   ) {
     return this.cvContentGenerationService.generateProfessionalSummary(
       userProfile,
       jobAnalysis,
-      additionalRequirements
+      additionalRequirements,
     );
   }
 
   async generateWorkExperience(jobAnalysis: any, experienceLevel: string) {
     return this.cvContentGenerationService.generateWorkExperience(
       jobAnalysis,
-      experienceLevel
+      experienceLevel,
     );
   }
 
   async generateSkillsSection(
     jobAnalysis: any,
-    userSkills?: Array<{ name: string; rating: number }>
+    userSkills?: Array<{ name: string; rating: number }>,
   ) {
     return this.cvContentGenerationService.generateSkillsSection(
       jobAnalysis,
-      userSkills
+      userSkills,
     );
   }
 
@@ -62,23 +62,23 @@ export class OpenAiService {
   // Vietnamese Content methods
   async generateProfessionalSummaryVi(
     jobAnalysis: any,
-    additionalRequirements?: string
+    additionalRequirements?: string,
   ) {
     return this.vietnameseContentService.generateProfessionalSummaryVi(
       jobAnalysis,
-      additionalRequirements
+      additionalRequirements,
     );
   }
 
   async generateProfessionalSummariesVi(
     jobAnalysis: any,
     additionalRequirements?: string,
-    count: number = 3
+    count: number = 3,
   ) {
     return this.vietnameseContentService.generateProfessionalSummariesVi(
       jobAnalysis,
       additionalRequirements,
-      count
+      count,
     );
   }
 
@@ -90,8 +90,16 @@ export class OpenAiService {
   getOpenAiService() {
     return this;
   }
-  public async translateCvContent(content: any, targetLanguage: string): Promise<any> {
-    return this.cvContentGenerationService.translateCvContent(content, targetLanguage);
+  public async translateCvContent(
+    content: any,
+    uiTexts: Record<string, string> = {},
+    targetLanguage: string,
+  ): Promise<any> {
+    return this.cvContentGenerationService.translateCvContent(
+      content,
+      uiTexts,
+      targetLanguage,
+    );
   }
   getOpenAI() {
     return this.openaiApiService.getOpenAI();

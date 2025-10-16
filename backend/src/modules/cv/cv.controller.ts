@@ -9,7 +9,7 @@ import {
   Post,
   UploadedFile,
   UseGuards,
-  UseInterceptors
+  UseInterceptors,
 } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { FileInterceptor } from "@nestjs/platform-express";
@@ -148,21 +148,21 @@ export class CvController {
     // Get user data
     const user = await this.userModel.findById(userId);
     if (!user) throw new Error("User not found");
-    
+
     // Generate CV content
     const cvContent = await this.cvContentGenerationService.generateCvContent(
       user,
       jobAnalysis,
-      additionalRequirements
+      additionalRequirements,
     );
-    
+
     return {
       success: true,
       data: {
         content: cvContent,
         jobAnalysis,
-        message: "CV generated from provided job analysis"
-      }
+        message: "CV generated from provided job analysis",
+      },
     };
   }
 
@@ -186,14 +186,14 @@ export class CvController {
 
       // 2. Analyze job description
       const jobAnalysis = await this.jobAnalysisService.analyzeJobDescription(
-        generateCvDto.jobDescription
+        generateCvDto.jobDescription,
       );
 
       // 3. Generate CV content
       const cvContent = await this.cvContentGenerationService.generateCvContent(
         user,
         jobAnalysis,
-        generateCvDto.additionalRequirements
+        generateCvDto.additionalRequirements,
       );
 
       // Get default template if not specified
@@ -213,7 +213,9 @@ export class CvController {
       // Create CV using the generated content
       const createCvDto: CreateCvDto = {
         cvTemplateId: new Types.ObjectId(templateId),
-        title: generateCvDto.title || `AI Generated CV - ${new Date().toLocaleDateString()}`,
+        title:
+          generateCvDto.title ||
+          `AI Generated CV - ${new Date().toLocaleDateString()}`,
         content: cvContent,
       };
 
@@ -270,7 +272,13 @@ export class CvController {
     @Body("jobAnalysis") jobAnalysis: any,
     @Body("userSkills") userSkills?: Array<{ name: string; rating: number }>,
   ) {
-    return { skillsOptions: await this.cvContentGenerationService.generateSkillsSection(jobAnalysis, userSkills) };
+    return {
+      skillsOptions:
+        await this.cvContentGenerationService.generateSkillsSection(
+          jobAnalysis,
+          userSkills,
+        ),
+    };
   }
 
   /**
@@ -282,12 +290,11 @@ export class CvController {
     @Body("jobAnalysis") jobAnalysis: any,
     @Body("experienceLevel") experienceLevel: string,
   ) {
-    return this.cvContentGenerationService.generateWorkExperience(jobAnalysis, experienceLevel);
+    return this.cvContentGenerationService.generateWorkExperience(
+      jobAnalysis,
+      experienceLevel,
+    );
   }
-
-
-
-
 
   /**
    * Get a specific CV by ID
@@ -387,8 +394,6 @@ export class CvController {
     return this.cvService.unshareCV(id, userId);
   }
 
-
-
   /**
    * Translate CV content to a target language using AI
    * Accepts JSON `content` following the CV schema and `targetLanguage` (e.g., "vi", "en").
@@ -398,19 +403,27 @@ export class CvController {
   @Post("translate")
   async translateCv(
     @Body("content") content: any,
+    @Body("uiTexts") uiTexts: Record<string, string> = {},
     @Body("targetLanguage") targetLanguage: string,
   ) {
     if (!content || typeof content !== "object") {
       throw new BadRequestException("content (CV JSON) is required");
     }
+
     if (!targetLanguage || typeof targetLanguage !== "string") {
       throw new BadRequestException("targetLanguage is required");
     }
+
     const translated = await this.cvContentGenerationService.translateCvContent(
       content,
+      uiTexts,
       targetLanguage,
     );
-    return { success: true, data: translated };
+
+    return {
+      success: true,
+      data: translated,
+    };
   }
 
   /**
@@ -431,6 +444,4 @@ export class CvController {
     );
     return { rewritten };
   }
-
-
 }
