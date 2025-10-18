@@ -1,5 +1,7 @@
 "use client";
 
+import { useSearchParams, useRouter } from "next/navigation";
+import React, { useEffect, useState, useRef } from "react";
 import {
   createCV,
   CV,
@@ -12,24 +14,21 @@ import {
   updateCV,
 } from "@/api/cvapi";
 import { templateComponentMap } from "@/components/cvTemplate/index";
-import { CVAIEditorPopupsManager } from "@/components/forms/CV-AIEditorPopup";
-import TranslateCVModal from "@/components/modals/TranslateCVModal";
-import { useOnClickOutside } from "@/hooks/useOnClickOutside";
-import { useCV } from "@/providers/cv-provider";
-import { jwtDecode } from "jwt-decode";
 import {
+  FileDown,
+  Printer,
+  Mail,
   ArrowLeft,
   CheckCircle2,
-  FileDown,
-  Languages,
   Loader2,
-  Mail,
-  Printer,
+  Languages,
 } from "lucide-react";
 import Image from "next/image";
-import { useRouter, useSearchParams } from "next/navigation";
-import React, { useEffect, useRef, useState } from "react";
-// BƯỚC 1: Import hook để lấy ngôn ngữ
+import { useCV } from "@/providers/cv-provider";
+import { useOnClickOutside } from "@/hooks/useOnClickOutside";
+import { jwtDecode } from "jwt-decode";
+import { CVAIEditorPopupsManager } from "@/components/forms/CV-AIEditorPopup";
+import TranslateCVModal from "@/components/modals/TranslateCVModal";
 import { useLanguage } from "@/providers/global_provider";
 
 // BƯỚC 2: TẠO ĐỐI TƯỢNG TRANSLATIONS ---
@@ -167,14 +166,15 @@ const PageCreateCVAIContent = () => {
   const [isSuggesting, setIsSuggesting] = useState(false);
   const [suggestedTemplate, setSuggestedTemplate] = useState<CVTemplate | null>(null);
   const [hasAutoSuggested, setHasAutoSuggested] = useState(false);
-  const [suppressAutoSuggest, setSuppressAutoSuggest] = useState<boolean>(() => {
-    if (typeof window === 'undefined') return false;
-    try {
-      return sessionStorage.getItem('suppressAISuggest') === '1';
-    } catch {
-      return false;
+  const [suppressAutoSuggest, setSuppressAutoSuggest] = useState<boolean>(false);
+
+  // Debug: Reset suppress flag if needed (remove this in production)
+  useEffect(() => {
+    if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+      console.log("[Debug] suppressAutoSuggest:", suppressAutoSuggest);
+      console.log("[Debug] sessionStorage suppressAISuggest:", sessionStorage.getItem('suppressAISuggest'));
     }
-  });
+  }, [suppressAutoSuggest]);
 
   const templateDropdownRef = useRef(null);
   const previewRef = useRef<HTMLDivElement>(null);
@@ -182,6 +182,13 @@ const PageCreateCVAIContent = () => {
   useOnClickOutside(templateDropdownRef, () => setShowTemplatePopup(false));
 
   useEffect(() => {
+    // Clear suppress flag khi vào trang lần đầu (không phải từ đổi template)
+    try {
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem('suppressAISuggest');
+      }
+    } catch {}
+    
     getCVTemplates().then((data) => setAllTemplates(data));
     const idFromUrl = id;
 
@@ -542,7 +549,13 @@ const PageCreateCVAIContent = () => {
   // Auto-trigger suggestion once when data is ready
   useEffect(() => {
     if (hasAutoSuggested) return;
-    const ready = (allTemplates && allTemplates.length > 0) && (userData != null) && !suppressAutoSuggest;
+    const ready = (allTemplates && allTemplates.length > 0) && (userData && Object.keys(userData).length > 0) && !suppressAutoSuggest;
+    console.log("[Auto Suggest] Check conditions:", {
+      allTemplates: allTemplates?.length,
+      userData: userData ? Object.keys(userData).length : 0,
+      suppressAutoSuggest,
+      ready
+    });
     if (!ready) return;
     setHasAutoSuggested(true);
     handleAISuggestTemplate();
@@ -734,7 +747,7 @@ const PageCreateCVAIContent = () => {
         }}
       />
 
-      <TranslateCVModal 
+      <TranslateCVModal
         isOpen={showTranslateModal}
         onClose={() => setShowTranslateModal(false)}
         onTranslate={handleTranslateCV}
@@ -798,7 +811,7 @@ const PageCreateCVAIContent = () => {
                   </div>
                 ) : (
                   <div className="text-slate-500 text-sm">
-                    {language === "vi" ? "AI chưa tìm thấy mẫu phù hợp." : "AI did not return a template."}
+                    {language === "vi" ? "AI chưa tìm thấy mẫu phù hợp. Có thể do bạn chưa nhập thông tin công việc." : "AI did not return a template. Maybe you don't enter job description."}
                   </div>
                 )}
               </div>

@@ -401,7 +401,7 @@ const PageCreateCVContent = () => {
     const templateOriginalWidth = 794;
     const scaleFactor = containerWidth / templateOriginalWidth;
     return (
-      <div className="max-w-[1050px] origin-top" ref={previewRef}>
+      <div className="max-w-[1050px] origin-top pb-24" ref={previewRef}>
         <div
           style={{
             width: `${templateOriginalWidth}px`,
