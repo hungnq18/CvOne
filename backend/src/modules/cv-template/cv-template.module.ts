@@ -7,6 +7,7 @@ import { CvTemplateAiService } from "./cv-template-ai.service";
 
 import { ConfigModule } from "@nestjs/config";
 import { UsersModule } from "../users/users.module";
+import { CvModule } from "../cv/cv.module";
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { UsersModule } from "../users/users.module";
       { name: CvTemplate.name, schema: CvTemplateSchema },
     ]),
     UsersModule,
+    CvModule,
   ],
   controllers: [CvTemplateController],
   providers: [CvTemplateService, CvTemplateAiService],
