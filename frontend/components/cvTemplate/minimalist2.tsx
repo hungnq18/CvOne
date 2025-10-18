@@ -61,6 +61,7 @@ interface Minimalist2Props {
   onSectionClick?: (sectionId: string) => void;
   isPdfMode?: boolean;
   language?: string;
+  cvUiTexts?: any;
 }
 
 // --- HOVERABLE WRAPPER COMPONENT ---
@@ -122,9 +123,23 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
   onSectionClick,
   isPdfMode = false,
   language,
+  cvUiTexts
 }) => {
   const lang = language || "en";
-  const t = translations[lang as "en" | "vi"];
+  const defaultT = translations[lang as "en" | "vi"];
+  
+  // Merge với cvUiTexts từ prop
+  const t = {
+    ...defaultT,
+    ...(cvUiTexts && {
+      contactLabel: cvUiTexts.contact || defaultT.contactLabel,
+      careerObjectiveLabel: cvUiTexts.careerObjective || defaultT.careerObjectiveLabel,
+      skillsLabel: cvUiTexts.skills || defaultT.skillsLabel,
+      experienceLabel: cvUiTexts.workExperience || defaultT.experienceLabel,
+      educationLabel: cvUiTexts.education || defaultT.educationLabel,
+      // personalInfoLabel: cvUiTexts.personalInformation || defaultT.personalInfoLabel,
+    })
+  };
 
   const userData = data?.userData || {};
   const professionalTitle = userData.professional || t.defaultProfessional;
