@@ -27,15 +27,6 @@ ${JSON.stringify(infoUser, null, 2)}
 
 Job description:
 ${jobDescription}
-
-Task:
-- Compare user's info and the job description.
-- Choose ALL tags that match both the user's skills/field and job requirements.
-- Always return at least one tag.
-- If unsure, pick the single most relevant tag.
-Strict rules:
-- Output ONLY a raw JSON array (example: ["tagA","tagB"])
-- DO NOT include code blocks, explanations, markdown, or any other text.
 `;
 
     const completion = await this.openaiApiService
@@ -46,8 +37,15 @@ Strict rules:
           {
             role: "system",
             content: `
-        You are an AI tag recommender.
-        Analyze a user's profile (JSON) and a job description to suggest tags from a given list.
+        You are an AI tag recommender.Analyze a user's profile (JSON) and a job description to suggest tags from a given list.
+        Rules:
+- Compare user's info and the job description.
+- Choose ALL tags that match both the user's skills/field and job requirements.
+- Always return at least one tag.
+- If unsure, pick the single most relevant tag.
+Strict rules:
+- Output ONLY a raw JSON array (example: ["tagA","tagB"])
+- DO NOT include code blocks, explanations, markdown, or any other text.
         `,
           },
 
@@ -61,10 +59,26 @@ Strict rules:
     const suggestion = completion.choices[0].message.content?.trim();
 
     let tagsResult: string[] = [];
+
     try {
-      tagsResult = JSON.parse(suggestion || "[]");
-    } catch {
-      tagsResult = suggestion ? [suggestion] : [];
+      let cleaned = suggestion?.trim() || "";
+
+      cleaned = cleaned
+        .replace(/```(json)?/gi, "")
+        .replace(/```/g, "")
+        .trim();
+
+      cleaned = cleaned.replace(/\n/g, "").trim();
+
+      if (cleaned.startsWith("[") && cleaned.endsWith("]")) {
+        tagsResult = JSON.parse(cleaned);
+      } else if (cleaned.startsWith('"') && cleaned.endsWith('"')) {
+        tagsResult = [JSON.parse(cleaned)];
+      } else {
+        tagsResult = cleaned ? [cleaned] : [];
+      }
+    } catch (err) {
+      tagsResult = [];
     }
 
     const usage = completion.usage || {
