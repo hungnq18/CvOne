@@ -471,17 +471,18 @@ Do not include any explanation or markdown, only valid JSON.
         
         Translate all human-readable text values to ${targetLanguage}. Keep keys, structure, and non-text values unchanged.
         
-        TRANSLATE: Natural language text (descriptions, titles, summaries).
+        TRANSLATE: Natural language text (descriptions, titles, summaries),Translate org prefixes to ${targetLanguage}, keep names.
         DO NOT TRANSLATE: Keys, dates, numbers, emails, URLs, tech names, brand/company names, personal names, null.
         
         RULES:
+        
         - Translate accurately, preserving full meaning and CV tone
         - Correct grammar: past tense for work history, present for skills. Include all articles/prepositions
         - Professional CV style: formal language, strong action verbs
         - Clear, natural phrasing - no awkward machine translations
         - Verify ALL text is in ${targetLanguage}. No untranslated fragments
         - Return ONLY valid JSON, Preserve JSON structure and order (no comments, markdown, explanations)
-        
+        -
         Input JSON:
         ${JSON.stringify(content, null, 2)}
         
