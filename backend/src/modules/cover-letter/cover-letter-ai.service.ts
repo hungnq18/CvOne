@@ -4,26 +4,15 @@ import * as fs from "fs";
 import OpenAI from "openai";
 import * as pdfParse from "pdf-parse";
 import { CreateGenerateCoverLetterDto } from "../cover-letter/dto/create-generate-cl-ai.dto";
+import { OpenaiApiService } from "../cv/services/openai-api.service";
 
 @Injectable()
 export class CoverLetterAiService {
-  private readonly logger = new Logger(CoverLetterAiService.name);
-  private openai: OpenAI;
-
-  constructor(private configService: ConfigService) {
-    const apiKey = this.configService.get<string>("OPENAI_API_KEY");
-    if (!apiKey) {
-      this.logger.warn("OPENAI_API_KEY not found in environment variables");
-    }
-    this.openai = new OpenAI({
-      // baseURL: "https://models.github.ai/inference",
-      apiKey: apiKey,
-    });
-  }
+  constructor(private openaiApiService: OpenaiApiService) {}
 
   async generateCoverLetterByAi(
     createClAi: CreateGenerateCoverLetterDto,
-    jdPath: string
+    jobDescription: string
   ) {
     try {
       const {
@@ -46,9 +35,6 @@ export class CoverLetterAiService {
         recipientEmail,
       } = createClAi;
 
-      const jdBuffer = fs.readFileSync(jdPath);
-      const jobDescriptionText = (await pdfParse(jdBuffer)).text;
-
       const prompt = `
 You are a professional assistant specialized in writing job application cover letters.
 
@@ -61,7 +47,7 @@ Your task is to:
 ---
 
 Job Description:
-${jobDescriptionText}
+${jobDescription}
 
 ---
 
@@ -94,27 +80,38 @@ Rules:
 - Do NOT add any explanation, markdown, or extra text — return only valid JSON.
 `;
 
-      const completion = await this.openai.chat.completions.create({
-        model: "gpt-4o",
-        messages: [
-          {
-            role: "system",
-            content:
-              "You are a professional cover letter writer. Generate only the requested fields in JSON format.",
-          },
-          {
-            role: "user",
-            content: prompt,
-          },
-        ],
-      });
+      const completion = await this.openaiApiService
+        .getOpenAI()
+        .chat.completions.create({
+          model: "gpt-4o",
+          messages: [
+            {
+              role: "system",
+              content:
+                "You are a professional cover letter writer. Generate only the requested fields in JSON format.",
+            },
+            {
+              role: "user",
+              content: prompt,
+            },
+          ],
+        });
 
       const response = completion.choices[0]?.message?.content;
       if (!response) {
         throw new Error("No response from OpenAI");
       }
 
-      const cleanedResponse = response.replace(/```json/g, "").replace(/```/g, "");
+      const usage = completion.usage || {
+        prompt_tokens: 0,
+        completion_tokens: 0,
+        total_tokens: 0,
+      };
+      console.log("Usage:", usage);
+
+      const cleanedResponse = response
+        .replace(/```json/g, "")
+        .replace(/```/g, "");
 
       const { subject, opening, body, callToAction } =
         JSON.parse(cleanedResponse);
@@ -150,41 +147,25 @@ Rules:
 
       return coverLetter;
     } catch (error) {
-      this.logger.error("Cover letter generation failed:", error);
       throw new Error("Failed to generate cover letter: " + error.message);
     }
   }
 
-  async extractCoverLetterFromPdf(
-    coverLetterPath: string,
-    jdPath: string,
+  async extractCoverLetter(
+    coverLetter: string,
+    jobDescription: string,
     templateId: string
   ) {
-    // 1. Validate file existence
-    if (!fs.existsSync(coverLetterPath)) {
-      throw new Error("Cover letter PDF file does not exist");
-    }
-    if (!fs.existsSync(jdPath)) {
-      throw new Error("Job description PDF file does not exist");
-    }
-
-    // 2. Read and extract text from both PDFs
-    const coverLetterBuffer = fs.readFileSync(coverLetterPath);
-    const jdBuffer = fs.readFileSync(jdPath);
-
-    const coverLetterText = (await pdfParse(coverLetterBuffer)).text;
-    const jobDescriptionText = (await pdfParse(jdBuffer)).text;
-
     const prompt = `
 You are an expert at analyzing cover letters. Your task is to extract key fields from the following cover letter and enhance them to better match the job description.
 
 ---
 
 **Cover Letter Content**:
-${coverLetterText}
+${coverLetter}
 
 **Job Description**:
-${jobDescriptionText}
+${jobDescription}
 
 ---
 
@@ -217,20 +198,22 @@ IMPORTANT:
 `;
 
     // 3. Call OpenAI
-    const completion = await this.openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [
-        {
-          role: "system",
-          content:
-            "You are a professional cover letter writer. Respond only with valid JSON.",
-        },
-        {
-          role: "user",
-          content: prompt,
-        },
-      ],
-    });
+    const completion = await this.openaiApiService
+      .getOpenAI()
+      .chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are a professional cover letter writer. Respond only with valid JSON.",
+          },
+          {
+            role: "user",
+            content: prompt,
+          },
+        ],
+      });
 
     const response = completion.choices[0]?.message?.content;
     if (!response) {
@@ -243,6 +226,13 @@ IMPORTANT:
     } catch (err) {
       throw new Error("Invalid JSON returned from OpenAI: " + err.message);
     }
+
+    const usage = completion.usage || {
+      prompt_tokens: 0,
+      completion_tokens: 0,
+      total_tokens: 0,
+    };
+    console.log("Usage:", usage);
 
     return {
       templateId,

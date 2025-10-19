@@ -51,7 +51,4 @@ export class CreateGenerateCoverLetterDto {
 
   @IsString()
   workStyle: string;
-
-  @IsString()
-  jobDescriptionFileName: string;
 }
