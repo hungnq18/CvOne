@@ -8,11 +8,9 @@ import { OpenaiApiService } from "../cv/services/openai-api.service";
  */
 @Injectable()
 export class CvTemplateAiService {
-  private openAi: OpenAI;
   constructor(private openaiApiService: OpenaiApiService) {}
 
   async suggestTagsByAi(
-    infoUser: any,
     jobDescription: string,
     tags: any
   ): Promise<{
@@ -22,11 +20,14 @@ export class CvTemplateAiService {
     const prompt = `
 Tags: ${tags.join(", ")}
 
-User profile:
-${JSON.stringify(infoUser, null, 2)}
-
 Job description:
 ${jobDescription}
+
+Task:
+- Analyze the job description.
+- Suggest ALL relevant tags that best describe the job's domain, skills, and focus.
+- If unsure, return the single closest tag.
+Output only a JSON array, e.g. ["tagA","tagB"].
 `;
 
     const completion = await this.openaiApiService
@@ -37,15 +38,12 @@ ${jobDescription}
           {
             role: "system",
             content: `
-        You are an AI tag recommender.Analyze a user's profile (JSON) and a job description to suggest tags from a given list.
-        Rules:
-- Compare user's info and the job description.
-- Choose ALL tags that match both the user's skills/field and job requirements.
-- Always return at least one tag.
-- If unsure, pick the single most relevant tag.
-Strict rules:
-- Output ONLY a raw JSON array (example: ["tagA","tagB"])
-- DO NOT include code blocks, explanations, markdown, or any other text.
+            You are an AI tag recommender.
+            Read a job description and select the most relevant tags from a given list.
+            Strict rules:
+            - Output ONLY a pure JSON array (e.g. ["tagA","tagB"])
+            - DO NOT include code blocks, markdown, or explanations.
+       
         `,
           },
 
