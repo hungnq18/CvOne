@@ -313,12 +313,12 @@ export default function JobDescriptionPage() {
           return;
         }
         const result = await uploadJDPdfAndAnalyze(jdFile);
-        // console.log(result);
+        console.log(result);
         let extractedText = result?.text?.trim() || "";
         if (!extractedText && result && typeof result === "object") {
           extractedText = analysisToText(result);
         }
-        // console.log("Extracted text from PDF:", extractedText);
+        console.log("Extracted text from PDF:", extractedText);
         if (extractedText) {
           setJobDescription(extractedText);
           finalJobDescription = extractedText;
@@ -337,12 +337,16 @@ export default function JobDescriptionPage() {
       const file = uint8ArrayToFile(pdfFile);
       const result = await uploadAndAnalyzeCV(file, finalJobDescription);
   
-      const userData = result?.optimizedCv?.userData;
+      const userData = result?.analysisResult?.userData;
       if (userData) {
         updateUserData(userData);
+        // Đợi một chút để đảm bảo context được update
+        await new Promise(resolve => setTimeout(resolve, 100));
       }
+
+      // console.log("trang job description" ,result);
   
-      router.push(`/createCV-AIManual?id=${templateId}`);
+      router.replace(`/createCV-AIManual?id=${templateId}`);
   
     } catch (error) {
       console.error("Lỗi trong quá trình xử lý CV:", error);
