@@ -90,9 +90,12 @@ export default function PageChooseUploadCreateCVSection() {
       
       if (result?.analysisResult?.userData) {
         updateUserData(result.analysisResult.userData);
+        console.log("trang choose upload" ,result.analysisResult.userData);
+        // Đợi một chút để đảm bảo context được update
+        await new Promise(resolve => setTimeout(resolve, 100));
       }
       
-      router.push(`/createCV-AIManual?id=${templateId}`);
+      router.replace(`/createCV-AIManual?id=${templateId}`);
 
     } catch (error) {
       if (error instanceof Error && error.message.includes('413')) {
