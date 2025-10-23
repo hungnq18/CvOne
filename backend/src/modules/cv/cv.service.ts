@@ -11,6 +11,7 @@ import { CvPdfCloudService } from "./cv-pdf-cloud.service";
 import { CreateCvDto } from "./dto/create-cv.dto";
 import { Cv } from "./schemas/cv.schema";
 import { CvCacheService } from "./services/cv-cache.service";
+import { ConfigService } from "@nestjs/config";
 
 @Injectable()
 export class CvService {
@@ -20,7 +21,8 @@ export class CvService {
     private cvCacheService: CvCacheService,
     private cvPdfCloudService: CvPdfCloudService,
     private mailService: MailService,
-  ) {}
+    private readonly configService: ConfigService,
+  ) { }
 
   async getAllCVs(userId: string): Promise<Cv[]> {
     return this.cvCacheService.getCachedCVs(userId);
@@ -28,6 +30,15 @@ export class CvService {
 
   async getCVById(id: string, userId: string): Promise<Cv> {
     const cv = await this.cvCacheService.getCachedCV(id, userId);
+    if (!cv) {
+      throw new NotFoundException("CV not found");
+    }
+    return cv;
+  }
+
+  async getCVShare(cvId: string) {
+    const cv = await this.cvModel.findById(cvId);
+
     if (!cv) {
       throw new NotFoundException("CV not found");
     }
@@ -200,113 +211,16 @@ export class CvService {
     return template;
   }
 
-  /**
-   * Generate PDF from CV and upload to Cloudinary
-   * @param cvId - The ID of the CV to generate PDF from
-   * @param userId - The ID of the user
-   * @returns Object containing shareUrl
-   */
-  async generatePdfAndUploadToCloudinary(
-    cvId: string,
-    userId: string,
-    pdfBase64: string,
-  ): Promise<{ success: boolean; shareUrl?: string; error?: string }> {
-    try {
-      // 1. Get CV data from database
-      const cv = await this.getCVById(cvId, userId);
-      if (!cv) {
-        throw new NotFoundException("CV not found");
-      }
-
-      // 2. Use provided base64 PDF from frontend
-      const pdfBuffer = Buffer.from(pdfBase64, "base64");
-
-      // 3. Upload PDF to Cloudinary
-      const uploadResult = await this.uploadPdfToCloudinary(
-        pdfBuffer,
-        cv.title,
-        userId,
-      );
-
-      if (!uploadResult.success) {
-        throw new Error(
-          uploadResult.error || "Failed to upload PDF to Cloudinary",
-        );
-      }
-
-      return {
-        success: true,
-        shareUrl: uploadResult.shareUrl,
-      };
-    } catch (error: unknown) {
-      console.error("Error in generatePdfAndUploadToCloudinary:", error);
-      const errMsg =
-        error instanceof Error
-          ? error.message
-          : "Failed to generate and upload PDF";
-      return {
-        success: false,
-        error: errMsg,
-      };
+  async generateShareLink(cvId: string, userId: string) {
+    const cv = await this.getCVById(cvId, userId);
+    if (!cv) {
+      throw new NotFoundException("CV not found");
     }
-  }
 
-  /**
-   * Upload PDF buffer to Cloudinary using CvPdfCloudService
-   * @param pdfBuffer - PDF buffer to upload
-   * @param cvTitle - CV title for naming
-   * @param userId - User ID for folder organization
-   * @returns Upload result with shareUrl
-   */
-  private async uploadPdfToCloudinary(
-    pdfBuffer: Buffer,
-    cvTitle: string,
-    userId: string,
-  ): Promise<{ success: boolean; shareUrl?: string; error?: string }> {
-    return this.cvPdfCloudService.uploadPdfToCloudinary(pdfBuffer, cvTitle, userId);
-  }
+    const frontendUrl = this.configService.get<string>("FRONTEND_URL");
 
-  /**
-   * Generate PDF from CV and send via email
-   * @param cvId - The ID of the CV to generate PDF from
-   * @param userId - The ID of the user
-   * @param recipientEmail - Email address to send the PDF to
-   * @returns Object containing success status
-   */
-  async generatePdfAndSendEmail(
-    cvId: string,
-    userId: string,
-    recipientEmail: string,
-    pdfBase64: string,
-  ): Promise<{ success: boolean; error?: string }> {
-    try {
-      // 1. Get CV data from database
-      const cv = await this.getCVById(cvId, userId);
-      if (!cv) {
-        throw new NotFoundException("CV not found");
-      }
+    const shareUrl = `${frontendUrl}/cvs/share/${cvId}`;
 
-      // 2. Use provided base64 from frontend
-      const pdfBuffer = Buffer.from(pdfBase64, "base64");
-
-      // 3. Send PDF via email
-      await this.mailService.sendCvPdfEmail(
-        recipientEmail,
-        pdfBuffer,
-        cv.title,
-      );
-
-      return { success: true };
-    } catch (error: unknown) {
-      console.error("Error in generatePdfAndSendEmail:", error);
-      const errMsg =
-        error instanceof Error
-          ? error.message
-          : "Failed to generate PDF and send email";
-      return {
-        success: false,
-        error: errMsg,
-      };
-    }
+    return { success: true, shareUrl };
   }
 }

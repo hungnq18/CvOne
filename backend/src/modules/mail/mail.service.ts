@@ -116,6 +116,15 @@ export class MailService {
     }
   }
 
+  convertBase64ToPdfBuffer(base64Pdf: string): Buffer {
+    if (!base64Pdf) throw new Error("Base64 input is required");
+
+    return Buffer.from(
+      base64Pdf.replace(/^data:application\/pdf;base64,/, ""),
+      "base64",
+    );
+  }
+
   async sendCvPdfEmail(
     recipientEmail: string,
     pdfBuffer: Buffer,

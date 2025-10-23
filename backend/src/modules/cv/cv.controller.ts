@@ -93,6 +93,29 @@ export class CvController {
   }
 
   /**
+   * Get CV share by ID (no auth required)
+   * - Ai có link cũng xem được, không kiểm tra isPublic
+   */
+  @Get(":id/share")
+  async viewCVShare(@Param("id") id: string) {
+    return this.cvService.getCVShare(id);
+  }
+
+  /**
+   * Generate shareable link for a CV
+   * @param id - CV ID
+   * @param userId - Authenticated user ID
+   */
+  @UseGuards(JwtAuthGuard)
+  @Post(":id/generate-share-link")
+  async generateShareLink(
+    @Param("id") id: string,
+    @User("_id") userId: string,
+  ) {
+    return this.cvService.generateShareLink(id, userId);
+  }
+
+  /**
    * Get all saved CVs for the current user
    * @param userId - The ID of the authenticated user
    */
