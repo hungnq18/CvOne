@@ -126,6 +126,15 @@ export class CvController {
   }
 
   /**
+   * Check OpenAI API status
+   */
+  @UseGuards(JwtAuthGuard)
+  @Get("ai-status")
+  async checkAiStatus() {
+    return this.openAiService.checkApiStatus();
+  }
+
+  /**
    * Get all available CV templates
    * @returns Array of CV templates
    * @public - No authentication required
@@ -144,6 +153,19 @@ export class CvController {
   @Get("templates/:id")
   async getTemplateById(@Param("id") id: string): Promise<CvTemplate> {
     return this.cvService.getTemplateById(id);
+  }
+
+  /**
+   * Get a specific CV by ID
+   * @param id - The ID of the CV to retrieve
+   * @param userId - The ID of the authenticated user
+   * @returns CV object if found and user has access
+   * @requires Authentication
+   */
+  @UseGuards(JwtAuthGuard)
+  @Get(":id")
+  getById(@Param("id") id: string, @User("_id") userId: string) {
+    return this.cvService.getCVById(id, userId);
   }
 
   /**
@@ -259,15 +281,6 @@ export class CvController {
   }
 
   /**
-   * Check OpenAI API status
-   */
-  @UseGuards(JwtAuthGuard)
-  @Get("ai-status")
-  async checkAiStatus() {
-    return this.openAiService.checkApiStatus();
-  }
-
-  /**
    * Gợi ý Professional Summary bằng AI
    */
   @UseGuards(JwtAuthGuard)
@@ -317,19 +330,6 @@ export class CvController {
       jobAnalysis,
       experienceLevel,
     );
-  }
-
-  /**
-   * Get a specific CV by ID
-   * @param id - The ID of the CV to retrieve
-   * @param userId - The ID of the authenticated user
-   * @returns CV object if found and user has access
-   * @requires Authentication
-   */
-  @UseGuards(JwtAuthGuard)
-  @Get(":id")
-  getById(@Param("id") id: string, @User("_id") userId: string) {
-    return this.cvService.getCVById(id, userId);
   }
 
   /**

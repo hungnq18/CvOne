@@ -113,6 +113,7 @@ function UploadCVPage() {
       alert(t.alerts.uploadRequired);
       return;
     }
+    
     router.push(`/job-description-cv?id=${templateId}`);
   };
 
