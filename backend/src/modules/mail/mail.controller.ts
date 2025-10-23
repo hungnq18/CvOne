@@ -37,18 +37,26 @@ export class MailController {
 
   @Post("send-cv-pdf")
   async sendCvPdf(
-    @Body() body: { email: string; pdfBuffer: string; cvTitle: string },
+    @Body() body: { email: string; base64Pdf: string; cvTitle: string },
   ) {
-    const { email, pdfBuffer, cvTitle } = body || ({} as any);
-    if (!email || !pdfBuffer || !cvTitle) {
+    const { email, base64Pdf, cvTitle } = body || {};
+
+    if (!email || !base64Pdf || !cvTitle) {
       throw new BadRequestException(
-        "email, pdfBuffer, and cvTitle are required",
+        "email, base64Pdf, and cvTitle are required",
       );
     }
 
-    // Convert base64 string back to Buffer
-    const buffer = Buffer.from(pdfBuffer, "base64");
-    await this.mailService.sendCvPdfEmail(email, buffer, cvTitle);
+    // Chuyển Base64 sang Buffer
+    const cleanedBase64 = base64Pdf.replace(
+      /^data:application\/pdf;base64,/,
+      "",
+    );
+    const pdfBuffer = Buffer.from(cleanedBase64, "base64");
+
+    // Gọi service gửi email kèm file PDF
+    await this.mailService.sendCvPdfEmail(email, pdfBuffer, cvTitle);
+
     return { message: "CV PDF email sent successfully" };
   }
 }
