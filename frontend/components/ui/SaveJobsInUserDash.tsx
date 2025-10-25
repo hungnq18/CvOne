@@ -1,10 +1,9 @@
 'use client';
 
-import React, { useRef, useState, useEffect } from 'react';
-import { Card } from 'antd';
-import { FaHeart, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import { Job } from '@/api/jobApi';
-import { useLanguage } from '@/providers/global-provider';
+import { useLanguage } from '@/providers/global_provider';
+import React, { useEffect, useRef, useState } from 'react';
+import { FaChevronLeft, FaChevronRight, FaHeart } from 'react-icons/fa';
 
 const translations = {
     vi: {

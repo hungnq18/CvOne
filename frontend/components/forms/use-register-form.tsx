@@ -1,11 +1,11 @@
 "use client"
 
+import { verifyEmail } from "@/api/authApi"
 import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/providers/auth-provider"
-import { useLanguage } from "@/providers/global-provider"
+import { useLanguage } from "@/providers/global_provider"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
-import { verifyEmail } from "@/api/authApi"
 
 interface RegisterFormData {
   email: string;

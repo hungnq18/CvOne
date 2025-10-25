@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, FC, ReactNode } from "react";
-import { useCV } from "@/providers/cv-provider";
 import { analyzeJD } from "@/api/cvapi";
-import { useLanguage } from "@/providers/global-provider";
+import { useCV } from "@/providers/cv-provider";
+import { useLanguage } from "@/providers/global_provider";
+import { FC, ReactNode, useState } from "react";
 
 // --- ĐỐI TƯỢNG TRANSLATIONS ---
 const translations = {

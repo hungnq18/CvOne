@@ -1,18 +1,18 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model, Types } from "mongoose";
-import { CoverLetter } from "./schemas/cover-letter.schema";
+import { OpenAiService } from "../cv/services/openai.service";
 import { CreateCoverLetterDto } from "./dto/create-cover-letter.dto";
 import { UpdateCoverLetterDto } from "./dto/update-cover-letter.dto";
-import { OpenAiService } from "../cv/openai.service";
+import { CoverLetter } from "./schemas/cover-letter.schema";
 
 @Injectable()
 export class CoverLetterService {
   constructor(
     @InjectModel(CoverLetter.name)
     private coverLetterModel: Model<CoverLetter>,
-    private openAiService: OpenAiService,
-  ) { }
+    private openAiService: OpenAiService
+  ) {}
 
   async create(dto: CreateCoverLetterDto, userId: string): Promise<any> {
     const payload = {

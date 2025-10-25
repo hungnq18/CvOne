@@ -1,9 +1,9 @@
-import React from "react";
-import { Table, Card, Row, Col, Button, Menu } from "antd";
-import { FaFileAlt, FaPlus } from "react-icons/fa";
 import { CV } from "@/api/cvapi";
-import { useLanguage } from "@/providers/global-provider";
+import { useLanguage } from "@/providers/global_provider";
+import { Button, Card, Col, Row, Table } from "antd";
 import dynamic from "next/dynamic";
+import React from "react";
+import { FaFileAlt, FaPlus } from "react-icons/fa";
 
 const CardMyCV = dynamic(() => import("@/components/card/card-MyCV"), {
   ssr: false,

@@ -1,15 +1,15 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, ArrowRight, ChevronDown } from "lucide-react";
 import {
-  getProvinces,
-  getDistrictsByProvinceCode,
-  Province,
   District,
+  getDistrictsByProvinceCode,
+  getProvinces,
+  Province,
 } from "@/api/locationApi";
-import { useLanguage } from "@/providers/global-provider";
+import { useLanguage } from "@/providers/global_provider";
+import { ArrowLeft, ArrowRight, ChevronDown } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
 
 const personalInfoTranslations = {
   en: {

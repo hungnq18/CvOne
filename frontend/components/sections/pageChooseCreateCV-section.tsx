@@ -1,6 +1,7 @@
 "use client";
+
+import { useLanguage } from "@/providers/global_provider";
 import Link from "next/link";
-import { useLanguage } from "@/providers/global-provider";
 import { useSearchParams } from "next/navigation";
 
 const translations = {
@@ -30,12 +31,13 @@ const translations = {
 
 export default function CreateMethodSection() {
   const searchParams = useSearchParams();
+
   const templateId = searchParams.get("id") ?? "";
   const { language } = useLanguage();
   const t = translations[language].chooseCreate;
 
   return (
-    <div className="bg-white py-24 sm:py-32">
+    <div className="bg-white py-24 sm:py-32 ">
       <div className="mx-auto max-w-5xl px-6 lg:px-8 text-center">
         <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
           {t.title}
@@ -82,3 +84,4 @@ export default function CreateMethodSection() {
     </div>
   );
 }
+

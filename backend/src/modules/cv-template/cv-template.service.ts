@@ -29,24 +29,20 @@ export class CvTemplateService {
     return template;
   }
 
-  async getSuggestTemplateCv(
-    infoUser: any,
-    jobDescription: string
-  ): Promise<CvTemplate[]> {
+  async getSuggestTemplateCv(jobDescription: string): Promise<CvTemplate[]> {
     const tags = await this.cvTemplateModel.distinct("tags").exec();
     console.log(tags);
 
     const suggestTags = await this.cvTemplateAiService.suggestTagsByAi(
-      infoUser,
       jobDescription,
       tags
     );
     console.log("suggestTags", suggestTags);
 
-    if (suggestTags && suggestTags.length > 0) {
+    if (suggestTags && suggestTags.tags.length > 0) {
       const templates = await this.cvTemplateModel
         .find({
-          tags: { $in: suggestTags }, // chỉ cần 1 tag match là được
+          tags: { $in: suggestTags.tags }, // chỉ cần 1 tag match là được
         })
         .lean()
         .exec();

@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { Table } from "antd";
-import { FaFileAlt } from "react-icons/fa";
 import { CV, CVTemplate, getCVTemplates } from "@/api/cvapi";
-import { useLanguage } from "@/providers/global-provider";
 import { templateComponentMap } from "@/components/cvTemplate/index";
+import { useLanguage } from "@/providers/global_provider";
+import { Table } from "antd";
+import React, { useEffect, useState } from "react";
+import { FaFileAlt } from "react-icons/fa";
 
 const translations = {
   vi: {

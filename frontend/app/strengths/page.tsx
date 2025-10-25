@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useEffect, Suspense } from "react";
-import { useRouter } from "next/navigation";
+import { useLanguage } from "@/providers/global_provider";
 import { ArrowLeft, ArrowRight, Check } from "lucide-react";
-import { useLanguage } from "@/providers/global-provider";
+import { useRouter } from "next/navigation";
+import React, { Suspense, useEffect, useState } from "react";
 
 const strengthsTranslations = {
   en: {

@@ -2,7 +2,7 @@
 import { ApplyJob, getApplyJobByHR } from "@/api/apiApplyJob";
 import { ApplyJobOverviewChart } from "@/components/hr/profit-chart";
 import { Card, CardContent } from "@/components/ui/card";
-import { useLanguage } from '@/providers/global-provider';
+import { useLanguage } from '@/providers/global_provider';
 import { Eye, Package, ShoppingCart, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 

@@ -1,15 +1,15 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { useLanguage } from '@/providers/global-provider';
-import JobTable from '@/components/sections/JobTable';
-import JobSearch from '@/components/sections/JobSearch';
-import JobTabs from '@/components/sections/JobTabs';
-import '@/styles/myDocuments.css';
-import { Job, translations } from '../../app/myJobs/page';
-import { getJobById, getSavedJobsByUser, getAppliedJobsByUser } from '@/api/jobApi';
+import { getAppliedJobsByUser, getSavedJobsByUser } from '@/api/jobApi';
 import { getAccountIdFromToken } from '@/api/userApi';
+import JobSearch from '@/components/sections/JobSearch';
+import JobTable from '@/components/sections/JobTable';
+import JobTabs from '@/components/sections/JobTabs';
+import { useLanguage } from '@/providers/global_provider';
+import '@/styles/myDocuments.css';
 import { TablePaginationConfig } from 'antd';
+import { useEffect, useState } from 'react';
+import { Job, translations } from '../../app/myJobs/page';
 
 export default function MyJobsClient() {
     const [activeTab, setActiveTab] = useState('1');

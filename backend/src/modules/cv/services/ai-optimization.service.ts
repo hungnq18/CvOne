@@ -1,5 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { CvAiService } from '../cv-ai.service';
+import { CvAnalysisService } from './cv-analysis.service';
+import { CvContentGenerationService } from './cv-content-generation.service';
+import { JobAnalysisService } from './job-analysis.service';
 
 @Injectable()
 export class AiOptimizationService {
@@ -7,14 +9,18 @@ export class AiOptimizationService {
   private readonly maxRetries = 3;
   private readonly retryDelay = 1000; // 1 second
 
-  constructor(private readonly cvAiService: CvAiService) {}
+  constructor(
+    private readonly cvAnalysisService: CvAnalysisService,
+    private readonly cvContentGenerationService: CvContentGenerationService,
+    private readonly jobAnalysisService: JobAnalysisService
+  ) {}
 
   /**
    * Analyze CV content with retry mechanism
    */
   async analyzeCvContentWithRetry(cvText: string): Promise<any> {
     return this.retryOperation(
-      () => this.cvAiService.analyzeCvContent(cvText),
+      () => this.cvAnalysisService.analyzeCvContent(cvText),
       'analyzeCvContent'
     );
   }
@@ -24,28 +30,11 @@ export class AiOptimizationService {
    */
   async analyzeJobDescriptionWithRetry(jobDescription: string): Promise<any> {
     return this.retryOperation(
-      () => this.cvAiService.getOpenAiService().analyzeJobDescription(jobDescription),
+      () => this.jobAnalysisService.analyzeJobDescription(jobDescription),
       'analyzeJobDescription'
     );
   }
 
-  /**
-   * Generate optimized CV with retry mechanism
-   */
-  async generateOptimizedCvWithRetry(
-    analysisResult: any,
-    jobAnalysis: any,
-    additionalRequirements?: string
-  ): Promise<any> {
-    return this.retryOperation(
-      () => this.cvAiService.generateOptimizedCvWithAI(
-        analysisResult,
-        jobAnalysis,
-        additionalRequirements
-      ),
-      'generateOptimizedCv'
-    );
-  }
 
   /**
    * Process CV upload with parallel AI calls for better performance
@@ -57,7 +46,6 @@ export class AiOptimizationService {
   ): Promise<{
     analysisResult: any;
     jobAnalysis: any;
-    optimizedCv: any;
   }> {
     try {
       // Run AI analysis in parallel for better performance
@@ -66,17 +54,9 @@ export class AiOptimizationService {
         this.analyzeJobDescriptionWithRetry(jobDescription)
       ]);
 
-      // Generate optimized CV after both analyses are complete
-      const optimizedCv = await this.generateOptimizedCvWithRetry(
-        analysisResult,
-        jobAnalysis,
-        additionalRequirements
-      );
-
       return {
         analysisResult,
-        jobAnalysis,
-        optimizedCv
+        jobAnalysis
       };
     } catch (error) {
       this.logger.error(`Error in processCvUploadOptimized: ${error.message}`, error.stack);

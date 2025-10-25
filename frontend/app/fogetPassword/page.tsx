@@ -1,11 +1,11 @@
 "use client"
 
+import { forgotPassword } from "@/api/authApi"
+import { useLanguage } from "@/providers/global_provider"
 import Image from "next/image"
 import React, { useState } from "react"
 import styled from "styled-components"
 import logoImg from "../../public/logo/logoCVOne.svg"
-import { forgotPassword } from "@/api/authApi"
-import { useLanguage } from "@/providers/global-provider";
 
 const Wrapper = styled.div`
   min-height: 100vh;

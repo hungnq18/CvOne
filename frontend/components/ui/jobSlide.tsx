@@ -1,7 +1,7 @@
 "use client";
-import React from 'react';
+import { useLanguage } from '@/providers/global_provider';
 import { Carousel } from 'antd';
-import { useLanguage } from '@/providers/global-provider';
+import React from 'react';
 
 const translations = {
     vi: {

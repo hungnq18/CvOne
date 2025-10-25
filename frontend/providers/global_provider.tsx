@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 
 type Language = 'en' | 'vi';
 
@@ -15,15 +15,19 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
   const [language, setLanguage] = useState<Language>('en');
 
   useEffect(() => {
-    const savedLanguage = localStorage.getItem('language') as Language;
-    if (savedLanguage) {
-      setLanguage(savedLanguage);
+    if (typeof window !== 'undefined') {
+      const savedLanguage = localStorage.getItem('language') as Language;
+      if (savedLanguage) {
+        setLanguage(savedLanguage);
+      }
     }
   }, []);
 
   const handleSetLanguage = (lang: Language) => {
     setLanguage(lang);
-    localStorage.setItem('language', lang);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('language', lang);
+    }
   };
 
   return (
@@ -41,9 +45,19 @@ export function useGlobal() {
   return context;
 }
 
+// Simple useLanguage hook
 export function useLanguage() {
-  const { language, setLanguage } = useGlobal();
-  return { language, setLanguage };
+  const context = useContext(GlobalContext);
+  
+  if (context === undefined) {
+    // Return default values when context is not available
+    return { 
+      language: 'en' as Language, 
+      setLanguage: () => {} 
+    };
+  }
+  
+  return context;
 }
 
-
+export default GlobalProvider;

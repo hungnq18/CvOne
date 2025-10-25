@@ -1,8 +1,7 @@
-import React from 'react';
-import { Tabs } from 'antd';
-import { FaBookmark, FaCheckCircle, FaArchive } from 'react-icons/fa';
-import { useLanguage } from '@/providers/global-provider';
 import { Job } from '@/app/myJobs/page';
+import { useLanguage } from '@/providers/global_provider';
+import { Tabs } from 'antd';
+import React from 'react';
 
 interface JobTabsProps {
     activeTab: string;

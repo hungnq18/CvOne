@@ -1,31 +1,25 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useCV } from "@/providers/cv-provider";
-import { templateComponentMap } from "@/components/cvTemplate/index";
-import { useSearchParams, useRouter } from "next/navigation";
 import {
-  getCVTemplateById,
-  getCVTemplates,
-  CVTemplate,
-  createCV,
-  CV,
+  getCVTemplateById
 } from "@/api/cvapi";
-import { useOnClickOutside } from "@/hooks/useOnClickOutside";
-import { jwtDecode } from "jwt-decode";
+import { templateComponentMap } from "@/components/cvTemplate/index";
 import {
-  InfoForm,
   ContactForm,
-  SummaryForm,
-  ExperienceForm,
   EducationForm,
+  ExperienceForm,
+  InfoForm,
   SkillsForm,
   Step,
+  SummaryForm,
 } from "@/components/forms/createCV-AIForm";
 import UpJdStep from "@/components/sections/up_JDforCV-AI";
+import { useCV } from "@/providers/cv-provider";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 // BƯỚC 1: Import hook để lấy ngôn ngữ
-import { useLanguage } from "@/providers/global-provider";
+import { useLanguage } from "@/providers/global_provider";
 
 // --- BƯỚC 2: TẠO ĐỐI TƯỢNG TRANSLATIONS ---
 const translations = {

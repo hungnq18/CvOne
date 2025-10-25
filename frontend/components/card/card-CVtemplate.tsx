@@ -2,14 +2,13 @@
 
 "use client";
 
-import Image from "next/image";
-import { useState } from "react";
-import { useLanguage } from "@/providers/global-provider";
-import { motion } from "framer-motion";
-import Link from "next/link";
 import { CVTemplate } from "@/api/cvapi";
 import { templateComponentMap } from "@/components/cvTemplate/index"; // Import nếu bạn đang dùng renderTemplatePreview
+import { useLanguage } from "@/providers/global_provider";
+import { motion } from "framer-motion";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 type CardCVTemplateProps = CVTemplate & {
   onPreviewClick: (template: CVTemplate) => void;

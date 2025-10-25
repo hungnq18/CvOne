@@ -2,20 +2,20 @@
 
 "use client";
 
+import { analyzeJD, suggestSkills, suggestSummary } from "@/api/cvapi";
 import { useOnClickOutside } from "@/hooks/useOnClickOutside";
-import {
-  CheckCircle2,
-  Edit,
-  Loader2,
-  PlusCircle,
-  Trash2,
-  X,
-} from "lucide-react";
-import { ChangeEvent, FC, ReactNode, useRef, useState, useEffect } from "react";
 import { useCV } from "@/providers/cv-provider";
-import { suggestSummary, analyzeJD, suggestSkills } from "@/api/cvapi";
-import { Wand2 } from "lucide-react";
-import { useLanguage } from "@/providers/global-provider";
+import { useLanguage } from "@/providers/global_provider";
+import {
+    CheckCircle2,
+    Edit,
+    Loader2,
+    PlusCircle,
+    Trash2,
+    Wand2,
+    X,
+} from "lucide-react";
+import { ChangeEvent, FC, ReactNode, useEffect, useRef, useState } from "react";
 
 // --- ĐỐI TƯỢNG TRANSLATIONS CHO TOÀN BỘ FILE ---
 const translations = {

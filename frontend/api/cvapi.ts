@@ -368,15 +368,21 @@ export async function uploadJDPdfAndAnalyze(file: File) {
 
 /**
  * Translate CV content to target language
- * @param cvData - CV data object to translate
+ * @param userData - CV user data object to translate
  * @param targetLanguage - Target language code (e.g., 'en', 'vi')
- * @returns Promise with translated CV data
+ * @param uiTexts - Optional UI texts to translate (e.g., section labels)
+ * @returns Promise with translated CV data including userData and uiTexts
  */
-export async function translateCV(userData: any, targetLanguage: string) {
+export async function translateCV(userData: any, targetLanguage: string, uiTexts?: any) {
+  const content: any = { userData };
+  if (uiTexts) {
+    content.uiTexts = uiTexts;
+  }
+  
   return fetchWithAuth(API_ENDPOINTS.CV.TRANSLATE_CV, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ targetLanguage, content: { userData } })
+    body: JSON.stringify({ targetLanguage, content })
   });
 }
 

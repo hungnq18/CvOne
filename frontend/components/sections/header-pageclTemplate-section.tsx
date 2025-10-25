@@ -1,8 +1,8 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { useLanguage } from '@/providers/global_provider';
 import { Typography } from 'antd';
-import { useLanguage } from '@/providers/global-provider';
+import { motion } from 'framer-motion';
 
 const HeaderCLSection: React.FC = () => {
     const { language } = useLanguage();

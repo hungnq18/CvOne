@@ -1,10 +1,10 @@
 import { Conversation, Message } from '@/api/apiChat';
+import { Avatar } from "@/components/ui/avatar";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { useChat } from '@/providers/ChatProvider';
+import { useLanguage } from '@/providers/global_provider';
 import { formatTime } from '@/utils/formatTime';
 import { useState } from 'react';
-import { useChat } from '@/providers/ChatProvider';
-import { useLanguage } from '@/providers/global-provider';
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 const sidebarTranslations = {
     en: {

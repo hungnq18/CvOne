@@ -1,9 +1,9 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useLanguage } from "@/providers/global_provider";
 import { ArrowLeft, ArrowRight } from "lucide-react";
-import { useLanguage } from "@/providers/global-provider";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 const workStylesTranslations = {
   en: {

@@ -20,7 +20,7 @@ import { UpdateCoverLetterDto } from "./dto/update-cover-letter.dto";
 export class CoverLetterController {
   constructor(
     private readonly coverLetterService: CoverLetterService,
-    private coverLetterAiService: CoverLetterAiService,
+    private coverLetterAiService: CoverLetterAiService
   ) {}
 
   @UseGuards(JwtAuthGuard)
@@ -53,43 +53,32 @@ export class CoverLetterController {
     return this.coverLetterService.remove(id);
   }
 
-  // @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard)
   @Post("generate/ai")
-  async generateByAi(@Body() dto: CreateGenerateCoverLetterDto) {
-    const jdPath = path.join(
-      process.cwd(),
-      "uploads/",
-      dto.jobDescriptionFileName,
+  async generateByAi(
+    @Body() dto: CreateGenerateCoverLetterDto,
+    @Body("jobDescription") jobDescription: string
+  ) {
+    return this.coverLetterAiService.generateCoverLetterByAi(
+      dto,
+      jobDescription
     );
-    return this.coverLetterAiService.generateCoverLetterByAi(dto, jdPath);
   }
 
-  // @UseGuards(JwtAuthGuard)
-  @Post("extract/from-path")
+  @UseGuards(JwtAuthGuard)
+  @Post("extract/ai")
   async extractFromPdfFiles(
     @Body()
     body: {
-      coverLetterFileName: string;
-      jobDescriptionFileName: string;
+      coverLetter: string;
+      jobDescription: string;
       templateId: string;
-    },
+    }
   ) {
-    const coverLetterPath = path.join(
-      process.cwd(),
-      "uploads/",
-      body.coverLetterFileName,
-    );
-
-    const jdPath = path.join(
-      process.cwd(),
-      "uploads/",
-      body.jobDescriptionFileName,
-    );
-
-    return this.coverLetterAiService.extractCoverLetterFromPdf(
-      coverLetterPath,
-      jdPath,
-      body.templateId,
+    return this.coverLetterAiService.extractCoverLetter(
+      body.coverLetter,
+      body.jobDescription,
+      body.templateId
     );
   }
 }

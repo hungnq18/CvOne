@@ -1,9 +1,9 @@
+import CVCard from "@/components/card/card-template";
+import TemplatePreviewModal from "@/components/modals/TemplatePreviewModal";
+import { useLanguage } from "@/providers/global_provider";
+import { motion } from "framer-motion";
 import { GetServerSideProps } from "next";
 import { useState } from "react";
-import { motion } from "framer-motion";
-import CVCard from "@/components/card/card-template";
-import { useLanguage } from "@/providers/global-provider";
-import TemplatePreviewModal from "@/components/modals/TemplatePreviewModal";
 
 // Giả sử API của bạn có hàm getCLTemplates
 import { getCLTemplates } from "@/api/clApi";

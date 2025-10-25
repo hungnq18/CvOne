@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
 import { Job } from '@/api/jobApi';
-import { useLanguage } from '@/providers/global-provider';
+import { useLanguage } from '@/providers/global_provider';
 import { Pagination } from 'antd';
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
 
 const translations = {
   vi: {

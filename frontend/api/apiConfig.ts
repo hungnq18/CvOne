@@ -59,10 +59,9 @@ export const API_ENDPOINTS = {
     REWRITE_WORK_DESCRIPTION: "/cv/rewrite-work-description",
     UPLOAD_AND_ANALYZE: "/cv/upload-and-analyze",
     UPLOAD_ANALYZE_GENERATE_PDF: "/cv/upload-analyze-generate-pdf",
-    // UPLOAD_ANALYZE_OVERLAY_PDF: "/cv/upload-analyze-overlay-pdf",
     AI_STATUS: "/cv/ai-status",
-    GENERATE_PDF_AND_UPLOAD_TO_CLOUDINARY: "/cv/:id/generate-pdf-uploadToCloudinary",// api để tạo pdf và upload lên cloudinary. nhận vào base64 pdf
-    GENERATE_PDF_AND_SEND_EMAIL: "/cv/:id/send-pdf-email",// api để tạo pdf và gửi mail. nhận vào base64 pdf và email
+    GET_CV_SHARE_BY_ID: "/cv/:id/share",// api lấy cv không cần đăng nhập
+    GENERATE_SHARE_LINK: "/cv/:id/generate-share-link",// api để tạo link share cv. nhận vào id cv
     TRANSLATE_CV: "/cv/translate",//nhận vào json cv và target language trả về json cv đã được translate
   },
   CL: {
@@ -127,6 +126,6 @@ export const API_ENDPOINTS = {
     UPLOAD_FILE: "/upload",
   },
   MAIL: {
-    SHARE_CV: "/mail/send-cv-pdf",// api để gửi pdf có sẵn qua mail
+    SHARE_CV: "/mail/send-cv-pdf",// api nhận vào email, base64 pdf, cvTitle để gửi pdf có sẵn qua mail
   },
 } as const;

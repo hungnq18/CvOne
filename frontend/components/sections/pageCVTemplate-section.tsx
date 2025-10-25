@@ -1,15 +1,14 @@
 "use client";
-import { GetServerSideProps } from "next";
 import { CVTemplate, getCVTemplates } from "@/api/cvapi";
 import CardCVTemplate from "@/components/card/card-CVtemplate";
-import { useLanguage } from "@/providers/global-provider";
-import { motion } from "framer-motion";
-import { FC, useState } from "react";
-import { X } from "lucide-react";
 import { templateComponentMap } from "@/components/cvTemplate/index";
-import { useRouter } from "next/navigation";
 import { useOnClickOutside } from "@/hooks/useOnClickOutside";
-import { useRef } from "react";
+import { useLanguage } from "@/providers/global_provider";
+import { motion } from "framer-motion";
+import { X } from "lucide-react";
+import { GetServerSideProps } from "next";
+import { useRouter } from "next/navigation";
+import { FC, useRef, useState } from "react";
 
 // ================== MODAL ==================
 interface TemplatePreviewModalProps {

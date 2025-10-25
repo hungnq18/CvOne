@@ -1,12 +1,12 @@
 "use client";
-import React, { useState, useEffect } from "react";
-import { Tabs } from "antd";
-import CVList from "@/components/sections/listMyCV";
+import { CL, createCL, CreateCLDto, getCLs } from "@/api/clApi";
+import { CV, getAllCVs } from "@/api/cvapi";
 import CoverLetterList from "@/components/sections/listMyCL";
+import CVList from "@/components/sections/listMyCV";
+import { useLanguage } from "@/providers/global_provider";
 import "@/styles/myDocuments.css";
-import { useLanguage } from "@/providers/global-provider";
-import { getCLs, CL, createCL, CreateCLDto } from "@/api/clApi";
-import { getAllCVs, CV } from "@/api/cvapi";
+import { Tabs } from "antd";
+import { useEffect, useState } from "react";
 
 const translations = {
   en: {

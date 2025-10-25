@@ -1,7 +1,7 @@
-"use client"
+"use client";
 
-import { resendVerification, verifyEmail, verifyToken } from "@/api/authApi"
-import { createContext, useContext, useState } from "react"
+import { resendVerification, verifyEmail, verifyToken } from "@/api/authApi";
+import { createContext, useContext, useState } from "react";
 
 interface EmailVerificationContextType {
   isVerifying: boolean

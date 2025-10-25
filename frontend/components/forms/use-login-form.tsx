@@ -2,7 +2,7 @@
 
 import { useToast } from "@/components/ui/use-toast"
 import { DecodedToken } from "@/middleware"
-import { useLanguage } from "@/providers/global-provider"
+import { useLanguage } from "@/providers/global_provider"
 import axios from "axios"
 import { jwtDecode } from "jwt-decode"
 import { useRouter } from "next/navigation"

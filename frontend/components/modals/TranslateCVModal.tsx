@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
-import { X, Languages, Loader2 } from "lucide-react";
-import { useLanguage } from "@/providers/global-provider";
+import { useLanguage } from "@/providers/global_provider";
+import { Languages, Loader2, X } from "lucide-react";
+import { useState } from "react";
 
 interface TranslateCVModalProps {
   isOpen: boolean;

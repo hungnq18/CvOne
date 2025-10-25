@@ -1,14 +1,14 @@
 "use client";
-import { GetServerSideProps } from "next";
 import { CVTemplate, getCVTemplates } from "@/api/cvapi"; // 💡 gọi từ fakeApi
-import { useLanguage } from "@/providers/global-provider";
-import { motion } from "framer-motion";
-import { useState, useRef, FC } from "react";
-import CardCVTemplate from "../card/card-CVtemplate";
 import { templateComponentMap } from "@/components/cvTemplate/index";
-import { useRouter } from "next/navigation";
-import { X } from "lucide-react";
 import { useOnClickOutside } from "@/hooks/useOnClickOutside";
+import { useLanguage } from "@/providers/global_provider";
+import { motion } from "framer-motion";
+import { X } from "lucide-react";
+import { GetServerSideProps } from "next";
+import { useRouter } from "next/navigation";
+import { FC, useRef, useState } from "react";
+import CardCVTemplate from "../card/card-CVtemplate";
 
 interface TemplatePreviewModalProps {
   templateId: string;

@@ -1,13 +1,13 @@
 'use client';
 
-import React from 'react';
-import { Table, Tag, Space, Tooltip } from 'antd';
-import type { ColumnsType, TablePaginationConfig } from 'antd/es/table';
-import { Job, translations } from '@/app/myJobs/page';
-import { useLanguage } from '@/providers/global-provider';
-import '@/styles/jobButtons.css';
-import { useRouter } from 'next/navigation';
 import { unSaveJob } from '@/api/jobApi';
+import { Job, translations } from '@/app/myJobs/page';
+import { useLanguage } from '@/providers/global_provider';
+import '@/styles/jobButtons.css';
+import { Space, Table, Tag, Tooltip } from 'antd';
+import type { ColumnsType, TablePaginationConfig } from 'antd/es/table';
+import { useRouter } from 'next/navigation';
+import React from 'react';
 
 interface JobTableProps {
     jobs: Job[];
