@@ -5,16 +5,17 @@ import { UsersModule } from '../users/users.module';
 import { AccountsController } from './accounts.controller';
 import { AccountsService } from './accounts.service';
 import { Account, AccountSchema } from './schemas/account.schema';
+import { PasswordResetCodeService } from './password-reset-code.service';
 
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: Account.name, schema: AccountSchema }]),
-    
-     forwardRef(() => UsersModule),
-     forwardRef(() => MailModule), // Sửa ở đây
+
+    forwardRef(() => UsersModule),
+    forwardRef(() => MailModule), // Sửa ở đây
   ],
   controllers: [AccountsController],
-  providers: [AccountsService],
+  providers: [AccountsService, PasswordResetCodeService],
   exports: [AccountsService],
 })
-export class AccountsModule {} 
+export class AccountsModule { } 

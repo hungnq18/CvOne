@@ -16,13 +16,15 @@ export const API_ENDPOINTS = {
     VERIFY_EMAIL: "/accounts/verify-email",
     CREATE: "/cover-letters",
     FORGOT_PASSWORD: "/auth/forgot-password",
-    RESET_PASSWORD: "/auth/reset-password", // Thêm dòng này
+    RESET_PASSWORD: "/auth/reset-password",
   },
   ACCOUNTS: {
     VERIFY_EMAIL: "/accounts/verify-email",
     RESEND_VERIFICATION: "/accounts/resend-verification",
     VERIFY_TOKEN: (token: string) => `/accounts/verify-email/${token}`,
     CHECK_TOKEN: (token: string) => `/accounts/check-token/${token}`,
+    Reset_Pass_With_Code: "/accounts/reset-password-code",//hàm nhận vào gmail, code, mật khẩu mới để cài lại mật khẩu
+    Sent_Fogot_Password_Code: "/accounts/forgot-password-code",// hàm nhận vào gmail để gửi code 
   },
   USER: {
     GET_ALL: "/users",

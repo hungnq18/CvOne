@@ -7,16 +7,19 @@ import {
   Put,
   UseGuards,
 } from "@nestjs/common";
+import { Throttle } from "@nestjs/throttler";
 import { AccountsService } from "./accounts.service";
 import { CreateAccountDto } from "./dto/create-account.dto";
 import { VerifyEmailDto } from "./dto/verify-email.dto";
+import { RequestResetCodeDto } from "./dto/request-reset-code.dto";
+import { VerifyResetCodeDto } from "./dto/verify-reset-code.dto";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { RolesGuard } from "../auth/guards/roles.guard";
 import { Roles } from "../../common/decorators/roles.decorator";
 
 @Controller("accounts")
 export class AccountsController {
-  constructor(private readonly accountsService: AccountsService) {}
+  constructor(private readonly accountsService: AccountsService) { }
 
   @Post("register")
   async register(@Body() createAccountDto: CreateAccountDto) {
@@ -49,5 +52,16 @@ export class AccountsController {
   @Post("resend-verification")
   async resendVerification(@Body() verifyEmailDto: VerifyEmailDto) {
     return this.accountsService.requestEmailVerification(verifyEmailDto);
+  }
+
+  @Throttle({ default: { limit: 3, ttl: 15 * 60 * 1000 } })
+  @Post("forgot-password-code")
+  async forgotPasswordCode(@Body() dto: RequestResetCodeDto) {
+    return this.accountsService.requestPasswordResetCode(dto);
+  }
+
+  @Post("reset-password-code")
+  async resetPasswordCode(@Body() dto: VerifyResetCodeDto) {
+    return this.accountsService.resetPasswordWithCode(dto);
   }
 }
