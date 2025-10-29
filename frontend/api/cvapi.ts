@@ -135,6 +135,16 @@ export async function unshareCV(id: string) {
 }
 
 /**
+ * Get shared CV by ID (public, no auth required)
+ * @param id - The CV ID to get
+ * @returns Promise with CV data
+ */
+export async function getSharedCV(id: string) {
+  const url = API_ENDPOINTS.CV.GET_CV_SHARE_BY_ID.replace(":id", id);
+  return fetchWithoutAuth(url);
+}
+
+/**
  * Save CV
  * @param id - The CV ID to save
  * @returns Promise with saving result

@@ -115,7 +115,7 @@ const CVList: React.FC<CVListProps> = ({ cvList, viewMode }) => {
               <p className="text-gray-600 text-sm">{t.tip}</p>
             </Card>
           </Col>
-          <CardMyCV />
+          <CardMyCV cvListOverride={cvList} />
         </Row>
       </div>
     );

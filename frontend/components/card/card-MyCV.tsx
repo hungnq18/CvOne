@@ -6,12 +6,13 @@ import {
     deleteCV,
     getAllCVs,
     getCVTemplates,
+    getCVById,
 } from "@/api/cvapi";
 import { templateComponentMap } from "@/components/cvTemplate/index";
 import { useLanguage } from "@/providers/global_provider";
 import { Card } from "antd";
 import { motion } from "framer-motion";
-import { Edit, Trash2 } from "lucide-react";
+import { Edit, Trash2, Share2, ExternalLinkIcon , CopyIcon} from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -47,6 +48,8 @@ const translations = {
         statusDraft: "Draft",
       },
       buttons: {
+        openShare: "Open",
+        share: "Share",
         edit: "Edit",
         deleteTooltip: "Delete this CV",
         deleting: "Deleting...",
@@ -84,6 +87,8 @@ const translations = {
         statusDraft: "Bản nháp",
       },
       buttons: {
+        openShare: "Mở",
+        share: "Chia sẻ",
         edit: "Chỉnh sửa",
         deleteTooltip: "Xóa CV này",
         deleting: "Đang xóa...",
@@ -107,13 +112,36 @@ const formatTimeAgo = (
   return date.toLocaleDateString(locale === "vi" ? "vi-VN" : "en-US");
 };
 
-const CardMyCV: React.FC<{}> = ({}) => {
+type CardMyCVProps = {
+  cvListOverride?: CV[]
+}
+
+const CardMyCV: React.FC<CardMyCVProps> = ({ cvListOverride }) => {
   const { language } = useLanguage();
   const t = translations[language].cardMyCV;
 
-  const [cvList, setCvList] = useState<CV[]>([]);
+  const [cvList, setCvList] = useState<CV[]>(cvListOverride || []);
   const [templates, setTemplates] = useState<CVTemplate[]>([]);
   const [deletingCVId, setDeletingCVId] = useState<string | null>(null);
+  const [shareCVId, setShareCVId] = useState<string | null>(null);
+  const [shareUrl, setShareUrl] = useState<string>("");
+  const [copied, setCopied] = useState<boolean>(false);
+
+  const enrichCVsWithUserData = async (list: CV[]): Promise<CV[]> => {
+    const results = await Promise.all(
+      list.map(async (cv) => {
+        if (cv?.content?.userData) return cv;
+        try {
+          const full = await getCVById(cv._id);
+          if (full?.content?.userData) {
+            return { ...cv, content: { ...(cv.content || {}), userData: full.content.userData } } as CV;
+          }
+        } catch {}
+        return cv;
+      })
+    );
+    return results;
+  };
 
   const fetchData = async () => {
     try {
@@ -121,7 +149,16 @@ const CardMyCV: React.FC<{}> = ({}) => {
         getAllCVs(),
         getCVTemplates(),
       ]);
-      setCvList(cvs);
+      const enriched = await enrichCVsWithUserData(cvs || []);
+      setCvList(enriched);
+      setTemplates(templatesData);
+    } catch (err) {
+      console.error(t.errors.fetch, err);
+    }
+  };
+  const fetchTemplatesOnly = async () => {
+    try {
+      const templatesData = await getCVTemplates();
       setTemplates(templatesData);
     } catch (err) {
       console.error(t.errors.fetch, err);
@@ -129,9 +166,14 @@ const CardMyCV: React.FC<{}> = ({}) => {
   };
 
   useEffect(() => {
-    fetchData();
+    if (cvListOverride) {
+      enrichCVsWithUserData(cvListOverride).then(setCvList);
+      fetchTemplatesOnly();
+    } else {
+      fetchData();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [cvListOverride]);
 
   const containerWidth = 180;
   const templateOriginalWidth = 794;
@@ -157,7 +199,29 @@ const CardMyCV: React.FC<{}> = ({}) => {
     }
   };
 
+  const openShareModal = (cvId: string) => {
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
+    const url = `${origin}/share-cv/${cvId}`;
+    setShareUrl(url);
+    setShareCVId(cvId);
+    setCopied(false);
+  };
+
+  const closeShareModal = () => {
+    setShareCVId(null);
+    setCopied(false);
+  };
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1200);
+    } catch {}
+  };
+
   return (
+    <>
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
       {cvList.length === 0 ? (
         <div className="col-span-full text-center py-8">
@@ -175,13 +239,10 @@ const CardMyCV: React.FC<{}> = ({}) => {
           const TemplateComponent =
             templateComponentMap?.[template?.title || ""];
 
-          const hasUserData = !!cv.content?.userData;
-          const componentData = hasUserData
-            ? {
-                ...template?.data,
-                userData: cv.content!.userData,
-              }
-            : undefined;
+          const componentData = {
+            ...template?.data,
+            userData: cv.content?.userData || {},
+          };
 
           return (
             <Card key={cv._id} hoverable>
@@ -200,7 +261,7 @@ const CardMyCV: React.FC<{}> = ({}) => {
                       }}
                     >
                       <div className="pointer-events-none ">
-                        {TemplateComponent && componentData ? (
+                        {TemplateComponent ? (
                           <TemplateComponent data={componentData} language={language} />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-sm text-gray-500">
@@ -263,6 +324,17 @@ const CardMyCV: React.FC<{}> = ({}) => {
                           <Edit size={16} /> {t.buttons.edit}
                         </button>
                       </Link>
+                        <button
+                          onClick={() => openShareModal(cv._id)}
+                          className={`flex ${
+                            language === "vi"
+                              ? "w-[110px]"
+                              : "w-[90px]"
+                          } items-center gap-1 text-sm px-3 py-1.5 rounded-md transition-colors bg-gray-100 hover:bg-blue-100 text-blue-600 hover:text-blue-700`}
+                        >
+                          <Share2 size={16} /> {t.buttons.share}
+                        </button>
+                      
                       <div>
                         <button
                           onClick={() =>
@@ -301,6 +373,46 @@ const CardMyCV: React.FC<{}> = ({}) => {
         })
       )}
     </div>
+    {shareCVId && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+        <div className="bg-white w-full max-w-[40%] min-h-[120px] mx-4 rounded-lg shadow-xl p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">
+              {language === "vi" ? "Chia sẻ liên kết CV" : "Share CV link"}
+            </h3>
+            <button onClick={closeShareModal} className="text-gray-500 hover:text-gray-800">×</button>
+          </div>
+          <div className="flex gap-2">
+            <input
+              value={shareUrl}
+              readOnly
+              className="flex-1 px-3 py-2 border rounded-md text-sm bg-gray-50 select-all"
+            />
+            <button
+              onClick={handleCopy}
+              className={`flex items-center gap-1 px-3 py-2 rounded-md text-sm font-medium ${copied ? "bg-green-500 text-white" : "bg-blue-600 text-white hover:bg-blue-700"}`}
+            >
+              <CopyIcon size={18} /> {copied ? (language === "vi" ? "Đã copy" : "Copied") : (language === "vi" ? "Copy" : "Copy")}
+            </button>
+            <Link href={`shareUrl`}>
+                        <button
+                          className={`flex ${
+                            language === "vi"
+                              ? "w-[60px]"
+                              : "w-[45px]"
+                          }items-center gap-1 px-3 py-2 rounded-md text-sm font-medium border border-gray-300`}
+                        >
+                          <ExternalLinkIcon size={18} />{t.buttons.openShare}
+                        </button>
+            </Link>
+          </div>
+          <div className="mt-3 text-xs text-gray-500">
+            {language === "vi" ? "Gửi liên kết này cho người nhận để xem CV của bạn." : "Send this link to let others view your CV."}
+          </div>
+        </div>
+      </div>
+    )}
+  </>
   );
 };
 
