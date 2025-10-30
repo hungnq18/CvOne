@@ -20,6 +20,7 @@ import { RequestResetCodeDto } from "./dto/request-reset-code.dto";
 import { VerifyResetCodeDto } from "./dto/verify-reset-code.dto";
 import { Account, AccountDocument } from "./schemas/account.schema";
 import { PasswordResetCodeService } from "./password-reset-code.service";
+import { CreateAccountHRDto } from "./dto/create-account-hr.dto";
 // ...existing code...
 @Injectable()
 export class AccountsService {
@@ -78,7 +79,7 @@ export class AccountsService {
         const userProfile = await this.usersService.createUser({
           first_name,
           last_name,
-          phone: phone ?? 0,
+          phone: phone ?? "",
           city: city ?? "",
           country: country ?? "",
           account_id: savedAccount._id,
@@ -165,7 +166,7 @@ export class AccountsService {
       await this.usersService.createUser({
         first_name,
         last_name,
-        phone: phone ?? 0,
+        phone: phone ?? "",
         city: city ?? "",
         country: country ?? "",
         account_id: savedAccount._id,
@@ -176,6 +177,98 @@ export class AccountsService {
     }
 
     return savedAccount;
+  }
+
+  async registerHR(dto: CreateAccountHRDto): Promise<Account> {
+    try {
+      const {
+        email,
+        password,
+        first_name,
+        last_name,
+        phone,
+        city,
+        country,
+        company_name,
+        company_country,
+        company_city,
+        company_district,
+        vatRegistrationNumber,
+      } = dto;
+
+      if (!email || email.trim() === "") {
+        throw new ConflictException("Email is required");
+      }
+
+      const trimmedEmail = email.trim();
+
+      // Check existing account
+      const existingAccount = await this.accountModel.findOne({
+        email: trimmedEmail,
+      });
+      if (existingAccount) {
+        throw new ConflictException("Email already exists");
+      }
+
+      // Hash password
+      const hashedPassword = await hashPassword(password);
+
+      // Create HR account with role = hr
+      const newAccount = new this.accountModel({
+        email: trimmedEmail,
+        password: hashedPassword,
+        isEmailVerified: false,
+        role: "hr",
+      });
+
+      const savedAccount = await newAccount.save();
+
+      try {
+        // Create base user profile
+        const createdUser = await this.usersService.createUser({
+          first_name,
+          last_name,
+          phone: phone ?? "",
+          city: city ?? "",
+          country: country ?? "",
+          account_id: savedAccount._id,
+        });
+
+        // Update HR-specific fields
+        await this.usersService.updateHRFields(createdUser._id.toString(), {
+          company_name,
+          company_country,
+          company_city,
+          company_district,
+          vatRegistrationNumber,
+        });
+
+        // Send verification email (same flow as user register)
+        const verificationToken = crypto.randomBytes(32).toString("hex");
+        const tokenExpires = new Date();
+        tokenExpires.setHours(tokenExpires.getHours() + 24);
+        savedAccount.emailVerificationToken = verificationToken;
+        savedAccount.emailVerificationTokenExpires = tokenExpires;
+        await savedAccount.save();
+        await this.mailService.sendVerificationEmail(
+          trimmedEmail,
+          verificationToken,
+        );
+      } catch (error: any) {
+        await this.accountModel.findByIdAndDelete(savedAccount._id);
+        throw error;
+      }
+
+      return savedAccount;
+    } catch (error: any) {
+      this.logger.error(`HR Registration error: ${String(error)}`);
+      if (error instanceof ConflictException) {
+        throw error;
+      }
+      throw new InternalServerErrorException(
+        `HR registration failed: ${String(error)}`,
+      );
+    }
   }
 
   async requestEmailVerification(verifyEmailDto: VerifyEmailDto) {

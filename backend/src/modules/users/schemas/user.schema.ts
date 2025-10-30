@@ -24,6 +24,22 @@ export class User {
 
   @Prop({ type: String, default: "" })
   country: string;
+
+  // --- Các trường riêng cho HR ---
+  @Prop()
+  company_name?: string;
+
+  @Prop()
+  company_country?: string;
+
+  @Prop()
+  company_city?: string;
+
+  @Prop()
+  company_district?: string;
+
+  @Prop()
+  vatRegistrationNumber?: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
