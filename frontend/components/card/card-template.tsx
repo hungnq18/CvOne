@@ -48,7 +48,16 @@ const CVCard: React.FC<CVCardProps> = ({ id, imageUrl, title, onPreviewClick }) 
   };
 
   const handleUseTemplateClick = () => {
-    router.push(`/chooseOption?templateId=${id}`);
+    const token = document.cookie
+      .split("; ")
+      .find((row) => row.startsWith("token="))
+      ?.split("=")[1];
+
+    if (token) {
+      router.push(`/chooseOption?templateId=${id}`);
+    } else {
+      router.push("/login");
+    }
   };
 
   return (
