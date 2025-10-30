@@ -310,14 +310,12 @@ export default function LoginPage() {
             </RegisterLink>
 
             <RegisterLink>
-              <span>{t.contactPrefix}</span>
-              <Link href="https://www.facebook.com/hungnqisme" target="_blank">{t.contactSupport}</Link>
-              <span>{t.contactSuffix}</span>
+              <Link href="/hr-register">{t.hrRegisterLink}</Link>
             </RegisterLink>
             {/* <Divider>
               <span>{t.or}</span>
             </Divider>
-            
+
             <GoogleButton
               type="button"
               onClick={handleGoogleLogin}
