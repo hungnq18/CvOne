@@ -306,11 +306,11 @@ export default function LoginPage() {
               <Link href="/register">{t.registerLink}</Link>
             </RegisterLink>
             <RegisterLink>
-              <Link href="/fogetPassword">{t.fogetPassword}</Link>
+              <span>{t.noHrAccount}</span>
+              <Link href="/hr-register">{t.registerLink}</Link>
             </RegisterLink>
-
             <RegisterLink>
-              <Link href="/hr-register">{t.hrRegisterLink}</Link>
+              <Link href="/fogetPassword">{t.fogetPassword}</Link>
             </RegisterLink>
             {/* <Divider>
               <span>{t.or}</span>
