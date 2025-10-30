@@ -39,4 +39,9 @@ export class ClTemplateController {
   remove(@Param("id") id: string) {
     return this.clTemplateService.remove(id);
   }
+
+  @Get("suggest-template/ai")
+  async getSuggestTemplateCv(@Body("jobDescription") jobDescription: string) {
+    return this.clTemplateService.getSuggestTemplateCl(jobDescription);
+  }
 }

@@ -156,45 +156,121 @@ Rules:
     jobDescription: string,
     templateId: string
   ) {
+    const promptSystem = `You are a precise and reliable AI that extracts structured data from cover letters.
+
+    Your job:
+    - Read the provided Cover Letter and Job Description.
+    - Detect language (Vietnamese or English).
+    - Output a complete JSON object in the same language as the Job Description.
+    - Always fill all fields, inferring when missing.
+    - Maintain a formal, professional tone.
+    
+    Output strictly this JSON structure:
+    {
+      "firstName": "",
+      "lastName": "",
+      "email": "",
+      "phone": "",
+      "subject": "",
+      "greeting": "",
+      "opening": "",
+      "body": "",
+      "callToAction": "",
+      "closing": "",
+      "signature": ""
+    }
+    
+    Rules:
+    - Output **only** a valid JSON object (no markdown, no backticks, no comments).
+    - Do **not** include explanations or formatting.`;
     const prompt = `
-You are an expert at analyzing cover letters. Your task is to extract key fields from the following cover letter and enhance them to better match the job description.
+    Cover Letter:
+    ${coverLetter}
+    
+    Job Description:
+    ${jobDescription}
+`;
+
+    // 3. Call OpenAI
+    const completion = await this.openaiApiService
+      .getOpenAI()
+      .chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: promptSystem,
+          },
+          {
+            role: "user",
+            content: prompt,
+          },
+        ],
+      });
+
+    let response = completion.choices[0]?.message?.content?.trim();
+
+    if (!response) throw new Error("No response from OpenAI");
+
+    response = response
+      .replace(/```json/i, "")
+      .replace(/```/g, "")
+      .trim();
+
+    let parsed;
+    try {
+      parsed = JSON.parse(response);
+    } catch (err) {
+      console.error("Raw response from OpenAI:", response);
+      throw new Error("Invalid JSON returned from OpenAI: " + err.message);
+    }
+
+    const usage = completion.usage || {
+      prompt_tokens: 0,
+      completion_tokens: 0,
+      total_tokens: 0,
+    };
+    console.log("Usage:", usage);
+
+    return {
+      templateId,
+      title: "Extracted from PDF",
+      data: parsed,
+    };
+  }
+
+  async generateCLByCVAndJD(
+    cv: string,
+    jobDescription: string,
+    templateId: string
+  ) {
+    const prompt = `
+You are a professional career assistant specializing in writing tailored cover letters.
 
 ---
 
-**Cover Letter Content**:
-${coverLetter}
+**CV Content**:
+${cv}
 
 **Job Description**:
 ${jobDescription}
 
 ---
-
-Instructions:
+Your task:
 1. Detect the language of the job description (Vietnamese or English).
-2. Based on the detected language, return the JSON fields **in the same language** (either Vietnamese or English).
-3. Keep the tone professional, concise, and relevant to the job description.
-4. If any field is missing, infer the best possible value from the context.
+2. Write a full, professional cover letter in the **same language** as the job description.
+3. The tone must be natural, formal, and personalized — not robotic.
+4. The letter must reflect the applicant’s experience, skills, and achievements from the CV, emphasizing their fit for the job.
+5. Keep the structure clear and concise with these sections:
+   - Greeting (e.g., “Dear Hiring Manager” or “Kính gửi …”)
+   - Opening (brief introduction and motivation)
+   - Body (highlight relevant experience, skills, and achievements)
+   - Call to Action (express interest in interview or next steps)
+   - Closing (thank you and sign-off)
+---
 
-Return a valid JSON object with **only** the following structure:
-
-{
-  "firstName": "",       // Applicant's first name
-  "lastName": "",        // Applicant's last name
-  "email": "",           // Email address
-  "phone": "",           // Phone number
-  "subject": "",         // Subject or position applied for
-  "greeting": "",        // e.g. "Dear Hiring Manager" or "Kính gửi"
-  "opening": "",         // Opening paragraph with motivation and interest
-  "body": "",            // Main paragraph elaborating experience and skills
-  "callToAction": "",    // Request for interview or next step
-  "closing": "",         // Closing phrase (e.g. "Sincerely", "Trân trọng")
-  "signature": ""        // Applicant's full name or sign-off
-}
-
-IMPORTANT:
-- Only return the JSON object, no additional explanation or markdown.
-- Write all content in the **same language as the job description**.
-- Use natural, human-like language appropriate for a formal cover letter.
+Output:
+Return only the **final cover letter text** — no JSON, no markdown, no explanations.
 `;
 
     // 3. Call OpenAI
