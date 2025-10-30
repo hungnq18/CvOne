@@ -16,6 +16,7 @@ import { VerifyResetCodeDto } from "./dto/verify-reset-code.dto";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { RolesGuard } from "../auth/guards/roles.guard";
 import { Roles } from "../../common/decorators/roles.decorator";
+import { CreateAccountHRDto } from "./dto/create-account-hr.dto";
 
 @Controller("accounts")
 export class AccountsController {
@@ -31,6 +32,11 @@ export class AccountsController {
   @Post("register-by-admin")
   async registerByAdmin(@Body() createAccountDto: CreateAccountDto) {
     return this.accountsService.registerByAdmin(createAccountDto);
+  }
+
+  @Post("register-hr")
+  async registerHR(@Body() dto: CreateAccountHRDto) {
+    return this.accountsService.registerHR(dto);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
