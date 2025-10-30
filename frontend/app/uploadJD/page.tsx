@@ -6,7 +6,12 @@ import Cookies from "js-cookie";
 import { ArrowLeft, ArrowRight, FileText, UploadCloud } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
+import { Document, pdfjs } from "react-pdf";
+import "react-pdf/dist/esm/Page/AnnotationLayer.css";
+import "react-pdf/dist/esm/Page/TextLayer.css";
 import { toast } from "react-hot-toast";
+
+pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
 const uploadJDTranslations = {
   en: {
@@ -44,14 +49,34 @@ function UploadJDContent() {
 
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [extractedText, setExtractedText] = useState<string | null>(null);
+
 
   const { language } = useLanguage();
   const t = uploadJDTranslations[language];
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setExtractedText(null); // Reset text on new file
     if (event.target.files && event.target.files.length > 0) {
-      setUploadedFile(event.target.files[0]);
+      const file = event.target.files[0];
+      if (file.type === "application/pdf") {
+        setUploadedFile(file);
+      } else {
+        toast.error("Vui lòng chỉ chọn file PDF.");
+        setUploadedFile(null);
+      }
     }
+  };
+
+  const onDocumentLoadSuccess = async (pdf: any) => {
+    let textContent = "";
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const text = await page.getTextContent();
+      textContent += text.items.map((s: any) => s.str).join(" ");
+    }
+    setExtractedText(textContent);
+    toast.success("Trích xuất nội dung JD PDF thành công!");
   };
 
   const handleContinue = async () => {
@@ -60,35 +85,27 @@ function UploadJDContent() {
       return;
     }
 
+    if (uploadedFile.type === "application/pdf" && !extractedText) {
+      toast.error("Đang xử lý file PDF, vui lòng đợi hoặc thử upload lại.");
+      return;
+    }
+
     setIsUploading(true);
 
-    const formData = new FormData();
-    formData.append("file", uploadedFile);
-
     const token = Cookies.get("token");
-    const headers: HeadersInit = {};
+    const headers: HeadersInit = {
+      "Content-Type": "application/json",
+    };
     if (token) {
       headers["Authorization"] = `Bearer ${token}`;
     }
 
     try {
-      const uploadResponse = await fetch(
-        `${API_URL}${API_ENDPOINTS.UPLOAD.UPLOAD_FILE}`,
-        {
-          method: "POST",
-          headers: headers,
-          body: formData,
-        }
-      );
-
-      const uploadResponseData = await uploadResponse.json();
-
-      if (!uploadResponse.ok) {
-        throw new Error(uploadResponseData.message || "JD file upload failed");
+      // Retrieve CL text from localStorage
+      const clText = localStorage.getItem("clText");
+      if (!clText) {
+        throw new Error("Không tìm thấy nội dung Cover Letter. Vui lòng thử lại từ bước trước.");
       }
-
-      toast.success(t.success);
-      const jdFilename = uploadResponseData.filename;
 
       const coverLetterDataString = localStorage.getItem("coverLetterData");
       const coverLetterData = coverLetterDataString
@@ -96,20 +113,53 @@ function UploadJDContent() {
         : {};
       const finalTemplateId = templateId || coverLetterData.templateId;
 
+      if (!finalTemplateId) {
+        throw new Error("Không tìm thấy template ID. Vui lòng chọn một template.");
+      }
+
+      const payload = {
+        coverLetter: clText,
+        jobDescription: extractedText,
+        templateId: finalTemplateId,
+      };
+
+      const response = await fetch(
+        `${API_URL}${API_ENDPOINTS.CL.EXTRACT_AI}`,
+        {
+          method: "POST",
+          headers: headers,
+          body: JSON.stringify(payload),
+        }
+      );
+
+      const responseData = await response.json();
+
+      if (!response.ok) {
+        throw new Error(responseData.message || "Xử lý JD và CL thất bại");
+      }
+
+      toast.success("Xử lý CL và JD thành công!");
+
+      // Clear localStorage after use
+      localStorage.removeItem("clText");
+      localStorage.removeItem("jdText");
+
+      // Save the result for the next page
+      localStorage.setItem("coverLetterData", JSON.stringify(responseData));
+
       const params = new URLSearchParams();
       if (finalTemplateId) params.append("templateId", finalTemplateId);
-      if (clFilename) params.append("clFilename", clFilename);
-      if (jdFilename) params.append("jdFilename", jdFilename);
-
-      const isAiFlow = !clFilename;
-      if (isAiFlow) {
-        params.append("type", "generate-by-ai");
+      // We are navigating to the creation page, maybe pass an ID from the response?
+      // Assuming responseData contains info to proceed
+      if (responseData.id) { // Or whatever identifier the backend returns
+          params.append("clId", responseData.id);
       }
 
       router.push(`/createCLTemplate?${params.toString()}`);
+
     } catch (error: any) {
-      console.error("Error during JD upload process:", error);
-      toast.error(error.message || "Failed to process JD. Please try again.");
+      console.error("Error during JD/CL processing:", error);
+      toast.error(error.message || "Đã có lỗi xảy ra. Vui lòng thử lại.");
     } finally {
       setIsUploading(false);
     }
@@ -155,9 +205,22 @@ function UploadJDContent() {
               type="file"
               className="hidden"
               onChange={handleFileChange}
-              accept=".pdf,.doc,.docx"
+              accept=".pdf"
             />
           </label>
+          {/* Hidden Document component for processing */}
+          {uploadedFile && (
+            <div style={{ display: "none" }}>
+              <Document
+                file={uploadedFile}
+                onLoadSuccess={onDocumentLoadSuccess}
+                onLoadError={(error) => {
+                  console.error("Error loading PDF for text extraction:", error);
+                  toast.error(`Lỗi khi xử lý file PDF: ${error.message}`);
+                }}
+              />
+            </div>
+          )}
         </div>
       </div>
 
@@ -171,7 +234,7 @@ function UploadJDContent() {
         </button>
         <button
           onClick={handleContinue}
-          disabled={!uploadedFile || isUploading}
+          disabled={!uploadedFile || isUploading || !extractedText}
           className="flex items-center gap-2 px-8 py-3 text-lg font-semibold text-white bg-blue-500 rounded-full hover:bg-blue-600 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
         >
           {isUploading ? t.processing : t.finish}

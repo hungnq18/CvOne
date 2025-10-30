@@ -24,7 +24,7 @@ export const API_ENDPOINTS = {
     VERIFY_TOKEN: (token: string) => `/accounts/verify-email/${token}`,
     CHECK_TOKEN: (token: string) => `/accounts/check-token/${token}`,
     Reset_Pass_With_Code: "/accounts/reset-password-code",//hàm nhận vào gmail, code, mật khẩu mới để cài lại mật khẩu
-    Sent_Fogot_Password_Code: "/accounts/forgot-password-code",// hàm nhận vào gmail để gửi code 
+    Sent_Fogot_Password_Code: "/accounts/forgot-password-code",// hàm nhận vào gmail để gửi code
   },
   USER: {
     GET_ALL: "/users",
@@ -76,6 +76,7 @@ export const API_ENDPOINTS = {
     DELETE: (id: string) => `/cover-letters/${id}`,
     EXTRACT_COVER_LETTER: "/cover-letters/extract/from-path",
     GENERATE_CL_BY_AI: "/cover-letters/generate/ai",
+    EXTRACT_AI: "/cover-letters/extract/ai",
   },
   CHAT: {
     GET_MESSAGES: (convId: string) => `/chat/messages/${convId}`,
