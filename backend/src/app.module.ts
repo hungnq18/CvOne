@@ -23,6 +23,7 @@ import { UploadModule } from "./modules/upload/upload.module";
 import { ScheduleModule } from "@nestjs/schedule";
 
 import { BannerModule } from "./modules/banner/banner.module";
+import { PayosModule } from "./modules/payos/payos.module";
 @Module({
   imports: [
     ScheduleModule.forRoot(),
@@ -78,6 +79,7 @@ import { BannerModule } from "./modules/banner/banner.module";
     ClTemplateModule,
     CoverLetterModule,
     ApplyJobModule,
+    PayosModule,
   ],
 })
 export class AppModule {}

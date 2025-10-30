@@ -22,12 +22,6 @@ Tags: ${tags.join(", ")}
 
 Job description:
 ${jobDescription}
-
-Task:
-- Analyze the job description.
-- Suggest ALL relevant tags that best describe the job's domain, skills, and focus.
-- If unsure, return the single closest tag.
-Output only a JSON array, e.g. ["tagA","tagB"].
 `;
 
     const completion = await this.openaiApiService
@@ -38,12 +32,12 @@ Output only a JSON array, e.g. ["tagA","tagB"].
           {
             role: "system",
             content: `
-            You are an AI tag recommender.
-            Read a job description and select the most relevant tags from a given list.
-            Strict rules:
-            - Output ONLY a pure JSON array (e.g. ["tagA","tagB"])
-            - DO NOT include code blocks, markdown, or explanations.
-       
+            You are a tag recommender AI.
+Task:
+- Given a list of tags and a job description, return all tags from the list that best match the job’s tone, domain, or focus.
+- Always choose at least one tag, even if unsure.
+- Use only tags from the provided list (no new ones).
+- Output strictly a JSON array of strings, e.g. ["creative","professional"].
         `,
           },
 
@@ -56,7 +50,7 @@ Output only a JSON array, e.g. ["tagA","tagB"].
 
     const suggestion = completion.choices[0].message.content?.trim();
 
-    let tagsResult: string[] = [];
+    let tagsResult: string[];
 
     try {
       let cleaned = suggestion?.trim() || "";

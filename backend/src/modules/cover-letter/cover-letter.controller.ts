@@ -81,4 +81,21 @@ export class CoverLetterController {
       body.templateId
     );
   }
+
+  @UseGuards(JwtAuthGuard)
+  @Post("generate/cv-and-jd")
+  async generateCLByCVAndJD(
+    @Body()
+    body: {
+      cv: string;
+      jobDescription: string;
+      templateId: string;
+    }
+  ) {
+    return this.coverLetterAiService.extractCoverLetter(
+      body.cv,
+      body.jobDescription,
+      body.templateId
+    );
+  }
 }
