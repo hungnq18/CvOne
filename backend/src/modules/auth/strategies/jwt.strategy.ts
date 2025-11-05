@@ -12,7 +12,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
     private configService: ConfigService,
     @InjectModel(Account.name) private accountModel: Model<Account>,
-    @InjectModel(User.name) private userModel: Model<User>
+    @InjectModel(User.name) private userModel: Model<User>,
   ) {
     const secret = configService.get<string>("JWT_SECRET");
     if (!secret) {
@@ -42,10 +42,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         },
         user: user
           ? {
-              _id: user._id,
-              first_name: user.first_name,
-              last_name: user.last_name,
-            }
+            _id: user._id,
+            first_name: user.first_name,
+            last_name: user.last_name,
+          }
           : null,
       };
     } catch (error) {
