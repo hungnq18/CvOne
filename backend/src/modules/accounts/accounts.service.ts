@@ -79,7 +79,7 @@ export class AccountsService {
         const userProfile = await this.usersService.createUser({
           first_name,
           last_name,
-          phone: phone ?? "",
+          phone: phone ?? 0,
           city: city ?? "",
           country: country ?? "",
           account_id: savedAccount._id,
@@ -166,7 +166,7 @@ export class AccountsService {
       await this.usersService.createUser({
         first_name,
         last_name,
-        phone: phone ?? "",
+        phone: phone ?? 0,
         city: city ?? "",
         country: country ?? "",
         account_id: savedAccount._id,
@@ -228,7 +228,7 @@ export class AccountsService {
         const createdUser = await this.usersService.createUser({
           first_name,
           last_name,
-          phone: phone ?? "",
+          phone: phone ?? 0,
           city: city ?? "",
           country: country ?? "",
           account_id: savedAccount._id,

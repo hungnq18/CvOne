@@ -33,9 +33,8 @@ export class CreateAccountHRDto {
 
   @IsOptional()
   @Transform(({ value }) => value || undefined)
-  @IsString()
   @ApiProperty()
-  phone?: string;
+  phone?: number;
 
   @IsString()
   @IsOptional()
