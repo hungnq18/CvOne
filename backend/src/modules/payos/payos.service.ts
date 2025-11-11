@@ -14,13 +14,13 @@ export class PayosService {
    * Tạo link thanh toán qua PayOS
    */
   async createPaymentLink(
-    orderId: number,
+    orderCode: number,
     amount: number,
     description: string
   ) {
     try {
       const bodyWithoutSig = {
-        orderCode: orderId,
+        orderCode: orderCode,
         amount,
         description,
         cancelUrl: `${process.env.FRONTEND_URL}/payment/cancel`,

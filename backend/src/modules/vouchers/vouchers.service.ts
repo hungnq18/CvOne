@@ -1,4 +1,9 @@
-import { Injectable, Logger, NotFoundException } from "@nestjs/common";
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model, Types } from "mongoose";
 import { Cron, CronExpression } from "@nestjs/schedule";
@@ -94,5 +99,31 @@ export class VouchersService {
 
     await voucher.save();
     return voucher;
+  }
+
+  async updateVoucherUsedCount(id: string) {
+    const voucher = await this.voucherModel.findById(id);
+    if (!voucher) {
+      throw new NotFoundException(`Voucher  not found`);
+    }
+    voucher.usedCount += 1;
+    await voucher.save();
+    return voucher;
+  }
+  async incrementVoucherUsageAtomic(voucherId: string): Promise<void> {
+    const updated = await this.voucherModel.findOneAndUpdate(
+      {
+        _id: new Types.ObjectId(voucherId), // ép sang ObjectId
+        $expr: { $lt: ["$usedCount", "$usageLimit"] }, // atomic check
+      },
+      { $inc: { usedCount: 1 } },
+      { new: true }
+    );
+
+    if (!updated) {
+      throw new BadRequestException(
+        "Voucher has reached usage limit or not found"
+      );
+    }
   }
 }
