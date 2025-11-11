@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Headers } from "@nestjs/common";
+import { Controller, Post, Body, Headers, Get, Param } from "@nestjs/common";
 import { PayosService } from "./payos.service";
 import { CreatePaymentDto } from "./dto/create-payment.dto";
 
@@ -32,5 +32,10 @@ export class PayosController {
     console.log("✅ Payment success:", body);
 
     return { status: "ok" };
+  }
+
+  @Get(":orderCode")
+  async getPaymentDetail(@Param("orderCode") orderCode: number) {
+    return this.payosService.getPaymentDetail(orderCode);
   }
 }

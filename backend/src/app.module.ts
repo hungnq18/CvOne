@@ -24,6 +24,7 @@ import { ScheduleModule } from "@nestjs/schedule";
 
 import { BannerModule } from "./modules/banner/banner.module";
 import { PayosModule } from "./modules/payos/payos.module";
+import { VouchersModule } from "./modules/vouchers/vouchers.module";
 @Module({
   imports: [
     ScheduleModule.forRoot(),
@@ -80,6 +81,7 @@ import { PayosModule } from "./modules/payos/payos.module";
     CoverLetterModule,
     ApplyJobModule,
     PayosModule,
+    VouchersModule,
   ],
 })
 export class AppModule {}
