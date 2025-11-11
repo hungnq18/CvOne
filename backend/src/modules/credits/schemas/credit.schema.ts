@@ -11,8 +11,21 @@ export class Credit {
   @Prop({ default: 0 })
   token: number;
 
-  @Prop({ type: Types.ObjectId, ref: "Voucher" })
-  vouchers: Types.ObjectId[];
+  @Prop({
+    type: [
+      {
+        voucherId: { type: Types.ObjectId, ref: "Voucher", required: true },
+        startDate: { type: Date, required: true },
+        endDate: { type: Date, required: true },
+      },
+    ],
+    default: [],
+  })
+  vouchers: {
+    voucherId: Types.ObjectId;
+    startDate: Date;
+    endDate: Date;
+  }[];
 }
 
 export const CreditSchema = SchemaFactory.createForClass(Credit);

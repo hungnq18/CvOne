@@ -44,4 +44,17 @@ export class VouchersController {
   ) {
     return await this.vouchersService.createVoucherDirect(createVoucherDto);
   }
+
+  @Get("all")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("mkt")
+  async getAllVouchers() {
+    return await this.vouchersService.getAllVouchers();
+  }
+
+  @Get("for-user")
+  @UseGuards(JwtAuthGuard)
+  async getVouchersForUser() {
+    return await this.vouchersService.getVoucherDisplayUsers();
+  }
 }

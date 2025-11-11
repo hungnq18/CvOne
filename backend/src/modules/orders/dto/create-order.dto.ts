@@ -10,10 +10,6 @@ import {
 
 export class CreateOrderDto {
   @IsString()
-  @IsNotEmpty()
-  userId: string;
-
-  @IsString()
   @IsOptional()
   voucherId: string;
 
@@ -24,10 +20,6 @@ export class CreateOrderDto {
   @IsNumber()
   @IsNotEmpty()
   price: number;
-
-  @IsString()
-  @IsNotEmpty()
-  status: string;
 
   @IsString()
   @IsNotEmpty()
