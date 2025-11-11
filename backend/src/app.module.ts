@@ -1,7 +1,6 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { MongooseModule } from "@nestjs/mongoose";
-import { ThrottlerModule } from "@nestjs/throttler";
 import { AccountsModule } from "./modules/accounts/accounts.module";
 import { AuthModule } from "./modules/auth/auth.module";
 import { CvTemplateModule } from "./modules/cv-template/cv-template.module";
@@ -25,16 +24,10 @@ import { ScheduleModule } from "@nestjs/schedule";
 
 import { BannerModule } from "./modules/banner/banner.module";
 import { PayosModule } from "./modules/payos/payos.module";
-
+import { VouchersModule } from "./modules/vouchers/vouchers.module";
 @Module({
   imports: [
     ScheduleModule.forRoot(),
-    ThrottlerModule.forRoot([
-      {
-        ttl: 15 * 60 * 1000, // 15 minutes
-        limit: 3, // 3 requests per 15 minutes
-      },
-    ]),
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: ".env",
@@ -88,6 +81,7 @@ import { PayosModule } from "./modules/payos/payos.module";
     CoverLetterModule,
     ApplyJobModule,
     PayosModule,
+    VouchersModule,
   ],
 })
-export class AppModule { }
+export class AppModule {}

@@ -14,20 +14,25 @@ export class PayosService {
    * Tạo link thanh toán qua PayOS
    */
   async createPaymentLink(
-    orderId: string,
+    orderId: number,
     amount: number,
     description: string
   ) {
     try {
-      const body = {
+      const bodyWithoutSig = {
         orderCode: orderId,
         amount,
         description,
-        cancelUrl: `${process.env.APP_URL}/payment/cancel`,
-        returnUrl: `${process.env.APP_URL}/payment/success`,
+        cancelUrl: `${process.env.FRONTEND_URL}/payment/cancel`,
+        returnUrl: `${process.env.FRONTEND_URL}/payment/success`,
       };
 
-      const res = await axios.post(`${this.baseUrl}/payment-requests`, body, {
+      const body = {
+        ...bodyWithoutSig,
+        signature: this.generateSignature(bodyWithoutSig),
+      };
+
+      const res = await axios.post(`${this.baseUrl}`, body, {
         headers: {
           "x-client-id": this.clientId,
           "x-api-key": this.apiKey,
@@ -40,6 +45,18 @@ export class PayosService {
     }
   }
 
+  private generateSignature(data: Record<string, any>): string {
+    const rawData = Object.keys(data)
+      .sort() // sắp xếp theo key tên từ a-z
+      .map((key) => `${key}=${data[key]}`)
+      .join("&");
+
+    return crypto
+      .createHmac("sha256", this.checksumKey || "")
+      .update(rawData)
+      .digest("hex");
+  }
+
   /**
    * Xác minh chữ ký webhook từ PayOS
    */
@@ -49,5 +66,20 @@ export class PayosService {
       .update(JSON.stringify(data))
       .digest("hex");
     return computed === signature;
+  }
+
+  async getPaymentDetail(orderCode: number) {
+    try {
+      const res = await axios.get(`${this.baseUrl}/${orderCode}`, {
+        headers: {
+          "x-client-id": this.clientId,
+          "x-api-key": this.apiKey,
+        },
+      });
+
+      return res.data;
+    } catch (error) {
+      throw new HttpException(error.response?.data || error.message, 500);
+    }
   }
 }
