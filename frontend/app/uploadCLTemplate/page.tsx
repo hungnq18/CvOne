@@ -1,12 +1,15 @@
 "use client";
 
-import { API_ENDPOINTS, API_URL } from "@/api/apiConfig";
 import { useLanguage } from "@/providers/global_provider";
-import Cookies from "js-cookie";
 import { ArrowLeft, ArrowRight, FileText, UploadCloud } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
+import { Document, pdfjs } from "react-pdf";
+import "react-pdf/dist/esm/Page/AnnotationLayer.css";
+import "react-pdf/dist/esm/Page/TextLayer.css";
 import { toast } from "react-hot-toast";
+
+pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
 const uploadCLTranslations = {
   en: {
@@ -41,13 +44,32 @@ function UploadCLTemplateContent() {
   const templateId = searchParams.get("templateId");
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [extractedText, setExtractedText] = useState<string | null>(null);
   const { language } = useLanguage();
   const t = uploadCLTranslations[language];
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setExtractedText(null); // Reset text on new file
     if (event.target.files && event.target.files.length > 0) {
-      setUploadedFile(event.target.files[0]);
+      const file = event.target.files[0];
+      if (file.type === "application/pdf") {
+        setUploadedFile(file);
+      } else {
+        toast.error("Vui lòng chỉ chọn file PDF.");
+        setUploadedFile(null);
+      }
     }
+  };
+
+  const onDocumentLoadSuccess = async (pdf: any) => {
+    let textContent = "";
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const text = await page.getTextContent();
+      textContent += text.items.map((s: any) => s.str).join(" ");
+    }
+    setExtractedText(textContent);
+    toast.success("Trích xuất nội dung PDF thành công!");
   };
 
   const handleContinue = async () => {
@@ -56,47 +78,39 @@ function UploadCLTemplateContent() {
       return;
     }
 
+    if (uploadedFile.type === "application/pdf" && !extractedText) {
+      toast.error("Đang xử lý file PDF, vui lòng đợi hoặc thử upload lại.");
+      return;
+    }
+
+    // Since text extraction is async, we simulate the loading state for it as well
     setIsUploading(true);
-    const formData = new FormData();
-    formData.append("file", uploadedFile);
 
-    const token = Cookies.get("token");
-    const headers: HeadersInit = {};
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
+    // For now, let's simulate success and move on
+    // The actual API call will be in the JD upload page.
+    setIsUploading(false);
+
+    if (!extractedText) {
+      toast.error("Không thể trích xuất nội dung từ file. Vui lòng thử lại.");
+      return;
     }
 
-    try {
-      const response = await fetch(
-        `${API_URL}${API_ENDPOINTS.UPLOAD.UPLOAD_FILE}`,
-        {
-          method: "POST",
-          headers: headers,
-          body: formData,
-        }
-      );
+    toast.success(
+      "Đã lưu nội dung CL, bạn sẽ được chuyển đến trang tải lên JD."
+    );
 
-      const responseData = await response.json();
+    // Store text in localStorage to pass to the next page
+    localStorage.setItem("clText", extractedText);
 
-      if (!response.ok) {
-        throw new Error(responseData.message || "File upload failed");
-      }
-
-      toast.success(t.success);
-      const params = new URLSearchParams();
-      if (templateId) {
-        params.append("templateId", templateId);
-      }
-      if (responseData.filename) {
-        params.append("clFilename", responseData.filename);
-      }
-      router.push(`/uploadJD?${params.toString()}`);
-    } catch (error: any) {
-      console.error("Error uploading file:", error);
-      toast.error(error.message || "Failed to upload file. Please try again.");
-    } finally {
-      setIsUploading(false);
+    const params = new URLSearchParams();
+    if (templateId) {
+      params.append("templateId", templateId);
     }
+    // Note: clFilename is no longer available.
+    // We can pass a flag instead.
+    params.append("clFromText", "true");
+
+    router.push(`/uploadJD?${params.toString()}`);
   };
 
   const handleBack = () => {
@@ -139,9 +153,22 @@ function UploadCLTemplateContent() {
               type="file"
               className="hidden"
               onChange={handleFileChange}
-              accept=".pdf,.doc,.docx"
+              accept=".pdf"
             />
           </label>
+          {/* Hidden Document component for processing */}
+          {uploadedFile && (
+            <div style={{ display: "none" }}>
+              <Document
+                file={uploadedFile}
+                onLoadSuccess={onDocumentLoadSuccess}
+                onLoadError={(error) => {
+                  console.error("Error loading PDF for text extraction:", error);
+                  toast.error(`Lỗi khi xử lý file PDF: ${error.message}`);
+                }}
+              />
+            </div>
+          )}
         </div>
 
         <div className="flex w-full justify-between max-w-2xl">
@@ -154,7 +181,7 @@ function UploadCLTemplateContent() {
           </button>
           <button
             onClick={handleContinue}
-            disabled={!uploadedFile || isUploading}
+            disabled={!uploadedFile || isUploading || !extractedText}
             className="flex items-center gap-2 px-8 py-3 text-lg font-semibold text-white bg-blue-500 rounded-full hover:bg-blue-600 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
           >
             {isUploading ? t.uploading : t.continue}

@@ -60,7 +60,7 @@ const FormSide = styled.div`
 
 const RegisterForm = styled.form`
   width: 100%;
-  max-width: 350px;
+  /* max-width: 350px; */
   margin: 0 auto;
   display: flex;
   flex-direction: column;
@@ -68,10 +68,16 @@ const RegisterForm = styled.form`
 `
 
 const Title = styled.h2`
-  text-align: center;
+  text-align:  center;
   margin-bottom: 8px;
-  color: #058ac3;
-  letter-spacing: 1px;
+  color: #212529;
+  /* letter-spacing: 1px; */
+  font-size: 20px;
+  font-weight: 700;
+`
+const SubTitle = styled.p`
+  color: #7a7a7a;
+  font-size: 14px;
 `
 
 const Label = styled.label`
@@ -160,6 +166,47 @@ const LoginPrompt = styled.div`
     margin-left: 4px;
   }
 `
+const GenderWrapper = styled.div`
+  display: flex;
+  gap: 20px;
+  align-items: center;
+`
+
+const GenderOption = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`
+const LocationWrapper = styled.div`
+  display: flex;
+  gap: 16px;
+`
+
+const LocationField = styled.div`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+`
+const CheckboxWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+`
+
+const Checkbox = styled.input`
+  width: 18px;
+  height: 18px;
+`
+const CheckboxLabel = styled.label`
+  font-size: 14px;
+  color: #555;
+  a {
+    color: #007bff;
+    text-decoration: none;
+  }
+`
 
 export default function RegisterPage() {
   const {
@@ -174,7 +221,7 @@ export default function RegisterPage() {
     handleRegister,
     setShowPassword,
     setShowConfirmPassword
-  } = useRegisterForm()
+  } = useRegisterForm("hr")
 
   return (
     <RegisterWrapper>
@@ -192,35 +239,11 @@ export default function RegisterPage() {
         </LogoSide>
         <FormSide>
           <RegisterForm onSubmit={handleRegister}>
-            <Title>{t.title}</Title>
+            <Title>{t.loginInfoTitle}</Title>
             {!isSuccess && (
               <>
                 <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                  <Label>{t.firstName}</Label>
-                  <Input
-                    id="first_name"
-                    type="text"
-                    placeholder={t.firstNamePlaceholder}
-                    value={formData.first_name}
-                    onChange={handleInputChange}
-                    required
-                    style={{ backgroundColor: "#f5f5f5" }}
-                  />
-                </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                  <Label>{t.lastName}</Label>
-                  <Input
-                    id="last_name"
-                    type="text"
-                    placeholder={t.lastNamePlaceholder}
-                    value={formData.last_name}
-                    onChange={handleInputChange}
-                    required
-                    style={{ backgroundColor: "#f5f5f5" }}
-                  />
-                </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                  <Label>{t.email}</Label>
+                  <Label>{t.emailLabel}</Label>
                   <Input
                     id="email"
                     type="email"
@@ -231,45 +254,111 @@ export default function RegisterPage() {
                     style={{ backgroundColor: "#f5f5f5" }}
                   />
                 </div>
-                <PasswordWrapper>
-                  <Label>{t.password}</Label>
-                  <div style={{ position: "relative" }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  <Label>{t.passwordLabel}</Label>
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder={t.passwordPlaceholder}
+                    value={formData.password}
+                    onChange={handleInputChange}
+                    required
+                    style={{ backgroundColor: "#f5f5f5" }}
+                  />
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  <Label>{t.confirmPasswordLabel}</Label>
+                  <Input
+                    id="confirmPassword"
+                    type={showConfirmPassword ? "text" : "password"}
+                    placeholder={t.confirmPasswordPlaceholder}
+                    value={formData.confirmPassword}
+                    onChange={handleInputChange}
+                    required
+                    style={{ backgroundColor: "#f5f5f5" }}
+                  />
+                </div>
+
+                <Title>{t.recruiterInfoTitle}</Title>
+
+                <LocationWrapper>
+                  <LocationField>
+                    <Label>{t.lastNameLabel}</Label>
                     <Input
-                      id="password"
-                      type={showPassword ? "text" : "password"}
-                      placeholder={t.passwordPlaceholder}
-                      value={formData.password}
+                      id="last_name"
+                      type="text"
+                      placeholder={t.lastNamePlaceholder}
+                      value={formData.last_name}
                       onChange={handleInputChange}
                       required
                       style={{ backgroundColor: "#f5f5f5" }}
                     />
-                    <EyeIcon onClick={() => setShowPassword(!showPassword)}>
-                      {showPassword ? <FaEyeSlash /> : <FaEye />}
-                    </EyeIcon>
-                  </div>
-                </PasswordWrapper>
-                <PasswordWrapper>
-                  <Label>{t.confirmPassword}</Label>
-                  <div style={{ position: "relative" }}>
+                  </LocationField>
+                  <LocationField>
+                    <Label>{t.firstNameLabel}</Label>
                     <Input
-                      id="confirmPassword"
-                      type={showConfirmPassword ? "text" : "password"}
-                      placeholder={t.confirmPasswordPlaceholder}
-                      value={formData.confirmPassword}
+                      id="first_name"
+                      type="text"
+                      placeholder={t.firstNamePlaceholder}
+                      value={formData.first_name}
                       onChange={handleInputChange}
                       required
                       style={{ backgroundColor: "#f5f5f5" }}
                     />
-                    <EyeIcon onClick={() => setShowConfirmPassword(!showConfirmPassword)}>
-                      {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
-                    </EyeIcon>
-                  </div>
-                </PasswordWrapper>
+                  </LocationField>
+                </LocationWrapper>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  <Label>{t.phoneLabel}</Label>
+                  <Input
+                    id="phone_number"
+                    type="text"
+                    placeholder={t.phonePlaceholder}
+                    value={formData.phone_number}
+                    onChange={handleInputChange}
+                    required
+                    style={{ backgroundColor: "#f5f5f5" }}
+                  />
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  <Label>{t.companyLabel}</Label>
+                  <Input
+                    id="company_name"
+                    type="text"
+                    placeholder={t.companyPlaceholder}
+                    value={formData.company_name}
+                    onChange={handleInputChange}
+                    required
+                    style={{ backgroundColor: "#f5f5f5" }}
+                  />
+                </div>
+                <LocationWrapper>
+                  <LocationField>
+                    <Label>{t.workLocationLabel}</Label>
+                    <select id="city" name="city" style={{ padding: '10px 12px', borderRadius: '8px', border: '1px solid #d0d7de', backgroundColor: "#f5f5f5" }} value={formData.city} onChange={handleInputChange}>
+                      <option value="">{t.cityPlaceholder}</option>
+                      {/* Add city options here */}
+                    </select>
+                  </LocationField>
+                  <LocationField>
+                    <Label>{t.districtLabel}</Label>
+                    <select id="district" name="district" style={{ padding: '10px 12px', borderRadius: '8px', border: '1px solid #d0d7de', backgroundColor: "#f5f5f5" }} value={formData.district} onChange={handleInputChange}>
+                      <option value="">{t.districtPlaceholder}</option>
+                       {/* Add district options here */}
+                    </select>
+                  </LocationField>
+                </LocationWrapper>
+                <CheckboxWrapper>
+                  <Checkbox type="checkbox" id="terms" required checked={formData.terms} onChange={handleInputChange} />
+                  <CheckboxLabel htmlFor="terms">
+                  {t.terms} <a href="#">{t.termsLink}</a> {t.and} <a href="#">{t.privacyLink}</a> {t.of}
+                  </CheckboxLabel>
+                </CheckboxWrapper>
                 <SubmitButton type="submit" disabled={isLoading}>
                   {isLoading ? (
                     <LoadingSpinner />
                   ) : (
-                    t.registerButton
+                    t.submitButton
                   )}
                 </SubmitButton>
               </>

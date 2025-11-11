@@ -7,11 +7,19 @@ import {
   IsString,
   MinLength,
 } from "class-validator";
-export class CreateAccountDto {
+
+// DTO cho đăng ký HR: bao gồm thông tin Account + thông tin User + field HR bắt buộc
+export class CreateAccountHRDto {
   @IsEmail()
   @IsNotEmpty()
   @ApiProperty()
   email: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @MinLength(6)
+  @ApiProperty()
+  password: string;
 
   @IsString()
   @IsNotEmpty()
@@ -22,12 +30,6 @@ export class CreateAccountDto {
   @IsNotEmpty()
   @ApiProperty()
   last_name: string;
-
-  @IsString()
-  @IsNotEmpty()
-  @MinLength(6)
-  @ApiProperty()
-  password: string;
 
   @IsOptional()
   @Transform(({ value }) => value || undefined)
@@ -46,8 +48,29 @@ export class CreateAccountDto {
   @ApiProperty()
   city?: string;
 
+  // Các trường bắt buộc cho HR
   @IsString()
-  @IsOptional()
+  @IsNotEmpty()
   @ApiProperty()
-  role?: string;
+  company_name: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @ApiProperty()
+  company_country: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @ApiProperty()
+  company_city: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @ApiProperty()
+  company_district: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @ApiProperty()
+  vatRegistrationNumber: string;
 }

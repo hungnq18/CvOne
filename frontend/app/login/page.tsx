@@ -306,18 +306,16 @@ export default function LoginPage() {
               <Link href="/register">{t.registerLink}</Link>
             </RegisterLink>
             <RegisterLink>
-              <Link href="/fogetPassword">{t.fogetPassword}</Link>
+              <span>{t.noHrAccount}</span>
+              <Link href="/hr-register">{t.registerLink}</Link>
             </RegisterLink>
-
             <RegisterLink>
-              <span>{t.contactPrefix}</span>
-              <Link href="https://www.facebook.com/hungnqisme" target="_blank">{t.contactSupport}</Link>
-              <span>{t.contactSuffix}</span>
+              <Link href="/fogetPassword">{t.fogetPassword}</Link>
             </RegisterLink>
             {/* <Divider>
               <span>{t.or}</span>
             </Divider>
-            
+
             <GoogleButton
               type="button"
               onClick={handleGoogleLogin}

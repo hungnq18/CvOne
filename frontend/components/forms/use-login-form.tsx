@@ -32,6 +32,7 @@ const translations = {
     contactSupport: "support",
     contactSuffix: " to register as HR",
     noAccount: "Don't have an account?",
+    noHrAccount: "Are you an HR?",
     registerLink: "Register now",
     fogetPassword: "Forgot password?",
     loginSuccess: "Login successful!",
@@ -56,6 +57,7 @@ const translations = {
     contactSupport: "chăm sóc khách hàng",
     contactSuffix: " để đăng kí HR",
     noAccount: "Chưa có tài khoản?",
+    noHrAccount: "Bạn là nhà tuyển dụng?",
     registerLink: "Đăng ký ngay",
     fogetPassword: "Quên mật khẩu?",
     loginSuccess: "Đăng nhập thành công!",
@@ -147,7 +149,7 @@ export function useLoginForm() {
 
     } catch (err: any) {
       let msg = t.networkError;
-      
+
       if (err?.response?.status === 401) {
         // Check if it's email verification error
         const errorMessage = err?.response?.data?.message || '';
@@ -157,7 +159,7 @@ export function useLoginForm() {
           msg = t.invalidCredentials;
         }
       }
-      
+
       setError(msg);
       toast({ title: t.loginFailed, description: msg, variant: "destructive" });
     } finally {

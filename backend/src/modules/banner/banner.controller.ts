@@ -15,10 +15,10 @@ import { Roles } from "src/common/decorators/roles.decorator";
 
 @Controller("banner")
 export class BannerController {
-  constructor(private readonly bannerService: BannerService) {}
+  constructor(private readonly bannerService: BannerService) { }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles("hr")
+  @Roles("mkt")
   @Get()
   getAllBanners() {
     return this.bannerService.getAllBanners();

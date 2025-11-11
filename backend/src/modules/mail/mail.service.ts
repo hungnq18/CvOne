@@ -116,6 +116,36 @@ export class MailService {
     }
   }
 
+  async sendPasswordResetCodeEmail(email: string, code: string) {
+    if (!this.transporter) {
+      console.error(
+        "Mail transporter is not configured. Cannot send password reset code email.",
+      );
+      throw new Error(
+        "Email service is not configured. Please contact administrator.",
+      );
+    }
+
+    try {
+      await this.transporter.sendMail({
+        from: this.configService.get("MAIL_FROM"),
+        to: email,
+        subject: "Your Password Reset Code",
+        html: `
+          <h1>Password Reset Code</h1>
+          <p>Use the code below to reset your password. This code expires in 1 hour.</p>
+          <p style="font-size:24px;font-weight:bold;letter-spacing:4px;">${code}</p>
+        `,
+      });
+      console.log(`Password reset code email sent to ${email}`);
+    } catch (error) {
+      console.error("Failed to send password reset code email:", error);
+      throw new Error(
+        "Failed to send password reset code email. Please try again later.",
+      );
+    }
+  }
+
   convertBase64ToPdfBuffer(base64Pdf: string): Buffer {
     if (!base64Pdf) throw new Error("Base64 input is required");
 
