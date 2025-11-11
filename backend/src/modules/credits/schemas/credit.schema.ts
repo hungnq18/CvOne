@@ -11,7 +11,7 @@ export class Credit {
   @Prop({ default: 0 })
   token: number;
 
-  @Prop({ type: Types.ObjectId, ref: "Voucher" })
+  @Prop({ type: [{ type: Types.ObjectId, ref: "Voucher" }] })
   vouchers: Types.ObjectId[];
 }
 
