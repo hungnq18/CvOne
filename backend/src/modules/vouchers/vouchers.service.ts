@@ -16,12 +16,22 @@ export class VouchersService {
   ) {}
 
   async createVoucherDirect(voucher: CreateVoucherDirectDto) {
-    const newVoucher = await this.voucherModel.create(voucher);
-    return newVoucher;
+    const newVoucher = {
+      ...voucher,
+      startDate: new Date(voucher.startDate),
+      endDate: new Date(voucher.endDate),
+    };
+    const createdVoucher = await this.voucherModel.create(newVoucher);
+    return createdVoucher;
   }
   async createVoucherSaveable(voucher: CreateVoucherSaveableDto) {
-    const newVoucher = await this.voucherModel.create(voucher);
-    return newVoucher;
+    const newVoucher = {
+      ...voucher,
+      startDate: new Date(voucher.startDate),
+      endDate: new Date(voucher.endDate),
+    };
+    const createdVoucher = await this.voucherModel.create(newVoucher);
+    return createdVoucher;
   }
 
   async getAllVouchers() {

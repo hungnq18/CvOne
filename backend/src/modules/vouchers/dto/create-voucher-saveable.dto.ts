@@ -51,9 +51,9 @@ export class CreateVoucherSaveableDto {
 
   @IsDateString()
   @IsNotEmpty()
-  startDate: Date;
+  startDate: string;
 
   @IsDateString()
   @IsNotEmpty()
-  endDate: Date;
+  endDate: string;
 }
