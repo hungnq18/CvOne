@@ -9,7 +9,7 @@ export default function DepositPage() {
             <div className="max-w-2xl mx-auto">
                 {/* Header */}
                 <Link
-                    href="/wallet"
+                    href="/user/wallet"
                     className="inline-flex items-center gap-2 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 mb-6 font-medium"
                 >
                     <ArrowLeft className="w-4 h-4" />

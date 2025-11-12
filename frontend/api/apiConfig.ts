@@ -135,6 +135,7 @@ export const API_ENDPOINTS = {
   VOUCHER: {
     GET_FOR_USER: "/vouchers/for-user",
     GET_FOR_MKT: "/vouchers/all",
+    GET_BY_ID: (id: string) => `/vouchers/${id}`,
     POST_VOUCHER_DIRECT: "/vouchers/direct", // BODY:{name,description,type,discountValue,discountType,maxDiscountValue,minOrderValue,usageLimit,perUserLimit,startDate,endDate}
     POST_VOUCHER_SAVEABLE: "/vouchers/saveable", // BODY:{name,description,type,discountValue,discountType,maxDiscountValue,minOrderValue,usageLimit,perUserLimit,startDate,endDate}
   },
@@ -144,7 +145,7 @@ export const API_ENDPOINTS = {
   },
   CREDIT: {
     UPDATE_TOKEN: "/credits/update-token", //BODY:{token} @PATCH
-    UPDATE_VOUCHER: (voucherId: string) => `save-voucher/${voucherId}`, // @PATCH
+    UPDATE_VOUCHER: (voucherId: string) => `/credits/save-voucher/${voucherId}`, // @PATCH
     GET_CREDIT: "/credits",
   },
 } as const;

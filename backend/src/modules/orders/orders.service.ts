@@ -22,8 +22,8 @@ export class OrdersService {
     @InjectModel(Order.name) private orderModel: Model<OrderDocument>,
     private readonly payosService: PayosService,
     private readonly voucherService: VouchersService,
-    private readonly creditService: CreditsService
-  ) {}
+    private readonly creditService: CreditsService,
+  ) { }
 
   generateOrderCode(): number {
     const now = new Date();
@@ -82,6 +82,10 @@ export class OrdersService {
       totalAmount = Math.max(price - discountAmount, 0);
     }
 
+    // --- Tính phí giao dịch 2% trên số tiền sau giảm ---
+    const transactionFee = totalAmount * 0.02;
+    const finalAmount = Math.ceil(totalAmount + transactionFee);
+
     // --- Tạo order ---
     const createdOrder = await this.orderModel.create({
       orderCode,
@@ -89,7 +93,7 @@ export class OrdersService {
       voucherId: voucher ? new Types.ObjectId(voucher._id) : null,
       totalToken,
       price,
-      totalAmount,
+      totalAmount: finalAmount, // Total amount bao gồm phí giao dịch
       status: "pending",
       paymentMethod,
     });
@@ -108,8 +112,8 @@ export class OrdersService {
     if (paymentMethod === "payos") {
       const payos = await this.payosService.createPaymentLink(
         orderCode,
-        totalAmount,
-        `Thanh toán đơn hàng ${orderCode} - Tổng tiền ${totalAmount} VND`
+        finalAmount,
+        `Thanh toán đơn hàng ${orderCode} - Tổng tiền ${finalAmount} VND`,
       );
       paymentLink = payos?.checkoutUrl || payos?.data?.checkoutUrl || null;
     }
@@ -125,7 +129,7 @@ export class OrdersService {
     const updatedOrder = await this.orderModel.findByIdAndUpdate(
       orderId,
       { status },
-      { new: true }
+      { new: true },
     );
     if (!updatedOrder) {
       throw new NotFoundException("Order not found");
@@ -136,7 +140,7 @@ export class OrdersService {
     const updatedOrder = await this.orderModel.findOneAndUpdate(
       { orderCode },
       { status },
-      { new: true }
+      { new: true },
     );
     if (!updatedOrder) {
       throw new NotFoundException("Order not found");

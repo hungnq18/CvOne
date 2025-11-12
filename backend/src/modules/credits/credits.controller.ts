@@ -26,9 +26,10 @@ import { CreditsService } from "./credits.service";
 
 @Controller("credits")
 export class CreditsController {
-  constructor(private readonly creditsService: CreditsService) {}
+  constructor(private readonly creditsService: CreditsService) { }
 
   @Patch("update-token")
+  @UseGuards(JwtAuthGuard)
   async updateToken(@Request() req, @Body("token") token: number) {
     const userId = req.user.user._id;
     return await this.creditsService.updateToken(userId, token);
@@ -42,6 +43,7 @@ export class CreditsController {
   }
 
   @Get()
+  @UseGuards(JwtAuthGuard)
   async getCredit(@Request() req) {
     const userId = req.user.user._id;
     return await this.creditsService.getCredit(userId);
