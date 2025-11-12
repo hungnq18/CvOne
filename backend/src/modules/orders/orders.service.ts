@@ -113,7 +113,7 @@ export class OrdersService {
       const payos = await this.payosService.createPaymentLink(
         orderCode,
         finalAmount,
-        `Thanh toán đơn hàng ${orderCode} - Tổng tiền ${finalAmount} VND`,
+        `Thanh toán`,
       );
       paymentLink = payos?.checkoutUrl || payos?.data?.checkoutUrl || null;
     }

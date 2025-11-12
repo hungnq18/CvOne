@@ -142,6 +142,7 @@ export const API_ENDPOINTS = {
   ORDER: {
     CREATE_ORDER: "/orders", //BODY:{voucherId,totalToken,price,paymentMethod}
     UPDATE_ORDER_STATUS: (id: string) => `/orders/${id}`, //BODY:{status}
+
   },
   CREDIT: {
     UPDATE_TOKEN: "/credits/update-token", //BODY:{token} @PATCH
