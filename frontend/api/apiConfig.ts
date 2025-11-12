@@ -7,7 +7,7 @@ export const API_ENDPOINTS = {
   AUTH: {
     LOGIN: "/auth/login",
     REGISTER: "/accounts/register",
-    REGISTER_HR: "/accounts/register-hr",// api đăng ký hr kiểm tra kĩ các trường nhé t có thêm trường mã số thuế
+    REGISTER_HR: "/accounts/register-hr", // api đăng ký hr kiểm tra kĩ các trường nhé t có thêm trường mã số thuế
     REGISTER_BY_ADMIN: "/accounts/register-by-admin",
     UPDATE_ROLE: (id: string) => `/accounts/${id}/role`,
     LOGOUT: "/auth/logout",
@@ -24,8 +24,8 @@ export const API_ENDPOINTS = {
     RESEND_VERIFICATION: "/accounts/resend-verification",
     VERIFY_TOKEN: (token: string) => `/accounts/verify-email/${token}`,
     CHECK_TOKEN: (token: string) => `/accounts/check-token/${token}`,
-    Reset_Pass_With_Code: "/accounts/reset-password-code",//hàm nhận vào gmail, code, mật khẩu mới để cài lại mật khẩu
-    Sent_Fogot_Password_Code: "/accounts/forgot-password-code",// hàm nhận vào gmail để gửi code
+    Reset_Pass_With_Code: "/accounts/reset-password-code", //hàm nhận vào gmail, code, mật khẩu mới để cài lại mật khẩu
+    Sent_Fogot_Password_Code: "/accounts/forgot-password-code", // hàm nhận vào gmail để gửi code
   },
   USER: {
     GET_ALL: "/users",
@@ -63,9 +63,9 @@ export const API_ENDPOINTS = {
     UPLOAD_AND_ANALYZE: "/cv/upload-and-analyze",
     UPLOAD_ANALYZE_GENERATE_PDF: "/cv/upload-analyze-generate-pdf",
     AI_STATUS: "/cv/ai-status",
-    GET_CV_SHARE_BY_ID: "/cv/:id/share",// api lấy cv không cần đăng nhập
-    GENERATE_SHARE_LINK: "/cv/:id/generate-share-link",// api để tạo link share cv. nhận vào id cv
-    TRANSLATE_CV: "/cv/translate",//nhận vào json cv và target language trả về json cv đã được translate
+    GET_CV_SHARE_BY_ID: "/cv/:id/share", // api lấy cv không cần đăng nhập
+    GENERATE_SHARE_LINK: "/cv/:id/generate-share-link", // api để tạo link share cv. nhận vào id cv
+    TRANSLATE_CV: "/cv/translate", //nhận vào json cv và target language trả về json cv đã được translate
   },
   CL: {
     TEMPLATES: "/cl-templates",
@@ -130,6 +130,21 @@ export const API_ENDPOINTS = {
     UPLOAD_FILE: "/upload",
   },
   MAIL: {
-    SHARE_CV: "/mail/send-cv-pdf",// api nhận vào email, base64 pdf, cvTitle để gửi pdf có sẵn qua mail
+    SHARE_CV: "/mail/send-cv-pdf", // api nhận vào email, base64 pdf, cvTitle để gửi pdf có sẵn qua mail
+  },
+  VOUCHER: {
+    GET_FOR_USER: "/vouchers/for-user",
+    GET_FOR_MKT: "/vouchers/all",
+    POST_VOUCHER_DIRECT: "/vouchers/direct", // BODY:{name,description,type,discountValue,discountType,maxDiscountValue,minOrderValue,usageLimit,perUserLimit,startDate,endDate}
+    POST_VOUCHER_SAVEABLE: "/vouchers/saveable", // BODY:{name,description,type,discountValue,discountType,maxDiscountValue,minOrderValue,usageLimit,perUserLimit,startDate,endDate}
+  },
+  ORDER: {
+    CREATE_ORDER: "/orders", //BODY:{voucherId,totalToken,price,paymentMethod}
+    UPDATE_ORDER_STATUS: (id: string) => `/orders/${id}`, //BODY:{status}
+  },
+  CREDIT: {
+    UPDATE_TOKEN: "/credits/update-token", //BODY:{token} @PATCH
+    UPDATE_VOUCHER: (voucherId: string) => `save-voucher/${voucherId}`, // @PATCH
+    GET_CREDIT: "/credits",
   },
 } as const;
