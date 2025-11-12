@@ -6,11 +6,11 @@ import { useState } from "react"
 import { CreditCard, User, Lock, Loader } from "lucide-react"
 import Link from "next/link"
 
-interface CheckoutFormProps {
+interface PayWithCardFormProps {
     depositAmount: number
 }
 
-export default function CheckoutForm({ depositAmount }: CheckoutFormProps) {
+export default function PayWithCardForm({ depositAmount }: PayWithCardFormProps) {
     const [isLoading, setIsLoading] = useState(false)
     const [formData, setFormData] = useState({
         fullName: "",
@@ -110,7 +110,7 @@ export default function CheckoutForm({ depositAmount }: CheckoutFormProps) {
                                 }))
                             }
                             placeholder="1234 5678 9012 3456"
-                            maxLength="19"
+                            maxLength={19}
                             required
                             className="w-full px-4 py-3 border-2 border-slate-200 dark:border-slate-700 rounded-lg focus:border-blue-500 dark:focus:border-blue-500 outline-none text-slate-900 dark:text-white dark:bg-slate-700 transition-colors font-mono"
                         />
@@ -130,7 +130,7 @@ export default function CheckoutForm({ depositAmount }: CheckoutFormProps) {
                                     }))
                                 }
                                 placeholder="MM/YY"
-                                maxLength="5"
+                                maxLength={5}
                                 required
                                 className="w-full px-4 py-3 border-2 border-slate-200 dark:border-slate-700 rounded-lg focus:border-blue-500 dark:focus:border-blue-500 outline-none text-slate-900 dark:text-white dark:bg-slate-700 transition-colors"
                             />
@@ -148,7 +148,7 @@ export default function CheckoutForm({ depositAmount }: CheckoutFormProps) {
                                     }))
                                 }
                                 placeholder="123"
-                                maxLength="4"
+                                maxLength={4}
                                 required
                                 className="w-full px-4 py-3 border-2 border-slate-200 dark:border-slate-700 rounded-lg focus:border-blue-500 dark:focus:border-blue-500 outline-none text-slate-900 dark:text-white dark:bg-slate-700 transition-colors font-mono"
                             />

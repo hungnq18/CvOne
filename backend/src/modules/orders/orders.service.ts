@@ -147,4 +147,15 @@ export class OrdersService {
     }
     return updatedOrder;
   }
+
+  // Lấy order theo orderCode
+  async getOrderByOrderCode(orderCode: string) {
+    const order = await this.orderModel
+      .findOne({ orderCode })
+      .populate("voucherId");
+    if (!order) {
+      throw new NotFoundException("Order not found");
+    }
+    return order;
+  }
 }

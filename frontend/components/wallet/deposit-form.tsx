@@ -143,7 +143,6 @@ export default function DepositForm() {
         setVoucherCode("")
         setVoucherError(null)
     }
-
     const handleProceedToCheckout = async () => {
         if (amount <= 0) {
             setError("Vui lòng chọn hoặc nhập số tiền hợp lệ")
@@ -169,35 +168,32 @@ export default function DepositForm() {
             setIsLoading(true)
             setError(null)
 
-            // Create order
+            // Tạo order
             const orderData: Partial<Order> = {
                 totalToken: tokens,
-                price: amount, // Original price
+                price: amount,
                 voucherId: voucher?._id,
                 paymentMethod: paymentMethod === "qr" ? "payos" : "card",
             }
 
             const response = await createOrder(orderData as Order)
 
-            // Handle based on payment method
             if (paymentMethod === "qr") {
-                // QR Code payment - redirect to payment link
+                // Chỉ redirect khi có paymentLink
                 if (response.paymentLink) {
                     window.location.href = response.paymentLink
-                } else if (response.order) {
-                    // Redirect to order confirmation page
-                    router.push(`/user/wallet/orders/${response.order._id || response.order.orderCode}`)
                 } else {
-                    // Fallback: redirect to wallet page
-                    router.push("/user/wallet")
+                    // Hiện thông báo lỗi, không redirect
+                    setError("Không thể tạo link thanh toán. Vui lòng thử lại.")
+                    setIsLoading(false)
                 }
             } else {
-                // Card payment - redirect to checkout page with order info
+                // Card payment
                 if (response.order) {
                     const orderId = response.order._id || response.order.orderCode
-                    router.push(`/checkout?orderId=${orderId}&amount=${Math.ceil(totalAmount)}&tokens=${tokens}`)
+                    router.push(`/payWithCard?orderId=${orderId}&amount=${Math.ceil(totalAmount)}&tokens=${tokens}`)
                 } else {
-                    router.push(`/checkout?amount=${Math.ceil(totalAmount)}&tokens=${tokens}`)
+                    router.push(`/payWithCard?amount=${Math.ceil(totalAmount)}&tokens=${tokens}`)
                 }
             }
         } catch (err: any) {

@@ -36,4 +36,9 @@ export class OrdersController {
   ) {
     return this.ordersService.updateOrderStatusByOrderCode(orderCode, status);
   }
+  // API lấy order theo orderCode
+  @Get("code/:orderCode")
+  async getOrderByCode(@Param("orderCode") orderCode: string) {
+    return this.ordersService.getOrderByOrderCode(orderCode);
+  }
 }
