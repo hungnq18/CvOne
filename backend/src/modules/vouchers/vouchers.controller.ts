@@ -24,6 +24,7 @@ import { JobAnalysisService } from "../cv/services/job-analysis.service";
 import { VouchersService } from "./vouchers.service";
 import { CreateVoucherDirectDto } from "./dto/create-voucher-direct.dto";
 import { CreateVoucherSaveableDto } from "./dto/create-voucher-saveable.dto";
+import { UpdateVoucherDirectDto } from "./dto/update-voucher-direct.dto";
 
 @Controller("vouchers")
 export class VouchersController {
@@ -56,5 +57,22 @@ export class VouchersController {
   @UseGuards(JwtAuthGuard)
   async getVouchersForUser() {
     return await this.vouchersService.getVoucherDisplayUsers();
+  }
+
+  @Put(":id")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("mkt")
+  async updateVoucher(
+    @Param("id") id: string,
+    @Body() updateVoucherDto: UpdateVoucherDirectDto
+  ) {
+    return await this.vouchersService.updateVoucherDirect(id, updateVoucherDto);
+  }
+
+  @Delete(":id")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("mkt")
+  async deleteVoucher(@Param("id") id: string) {
+    return await this.vouchersService.deleteVoucherById(id);
   }
 }
