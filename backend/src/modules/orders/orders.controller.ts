@@ -14,7 +14,7 @@ import { CreateOrderDto } from "./dto/create-order.dto";
 
 @Controller("orders")
 export class OrdersController {
-  constructor(private readonly ordersService: OrdersService) { }
+  constructor(private readonly ordersService: OrdersService) {}
 
   @Post()
   @UseGuards(JwtAuthGuard)
@@ -32,8 +32,14 @@ export class OrdersController {
   @UseGuards(JwtAuthGuard)
   updateByOrderCode(
     @Param("orderCode") orderCode: string,
-    @Body("status") status: string,
+    @Body("status") status: string
   ) {
     return this.ordersService.updateOrderStatusByOrderCode(orderCode, status);
+  }
+  @Get()
+  @UseGuards(JwtAuthGuard)
+  getOrderByUser(@Request() req) {
+    const userId = req.user.user._id;
+    return this.ordersService.getOrderForUser(userId);
   }
 }

@@ -16,7 +16,7 @@ import { CreateVoucherSaveableDto } from "./dto/create-voucher-saveable.dto";
 
 @Controller("vouchers")
 export class VouchersController {
-  constructor(private readonly vouchersService: VouchersService) { }
+  constructor(private readonly vouchersService: VouchersService) {}
 
   @Post("direct")
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -29,12 +29,14 @@ export class VouchersController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles("mkt")
   async createVoucherSaveable(
-    @Body() createVoucherDto: CreateVoucherSaveableDto,
+    @Body() createVoucherDto: CreateVoucherSaveableDto
   ) {
     return await this.vouchersService.createVoucherDirect(createVoucherDto);
   }
 
   @Get("all")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("mkt")
   async getAllVouchers() {
     return await this.vouchersService.getAllVouchers();
   }
