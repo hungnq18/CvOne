@@ -141,6 +141,8 @@ export function useLoginForm() {
         router.replace(redirect);
       } else if (decoded.role === "admin") {
         router.replace("/admin");
+      } else if (decoded.role === "mkt") {
+        router.replace("/marketing");
       } else if (decoded.role === "hr") {
         router.replace("/hr/dashboard");
       } else {

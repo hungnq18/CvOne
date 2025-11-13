@@ -12,6 +12,7 @@ import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { BannerService } from "./banner.service";
 import { RolesGuard } from "../auth/guards/roles.guard";
 import { Roles } from "src/common/decorators/roles.decorator";
+import { CreateBannerDto } from "./dto/create-banner.dto";
 
 @Controller("banner")
 export class BannerController {
@@ -22,5 +23,12 @@ export class BannerController {
   @Get()
   getAllBanners() {
     return this.bannerService.getAllBanners();
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("mkt")
+  @Post()
+  createBanner(@Body() createBannerDto: CreateBannerDto) {
+    return this.bannerService.createBanner(createBannerDto);
   }
 }

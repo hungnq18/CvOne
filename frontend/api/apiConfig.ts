@@ -137,6 +137,8 @@ export const API_ENDPOINTS = {
     GET_FOR_MKT: "/vouchers/all",
     POST_VOUCHER_DIRECT: "/vouchers/direct", // BODY:{name,description,type,discountValue,discountType,maxDiscountValue,minOrderValue,usageLimit,perUserLimit,startDate,endDate}
     POST_VOUCHER_SAVEABLE: "/vouchers/saveable", // BODY:{name,description,type,discountValue,discountType,maxDiscountValue,minOrderValue,usageLimit,perUserLimit,startDate,endDate}
+    UPDATE: (id: string) => `/vouchers/${id}`,
+    DELETE: (id: string) => `/vouchers/${id}`,
   },
   ORDER: {
     CREATE_ORDER: "/orders", //BODY:{voucherId,totalToken,price,paymentMethod}
@@ -146,5 +148,9 @@ export const API_ENDPOINTS = {
     UPDATE_TOKEN: "/credits/update-token", //BODY:{token} @PATCH
     UPDATE_VOUCHER: (voucherId: string) => `save-voucher/${voucherId}`, // @PATCH
     GET_CREDIT: "/credits",
+  },
+  BANNER: {
+    GET_ALL: "/banner",
+    CREATE: "/banner",
   },
 } as const;
