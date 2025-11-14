@@ -29,7 +29,7 @@ export default function PaymentSuccessPage() {
                     return
                 }
 
-                // 1️⃣ Lấy chi tiết đơn hàng
+                //  Lấy chi tiết đơn hàng
                 const response = await getOrderByOrderCode(orderCode)
                 console.log("Order API response:", response)
 
@@ -57,7 +57,10 @@ export default function PaymentSuccessPage() {
 
                 // 3️⃣ Cộng token cho user
                 if (orderDetail.totalToken && orderDetail.totalToken > 0) {
-                    await updateToken({ token: orderDetail.totalToken })
+
+                    const credit = await updateToken({ token: orderDetail.totalToken })
+                    console.log("Credit:", credit)
+
                 }
             } catch (err) {
                 console.error("❌ Error fetching order:", err)
