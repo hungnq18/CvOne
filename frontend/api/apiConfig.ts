@@ -155,4 +155,8 @@ export const API_ENDPOINTS = {
     GET_ALL: "/banner",
     CREATE: "/banner",
   },
+  AVERAGE_AI: {
+    GET_ALL_AVERAGE: "/ai-average/average-stats",
+    RESET_AVERAGE: "/ai-average/reset"
+  }
 } as const;
