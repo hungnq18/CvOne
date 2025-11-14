@@ -44,4 +44,27 @@ export class AiAverageStatsService {
       totalUsageCount: stat.usageCount,
     }));
   }
+
+  // Reset averages: if `feature` provided, reset that feature only; otherwise reset all.
+  async resetAverages(feature?: AiFeature) {
+    if (feature) {
+      const res = await this.aiAverageStatsModel.findOneAndUpdate(
+        { feature },
+        { $set: { totalTokensUsed: 0, usageCount: 0 } },
+        { new: true },
+      );
+
+      return {
+        feature: res ? res.feature : feature,
+        totalTokensUsed: 0,
+        usageCount: 0,
+      };
+    }
+
+    await this.aiAverageStatsModel.updateMany(
+      {},
+      { $set: { totalTokensUsed: 0, usageCount: 0 } },
+    );
+    return { ok: true };
+  }
 }
