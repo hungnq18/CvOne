@@ -64,20 +64,30 @@ export class VouchersService {
     }
     return vouchers;
   }
+
   async updateVoucherDirect(
     id: string,
     updateVoucherDto: UpdateVoucherDirectDto,
   ) {
     const voucher = await this.voucherModel.findById(id);
     if (!voucher) {
-      throw new NotFoundException(`Voucher  not found`);
+      throw new NotFoundException(`Voucher not found`);
     }
     if (voucher.type !== "direct") {
       throw new NotFoundException(`Voucher is not direct`);
     }
 
+    // Create a new object for updates to handle date conversion
+    const updateData: any = { ...updateVoucherDto };
+    if (updateVoucherDto.startDate) {
+      updateData.startDate = new Date(updateVoucherDto.startDate);
+    }
+    if (updateVoucherDto.endDate) {
+      updateData.endDate = new Date(updateVoucherDto.endDate);
+    }
+
     // Cập nhật các trường được gửi lên
-    Object.assign(voucher, updateVoucherDto);
+    Object.assign(voucher, updateData);
 
     await voucher.save();
     return voucher;

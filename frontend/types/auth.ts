@@ -6,6 +6,9 @@ export interface User {
   phone?: string;
   city?: string;
   country?: string;
+  role?: 'customer' | 'hr' | 'admin' | 'mkt';
+  isActive?: boolean;
+  createdAt?: string;
 }
 
 export interface AuthResponse {
