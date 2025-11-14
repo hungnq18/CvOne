@@ -17,8 +17,8 @@ import { UpdateVoucherSaveableDto } from "./dto/update-voucher-saveable.dto";
 @Injectable()
 export class VouchersService {
   constructor(
-    @InjectModel(Voucher.name) private voucherModel: Model<VoucherDocument>
-  ) {}
+    @InjectModel(Voucher.name) private voucherModel: Model<VoucherDocument>,
+  ) { }
 
   async createVoucherDirect(voucher: CreateVoucherDirectDto) {
     const newVoucher = {
@@ -67,7 +67,7 @@ export class VouchersService {
 
   async updateVoucherDirect(
     id: string,
-    updateVoucherDto: UpdateVoucherDirectDto
+    updateVoucherDto: UpdateVoucherDirectDto,
   ) {
     const voucher = await this.voucherModel.findById(id);
     if (!voucher) {
@@ -94,7 +94,7 @@ export class VouchersService {
   }
   async updateVoucherSaveable(
     id: string,
-    updateVoucherDto: UpdateVoucherSaveableDto
+    updateVoucherDto: UpdateVoucherSaveableDto,
   ) {
     const voucher = await this.voucherModel.findById(id);
     if (!voucher) {
@@ -127,12 +127,12 @@ export class VouchersService {
         $expr: { $lt: ["$usedCount", "$usageLimit"] }, // atomic check
       },
       { $inc: { usedCount: 1 } },
-      { new: true }
+      { new: true },
     );
 
     if (!updated) {
       throw new BadRequestException(
-        "Voucher has reached usage limit or not found"
+        "Voucher has reached usage limit or not found",
       );
     }
   }

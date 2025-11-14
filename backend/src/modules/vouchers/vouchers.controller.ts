@@ -1,26 +1,17 @@
 import {
-  BadRequestException,
   Body,
   Controller,
-  Delete,
   Get,
   Param,
   Post,
-  Put,
-  Query,
   Request,
-  UnauthorizedException,
-  UploadedFile,
+  Put,
+  Delete,
   UseGuards,
-  UseInterceptors,
 } from "@nestjs/common";
-import { FileInterceptor } from "@nestjs/platform-express";
-import type { File as MulterFile } from "multer";
-import * as pdf from "pdf-parse";
 import { Roles } from "src/common/decorators/roles.decorator";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { RolesGuard } from "../auth/guards/roles.guard";
-import { JobAnalysisService } from "../cv/services/job-analysis.service";
 import { VouchersService } from "./vouchers.service";
 import { CreateVoucherDirectDto } from "./dto/create-voucher-direct.dto";
 import { CreateVoucherSaveableDto } from "./dto/create-voucher-saveable.dto";
@@ -41,14 +32,12 @@ export class VouchersController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles("mkt")
   async createVoucherSaveable(
-    @Body() createVoucherDto: CreateVoucherSaveableDto
+    @Body() createVoucherDto: CreateVoucherSaveableDto,
   ) {
     return await this.vouchersService.createVoucherDirect(createVoucherDto);
   }
 
   @Get("all")
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles("mkt")
   async getAllVouchers() {
     return await this.vouchersService.getAllVouchers();
   }
@@ -64,7 +53,7 @@ export class VouchersController {
   @Roles("mkt")
   async updateVoucher(
     @Param("id") id: string,
-    @Body() updateVoucherDto: UpdateVoucherDirectDto
+    @Body() updateVoucherDto: UpdateVoucherDirectDto,
   ) {
     return await this.vouchersService.updateVoucherDirect(id, updateVoucherDto);
   }
