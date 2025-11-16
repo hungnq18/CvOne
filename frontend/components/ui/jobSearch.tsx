@@ -44,6 +44,11 @@ export default function JobSearch({ jobs, jobTypes }: JobSearchProps) {
     job.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // useEffect(() => {
+  //   console.log(" Jobs from props:", jobs);
+  //   console.log(" Job types from props:", jobTypes);
+  // }, []);
+
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);

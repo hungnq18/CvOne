@@ -17,7 +17,7 @@ export const API_ENDPOINTS = {
     VERIFY_EMAIL: "/accounts/verify-email",
     CREATE: "/cover-letters",
     FORGOT_PASSWORD: "/auth/forgot-password",
-    RESET_PASSWORD: "/auth/reset-password",
+
   },
   ACCOUNTS: {
     VERIFY_EMAIL: "/accounts/verify-email",
