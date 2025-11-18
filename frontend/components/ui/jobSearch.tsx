@@ -44,6 +44,11 @@ export default function JobSearch({ jobs, jobTypes }: JobSearchProps) {
     job.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // useEffect(() => {
+  //   console.log(" Jobs from props:", jobs);
+  //   console.log(" Job types from props:", jobTypes);
+  // }, []);
+
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
@@ -161,15 +166,18 @@ export default function JobSearch({ jobs, jobTypes }: JobSearchProps) {
               </div>
             )}
           </section>
-          <div className="flex justify-center mt-8">
-            <Pagination
-              current={currentPage}
-              pageSize={PAGE_SIZE}
-              total={filteredJobs.length}
-              onChange={(page) => setCurrentPage(page)}
-              showSizeChanger={false}
-            />
-          </div>
+          {filteredJobs.length > PAGE_SIZE && (
+            <div className="flex justify-center mt-8">
+              <Pagination
+                current={currentPage}
+                pageSize={PAGE_SIZE}
+                total={filteredJobs.length}
+                onChange={(page) => setCurrentPage(page)}
+                showSizeChanger={false}
+                showLessItems={true}
+              />
+            </div>
+          )}
         </main>
       </div>
     </div>

@@ -158,4 +158,14 @@ export class OrdersService {
     }
     return order;
   }
+
+  async getOrderHistory(userId: string) {
+    return this.orderModel
+      .find({
+        userId: new Types.ObjectId(userId),
+        status: { $in: ["completed", "cancelled"] },
+      })
+      .sort({ createdAt: -1 })
+      .exec();
+  }
 }
