@@ -145,6 +145,7 @@ export const API_ENDPOINTS = {
     CREATE_ORDER: "/orders", //BODY:{voucherId,totalToken,price,paymentMethod}
     UPDATE_ORDER_STATUS: (id: string) => `/orders/${id}/update`, //BODY:{status}
     GET_ORDER_BY_CODE: (orderCode: string) => `/orders/code/${orderCode}`,
+    GET_ORDER_HISTORY: "/orders/history" //lấy ra lịch sử order của user
   },
   CREDIT: {
     UPDATE_TOKEN: "/credits/update-token", //BODY:{token} @PATCH

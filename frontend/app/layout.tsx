@@ -15,6 +15,7 @@ import { Inter } from "next/font/google";
 import { cookies } from "next/headers";
 import React from "react";
 import "./globals.css";
+import 'antd/dist/reset.css';
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -60,13 +61,11 @@ export default function RootLayout({
                       {role === 'admin' ? (
                         children
                       ) : (
-                        <div className="flex flex-col min-h-screen">
+                        <div className="flex flex-col flex-1">
                           <Header />
                           <main className="flex-1 min-h-0">{children}</main>
-                          <div className="relative z-10">
-                            {/* <CVChatbot /> */}
-                            <FooterWrapper />
-                          </div>
+
+                          <FooterWrapper />
                         </div>
                       )}
                       <IconChatAndNotification /> {/* use */}
