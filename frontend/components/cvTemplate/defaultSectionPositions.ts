@@ -1,13 +1,8 @@
 import { SectionPositions } from "@/providers/cv-provider";
+import { CVTemplate } from "@/api/cvapi";
 
-/**
- * Default section positions for all CV templates
- * Key: Template title (as in templateComponentMap)
- * Value: SectionPositions object
- */
-
-export const defaultSectionPositionsMap: Record<string, SectionPositions> = {
-  // modern1
+// 1. Dữ liệu dự phòng (Fallback) - Giữ lại để tránh lỗi khi chưa tải xong API
+const fallbackSectionPositionsMap: Record<string, SectionPositions> = {
   "The Signature": {
     avatar: { place: 1, order: 0 },
     info: { place: 2, order: 0 },
@@ -20,8 +15,6 @@ export const defaultSectionPositionsMap: Record<string, SectionPositions> = {
     achievement: { place: 0, order: 0 },
     hobby: { place: 0, order: 0 },
   },
-
-  // minimalist1
   "The Vanguard": {
     avatar: { place: 1, order: 0 },
     info: { place: 1, order: 1 },
@@ -34,8 +27,6 @@ export const defaultSectionPositionsMap: Record<string, SectionPositions> = {
     achievement: { place: 0, order: 0 },
     hobby: { place: 0, order: 0 },
   },
-
-  // modern2
   "The Modern": {
     avatar: { place: 1, order: 0 },
     info: { place: 1, order: 1 },
@@ -48,8 +39,6 @@ export const defaultSectionPositionsMap: Record<string, SectionPositions> = {
     achievement: { place: 0, order: 0 },
     hobby: { place: 0, order: 0 },
   },
-
-  // minimalist2
   "The Minimalist": {
     avatar: { place: 1, order: 0 },
     info: { place: 2, order: 0 },
@@ -64,14 +53,34 @@ export const defaultSectionPositionsMap: Record<string, SectionPositions> = {
   },
 };
 
+// 2. Biến lưu trữ dữ liệu từ API (Cache)
+let apiPositionsCache: Record<string, SectionPositions> = {};
+
 /**
- * Get default section positions for a template by title
+ * Hàm này dùng để đồng bộ dữ liệu từ API Template vào Cache.
+ * Gọi hàm này ngay sau khi fetch thành công getCVTemplates()
+ */
+export const syncDefaultsWithTemplates = (templates: CVTemplate[]) => {
+  if (!templates || !Array.isArray(templates)) return;
+
+  templates.forEach((template) => {
+    // Kiểm tra xem template có dữ liệu sectionPositions từ API không (theo cấu trúc JSON bạn gửi)
+    if (template.title && template.data?.sectionPositions) {
+      apiPositionsCache[template.title] = template.data.sectionPositions;
+    }
+  });
+};
+
+/**
+ * Lấy vị trí mặc định.
+ * Ưu tiên: API Cache -> Fallback Hardcode
  */
 export const getDefaultSectionPositions = (
   templateTitle: string
 ): SectionPositions => {
   return (
-    defaultSectionPositionsMap[templateTitle] ||
-    defaultSectionPositionsMap["The Signature"]
+    apiPositionsCache[templateTitle] ||
+    fallbackSectionPositionsMap[templateTitle] ||
+    fallbackSectionPositionsMap["The Signature"]
   );
 };

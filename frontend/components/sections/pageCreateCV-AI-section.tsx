@@ -324,15 +324,52 @@ const PageCreateCVAIContent = () => {
 
     setIsSaving(true);
     try {
+      // Get sectionPositions from provider
+      const sectionPositions = getSectionPositions(currentTemplate._id) ||
+        currentTemplate.data?.sectionPositions ||
+        getDefaultSectionPositions(currentTemplate.title);
+
+      // Prepare complete userData with all fields inside userData object
+      // Extract all fields that should be in userData, removing any duplicates
+      const completeUserData = {
+        // Basic user info
+        firstName: userData.firstName || "",
+        lastName: userData.lastName || "",
+        professional: userData.professional || "",
+        city: userData.city || "",
+        country: userData.country || "",
+        province: userData.province || "",
+        phone: userData.phone || "",
+        email: userData.email || "",
+        avatar: userData.avatar || "",
+        summary: userData.summary || "",
+        skills: userData.skills || [],
+        workHistory: userData.workHistory || [],
+        education: userData.education || [],
+        // All additional fields MUST be inside userData
+        careerObjective: userData.careerObjective || "",
+        Project: userData.Project || [],
+        certification: userData.certification || [],
+        achievement: userData.achievement || [],
+        hobby: userData.hobby || [],
+        sectionPositions: sectionPositions,
+      };
+
+      // Ensure content ONLY contains userData (and uiTexts if needed), nothing else
+      const contentData: any = {
+        userData: completeUserData
+      };
+      if (cvUiTexts) {
+        contentData.uiTexts = cvUiTexts;
+      }
+
       if (cvId) {
         const dataToUpdate: Partial<CV> = {
-          content: {
-            userData,
-            ...(cvUiTexts && { uiTexts: cvUiTexts }),
-          },
+          content: contentData,
           title: cvTitle || t.cvForUser(userData.firstName),
           updatedAt: new Date().toISOString(),
         };
+        console.log("[handleSaveToDB-AI] Updating CV with data:", JSON.stringify(dataToUpdate, null, 2));
         await updateCV(cvId, dataToUpdate);
       } else {
         const dataToCreate: Omit<CV, "_id"> = {
@@ -340,10 +377,7 @@ const PageCreateCVAIContent = () => {
           title:
             cvTitle ||
             t.cvForUser(`${userData.firstName} ${userData.lastName}`),
-          content: {
-            userData,
-            ...(cvUiTexts && { uiTexts: cvUiTexts }),
-          },
+          content: contentData,
           isPublic: false,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
@@ -351,6 +385,7 @@ const PageCreateCVAIContent = () => {
           isSaved: true,
           isFinalized: false,
         };
+        console.log("[handleSaveToDB-AI] Creating CV with data:", JSON.stringify(dataToCreate, null, 2));
         const newCV = await createCV(dataToCreate);
         if (newCV && newCV.id) {
           setCvId(newCV.id);

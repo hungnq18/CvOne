@@ -170,10 +170,14 @@ const PageCreateCVContent = () => {
     getCVTemplates().then((data) => setAllTemplates(data));
     const idFromUrl = id;
 
+    console.log("[CreateCV] ID from URL:", idFromUrl);
+
     if (idFromUrl) {
       setLoading(true);
+      // First try to get as CV ID (for update flow)
       getCVById(idFromUrl)
         .then((templateData) => {
+          console.log("[CreateCV] Found CV with ID:", idFromUrl, templateData);
           if (templateData) {
             loadTemplate(templateData);
             if (templateData.title) {
@@ -188,10 +192,12 @@ const PageCreateCVContent = () => {
           }
           setLoading(false);
         })
-        .catch(() => {
+        .catch((error) => {
+          console.log("[CreateCV] Not a CV ID, trying as template ID. Error:", error);
           console.log(t.loadingTemplateForNew);
           setCvId(null);
           getCVTemplateById(idFromUrl).then((templateData) => {
+            console.log("[CreateCV] Found template with ID:", idFromUrl, templateData);
             if (templateData) {
               loadTemplate(templateData);
               if (
@@ -201,7 +207,12 @@ const PageCreateCVContent = () => {
                 updateUserData(templateData.data.userData);
               }
               setCvTitle(t.cvTitleDefault(templateData.title));
+            } else {
+              console.error("[CreateCV] Template not found with ID:", idFromUrl);
             }
+            setLoading(false);
+          }).catch((templateError) => {
+            console.error("[CreateCV] Error loading template:", templateError);
             setLoading(false);
           });
         });
@@ -250,12 +261,49 @@ const PageCreateCVContent = () => {
 
     setIsSaving(true);
     try {
+      // Get sectionPositions from provider
+      const sectionPositions = getSectionPositions(currentTemplate._id) ||
+        currentTemplate.data?.sectionPositions ||
+        getDefaultSectionPositions(currentTemplate.title);
+
+      // Prepare complete userData with all fields inside userData object
+      // Extract all fields that should be in userData, removing any duplicates
+      const completeUserData = {
+        // Basic user info
+        firstName: userData.firstName || "",
+        lastName: userData.lastName || "",
+        professional: userData.professional || "",
+        city: userData.city || "",
+        country: userData.country || "",
+        province: userData.province || "",
+        phone: userData.phone || "",
+        email: userData.email || "",
+        avatar: userData.avatar || "",
+        summary: userData.summary || "",
+        skills: userData.skills || [],
+        workHistory: userData.workHistory || [],
+        education: userData.education || [],
+        // All additional fields MUST be inside userData
+        careerObjective: userData.careerObjective || "",
+        Project: userData.Project || [],
+        certification: userData.certification || [],
+        achievement: userData.achievement || [],
+        hobby: userData.hobby || [],
+        sectionPositions: sectionPositions,
+      };
+
+      // Ensure content ONLY contains userData, nothing else
+      const contentData = {
+        userData: completeUserData
+      };
+
       if (cvId) {
         const dataToUpdate: Partial<CV> = {
-          content: { userData },
+          content: contentData,
           title: cvTitle || t.cvForUser(userData.firstName),
           updatedAt: new Date().toISOString(),
         };
+        console.log("[handleSaveToDB] Updating CV with data:", JSON.stringify(dataToUpdate, null, 2));
         await updateCV(cvId, dataToUpdate);
       } else {
         const dataToCreate: Omit<CV, "_id"> = {
@@ -263,7 +311,7 @@ const PageCreateCVContent = () => {
           title:
             cvTitle ||
             t.cvForUser(`${userData.firstName} ${userData.lastName}`),
-          content: { userData },
+          content: contentData,
           isPublic: false,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
@@ -271,6 +319,7 @@ const PageCreateCVContent = () => {
           isSaved: true,
           isFinalized: false,
         };
+        console.log("[handleSaveToDB] Creating CV with data:", JSON.stringify(dataToCreate, null, 2));
         const newCV = await createCV(dataToCreate);
         if (newCV && newCV.id) {
           setCvId(newCV.id);

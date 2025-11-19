@@ -249,13 +249,50 @@ const PageUpdateCVContent = () => {
 
     setIsSaving(true);
     try {
+      // Get sectionPositions from provider
+      const sectionPositions = getSectionPositions(currentTemplate._id) ||
+        currentTemplate.data?.sectionPositions ||
+        getDefaultSectionPositions(currentTemplate.title);
+
+      // Prepare complete userData with all fields inside userData object
+      // Extract all fields that should be in userData, removing any duplicates
+      const completeUserData = {
+        // Basic user info
+        firstName: userData.firstName || "",
+        lastName: userData.lastName || "",
+        professional: userData.professional || "",
+        city: userData.city || "",
+        country: userData.country || "",
+        province: userData.province || "",
+        phone: userData.phone || "",
+        email: userData.email || "",
+        avatar: userData.avatar || "",
+        summary: userData.summary || "",
+        skills: userData.skills || [],
+        workHistory: userData.workHistory || [],
+        education: userData.education || [],
+        // All additional fields MUST be inside userData
+        careerObjective: userData.careerObjective || "",
+        Project: userData.Project || [],
+        certification: userData.certification || [],
+        achievement: userData.achievement || [],
+        hobby: userData.hobby || [],
+        sectionPositions: sectionPositions,
+      };
+
+      // Ensure content ONLY contains userData, nothing else
+      const contentData = {
+        userData: completeUserData
+      };
+
       const dataToUpdate: Partial<CV> = {
-        content: { userData },
+        content: contentData,
         title: cvTitle,
         updatedAt: new Date().toISOString(),
         cvTemplateId: currentTemplate._id,
       };
 
+      console.log("[handleSaveToDB-Update] Updating CV with data:", JSON.stringify(dataToUpdate, null, 2));
       await updateCV(cvId, dataToUpdate);
       alert(t.alerts.updateSuccess);
       setIsDirty(false);

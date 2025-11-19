@@ -246,8 +246,8 @@ const CardMyCV: React.FC<CardMyCVProps> = ({ cvListOverride }) => {
 
           return (
             <Card key={cv._id} hoverable>
-              <motion.div className="bg-white rounded-xl overflow-hidden w-[350px] h-[260px] items-start">
-                <div className="bg-white overflow-hidden w-[350px] h-[260px] flex gap-4 items-start">
+              <motion.div className="bg-white rounded-xl overflow-hidden w-[350px] h-[300px] items-start">
+                <div className="bg-white overflow-hidden w-[350px] h-[300px] flex gap-4 items-start">
                   <div className="relative shrink-0 w-[180px] aspect-[210/350] bg-gray-100 border rounded-md overflow-hidden">
                     <div
                       className="absolute bg-white"
