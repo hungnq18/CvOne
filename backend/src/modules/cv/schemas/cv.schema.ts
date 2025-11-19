@@ -50,50 +50,42 @@ export class Cv extends Document {
             institution: { type: String },
           },
         ],
-      },
-      careerObjective: { type: String },
-      Project: {
-        type: [
-          {
-            title: { type: String },
-            summary: { type: String },
-            startDate: { type: Date },
-            endDate: { type: Date },
-            tags: [{ type: String }],
-          },
-        ],
-        default: [],
-      },
-      certification: {
-        type: [
-          {
-            title: { type: String },
-            organization: { type: String },
-            issuedDate: { type: Date },
-            expiryDate: { type: Date },
-            credentialId: { type: String },
-          },
-        ],
-        default: [],
-      },
-      achievement: {
-        type: [
-          {
-            title: { type: String },
-            description: { type: String },
-            date: { type: Date },
-          },
-        ],
-        default: [],
-      },
-      hobby: { type: [{ type: String }], default: [] },
-      sectionPositions: {
-        type: Map,
-        of: {
-          place: { type: Number },
-          order: { type: Number },
+        careerObjective: { type: String },
+        Project: {
+          type: [
+            {
+              title: { type: String },
+              summary: { type: String },
+              startDate: { type: Date },
+              endDate: { type: Date },
+              tags: [{ type: String }],
+            },
+          ],
+          default: [],
         },
-        default: {},
+        certification: {
+          type: [
+            {
+              title: { type: String },
+              startDate: { type: Date },
+              endDate: { type: Date },
+            },
+          ],
+          default: [],
+        },
+        achievement: {
+          type: [String],
+          default: [],
+        },
+        hobby: { type: [{ type: String }], default: [] },
+        sectionPositions: {
+          type: Map,
+          of: {
+            place: { type: Number },
+            order: { type: Number },
+          },
+          default: {},
+        },
       },
     },
   })
@@ -127,34 +119,28 @@ export class Cv extends Document {
         degree: string;
         institution: string;
       }[];
-    careerObjective?: string;
-    Project?: {
-      title: string;
-      summary: string;
-      startDate?: Date;
-      endDate?: Date;
-      tags?: string[];
-    }[];
-    certification?: {
-      title: string;
-      organization?: string;
-      issuedDate?: Date;
-      expiryDate?: Date;
-      credentialId?: string;
-    }[];
-    achievement?: {
-      title: string;
-      description?: string;
-      date?: Date;
-    }[];
-    hobby?: string[];
-    sectionPositions?: Record<
-      string,
-      {
-        place?: number;
-        order?: number;
-      }
-    >;
+      careerObjective?: string;
+      Project?: {
+        title: string;
+        summary: string;
+        startDate?: Date;
+        endDate?: Date;
+        tags?: string[];
+      }[];
+      certification?: {
+        title: string;
+        startDate?: Date;
+        endDate?: Date;
+      }[];
+      achievement?: string[];
+      hobby?: string[];
+      sectionPositions?: Record<
+        string,
+        {
+          place?: number;
+          order?: number;
+        }
+      >;
     };
   };
 
