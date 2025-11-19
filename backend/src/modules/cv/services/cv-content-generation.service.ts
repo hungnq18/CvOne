@@ -432,13 +432,13 @@ Do not include any explanation or markdown, only valid JSON.
         skills: skills[0] || skills, // Take first skills list if array
         workHistory: workHistory[0] || workHistory, // Take first work experience if array
         education: [education],
+        careerObjective: normalizedSummary,
+        Project: [],
+        certification: [],
+        achievement: [],
+        hobby: [],
+        sectionPositions: {},
       },
-      careerObjective: normalizedSummary,
-      Project: [],
-      certification: [],
-      achievement: [],
-      hobby: [],
-      sectionPositions: {},
     };
   }
 

@@ -308,21 +308,51 @@ Tiêu chí đánh giá:
       throw new NotFoundException('Question not found');
     }
 
+    // Kiểm tra xem câu hỏi này đã được trả lời chưa
+    const existingFeedback = session.feedbacks.find(f => f.questionId === questionId);
+    if (existingFeedback) {
+      this.logger.warn(`Question ${questionId} already answered, updating answer`);
+      // Có thể cho phép update hoặc throw error, tùy business logic
+    }
+
     // Đánh giá câu trả lời
     const feedback = await this.evaluateAnswer(question, answer, session.jobDescription);
 
     // Lưu vào session
     session.userAnswers.set(questionId, answer);
-    session.feedbacks.push({
-      questionId: feedback.questionId,
-      userAnswer: feedback.userAnswer,
-      score: feedback.score,
-      feedback: feedback.feedback,
-      suggestions: feedback.suggestions,
-      strengths: feedback.strengths,
-      improvements: feedback.improvements,
-      evaluatedAt: new Date()
-    } as any);
+    
+    // Nếu đã có feedback cho câu này, update; nếu chưa thì push mới
+    if (existingFeedback) {
+      const feedbackIndex = session.feedbacks.findIndex(f => f.questionId === questionId);
+      session.feedbacks[feedbackIndex] = {
+        questionId: feedback.questionId,
+        userAnswer: feedback.userAnswer,
+        score: feedback.score,
+        feedback: feedback.feedback,
+        suggestions: feedback.suggestions,
+        strengths: feedback.strengths,
+        improvements: feedback.improvements,
+        evaluatedAt: new Date()
+      } as any;
+    } else {
+      session.feedbacks.push({
+        questionId: feedback.questionId,
+        userAnswer: feedback.userAnswer,
+        score: feedback.score,
+        feedback: feedback.feedback,
+        suggestions: feedback.suggestions,
+        strengths: feedback.strengths,
+        improvements: feedback.improvements,
+        evaluatedAt: new Date()
+      } as any);
+    }
+
+    // Cập nhật currentQuestionIndex để track tiến độ
+    const currentQuestionIndex = session.questions.findIndex(q => q.id === questionId);
+    if (currentQuestionIndex !== -1 && currentQuestionIndex >= session.currentQuestionIndex) {
+      // Chỉ update nếu đang trả lời câu hỏi hiện tại hoặc câu tiếp theo
+      session.currentQuestionIndex = currentQuestionIndex + 1;
+    }
 
     await session.save();
     

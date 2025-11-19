@@ -67,6 +67,24 @@ const AdLink = styled.a`
   }
 `;
 
+const VerticalAdCard = styled(AdCard)`
+  width: 300px;
+  height: 800px;
+  margin: 0 auto;
+`;
+
+const VerticalAdWrapper = styled.div`
+  display: flex;
+  justify-content: center;
+  padding: 1.5rem 0;
+`;
+
+const VerticalAdImage = styled(AdImage)`
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+`;
+
 
 export const AdvertisementSection = () => {
   return (
@@ -74,7 +92,7 @@ export const AdvertisementSection = () => {
       <AdLink href="/lien-he-quang-cao" target="_blank" rel="noopener noreferrer">
         <AdCard>
           <AdImage
-            src="https://www.pollfish.com/wp-content/uploads/2017/12/Mobile_AD_FORMATS3-1.png"
+            src="https://upload.wikimedia.org/wikipedia/commons/4/4c/Digital_rain_banner.gif"
             alt="Banner quảng cáo"
             width={1000}
             height={200}
@@ -87,6 +105,26 @@ export const AdvertisementSection = () => {
           </ButtonWrapper>
         </AdCard>
       </AdLink>
+    </SectionWrapper>
+  );
+};
+
+export const VerticalAdvertisementSection = () => {
+  return (
+    <SectionWrapper>
+      <VerticalAdWrapper>
+        <AdLink href="/lien-he-quang-cao" target="_blank" rel="noopener noreferrer">
+          <VerticalAdCard>
+            <VerticalAdImage
+              src="https://lh3.googleusercontent.com/proxy/nxlLhZnbX0xnUIq2uAvI_bmr4BqhcT0OGwgzrqAzV5zR0NajEQHaqdX9aeHrcLVnT9VIykTlB505ChzUc-Au9dqLrB1twxLTSbiY1obHBeLnS3t2mg0MW4ZGMBkua6s"
+              alt="Banner quảng cáo dọc"
+              width={300}
+              height={800}
+            />
+            <Overlay />
+          </VerticalAdCard>
+        </AdLink>
+      </VerticalAdWrapper>
     </SectionWrapper>
   );
 };

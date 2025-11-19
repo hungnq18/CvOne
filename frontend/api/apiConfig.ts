@@ -155,6 +155,8 @@ export const API_ENDPOINTS = {
   BANNER: {
     GET_ALL: "/banner",
     CREATE: "/banner",
+    UPDATE: (id: string) => `/banner/${id}`,
+    DELETE: (id: string) => `/banner/${id}`,
   },
   AVERAGE_AI: {
     GET_ALL_AVERAGE: "/ai-average/average-stats",
