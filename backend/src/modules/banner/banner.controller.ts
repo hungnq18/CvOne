@@ -13,6 +13,7 @@ import { BannerService } from "./banner.service";
 import { RolesGuard } from "../auth/guards/roles.guard";
 import { Roles } from "src/common/decorators/roles.decorator";
 import { CreateBannerDto } from "./dto/create-banner.dto";
+import { UpdateBannerDto } from "./dto/update-banner.dto";
 
 @Controller("banner")
 export class BannerController {
@@ -30,5 +31,22 @@ export class BannerController {
   @Post()
   createBanner(@Body() createBannerDto: CreateBannerDto) {
     return this.bannerService.createBanner(createBannerDto);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("mkt")
+  @Patch(":id")
+  updateBanner(
+    @Param("id") id: string,
+    @Body() updateBannerDto: UpdateBannerDto,
+  ) {
+    return this.bannerService.updateBanner(id, updateBannerDto);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("mkt")
+  @Delete(":id")
+  deleteBanner(@Param("id") id: string) {
+    return this.bannerService.deleteBanner(id);
   }
 }

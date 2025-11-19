@@ -41,4 +41,11 @@ export class OrdersController {
   async getOrderByCode(@Param("orderCode") orderCode: string) {
     return this.ordersService.getOrderByOrderCode(orderCode);
   }
+  // order history
+  @Get("history")
+  @UseGuards(JwtAuthGuard)
+  async getOrderHistory(@Request() req) {
+    const userId = req.user.user._id;
+    return this.ordersService.getOrderHistory(userId);
+  }
 }

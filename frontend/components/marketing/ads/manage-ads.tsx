@@ -12,9 +12,20 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Progress } from "@/components/ui/progress"
-import { getAllAds, Ad } from "@/api/adsApi"
+import { getAllAds, Ad, deleteAd } from "@/api/adsApi"
 import { toast } from "@/components/ui/use-toast"
 import { AddAdModal } from "./add-ad-modal"
+import { EditAdModal } from "./edit-ad-modal"
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 
 const platformIcons: { [key: string]: React.ReactNode } = {
@@ -36,6 +47,33 @@ export function ManageAds() {
     const [ads, setAds] = useState<Ad[]>([])
     const [searchTerm, setSearchTerm] = useState("")
     const [isLoading, setIsLoading] = useState(true);
+    const [selectedAd, setSelectedAd] = useState<Ad | null>(null)
+    const [isEditOpen, setIsEditOpen] = useState(false)
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+
+    const handleDelete = (ad: Ad) => {
+        setSelectedAd(ad)
+        setIsDeleteDialogOpen(true)
+    }
+
+    const confirmDelete = async () => {
+        if (!selectedAd) return
+        try {
+            await deleteAd(selectedAd._id);
+            toast({ title: "Deleted", description: "Xóa quảng cáo thành công." });
+            fetchAds();
+        } catch (error) {
+            console.error("Failed to delete ad", error);
+            toast({
+                title: "Error",
+                description: "Xóa quảng cáo thất bại.",
+                variant: "destructive",
+            });
+        } finally {
+            setIsDeleteDialogOpen(false);
+            setSelectedAd(null);
+        }
+    }
 
     const fetchAds = async () => {
         setIsLoading(true);
@@ -118,9 +156,21 @@ export function ManageAds() {
                                             </Button>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end">
-                                            <DropdownMenuItem>View Details</DropdownMenuItem>
+                                            <DropdownMenuItem
+                                                onClick={() => {
+                                                    setSelectedAd(ad)
+                                                    setIsEditOpen(true)
+                                                }}
+                                            >
+                                                Edit Ad
+                                            </DropdownMenuItem>
                                             <DropdownMenuItem>Deactivate</DropdownMenuItem>
-                                            <DropdownMenuItem className="text-red-500">Delete</DropdownMenuItem>
+                                            <DropdownMenuItem
+                                                className="text-red-500"
+                                                onClick={() => handleDelete(ad)}
+                                            >
+                                                Delete
+                                            </DropdownMenuItem>
                                         </DropdownMenuContent>
                                     </DropdownMenu>
                                 </div>
@@ -145,6 +195,31 @@ export function ManageAds() {
                     <p className="text-muted-foreground">No ads found.</p>
                 </div>
             )}
+            <EditAdModal
+                ad={selectedAd as Ad}
+                open={isEditOpen && !!selectedAd}
+                onOpenChange={(open) => {
+                    setIsEditOpen(open)
+                    if (!open) {
+                        setSelectedAd(null)
+                    }
+                }}
+                onAdUpdated={fetchAds}
+            />
+            <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete the ad.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={confirmDelete}>Continue</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     )
 }

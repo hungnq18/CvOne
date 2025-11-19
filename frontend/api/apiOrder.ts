@@ -56,3 +56,13 @@ export async function getOrderByOrderCode(orderCode: string) {
         method: "GET",
     })
 }
+
+/**
+ * Get order history 
+ * @returns Promise with list of orders
+ */
+export async function getOrderHistory() {
+    return fetchWithAuth(API_ENDPOINTS.ORDER.GET_ORDER_HISTORY, {
+        method: "GET",
+    });
+}

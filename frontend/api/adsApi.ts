@@ -36,3 +36,36 @@ export const createAd = async (adData: Omit<Ad, '_id' | 'isActive' | 'startDate'
     });
     return response as Ad;
 };
+
+/**
+ * Update an existing ad (banner)
+ * @param id - The id of the ad to update
+ * @param adData - The fields to update
+ * @returns Promise with the updated ad data
+ */
+export const updateAd = async (
+  id: string,
+  adData: Partial<Omit<Ad, '_id' | 'isActive' | 'startDate' | 'endDate'>> & {
+    startDate?: string;
+    endDate?: string;
+  },
+): Promise<Ad> => {
+  const response = await fetchWithAuth(API_ENDPOINTS.BANNER.UPDATE(id), {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(adData),
+  });
+  return response as Ad;
+};
+
+/**
+ * Delete an existing ad (banner)
+ * @param id - The id of the ad to delete
+ */
+export const deleteAd = async (id: string): Promise<void> => {
+  await fetchWithAuth(API_ENDPOINTS.BANNER.DELETE(id), {
+    method: "DELETE",
+  });
+};
