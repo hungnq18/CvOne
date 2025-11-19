@@ -2,11 +2,11 @@
 
 import Image from "next/image";
 import type React from "react";
+import { getDefaultSectionPositions } from "./defaultSectionPositions";
 
-// BƯỚC 1: Import hook để lấy ngôn ngữ
+// --- TRANSLATIONS ---
 const translations = {
   en: {
-    // Labels for HoverableWrapper
     avatarLabel: "Avatar",
     fullNameAndTitleLabel: "Full Name & Title",
     personalInfoLabel: "PERSONAL INFORMATION",
@@ -14,7 +14,6 @@ const translations = {
     skillsLabel: "SKILLS",
     experienceLabel: "WORK EXPERIENCE",
     educationLabel: "EDUCATION",
-    // Content
     phone: "Phone:",
     email: "Email:",
     address: "Address:",
@@ -26,15 +25,13 @@ const translations = {
     defaultProfessional: "Professional",
   },
   vi: {
-    // Labels for HoverableWrapper
     avatarLabel: "Ảnh đại diện",
     fullNameAndTitleLabel: "Họ tên & Chức danh",
     personalInfoLabel: "THÔNG TIN CÁ NHÂN",
     careerObjectiveLabel: "MỤC TIÊU NGHỀ NGHIỆP",
     skillsLabel: "KỸ NĂNG",
-    experienceLabel: "KINH NGHIỆP LÀM VIỆC",
+    experienceLabel: "KINH NGHIỆM LÀM VIỆC",
     educationLabel: "HỌC VẤN",
-    // Content
     phone: "Điện thoại:",
     email: "Email:",
     address: "Địa chỉ:",
@@ -89,20 +86,20 @@ const HoverableWrapper: React.FC<HoverableWrapperProps> = ({
     summary: "hover:shadow-lg",
     education: "hover:shadow-lg",
     experience: "hover:shadow-lg",
+    contact: "hover:shadow-lg",
+    skills: "hover:shadow-lg",
   };
 
   const hoverClass = hoverEffectMap[sectionId] || "";
 
-  const finalClassName = `
-    relative group cursor-pointer rounded-lg transition-all duration-300 ease-in-out
-    ${hoverClass}
-  `;
-
   return (
-    <div className={finalClassName} onClick={() => onClick?.(sectionId)}>
+    <div
+      className={`relative group cursor-pointer transition-all duration-300 ease-in-out ${hoverClass}`}
+      onClick={() => onClick?.(sectionId)}
+    >
       {children}
-      <div className="absolute inset-0 rounded-lg border-2 border-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
-      <div className="absolute top-0 left-6 -translate-y-1/2 bg-primary text-primary-foreground text-xs font-semibold tracking-wider px-4 py-1.5 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none rounded-full shadow-md">
+      <div className="absolute inset-0 border-2 border-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+      <div className="absolute top-0 left-6 -translate-y-1/2 bg-primary text-primary-foreground text-xs font-semibold tracking-wider px-4 py-1.5 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none rounded-full shadow-md z-10">
         {label}
       </div>
     </div>
@@ -135,7 +132,7 @@ const Section: React.FC<SectionProps> = ({
   isPdfMode = false,
 }) => {
   return (
-    <div className="mb-6">
+    <div className="mb-6 px-8">
       <HoverableWrapper
         label={title}
         sectionId={sectionId}
@@ -175,46 +172,62 @@ const Modern2: React.FC<Modern2Props> = ({
   const professionalTitle = userData.professional || t.defaultProfessional;
 
   const sectionMap = {
-    header: "info",
+    info: "info",
     contact: "contact",
     summary: "summary",
     education: "education",
     experience: "experience",
     skills: "skills",
+    avatar: "avatar",
   };
+
+  // --- Tính toán vị trí hiển thị section ---
+  const sectionPositions =
+    data?.sectionPositions ||
+    getDefaultSectionPositions(data?.templateTitle || "The Modern");
+
+  type SectionPosition = { place: number; order: number };
+
+  // --- LOGIC SẮP XẾP (SORTING) ---
+  // Gộp tất cả thành 1 danh sách duy nhất và sắp xếp theo Place -> Order
+  // Place 1 (Info) -> Place 2 (Contact) -> Place 3 (Content)
+  const sortedSections = Object.entries(sectionPositions)
+    .sort(([, a], [, b]) => {
+      const posA = a as SectionPosition;
+      const posB = b as SectionPosition;
+      // Ưu tiên Place trước (1 -> 2 -> 3...)
+      if (posA.place !== posB.place) return posA.place - posB.place;
+      // Sau đó đến Order
+      return posA.order - posB.order;
+    })
+    .map(([key]) => key);
 
   const styles = `
     .professional-card {
       transition: all 0.3s ease;
     }
-
     .professional-card:hover {
       transform: translateY(-1px);
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     }
-
-    .section-divider {
-      height: 2px;
-      background: linear-gradient(90deg, #1e3a8a 0%, #3b82f6 50%, transparent 100%);
-    }
   `;
 
-  return (
-    <>
-      <style dangerouslySetInnerHTML={{ __html: styles }} />
-
-      <div className="bg-slate-50 min-h-screen font-sans">
-        <div className="max-w-4xl mx-auto bg-white shadow-sm">
-          {/* HEADER SECTION - Professional Layout */}
+  // --- Hàm Render ---
+  const renderSection = (sectionId: string) => {
+    switch (sectionId) {
+      // --- AVATAR & INFO (HERO SECTION) - Place 1 ---
+      case "info":
+        return (
           <HoverableWrapper
+            key="info"
             label={t.fullNameAndTitleLabel}
-            sectionId={sectionMap.header}
+            sectionId={sectionMap.info}
             onClick={onSectionClick}
             isPdfMode={isPdfMode}
           >
-            <div className="bg-gradient-to-r from-slate-800 to-slate-700 px-8 py-6">
+            <div className="bg-gradient-to-r from-slate-800 to-slate-700 px-8 py-6 mb-6">
               <div className="flex items-center gap-8">
-                {/* Avatar */}
+                {/* Avatar Image */}
                 <div className="shrink-0">
                   <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-white shadow-lg">
                     {isPdfMode ? (
@@ -244,7 +257,7 @@ const Modern2: React.FC<Modern2Props> = ({
                   </div>
                 </div>
 
-                {/* Name and Title */}
+                {/* Text Info */}
                 <div className="flex-1">
                   <h1 className="text-3xl font-bold text-white mb-1 tracking-tight">
                     {userData.firstName} {userData.lastName}
@@ -256,91 +269,66 @@ const Modern2: React.FC<Modern2Props> = ({
               </div>
             </div>
           </HoverableWrapper>
+        );
 
-          {/* PERSONAL INFO BAR */}
+      case "avatar":
+        // Avatar đã được hiển thị bên trong block "info" ở trên
+        return null;
+
+      // --- CONTACT (INFO BAR) - Place 2 ---
+      case "contact":
+        return (
           <HoverableWrapper
+            key="contact"
             label={t.personalInfoLabel}
             sectionId={sectionMap.contact}
             onClick={onSectionClick}
             isPdfMode={isPdfMode}
           >
-            <div className="bg-slate-100 px-8 py-4 border-b-2 border-blue-600">
+            <div className="bg-slate-100 px-8 py-4 border-b-2 border-blue-600 mb-6">
               <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
                 {userData.dateOfBirth && (
                   <div className="flex items-center gap-3">
-                    <svg
-                      className="w-4 h-4 text-slate-600 shrink-0"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" />
-                    </svg>
-                    <span className="text-slate-700 font-medium">
+                    <span className="text-slate-600 font-semibold">
+                      {t.dateOfBirth}
+                    </span>
+                    <span className="text-slate-700">
                       {userData.dateOfBirth}
                     </span>
                   </div>
                 )}
                 {userData.gender && (
                   <div className="flex items-center gap-3">
-                    <svg
-                      className="w-4 h-4 text-slate-600 shrink-0"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                    <span className="text-slate-700 font-medium">
-                      {userData.gender}
+                    <span className="text-slate-600 font-semibold">
+                      {t.gender}
                     </span>
+                    <span className="text-slate-700">{userData.gender}</span>
                   </div>
                 )}
                 {userData.phone && (
                   <div className="flex items-center gap-3">
-                    <svg
-                      className="w-4 h-4 text-slate-600 shrink-0"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
-                    </svg>
-                    <span className="text-slate-700 font-medium">
-                      {userData.phone}
+                    <span className="text-slate-600 font-semibold">
+                      {t.phone}
                     </span>
+                    <span className="text-slate-700">{userData.phone}</span>
                   </div>
                 )}
                 {userData.email && (
                   <div className="flex items-center gap-3">
-                    <svg
-                      className="w-4 h-4 text-slate-600 shrink-0"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
-                      <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
-                    </svg>
-                    <span className="text-slate-700 font-medium break-all">
+                    <span className="text-slate-600 font-semibold">
+                      {t.email}
+                    </span>
+                    <span className="text-slate-700 break-all">
                       {userData.email}
                     </span>
                   </div>
                 )}
                 {(userData.city || userData.country) && (
                   <div className="flex items-center gap-3 col-span-2">
-                    <svg
-                      className="w-4 h-4 text-slate-600 shrink-0"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                    <span className="text-slate-700 font-medium">
+                    <span className="text-slate-600 font-semibold">
+                      {t.address}
+                    </span>
+                    <span className="text-slate-700">
                       {userData.city}
                       {userData.city && userData.country && ", "}
                       {userData.country}
@@ -350,113 +338,124 @@ const Modern2: React.FC<Modern2Props> = ({
               </div>
             </div>
           </HoverableWrapper>
+        );
 
-          <div className="px-8 py-6">
-            {/* CAREER OBJECTIVE */}
-            {userData.summary && (
-              <Section
-                title={t.careerObjectiveLabel}
-                sectionId={sectionMap.summary}
-                onSectionClick={onSectionClick}
-                isPdfMode={isPdfMode}
-              >
-                <div className="professional-card bg-white p-6 border-l-4 border-blue-600">
-                  <p className="text-slate-700 leading-relaxed text-pretty">
-                    {userData.summary}
-                  </p>
-                </div>
-              </Section>
-            )}
-
-            {/* EDUCATION */}
-            {userData.education?.length > 0 && (
-              <Section
-                title={t.educationLabel}
-                sectionId={sectionMap.education}
-                onSectionClick={onSectionClick}
-                isPdfMode={isPdfMode}
-              >
-                <div className="space-y-6">
-                  {userData.education.map((edu: any, i: number) => (
-                    <div
-                      key={i}
-                      className="professional-card bg-slate-50 p-6 border-l-4 border-blue-500"
-                    >
-                      <div className="flex justify-between items-start mb-3">
-                        <div className="flex-1">
-                          <h3 className="text-lg font-bold text-slate-800 mb-1">
-                            {edu.degree}
-                          </h3>
-                          <p className="text-blue-700 font-semibold">
-                            {edu.institution}
-                          </p>
-                        </div>
-                        <span className="text-sm text-slate-600 bg-white px-4 py-1.5 rounded border border-slate-300 shrink-0 ml-4 font-medium">
-                          {edu.startDate?.slice(0, 4)} -{" "}
-                          {edu.endDate?.slice(0, 4)}
-                        </span>
-                      </div>
-                      {edu.major && (
-                        <p className="text-sm text-slate-600 mt-2">
-                          <span className="font-semibold">{t.major}</span>{" "}
-                          {edu.major}
-                        </p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </Section>
-            )}
-
-            {/* WORK EXPERIENCE */}
-            {userData.workHistory?.length > 0 && (
-              <Section
-                title={t.experienceLabel}
-                sectionId={sectionMap.experience}
-                onSectionClick={onSectionClick}
-                isPdfMode={isPdfMode}
-              >
-                <div className="space-y-4">
-                  {userData.workHistory.map((job: any, i: number) => (
-                    <div
-                      key={i}
-                      className="professional-card bg-slate-50 p-4 border-l-4 border-slate-700"
-                    >
-                      <div className="flex justify-between items-start mb-2">
-                        <div className="flex-1">
-                          <h3 className="text-base font-bold text-slate-800 mb-1">
-                            {job.title}
-                          </h3>
-                          <p className="text-blue-700 font-semibold">
-                            {job.company}
-                          </p>
-                        </div>
-                        <span className="text-sm text-slate-600 bg-white px-4 py-1.5 rounded border border-slate-300 shrink-0 ml-4 font-medium">
-                          {job.startDate?.slice(5, 7)}/
-                          {job.startDate?.slice(0, 4)} -{" "}
-                          {job.isCurrent ||
-                          job.endDate === "Present" ||
-                          job.endDate === "Hiện tại"
-                            ? t.present
-                            : `${job.endDate?.slice(5, 7)}/${job.endDate?.slice(
-                                0,
-                                4
-                              )}`}
-                        </span>
-                      </div>
-                      <div className="mt-3">
-                        {renderDescription(job.description)}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </Section>
-            )}
-          </div>
-
-          {/* SKILLS with rating */}
-          {userData.skills?.length > 0 && (
+      // --- CONTENT SECTIONS (SUMMARY, EXPERIENCE, ETC.) - Place 3 ---
+      case "summary":
+        return (
+          userData.summary && (
             <Section
+              key="summary"
+              title={t.careerObjectiveLabel}
+              sectionId={sectionMap.summary}
+              onSectionClick={onSectionClick}
+              isPdfMode={isPdfMode}
+            >
+              <div className="professional-card bg-white p-6 border-l-4 border-blue-600">
+                <p className="text-slate-700 leading-relaxed text-pretty">
+                  {userData.summary}
+                </p>
+              </div>
+            </Section>
+          )
+        );
+
+      case "education":
+        return (
+          userData.education?.length > 0 && (
+            <Section
+              key="education"
+              title={t.educationLabel}
+              sectionId={sectionMap.education}
+              onSectionClick={onSectionClick}
+              isPdfMode={isPdfMode}
+            >
+              <div className="space-y-6">
+                {userData.education.map((edu: any, i: number) => (
+                  <div
+                    key={i}
+                    className="professional-card bg-slate-50 p-6 border-l-4 border-blue-500"
+                  >
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="flex-1">
+                        <h3 className="text-lg font-bold text-slate-800 mb-1">
+                          {edu.degree}
+                        </h3>
+                        <p className="text-blue-700 font-semibold">
+                          {edu.institution}
+                        </p>
+                      </div>
+                      <span className="text-sm text-slate-600 bg-white px-4 py-1.5 rounded border border-slate-300 shrink-0 ml-4 font-medium">
+                        {edu.startDate?.slice(0, 4)} -{" "}
+                        {edu.endDate?.slice(0, 4)}
+                      </span>
+                    </div>
+                    {edu.major && (
+                      <p className="text-sm text-slate-600 mt-2">
+                        <span className="font-semibold">{t.major}</span>{" "}
+                        {edu.major}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </Section>
+          )
+        );
+
+      case "experience":
+        return (
+          userData.workHistory?.length > 0 && (
+            <Section
+              key="experience"
+              title={t.experienceLabel}
+              sectionId={sectionMap.experience}
+              onSectionClick={onSectionClick}
+              isPdfMode={isPdfMode}
+            >
+              <div className="space-y-4">
+                {userData.workHistory.map((job: any, i: number) => (
+                  <div
+                    key={i}
+                    className="professional-card bg-slate-50 p-4 border-l-4 border-slate-700"
+                  >
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="flex-1">
+                        <h3 className="text-base font-bold text-slate-800 mb-1">
+                          {job.title}
+                        </h3>
+                        <p className="text-blue-700 font-semibold">
+                          {job.company}
+                        </p>
+                      </div>
+                      <span className="text-sm text-slate-600 bg-white px-4 py-1.5 rounded border border-slate-300 shrink-0 ml-4 font-medium">
+                        {job.startDate?.slice(5, 7)}/
+                        {job.startDate?.slice(0, 4)} -{" "}
+                        {job.isCurrent ||
+                        job.endDate === "Present" ||
+                        job.endDate === "Hiện tại"
+                          ? t.present
+                          : `${job.endDate?.slice(5, 7)}/${job.endDate?.slice(
+                              0,
+                              4
+                            )}`}
+                      </span>
+                    </div>
+                    <div className="mt-3">
+                      {renderDescription(job.description)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Section>
+          )
+        );
+
+      case "skills":
+        return (
+          userData.skills?.length > 0 && (
+            <Section
+              key="skills"
               title={t.skillsLabel}
               sectionId={sectionMap.skills}
               onSectionClick={onSectionClick}
@@ -493,7 +492,22 @@ const Modern2: React.FC<Modern2Props> = ({
                 })}
               </div>
             </Section>
-          )}
+          )
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <>
+      <style dangerouslySetInnerHTML={{ __html: styles }} />
+
+      <div className="bg-slate-50 min-h-screen font-sans">
+        <div className="max-w-4xl mx-auto bg-white shadow-sm min-h-screen pb-8">
+          {/* Render tuần tự theo Place -> Order */}
+          {sortedSections.map((id) => renderSection(id))}
         </div>
       </div>
     </>

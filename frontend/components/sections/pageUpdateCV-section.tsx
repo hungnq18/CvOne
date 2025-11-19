@@ -13,18 +13,21 @@ import { CVAIEditorPopupsManager } from "@/components/forms/CV-AIEditorPopup";
 import { CVEditorPopupsManager } from "@/components/forms/CVEditorPopups";
 import { useOnClickOutside } from "@/hooks/useOnClickOutside";
 import { useCV } from "@/providers/cv-provider";
-import { useLanguage } from "@/providers/global_provider"; // BƯỚC 1: Import hook
+import { useLanguage } from "@/providers/global_provider";
 import {
   ArrowLeft,
   CheckCircle2,
   FileDown,
   Loader2,
   Mail,
-  Printer
+  Printer,
+  LayoutTemplate
 } from "lucide-react";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useEffect, useRef, useState } from "react";
+import CVTemplateLayoutPopup from "@/components/forms/CVTemplateLayoutPopup";
+import { getDefaultSectionPositions } from "../cvTemplate/defaultSectionPositions";
 
 // BƯỚC 2: TẠO ĐỐI TƯỢNG TRANSLATIONS
 const translations = {
@@ -37,6 +40,7 @@ const translations = {
       education: "Education",
       skills: "Skills",
       title: "CV SECTIONS",
+      customLayout: "Custom Layout", // Thêm mới
     },
     header: {
       defaultTitle: "Update CV",
@@ -79,6 +83,7 @@ const translations = {
       education: "Học vấn",
       skills: "Kỹ năng",
       title: "CÁC MỤC CỦA CV",
+      customLayout: "Tùy chỉnh bố cục", // Thêm mới
     },
     header: {
       defaultTitle: "Cập nhật CV",
@@ -142,7 +147,7 @@ const PageUpdateCVContent = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
   const cvId = searchParams.get("id");
-  const { currentTemplate, userData, loadTemplate, updateUserData } = useCV();
+  const { currentTemplate, userData, loadTemplate, updateUserData, getSectionPositions, updateSectionPositions } = useCV();
 
   const [loading, setLoading] = useState(true);
   const [activeSection, setActiveSection] = useState("info");
@@ -156,6 +161,7 @@ const PageUpdateCVContent = () => {
   const [cvTitle, setCvTitle] = useState<string>("");
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [jobDescription, setJobDescription] = useState<string>("");
+  const [showLayoutPopup, setShowLayoutPopup] = useState(false);
 
   const templateDropdownRef = useRef(null);
   const colorDropdownRef = useRef(null);
@@ -447,6 +453,12 @@ const PageUpdateCVContent = () => {
       </header>
       <main className="flex-grow flex overflow-hidden">
         <aside className="w-72 bg-white p-6 border-r border-slate-200 overflow-y-auto">
+          <button
+            onClick={() => setShowLayoutPopup(true)}
+            className="w-full flex items-center gap-3 p-3 rounded-md text-slate-700 hover:bg-slate-100 font-medium mb-2"
+          >
+            <LayoutTemplate size={20} /> {t.sidebar.customLayout}
+          </button>
           <h2 className="text-sm font-bold uppercase text-slate-500 mb-4">{t.sidebar.title}</h2>
           <nav className="flex flex-col gap-1">
             {sidebarSections.map((section) => (
@@ -475,6 +487,20 @@ const PageUpdateCVContent = () => {
         <CVAIEditorPopupsManager activePopup={activePopup} onClose={() => setActivePopup(null)} userData={userData} handleDataUpdate={handleDataUpdate} isSaving={isSaving} onLeaveWithoutSaving={() => router.push("/myDocuments")} onSaveAndLeave={async () => { if (await handleSaveToDB()) router.push("/myDocuments"); }} />
       ) : (
         <CVEditorPopupsManager activePopup={activePopup} onClose={() => setActivePopup(null)} userData={userData} handleDataUpdate={handleDataUpdate} isSaving={isSaving} onLeaveWithoutSaving={() => router.push("/myDocuments")} onSaveAndLeave={async () => { if (await handleSaveToDB()) router.push("/myDocuments"); }} />
+      )}
+
+      {/* --- POPUP LAYOUT EDITOR --- */}
+      {showLayoutPopup && currentTemplate && (
+        <CVTemplateLayoutPopup
+          currentPositions={getSectionPositions(currentTemplate._id)}
+          defaultPositions={getDefaultSectionPositions(currentTemplate.title)}
+          templateTitle={currentTemplate.title}
+          onSave={(newPositions) => {
+            updateSectionPositions(currentTemplate._id, newPositions);
+            setShowLayoutPopup(false);
+          }}
+          onClose={() => setShowLayoutPopup(false)}
+        />
       )}
     </div>
   );

@@ -22,6 +22,7 @@ import {
   CheckCircle2,
   Loader2,
   Languages,
+  LayoutTemplate,
 } from "lucide-react";
 import Image from "next/image";
 import { useCV } from "@/providers/cv-provider";
@@ -30,6 +31,8 @@ import { jwtDecode } from "jwt-decode";
 import { CVAIEditorPopupsManager } from "@/components/forms/CV-AIEditorPopup";
 import TranslateCVModal from "@/components/modals/TranslateCVModal";
 import { useLanguage } from "@/providers/global_provider";
+import CVTemplateLayoutPopup from "@/components/forms/CVTemplateLayoutPopup";
+import { getDefaultSectionPositions } from "../cvTemplate/defaultSectionPositions";
 
 // BƯỚC 2: TẠO ĐỐI TƯỢNG TRANSLATIONS ---
 const translations = {
@@ -42,6 +45,7 @@ const translations = {
     education: "Education",
     skills: "Skills",
     cvSections: "CV SECTIONS",
+    customLayout: "Custom Layout", // Thêm mới
 
     // Header & Buttons
     editCv: "Edit CV",
@@ -73,9 +77,9 @@ const translations = {
 
 
     //translate
-    translateSuccess: "CV translated successfully!",        // ← THÊM
-    translateError: "Error occurred while translating CV",   // ← THÊM
-    aiSuggestFailed: "AI suggestion failed",                 // ← THÊM
+    translateSuccess: "CV translated successfully!",
+    translateError: "Error occurred while translating CV",
+    aiSuggestFailed: "AI suggestion failed",
     // Dynamic titles
     loadingTemplateForNew: "Loading template to create new...",
     cvTitleDefault: (title: string) => `CV - ${title}`,
@@ -90,6 +94,7 @@ const translations = {
     education: "Học vấn",
     skills: "Kỹ năng",
     cvSections: "CÁC MỤC CỦA CV",
+    customLayout: "Tùy chỉnh bố cục", // Thêm mới
 
     // Header & Buttons
     editCv: "Chỉnh Sửa CV",
@@ -121,9 +126,9 @@ const translations = {
 
 
     //translate
-    translateSuccess: "Dịch CV thành công!",                 // ← THÊM
-    translateError: "Có lỗi xảy ra khi dịch CV",             // ← THÊM
-    aiSuggestFailed: "AI đề xuất mẫu thất bại",              // ← THÊM              // ← THÊM
+    translateSuccess: "Dịch CV thành công!",
+    translateError: "Có lỗi xảy ra khi dịch CV",
+    aiSuggestFailed: "AI đề xuất mẫu thất bại",
     // Dynamic titles
     loadingTemplateForNew: "Đang tải template để tạo mới...",
     cvTitleDefault: (title: string) => `CV - ${title}`,
@@ -155,6 +160,8 @@ const PageCreateCVAIContent = () => {
     loadTemplate,
     updateUserData,
     jobDescription,
+    getSectionPositions,
+    updateSectionPositions,
   } = useCV();
 
   const [loading, setLoading] = useState(true);
@@ -178,6 +185,7 @@ const PageCreateCVAIContent = () => {
   const [suppressAutoSuggest, setSuppressAutoSuggest] =
     useState<boolean>(false);
   const [cvUiTexts, setCvUiTexts] = useState<any>(null);
+  const [showLayoutPopup, setShowLayoutPopup] = useState(false);
 
   // BƯỚC 4: TẠO MẢNG sidebarSections ĐỘNG - sử dụng cvUiTexts nếu có, fallback về translations
   const sidebarSections = [
@@ -807,6 +815,12 @@ const PageCreateCVAIContent = () => {
 
       <main className="flex-grow flex overflow-hidden">
         <aside className="w-72 bg-white p-6 border-r border-slate-200 overflow-y-auto">
+          <button
+            onClick={() => setShowLayoutPopup(true)}
+            className="w-full flex items-center gap-3 p-3 rounded-md text-slate-700 hover:bg-slate-100 font-medium mb-2"
+          >
+            <LayoutTemplate size={20} /> {t.customLayout}
+          </button>
           <h2 className="text-sm font-bold uppercase text-slate-500 mb-4">
             {t.cvSections}
           </h2>
@@ -1068,6 +1082,20 @@ const PageCreateCVAIContent = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* --- POPUP LAYOUT EDITOR --- */}
+      {showLayoutPopup && currentTemplate && (
+        <CVTemplateLayoutPopup
+          currentPositions={getSectionPositions(currentTemplate._id)}
+          defaultPositions={getDefaultSectionPositions(currentTemplate.title)}
+          templateTitle={currentTemplate.title}
+          onSave={(newPositions) => {
+            updateSectionPositions(currentTemplate._id, newPositions);
+            setShowLayoutPopup(false);
+          }}
+          onClose={() => setShowLayoutPopup(false)}
+        />
       )}
     </div>
   );
