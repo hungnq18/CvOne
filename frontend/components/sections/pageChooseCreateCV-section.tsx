@@ -33,6 +33,7 @@ export default function CreateMethodSection() {
   const searchParams = useSearchParams();
 
   const templateId = searchParams.get("id") ?? "";
+  console.log("[ChooseCreateCV] Received template ID from URL:", templateId);
   const { language } = useLanguage();
   const t = translations[language].chooseCreate;
 

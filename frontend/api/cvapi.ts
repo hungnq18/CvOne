@@ -46,7 +46,14 @@ export interface CV {
  */
 export const getCVTemplates = async (): Promise<CVTemplate[]> => {
   // Lấy template là API public -> dùng fetchWithoutAuth để hoạt động cả trên server
-  return fetchWithoutAuth(API_ENDPOINTS.CV.TEMPLATES);
+  // Add cache-busting timestamp to ensure fresh data
+  const cacheBuster = `?t=${Date.now()}`;
+  const url = `${API_ENDPOINTS.CV.TEMPLATES}${cacheBuster}`;
+  
+  console.log("[getCVTemplates] Fetching from URL:", url);
+  const response = await fetchWithoutAuth(url);
+  
+  return response;
 };
 
 /**

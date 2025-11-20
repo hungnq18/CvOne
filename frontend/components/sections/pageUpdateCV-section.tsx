@@ -40,7 +40,7 @@ const translations = {
       education: "Education",
       skills: "Skills",
       title: "CV SECTIONS",
-      customLayout: "Custom Layout", // Thêm mới
+      customLayout: "Custom Layout",
     },
     header: {
       defaultTitle: "Update CV",
@@ -83,7 +83,7 @@ const translations = {
       education: "Học vấn",
       skills: "Kỹ năng",
       title: "CÁC MỤC CỦA CV",
-      customLayout: "Tùy chỉnh bố cục", // Thêm mới
+      customLayout: "Tùy chỉnh bố cục",
     },
     header: {
       defaultTitle: "Cập nhật CV",
@@ -130,11 +130,9 @@ const DropdownArrow = () => (
 );
 
 const PageUpdateCVContent = () => {
-  // BƯỚC 3: SỬ DỤNG HOOK VÀ LẤY ĐÚNG BỘ TỪ ĐIỂN
   const { language } = useLanguage();
   const t = translations[language];
 
-  // BƯỚC 4: TẠO MẢNG sidebarSections ĐỘNG
   const sidebarSections = [
     { id: "info", title: t.sidebar.personalInfo },
     { id: "contact", title: t.sidebar.contact },
@@ -154,7 +152,6 @@ const PageUpdateCVContent = () => {
   const [activePopup, setActivePopup] = useState<string | null>(null);
   const [allTemplates, setAllTemplates] = useState<CVTemplate[]>([]);
   const [showTemplatePopup, setShowTemplatePopup] = useState(false);
-  const [showColorPopup, setShowColorPopup] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [cvData, setCvData] = useState<CV | null>(null);
@@ -164,10 +161,8 @@ const PageUpdateCVContent = () => {
   const [showLayoutPopup, setShowLayoutPopup] = useState(false);
 
   const templateDropdownRef = useRef(null);
-  const colorDropdownRef = useRef(null);
 
   useOnClickOutside(templateDropdownRef, () => setShowTemplatePopup(false));
-  useOnClickOutside(colorDropdownRef, () => setShowColorPopup(false));
 
   useEffect(() => {
     if (!jobDescription || jobDescription === "") {
@@ -191,6 +186,9 @@ const PageUpdateCVContent = () => {
         loadTemplate(template);
 
         if (cv.content?.userData) {
+          if (cv.content.userData.sectionPositions && cv.cvTemplateId) {
+            updateSectionPositions(cv.cvTemplateId, cv.content.userData.sectionPositions);
+          }
           updateUserData(cv.content.userData);
         }
       } catch (error) {
@@ -213,10 +211,7 @@ const PageUpdateCVContent = () => {
 
   const handleTemplateSelect = async (selectedTemplate: CVTemplate) => {
     setShowTemplatePopup(false);
-
-    if (currentTemplate?._id === selectedTemplate._id) {
-      return;
-    }
+    if (currentTemplate?._id === selectedTemplate._id) return;
 
     try {
       setLoading(true);
@@ -224,21 +219,39 @@ const PageUpdateCVContent = () => {
 
       if (newTemplateData) {
         loadTemplate(newTemplateData);
+        
+        // --- FIX: Lấy vị trí chuẩn từ API của template mới ---
+        const correctPositions = newTemplateData.data?.sectionPositions || getDefaultSectionPositions(newTemplateData.title);
+
+        // Áp dụng ngay vào userData
+        const newUserData = { ...userData, sectionPositions: correctPositions };
+
+        updateUserData(newUserData);
+        updateSectionPositions(selectedTemplate._id, correctPositions);
+        
         setIsDirty(true);
-      } else {
-        throw new Error(t.alerts.newTemplateError);
       }
     } catch (error) {
-      console.error(t.alerts.changeTemplateError, error);
-      alert(t.alerts.changeTemplateError);
-    } finally {
-      setLoading(false);
+       console.error(t.alerts.changeTemplateError, error);
+       alert(t.alerts.changeTemplateError);
+    } finally { 
+       setLoading(false); 
     }
   };
 
   const handleDataUpdate = (updatedData: any) => {
     updateUserData(updatedData);
     setIsDirty(true);
+  };
+
+  // --- HÀM XỬ LÝ KÉO THẢ TRỰC TIẾP ---
+  const handleLayoutChange = (newPositions: any) => {
+    if (currentTemplate) {
+      updateSectionPositions(currentTemplate._id, newPositions);
+      // Cập nhật trực tiếp vào userData để render lại ngay lập tức
+      updateUserData({ ...userData, sectionPositions: newPositions });
+      setIsDirty(true);
+    }
   };
 
   const handleSaveToDB = async (): Promise<boolean> => {
@@ -249,8 +262,40 @@ const PageUpdateCVContent = () => {
 
     setIsSaving(true);
     try {
+      const sectionPositions = 
+        userData.sectionPositions || 
+        getSectionPositions(currentTemplate._id) || 
+        currentTemplate.data?.sectionPositions || 
+        getDefaultSectionPositions(currentTemplate.title); 
+
+      const completeUserData = {
+        firstName: userData.firstName || "",
+        lastName: userData.lastName || "",
+        professional: userData.professional || "",
+        city: userData.city || "",
+        country: userData.country || "",
+        province: userData.province || "",
+        phone: userData.phone || "",
+        email: userData.email || "",
+        avatar: userData.avatar || "",
+        summary: userData.summary || "",
+        skills: userData.skills || [],
+        workHistory: userData.workHistory || [],
+        education: userData.education || [],
+        careerObjective: userData.careerObjective || "",
+        Project: userData.Project || [],
+        certification: userData.certification || [],
+        achievement: userData.achievement || [],
+        hobby: userData.hobby || [],
+        sectionPositions: sectionPositions,
+      };
+
+      const contentData = {
+        userData: completeUserData
+      };
+
       const dataToUpdate: Partial<CV> = {
-        content: { userData },
+        content: contentData,
         title: cvTitle,
         updatedAt: new Date().toISOString(),
         cvTemplateId: currentTemplate._id,
@@ -288,12 +333,19 @@ const PageUpdateCVContent = () => {
     const TemplateComponent = templateComponentMap?.[currentTemplate.title];
     if (!TemplateComponent) return null;
 
+    const sectionPositions = 
+      userData.sectionPositions || 
+      getSectionPositions(currentTemplate._id) || 
+      currentTemplate.data?.sectionPositions || 
+      getDefaultSectionPositions(currentTemplate.title); 
+
     const componentData = {
       ...currentTemplate.data,
       userData: userData,
+      sectionPositions: sectionPositions
     };
 
-    const fontBase64 = "data:font/woff2;base64,d09GMgABAAAAA... (thay bằng chuỗi Base64 thật của font bạn dùng)";
+    const fontBase64 = "data:font/woff2;base64,d09GMgABAAAAA..."; // (Thay bằng font base64 thật của bạn)
     const fontName = 'CVFont';
 
     return (
@@ -366,7 +418,21 @@ const PageUpdateCVContent = () => {
     if (!TemplateComponent) {
       return <div>{t.content.templateComponentNotFound(currentTemplate.title)}</div>;
     }
-    const componentData = { ...currentTemplate.data, userData: userData };
+    
+    // Ưu tiên lấy positions từ userData (nếu có, tức là đang ở đúng template đã lưu)
+    // Nếu không, lấy từ defaultPositions (khi vừa switch template)
+    const sectionPositions = 
+      userData.sectionPositions || 
+      getSectionPositions(currentTemplate._id) || 
+      currentTemplate.data?.sectionPositions || 
+      getDefaultSectionPositions(currentTemplate.title); 
+    
+    const componentData = { 
+      ...currentTemplate.data, 
+      userData: userData,
+      sectionPositions: sectionPositions
+    };
+    
     const containerWidth = 700;
     const templateOriginalWidth = 794;
     const scaleFactor = containerWidth / templateOriginalWidth;
@@ -378,7 +444,14 @@ const PageUpdateCVContent = () => {
             transformOrigin: "top",
             transform: `scale(${scaleFactor})`,
           }}>
-          <TemplateComponent data={componentData} onSectionClick={handleSectionClick}  language={language}/>
+          {/* TRUYỀN onLayoutChange VÀ scale ĐỂ KÍCH HOẠT DRAG DROP */}
+          <TemplateComponent 
+            data={componentData} 
+            onSectionClick={handleSectionClick} 
+            onLayoutChange={handleLayoutChange}
+            scale={scaleFactor}
+            language={language}
+          />
         </div>
       </div>
     );
@@ -490,18 +563,27 @@ const PageUpdateCVContent = () => {
       )}
 
       {/* --- POPUP LAYOUT EDITOR --- */}
-      {showLayoutPopup && currentTemplate && (
-        <CVTemplateLayoutPopup
-          currentPositions={getSectionPositions(currentTemplate._id)}
-          defaultPositions={getDefaultSectionPositions(currentTemplate.title)}
-          templateTitle={currentTemplate.title}
-          onSave={(newPositions) => {
-            updateSectionPositions(currentTemplate._id, newPositions);
-            setShowLayoutPopup(false);
-          }}
-          onClose={() => setShowLayoutPopup(false)}
-        />
-      )}
+      {showLayoutPopup && currentTemplate && (() => {
+        const currentPositions = 
+          userData?.sectionPositions || 
+          getSectionPositions(currentTemplate._id) || 
+          currentTemplate.data?.sectionPositions || 
+          getDefaultSectionPositions(currentTemplate.title); 
+        
+        return (
+          <CVTemplateLayoutPopup
+            currentPositions={currentPositions}
+            defaultPositions={getDefaultSectionPositions(currentTemplate.title)}
+            templateTitle={currentTemplate.title}
+            onSave={(newPositions) => {
+              updateSectionPositions(currentTemplate._id, newPositions);
+              updateUserData({ ...userData, sectionPositions: newPositions });
+              setShowLayoutPopup(false);
+            }}
+            onClose={() => setShowLayoutPopup(false)}
+          />
+        );
+      })()}
     </div>
   );
 };

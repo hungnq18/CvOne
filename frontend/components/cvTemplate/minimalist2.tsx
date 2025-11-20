@@ -1,8 +1,10 @@
 "use client";
 
-import { Award, Briefcase, Globe, Mail, MapPin, Phone } from "lucide-react";
+import { Award, Briefcase, Globe, Mail, MapPin, Phone, GripVertical } from "lucide-react";
 import Image from "next/image";
-import type React from "react";
+import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
+import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import { getDefaultSectionPositions } from "./defaultSectionPositions";
 
 // --- TRANSLATIONS ---
@@ -47,13 +49,26 @@ const translations = {
   },
 };
 
-// --- PROPS INTERFACES ---
+// --- PORTAL COMPONENT ---
+const DragPortal = ({ children }: { children: React.ReactNode }) => {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
+  if (!mounted) return null;
+  return createPortal(children, document.body);
+};
+
+// --- PROPS ---
 interface HoverableWrapperProps {
   children: React.ReactNode;
   label: string;
   sectionId: string;
   onClick?: (sectionId: string) => void;
   isPdfMode?: boolean;
+  dragHandleProps?: any;
+  isDragging?: boolean;
 }
 
 interface Minimalist2Props {
@@ -62,15 +77,19 @@ interface Minimalist2Props {
   isPdfMode?: boolean;
   language?: string;
   cvUiTexts?: any;
+  onLayoutChange?: (newPositions: any) => void;
+  scale?: number;
 }
 
-// --- HOVERABLE WRAPPER COMPONENT ---
+// --- COMPONENT ---
 const HoverableWrapper: React.FC<HoverableWrapperProps> = ({
   children,
   label,
   sectionId,
   onClick,
   isPdfMode = false,
+  dragHandleProps,
+  isDragging,
 }) => {
   if (isPdfMode) {
     return <>{children}</>;
@@ -88,10 +107,8 @@ const HoverableWrapper: React.FC<HoverableWrapperProps> = ({
   };
 
   const hoverClass = hoverEffectMap[sectionId] || "";
-  const borderRadiusClass =
-    sectionId === "avatar" ? "rounded-full" : "rounded-lg";
-  const labelPositionClass =
-    sectionId === "avatar"
+  const borderRadiusClass = sectionId === "avatar" ? "rounded-full" : "rounded-lg";
+  const labelPositionClass = sectionId === "avatar"
       ? "top-0 left-1/2 -translate-x-1/2 -translate-y-[calc(100%+8px)]"
       : "top-2 right-2";
 
@@ -100,10 +117,35 @@ const HoverableWrapper: React.FC<HoverableWrapperProps> = ({
   const finalClassName = `
     relative group cursor-pointer transition-all duration-300 ease-in-out
     ${hoverClass}
+    ${isDragging ? "z-50 shadow-2xl ring-4 ring-green-400 opacity-100 scale-105 bg-white" : ""}
   `;
+
+  const isAvatar = sectionId === "avatar";
 
   return (
     <div className={finalClassName} onClick={() => onClick?.(sectionId)}>
+      {/* --- DRAG HANDLE --- */}
+      {!isPdfMode && (
+        <div
+          {...dragHandleProps}
+          className="absolute -left-3 top-1/2 -translate-y-1/2 -translate-x-full 
+                     w-8 h-8 flex items-center justify-center
+                     bg-white rounded-full shadow-[0_4px_12px_rgba(0,0,0,0.15)] border border-gray-100 
+                     text-slate-400 hover:text-green-600 hover:border-green-300 hover:bg-green-50
+                     cursor-grab active:cursor-grabbing 
+                     opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110 z-[100]"
+          title="Kéo để sắp xếp vị trí"
+          style={{
+             left: isAvatar ? '0' : undefined,
+             transform: isAvatar ? 'translate(-120%, -50%)' : undefined,
+             zIndex: 100
+          }}
+          onClick={(e) => e.stopPropagation()} 
+        >
+          <GripVertical size={18} strokeWidth={2.5} />
+        </div>
+      )}
+
       {children}
       <div
         className={`absolute inset-0 ${borderRadiusClass} border-2 border-green-500/50 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none`}
@@ -124,10 +166,11 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
   isPdfMode = false,
   language,
   cvUiTexts,
+  onLayoutChange,
+  scale = 1,
 }) => {
   const lang = language || "en";
   const defaultT = translations[lang as "en" | "vi"];
-  // Merge với cvUiTexts từ prop
   const t = {
     ...defaultT,
     ...(cvUiTexts && {
@@ -153,30 +196,52 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
     education: "education",
   };
 
-  // --- Tính toán vị trí hiển thị section ---
+  // --- Logic lấy vị trí ---
   const sectionPositions =
     data?.sectionPositions ||
     getDefaultSectionPositions(data?.templateTitle || "The Minimalist");
 
   type SectionPosition = { place: number; order: number };
 
-  // Place 1: Sidebar (Left - 38%)
   const leftSections = Object.entries(sectionPositions)
     .filter(([_, pos]) => (pos as SectionPosition).place === 1)
-    .sort(
-      ([, a], [, b]) =>
-        (a as SectionPosition).order - (b as SectionPosition).order
-    )
+    .sort(([, a], [, b]) => (a as SectionPosition).order - (b as SectionPosition).order)
     .map(([key]) => key);
 
-  // Place 2: Main Content (Right - 62%)
   const rightSections = Object.entries(sectionPositions)
     .filter(([_, pos]) => (pos as SectionPosition).place === 2)
-    .sort(
-      ([, a], [, b]) =>
-        (a as SectionPosition).order - (b as SectionPosition).order
-    )
+    .sort(([, a], [, b]) => (a as SectionPosition).order - (b as SectionPosition).order)
     .map(([key]) => key);
+
+  const handleDragEnd = (result: DropResult) => {
+    if (!onLayoutChange || !result.destination) return;
+    const { source, destination } = result;
+
+    if (source.droppableId === destination.droppableId && source.index === destination.index) return;
+
+    const sourcePlace = parseInt(source.droppableId);
+    const destPlace = parseInt(destination.droppableId);
+    const newPositions = { ...sectionPositions };
+
+    // FIX LỖI: Thêm kiểu [string, any] cho tham số trong sort để TS không báo lỗi unknown
+    const getKeys = (place: number) => Object.entries(newPositions)
+      .filter(([_, pos]: [string, any]) => pos.place === place)
+      .sort(([, a]: [string, any], [, b]: [string, any]) => a.order - b.order)
+      .map(([key]) => key);
+
+    const sourceKeys = getKeys(sourcePlace);
+    const destKeys = sourcePlace === destPlace ? sourceKeys : getKeys(destPlace);
+
+    const [moved] = sourceKeys.splice(source.index, 1);
+    destKeys.splice(destination.index, 0, moved);
+
+    if (sourcePlace !== destPlace) {
+       sourceKeys.forEach((key, index) => { newPositions[key] = { ...newPositions[key], order: index }; });
+    }
+    destKeys.forEach((key, index) => { newPositions[key] = { place: destPlace, order: index }; });
+
+    onLayoutChange(newPositions);
+  };
 
   const renderDescription = (desc: string) => {
     if (!desc) return null;
@@ -193,7 +258,7 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
     );
   };
 
-  const renderSection = (sectionId: string) => {
+  const renderSection = (sectionId: string, dragHandleProps?: any, isDragging?: boolean) => {
     switch (sectionId) {
       case "avatar":
         return (
@@ -204,23 +269,21 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
                 sectionId={sectionMap.avatar}
                 onClick={onSectionClick}
                 isPdfMode={isPdfMode}
+                dragHandleProps={dragHandleProps}
+                isDragging={isDragging}
               >
                 <div className="w-36 h-36 lg:w-40 lg:h-40 rounded-full overflow-hidden bg-white border-6 border-white shadow-2xl ring-4 ring-green-700/20">
                   {isPdfMode ? (
                     <img
                       src={userData.avatar || "/avatar-female.png"}
-                      alt={`${userData.firstName || ""} ${
-                        userData.lastName || ""
-                      }`}
+                      alt={`${userData.firstName || ""} ${userData.lastName || ""}`}
                       crossOrigin="anonymous"
                       className="w-full h-full object-cover"
                     />
                   ) : (
                     <Image
                       src={userData.avatar || "/avatar-female.png"}
-                      alt={`${userData.firstName || ""} ${
-                        userData.lastName || ""
-                      }`}
+                      alt={`${userData.firstName || ""} ${userData.lastName || ""}`}
                       width={200}
                       height={200}
                       className="w-full h-full object-cover"
@@ -240,6 +303,8 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
             sectionId={sectionMap.contact}
             onClick={onSectionClick}
             isPdfMode={isPdfMode}
+            dragHandleProps={dragHandleProps}
+            isDragging={isDragging}
           >
             <div className="px-8 lg:px-10">
               <div className="flex items-center gap-2 mb-3">
@@ -297,14 +362,15 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
         );
 
       case "summary":
-        return (
-          userData.summary && (
+        return userData.summary && (
             <HoverableWrapper
               key="summary"
               label={t.careerObjectiveLabel}
               sectionId={sectionMap.summary}
               onClick={onSectionClick}
               isPdfMode={isPdfMode}
+              dragHandleProps={dragHandleProps}
+              isDragging={isDragging}
             >
               <div className="px-8 lg:px-10">
                 <div className="flex items-center gap-2 mb-3">
@@ -320,18 +386,18 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
                 </div>
               </div>
             </HoverableWrapper>
-          )
         );
 
       case "skills":
-        return (
-          userData.skills?.length > 0 && (
+        return userData.skills?.length > 0 && (
             <HoverableWrapper
               key="skills"
               label={t.skillsLabel}
               sectionId={sectionMap.skills}
               onClick={onSectionClick}
               isPdfMode={isPdfMode}
+              dragHandleProps={dragHandleProps}
+              isDragging={isDragging}
             >
               <div className="w-full max-w-4xl mx-auto p-6">
                 <div className="mb-4">
@@ -346,10 +412,7 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
                 <div className="bg-white/60 backdrop-blur-sm p-6 rounded-xl shadow-md">
                   <div className="space-y-4">
                     {userData.skills.map((skill: any, i: number) => {
-                      const rating = Math.max(
-                        0,
-                        Math.min(5, Number(skill.rating || 0))
-                      );
+                      const rating = Math.max(0, Math.min(5, Number(skill.rating || 0)));
                       const width = `${(rating / 5) * 100}%`;
                       return (
                         <div key={i} className="group">
@@ -374,7 +437,6 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
                 </div>
               </div>
             </HoverableWrapper>
-          )
         );
 
       case "info":
@@ -385,6 +447,8 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
             sectionId={sectionMap.info}
             onClick={onSectionClick}
             isPdfMode={isPdfMode}
+            dragHandleProps={dragHandleProps}
+            isDragging={isDragging}
           >
             <div className="bg-gradient-to-r from-green-700 to-green-800 px-8 lg:px-12 py-10 relative overflow-hidden">
               <div className="absolute top-0 right-0 w-48 h-48 bg-lime-500/10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
@@ -415,6 +479,8 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
             sectionId={sectionMap.experience}
             onClick={onSectionClick}
             isPdfMode={isPdfMode}
+            dragHandleProps={dragHandleProps}
+            isDragging={isDragging}
           >
             <div className="px-8 lg:px-12 py-6">
               <div className="flex items-center gap-3 mb-4">
@@ -427,27 +493,16 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
               </div>
               <div className="space-y-4">
                 {(userData.workHistory || []).map((job: any, i: number) => (
-                  <div
-                    key={i}
-                    className="relative pl-6 pb-4 last:pb-0 border-l-2 border-green-200 last:border-l-0"
-                  >
+                  <div key={i} className="relative pl-6 pb-4 last:pb-0 border-l-2 border-green-200 last:border-l-0">
                     <div className="absolute left-0 top-0 w-3 h-3 rounded-full bg-lime-500 -translate-x-[7px] ring-4 ring-white"></div>
                     <div className="bg-white p-5 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 border border-gray-100">
                       <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-1 mb-2">
-                        <h3 className="font-bold text-lg text-green-900">
-                          {job.title}
-                        </h3>
+                        <h3 className="font-bold text-lg text-green-900">{job.title}</h3>
                         <span className="text-sm font-semibold text-gray-600 bg-green-50 px-3 py-1 rounded-full shrink-0">
-                          {job.startDate?.slice(5, 7)}/
-                          {job.startDate?.slice(0, 4)} -{" "}
-                          {job.isCurrent ||
-                          job.endDate === "Present" ||
-                          job.endDate === "Hiện tại"
+                          {job.startDate?.slice(5, 7)}/{job.startDate?.slice(0, 4)} -{" "}
+                          {job.isCurrent || job.endDate === "Present" || job.endDate === "Hiện tại"
                             ? t.present
-                            : `${job.endDate?.slice(5, 7)}/${job.endDate?.slice(
-                                0,
-                                4
-                              )}`}
+                            : `${job.endDate?.slice(5, 7)}/${job.endDate?.slice(0, 4)}`}
                         </span>
                       </div>
                       <h4 className="font-semibold text-base text-gray-700 mb-3 flex items-center gap-2">
@@ -471,6 +526,8 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
             sectionId={sectionMap.education}
             onClick={onSectionClick}
             isPdfMode={isPdfMode}
+            dragHandleProps={dragHandleProps}
+            isDragging={isDragging}
           >
             <div className="px-8 lg:px-12 py-6 bg-gradient-to-br from-gray-50 to-white">
               <div className="flex items-center gap-3 mb-4">
@@ -483,16 +540,12 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
               </div>
               <div className="space-y-4">
                 {(userData.education || []).map((edu: any, i: number) => (
-                  <div
-                    key={i}
-                    className="bg-white p-5 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 border-l-4 border-lime-500"
-                  >
+                  <div key={i} className="bg-white p-5 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 border-l-4 border-lime-500">
                     <p className="text-lg font-bold text-gray-900 mb-2">
                       {edu.major} - {edu.institution}
                     </p>
                     <p className="text-sm text-gray-600 mb-1">
-                      <span className="font-semibold">{t.degree}</span>{" "}
-                      {edu.degree}
+                      <span className="font-semibold">{t.degree}</span> {edu.degree}
                     </p>
                     <p className="text-sm font-medium text-green-700">
                       {edu.startDate?.slice(0, 4)} - {edu.endDate?.slice(0, 4)}
@@ -509,18 +562,80 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
     }
   };
 
-  return (
-    <div className="bg-white font-sans text-gray-800 flex flex-col lg:flex-row shadow-2xl mx-auto">
-      {/* --- LEFT SIDEBAR (BEIGE) --- */}
-      <div className="w-full lg:w-[38%] bg-gradient-to-br from-green-50 to-green-100/50 flex flex-col gap-8 py-10 relative border-r-4 border-green-700">
-        {leftSections.map((id) => renderSection(id))}
-      </div>
+  // --- DRAGGABLE ITEM ---
+  const DraggableItem = ({ id, index }: { id: string, index: number }) => (
+    <Draggable key={id} draggableId={id} index={index}>
+      {(provided, snapshot) => {
+        const child = (
+          <div
+            ref={provided.innerRef}
+            {...provided.draggableProps}
+            style={{
+              ...provided.draggableProps.style,
+              ...(snapshot.isDragging ? {
+                transform: `${provided.draggableProps.style?.transform || ''} scale(${scale})`,
+                transformOrigin: "top left",
+                zIndex: 9999,
+              } : {})
+            }}
+          >
+             {renderSection(id, provided.dragHandleProps, snapshot.isDragging)}
+          </div>
+        );
 
-      {/* --- RIGHT CONTENT AREA (WHITE) --- */}
-      <div className="w-full lg:w-[62%] bg-white">
-        {rightSections.map((id) => renderSection(id))}
+        if (snapshot.isDragging) {
+          return <DragPortal>{child}</DragPortal>;
+        }
+        return child;
+      }}
+    </Draggable>
+  );
+
+  if (isPdfMode) {
+    return (
+      <div className="bg-white font-sans text-gray-800 flex flex-col lg:flex-row shadow-2xl mx-auto">
+        <div className="w-full lg:w-[38%] bg-gradient-to-br from-green-50 to-green-100/50 flex flex-col gap-8 py-10 relative border-r-4 border-green-700">
+          {leftSections.map(id => renderSection(id))}
+        </div>
+        <div className="w-full lg:w-[62%] bg-white">
+          {rightSections.map(id => renderSection(id))}
+        </div>
       </div>
-    </div>
+    );
+  }
+
+  return (
+    <DragDropContext onDragEnd={handleDragEnd}>
+      <div className="bg-white font-sans text-gray-800 flex flex-col lg:flex-row shadow-2xl mx-auto">
+        {/* LEFT SIDEBAR - Droppable ID="1" */}
+        <Droppable droppableId="1">
+          {(provided) => (
+            <div 
+               ref={provided.innerRef} 
+               {...provided.droppableProps}
+               className="w-full lg:w-[38%] bg-gradient-to-br from-green-50 to-green-100/50 flex flex-col gap-8 py-10 relative border-r-4 border-green-700 min-h-[500px]"
+            >
+               {leftSections.map((id, index) => <DraggableItem key={id} id={id} index={index} />)}
+               {provided.placeholder}
+            </div>
+          )}
+        </Droppable>
+
+        {/* RIGHT CONTENT - Droppable ID="2" */}
+        <Droppable droppableId="2">
+          {(provided) => (
+            <div 
+               ref={provided.innerRef} 
+               {...provided.droppableProps}
+               className="w-full lg:w-[62%] bg-white min-h-[500px]"
+            >
+               {rightSections.map((id, index) => <DraggableItem key={id} id={id} index={index} />)}
+               {provided.placeholder}
+            </div>
+          )}
+        </Droppable>
+      </div>
+    </DragDropContext>
   );
 };
 
