@@ -278,6 +278,11 @@ const ModernCV1: React.FC<ModernCV1Props> = ({
 
     onLayoutChange(newPositions);
   };
+  // --- Tính toán vị trí hiển thị section ---
+  // Lấy từ provider nếu có templateId, fallback về default
+  const sectionPositions =
+    data?.sectionPositions ||
+    getDefaultSectionPositions(data?.templateTitle || "The Signature");
 
   const renderSectionContent = (sectionId: string, dragHandleProps?: any, isDragging?: boolean) => {
     switch (sectionId) {
@@ -443,10 +448,15 @@ const ModernCV1: React.FC<ModernCV1Props> = ({
                     {job.startDate?.slice(5, 7)}/{job.startDate?.slice(0, 4)} -{" "}
                     {job.isCurrent || job.endDate == "Present" || job.endDate == "Hiện tại"
                       ? t.present
-                      : `${job.endDate?.slice(5, 7)}/${job.endDate?.slice(0, 4)}`}
+                      : `${job.endDate?.slice(5, 7)}/${job.endDate?.slice(
+                          0,
+                          4
+                        )}`}
                   </span>
                 </div>
-                <h4 className="font-bold text-lg text-gray-700 mb-3">{job.company}</h4>
+                <h4 className="font-bold text-lg text-gray-700 mb-3">
+                  {job.company}
+                </h4>
                 {renderDescription(job.description)}
               </div>
             ))}
