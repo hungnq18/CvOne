@@ -231,6 +231,14 @@ const PageCreateCVContent = () => {
     updateUserData(updatedData);
     setIsDirty(true);
   };
+  
+  // --- HÀM XỬ LÝ KHI KÉO THẢ TRÊN TEMPLATE ---
+  const handleLayoutChange = (newPositions: any) => {
+    if (currentTemplate) {
+      updateSectionPositions(currentTemplate._id, newPositions);
+      setIsDirty(true); // Đánh dấu là đã thay đổi để hiện popup xác nhận khi thoát
+    }
+  };
 
   const getUserIdFromToken = (): string | null => {
     if (typeof document === "undefined") return null;
@@ -489,9 +497,12 @@ const PageCreateCVContent = () => {
             transform: `scale(${scaleFactor})`,
           }}
         >
+          {/* Truyền hàm handleLayoutChange vào template */}
           <TemplateComponent
             data={componentData}
             onSectionClick={handleSectionClick}
+            onLayoutChange={handleLayoutChange}
+            language={language}
           />
         </div>
       </div>
