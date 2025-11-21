@@ -1,8 +1,8 @@
+import { DragDropContext, Draggable, Droppable, DropResult } from "@hello-pangea/dnd";
+import { GripVertical } from "lucide-react";
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
-import { GripVertical } from "lucide-react"; 
 import { getDefaultSectionPositions } from "./defaultSectionPositions";
 
 // --- BƯỚC 2: TẠO ĐỐI TƯỢNG TRANSLATIONS ---
@@ -278,11 +278,6 @@ const ModernCV1: React.FC<ModernCV1Props> = ({
 
     onLayoutChange(newPositions);
   };
-  // --- Tính toán vị trí hiển thị section ---
-  // Lấy từ provider nếu có templateId, fallback về default
-  const sectionPositions =
-    data?.sectionPositions ||
-    getDefaultSectionPositions(data?.templateTitle || "The Signature");
 
   const renderSectionContent = (sectionId: string, dragHandleProps?: any, isDragging?: boolean) => {
     switch (sectionId) {
