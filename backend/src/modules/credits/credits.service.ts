@@ -13,8 +13,8 @@ export class CreditsService {
   constructor(
     @InjectModel(Credit.name) private creditModel: Model<CreditDocument>,
 
-    private readonly voucherService: VouchersService,
-  ) { }
+    private readonly voucherService: VouchersService
+  ) {}
 
   async createCredit(userId: string) {
     return await this.creditModel.create({
@@ -25,7 +25,7 @@ export class CreditsService {
     const credit = await this.creditModel.findOneAndUpdate(
       { userId: new Types.ObjectId(userId) },
       { $inc: { token: token } },
-      { new: true },
+      { new: true }
     );
     if (!credit) {
       throw new NotFoundException("Credit not found");
@@ -58,8 +58,8 @@ export class CreditsService {
     const startDate = new Date();
     const endDate = voucher.durationDays
       ? new Date(
-        startDate.getTime() + voucher.durationDays * 24 * 60 * 60 * 1000,
-      )
+          startDate.getTime() + voucher.durationDays * 24 * 60 * 60 * 1000
+        )
       : voucher.endDate;
 
     // Add to user's credit (or create if not exists)
@@ -74,7 +74,7 @@ export class CreditsService {
           },
         },
       },
-      { upsert: true },
+      { upsert: true }
     );
 
     return { message: "Voucher saved successfully" };
@@ -106,7 +106,18 @@ export class CreditsService {
     const credit = await this.creditModel.findOneAndUpdate(
       { userId: new Types.ObjectId(userId) },
       { $pull: { vouchers: { voucherId: new Types.ObjectId(voucherId) } } },
-      { new: true },
+      { new: true }
+    );
+    if (!credit) {
+      throw new NotFoundException("Credit not found");
+    }
+    return credit;
+  }
+  async useToken(userId: string, token: number) {
+    const credit = await this.creditModel.findOneAndUpdate(
+      { userId: new Types.ObjectId(userId) },
+      { $inc: { token: -token } },
+      { new: true }
     );
     if (!credit) {
       throw new NotFoundException("Credit not found");

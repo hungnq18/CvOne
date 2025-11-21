@@ -11,6 +11,8 @@ import {
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { OrdersService } from "./orders.service";
 import { CreateOrderDto } from "./dto/create-order.dto";
+import { RolesGuard } from "../auth/guards/roles.guard";
+import { Roles } from "src/common/decorators/roles.decorator";
 
 @Controller("orders")
 export class OrdersController {
@@ -41,5 +43,12 @@ export class OrdersController {
   getOrderByUser(@Request() req) {
     const userId = req.user.user._id;
     return this.ordersService.getOrderForUser(userId);
+  }
+
+  @Get("all")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("admin")
+  getAllOrders() {
+    return this.ordersService.getAllOrders();
   }
 }

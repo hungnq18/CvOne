@@ -1,50 +1,52 @@
 import {
   IsString,
-  IsNotEmpty,
   IsDateString,
-  IsArray,
-  IsBoolean,
   IsOptional,
   IsNumber,
 } from "class-validator";
 
 export class UpdateVoucherDirectDto {
   @IsString()
-  @IsNotEmpty()
-  name: string;
+  @IsOptional()
+  name?: string;
 
   @IsString()
-  @IsNotEmpty()
-  description: string;
-
-  @IsNumber()
-  @IsNotEmpty()
-  discountValue: number;
+  @IsOptional()
+  description?: string;
 
   @IsString()
-  @IsNotEmpty()
-  discountType: string;
+  @IsOptional()
+  type?: string;
 
-  @IsNumber()
-  @IsNotEmpty()
-  maxDiscountValue: number;
-
-  @IsNumber()
-  @IsNotEmpty()
-  minOrderValue: number;
-
-  @IsNumber()
-  @IsNotEmpty()
-  usageLimit: number;
   @IsNumber()
   @IsOptional()
-  perUserLimit: number;
+  discountValue?: number;
+
+  @IsString()
+  @IsOptional()
+  discountType?: string;
+
+  @IsNumber()
+  @IsOptional()
+  maxDiscountValue?: number;
+
+  @IsNumber()
+  @IsOptional()
+  minOrderValue?: number;
+
+  @IsNumber()
+  @IsOptional()
+  usageLimit?: number;
+
+  @IsNumber()
+  @IsOptional()
+  perUserLimit?: number;
 
   @IsDateString()
-  @IsNotEmpty()
-  startDate: Date;
+  @IsOptional()
+  startDate?: string;
 
   @IsDateString()
-  @IsNotEmpty()
-  endDate: Date;
+  @IsOptional()
+  endDate?: string;
 }

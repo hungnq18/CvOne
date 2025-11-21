@@ -12,8 +12,8 @@ export class UsersService {
 
   constructor(
     @InjectModel(User.name) private userModel: Model<User>,
-    private accountsService: AccountsService,
-  ) { }
+    private accountsService: AccountsService
+  ) {}
 
   async createUser(createUserDto: CreateUserDto): Promise<User> {
     try {
@@ -52,7 +52,7 @@ export class UsersService {
   }
 
   async getUserByAccountId(
-    accountId: string | Types.ObjectId,
+    accountId: string | Types.ObjectId
   ): Promise<UserDocument> {
     const user = await this.userModel
       .findOne({ account_id: accountId })
@@ -71,7 +71,7 @@ export class UsersService {
 
   async updateProfile(
     userId: string,
-    updateUserDto: UpdateUserDto,
+    updateUserDto: UpdateUserDto
   ): Promise<User> {
     const updatedUser = await this.userModel
       .findByIdAndUpdate(
@@ -89,7 +89,7 @@ export class UsersService {
             ...(updateUserDto.country && { country: updateUserDto.country }),
           },
         },
-        { new: true },
+        { new: true }
       )
       .populate({
         path: "account_id",
@@ -113,7 +113,7 @@ export class UsersService {
       company_city: string;
       company_district: string;
       vatRegistrationNumber: string;
-    },
+    }
   ): Promise<User> {
     const updated = await this.userModel
       .findByIdAndUpdate(
@@ -127,7 +127,7 @@ export class UsersService {
             vatRegistrationNumber: fields.vatRegistrationNumber,
           },
         },
-        { new: true },
+        { new: true }
       )
       .exec();
 
