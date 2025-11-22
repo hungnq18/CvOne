@@ -1,22 +1,11 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-import OpenAI from "openai";
+import { OpenaiApiService } from "./openai-api.service";
 
 @Injectable()
 export class VietnameseContentService {
   private readonly logger = new Logger(VietnameseContentService.name);
-  private openai: OpenAI;
 
-  constructor(private configService: ConfigService) {
-    const apiKey = this.configService.get<string>("OPENAI_API_KEY");
-    if (!apiKey) {
-      this.logger.warn("OPENAI_API_KEY not found in environment variables");
-    }
-
-    this.openai = new OpenAI({
-      apiKey: apiKey,
-    });
-  }
+  constructor(private openaiApiService: OpenaiApiService) {}
 
   /**
    * Generate professional summary in Vietnamese using OpenAI
@@ -43,7 +32,8 @@ Yêu cầu:
 Chỉ trả về đoạn summary, không giải thích, không markdown.
 `;
 
-      const completion = await this.openai.chat.completions.create({
+      const openai = this.openaiApiService.getOpenAI();
+      const completion = await openai.chat.completions.create({
         model: "gpt-4o",
         messages: [
           {
@@ -112,7 +102,8 @@ Chỉ trả về một mảng JSON gồm ${count} đoạn summary, ví dụ:
 Không giải thích, không markdown.
 `;
 
-      const completion = await this.openai.chat.completions.create({
+      const openai = this.openaiApiService.getOpenAI();
+      const completion = await openai.chat.completions.create({
         model: "gpt-4o",
         messages: [
           {

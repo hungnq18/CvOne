@@ -100,7 +100,6 @@ export class CvService {
 
     // Invalidate cache for this CV
     this.cvCacheService.invalidateCVCache(id, userId);
-
     return cv;
   }
 

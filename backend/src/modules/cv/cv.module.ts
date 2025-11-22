@@ -12,12 +12,14 @@ import { CvController } from "./cv.controller";
 import { CvService } from "./cv.service";
 import { AiInterviewSession, AiInterviewSessionSchema } from "./schemas/ai-interview.schema";
 import { Cv, CvSchema } from "./schemas/cv.schema";
+import { InterviewQuestionPool, InterviewQuestionPoolSchema } from "./schemas/interview-question-pool.schema";
 import { AiInterviewService } from "./services/ai-interview.service";
 import { AiOptimizationService } from "./services/ai-optimization.service";
 import { CvAnalysisService } from "./services/cv-analysis.service";
 import { CvCacheService } from "./services/cv-cache.service";
 import { CvContentGenerationService } from "./services/cv-content-generation.service";
 import { CvUploadService } from "./services/cv-upload.service";
+import { EncryptionService } from "./services/encryption.service";
 import { JobAnalysisService } from "./services/job-analysis.service";
 import { OpenaiApiService } from "./services/openai-api.service";
 import { OpenAiService } from "./services/openai.service";
@@ -30,6 +32,7 @@ import { VietnameseContentService } from "./services/vietnamese-content.service"
       { name: CvTemplate.name, schema: CvTemplateSchema },
       { name: User.name, schema: UserSchema },
       { name: AiInterviewSession.name, schema: AiInterviewSessionSchema },
+      { name: InterviewQuestionPool.name, schema: InterviewQuestionPoolSchema },
     ]),
     MailModule,
   ],
@@ -37,6 +40,7 @@ import { VietnameseContentService } from "./services/vietnamese-content.service"
   providers: [
     CvService,
     CvPdfCloudService,
+    EncryptionService,
     OpenAiService,
     JobAnalysisService,
     CvContentGenerationService,
@@ -51,6 +55,7 @@ import { VietnameseContentService } from "./services/vietnamese-content.service"
   exports: [
     CvService,
     CvPdfCloudService,
+    EncryptionService,
     OpenAiService,
     JobAnalysisService,
     CvContentGenerationService,
