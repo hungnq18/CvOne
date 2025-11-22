@@ -2,8 +2,10 @@ import { fetchWithAuth } from './apiClient';
 
 export interface CreateInterviewRequest {
   jobDescription: string;
+  jobTitle?: string;
+  companyName?: string;
   numberOfQuestions?: number;
-  difficulty?: 'easy' | 'medium' | 'hard';
+  // difficulty không cần nữa - tự động xác định từ JD
 }
 
 export interface InterviewQuestion {
@@ -16,10 +18,17 @@ export interface InterviewQuestion {
 
 export interface InterviewSession {
   sessionId: string;
+  jobDescription: string;
+  jobTitle?: string;
+  companyName?: string;
   questions: InterviewQuestion[];
   currentQuestionIndex: number;
   totalQuestions: number;
   completedQuestions: number;
+  status: string;
+  difficulty: 'easy' | 'medium' | 'hard'; // Auto-determined từ JD
+  createdAt: Date;
+  averageScore?: number;
 }
 
 export interface SubmitAnswerRequest {
@@ -83,11 +92,29 @@ class AiInterviewApi {
   }
 
   /**
+   * Lấy session theo ID
+   */
+  async getSession(sessionId: string): Promise<ApiResponse<InterviewSession>> {
+    try {
+      const response = await fetchWithAuth(`${this.baseUrl}/session/${sessionId}`);
+      return response;
+    } catch (error: any) {
+      console.error('Error getting session:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || 'Failed to get session'
+      };
+    }
+  }
+
+  /**
    * Nộp câu trả lời
    */
   async submitAnswer(sessionId: string, request: SubmitAnswerRequest): Promise<ApiResponse<{
     feedback: InterviewFeedback;
     nextQuestionAvailable: boolean;
+    totalQuestions: number;
+    answeredQuestions: number;
   }>> {
     try {
       const response = await fetchWithAuth(`${this.baseUrl}/session/${sessionId}/submit-answer`, {
@@ -147,7 +174,13 @@ class AiInterviewApi {
    * Hoàn thành session
    */
   async completeSession(sessionId: string): Promise<ApiResponse<{
+    sessionId: string;
     overallFeedback: string;
+    averageScore: number;
+    totalQuestions: number;
+    answeredQuestions: number;
+    feedbacks: InterviewFeedback[];
+    completedAt: Date;
     sessionCompleted: boolean;
   }>> {
     try {
@@ -167,13 +200,33 @@ class AiInterviewApi {
   /**
    * Lấy lịch sử phỏng vấn
    */
-  async getInterviewHistory(): Promise<ApiResponse<{
-    sessions: any[];
-    totalSessions: number;
-    averageScore: number;
+  async getInterviewHistory(status?: 'in-progress' | 'completed' | 'abandoned'): Promise<ApiResponse<{
+    sessions: Array<{
+      sessionId: string;
+      jobDescription: string;
+      jobTitle?: string;
+      companyName?: string;
+      difficulty: 'easy' | 'medium' | 'hard';
+      status: string;
+      totalQuestions: number;
+      answeredQuestions: number;
+      averageScore?: number;
+      createdAt: Date;
+      completedAt?: Date;
+    }>;
+    stats: {
+      totalSessions: number;
+      completedSessions: number;
+      inProgressSessions: number;
+      averageScore: number;
+      recentSessions: any[];
+    };
   }>> {
     try {
-      const response = await fetchWithAuth(`${this.baseUrl}/history`);
+      const url = status 
+        ? `${this.baseUrl}/history?status=${status}`
+        : `${this.baseUrl}/history`;
+      const response = await fetchWithAuth(url);
       return response;
     } catch (error: any) {
       console.error('Error getting interview history:', error);

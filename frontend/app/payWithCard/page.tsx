@@ -4,7 +4,7 @@ import { useState } from "react"
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, ShoppingCart, Lock } from "lucide-react"
-import CheckoutForm from "@/components/checkout/checkout-form"
+import PayWithCardForm from "@/components/payWithCard/payWithCard-form"
 
 export default function CheckoutPage() {
     const searchParams = useSearchParams()
@@ -37,7 +37,7 @@ export default function CheckoutPage() {
                                 </div>
                             </div>
 
-                            <CheckoutForm depositAmount={depositAmount} />
+                            <PayWithCardForm depositAmount={depositAmount} />
                         </div>
                     </div>
 

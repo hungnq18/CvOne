@@ -414,6 +414,9 @@ Do not include any explanation or markdown, only valid JSON.
     // Generate education
     const education = this.generateEducation(user);
 
+    const normalizedSummary =
+      Array.isArray(summary) && summary.length > 0 ? summary[0] : summary;
+
     return {
       userData: {
         firstName: user.first_name || "",
@@ -425,10 +428,16 @@ Do not include any explanation or markdown, only valid JSON.
         phone: user.phone?.toString() || "",
         email: "", // Will be filled from account
         avatar: "",
-        summary: summary[0] || summary, // Take first summary if array
+        summary: normalizedSummary,
         skills: skills[0] || skills, // Take first skills list if array
         workHistory: workHistory[0] || workHistory, // Take first work experience if array
         education: [education],
+        careerObjective: normalizedSummary,
+        Project: [],
+        certification: [],
+        achievement: [],
+        hobby: [],
+        sectionPositions: {},
       },
     };
   }

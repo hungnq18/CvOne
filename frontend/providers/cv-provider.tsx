@@ -11,6 +11,12 @@ import {
 } from "react";
 import { CVTemplate } from "@/api/cvapi";
 
+export interface SectionPositions {
+  [key: string]: {
+    place: number;
+    order: number;
+  };
+}
 
 interface CVContextType {
   pdfFile: Uint8Array | null;
@@ -23,6 +29,9 @@ interface CVContextType {
   updateUserData: (newData: any) => void;
   jobAnalysis: any;
   setJobAnalysis: (analysis: any) => void;
+  sectionPositions: { [templateId: string]: SectionPositions };
+  getSectionPositions: (templateId: string) => SectionPositions | undefined;
+  updateSectionPositions: (templateId: string, positions: SectionPositions) => void;
 }
 
 const CVContext = createContext<CVContextType | undefined>(undefined);
@@ -57,6 +66,18 @@ export const CVProvider = ({ children }: { children: ReactNode }) => {
 
   const [jobDescription, setJobDescription] = useState<string>("");
   const [jobAnalysis, setJobAnalysis] = useState<any>(null);
+  const [sectionPositions, setSectionPositions] = useState<{ [templateId: string]: SectionPositions }>({});
+
+  const getSectionPositions = useCallback((templateId: string): SectionPositions | undefined => {
+    return sectionPositions[templateId];
+  }, [sectionPositions]);
+
+  const updateSectionPositions = useCallback((templateId: string, positions: SectionPositions) => {
+    setSectionPositions((prev) => ({
+      ...prev,
+      [templateId]: positions,
+    }));
+  }, []);
 
   const value = {
     pdfFile,
@@ -69,6 +90,9 @@ export const CVProvider = ({ children }: { children: ReactNode }) => {
     updateUserData,
     jobAnalysis,
     setJobAnalysis,
+    sectionPositions,
+    getSectionPositions,
+    updateSectionPositions,
   };
 
   return <CVContext.Provider value={value}>{children}</CVContext.Provider>;

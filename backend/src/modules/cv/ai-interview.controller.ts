@@ -1,33 +1,16 @@
 import {
-    Body,
-    Controller,
-    Get,
-    Param,
-    Post,
-    UseGuards,
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Query,
+  UseGuards,
 } from '@nestjs/common';
 import { User } from '../../common/decorators/user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { AiInterviewService, InterviewFeedback, InterviewQuestion, InterviewSession } from './services/ai-interview.service';
-
-export interface CreateInterviewDto {
-  jobDescription: string;
-  numberOfQuestions?: number;
-  difficulty?: 'easy' | 'medium' | 'hard';
-}
-
-export interface SubmitAnswerDto {
-  questionId: string;
-  answer: string;
-}
-
-export interface InterviewSessionResponse {
-  sessionId: string;
-  questions: InterviewQuestion[];
-  currentQuestionIndex: number;
-  totalQuestions: number;
-  completedQuestions: number;
-}
+import { CreateInterviewSessionDto, InterviewSessionResponse, SubmitAnswerDto } from './dto/ai-interview.dto';
+import { AiInterviewService } from './services/ai-interview.service';
 
 @Controller('ai-interview')
 export class AiInterviewController {
@@ -36,45 +19,41 @@ export class AiInterviewController {
   ) {}
 
   /**
-   * Tạo buổi phỏng vấn mới với AI
+   * Tạo buổi phỏng vấn mới với AI - độ khó tự động xác định từ JD
    */
   @UseGuards(JwtAuthGuard)
   @Post('create-session')
   async createInterviewSession(
-    @Body() createInterviewDto: CreateInterviewDto,
+    @Body() createInterviewDto: CreateInterviewSessionDto,
     @User('_id') userId: string
   ) {
     try {
-      const questions = await this.aiInterviewService.generateInterviewQuestions(
+      const session = await this.aiInterviewService.createInterviewSession(
+        userId,
         createInterviewDto.jobDescription,
         createInterviewDto.numberOfQuestions || 10,
-        createInterviewDto.difficulty || 'medium'
+        createInterviewDto.jobTitle,
+        createInterviewDto.companyName
       );
 
-      const session: InterviewSession = {
-        id: `session_${Date.now()}_${userId}`,
-        jobDescription: createInterviewDto.jobDescription,
-        questions,
-        currentQuestionIndex: 0,
-        userAnswers: {},
-        feedback: {},
-        createdAt: new Date()
-      };
-
-      // Trong thực tế, bạn nên lưu session vào database
-      // Ở đây tôi sẽ trả về response trực tiếp
       const response: InterviewSessionResponse = {
-        sessionId: session.id,
+        sessionId: String(session._id),
+        jobDescription: session.jobDescription,
+        jobTitle: session.jobTitle,
+        companyName: session.companyName,
         questions: session.questions,
         currentQuestionIndex: session.currentQuestionIndex,
         totalQuestions: session.questions.length,
-        completedQuestions: 0
+        completedQuestions: session.feedbacks.length,
+        status: session.status,
+        difficulty: session.difficulty,
+        createdAt: session.createdAt
       };
 
       return {
         success: true,
         data: response,
-        message: 'Interview session created successfully'
+        message: `Interview session created successfully with ${session.difficulty} difficulty (auto-determined from JD)`
       };
 
     } catch (error) {
@@ -82,6 +61,43 @@ export class AiInterviewController {
         success: false,
         error: error.message,
         message: 'Failed to create interview session'
+      };
+    }
+  }
+
+  /**
+   * Lấy session theo ID
+   */
+  @UseGuards(JwtAuthGuard)
+  @Get('session/:sessionId')
+  async getSession(
+    @Param('sessionId') sessionId: string,
+    @User('_id') userId: string
+  ) {
+    try {
+      const session = await this.aiInterviewService.getSessionById(sessionId, userId);
+      
+      return {
+        success: true,
+        data: {
+          sessionId: String(session._id),
+          jobDescription: session.jobDescription,
+          jobTitle: session.jobTitle,
+          companyName: session.companyName,
+          questions: session.questions,
+          currentQuestionIndex: session.currentQuestionIndex,
+          totalQuestions: session.questions.length,
+          completedQuestions: session.feedbacks.length,
+          status: session.status,
+          difficulty: session.difficulty,
+          averageScore: session.averageScore,
+          createdAt: session.createdAt
+        }
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message
       };
     }
   }
@@ -96,21 +112,19 @@ export class AiInterviewController {
     @User('_id') userId: string
   ) {
     try {
-      // Trong thực tế, lấy session từ database
-      // Ở đây tôi sẽ trả về mock data
+      const session = await this.aiInterviewService.getSessionById(sessionId, userId);
+      const currentQuestion = session.questions[session.currentQuestionIndex];
+      
+      if (!currentQuestion) {
+        return {
+          success: false,
+          message: 'No more questions available'
+        };
+      }
+
       return {
         success: true,
-        data: {
-          questionId: 'q_1',
-          question: 'Hãy giới thiệu về bản thân và kinh nghiệm của bạn',
-          category: 'behavioral',
-          difficulty: 'easy',
-          tips: [
-            'Tập trung vào kinh nghiệm liên quan đến công việc',
-            'Nêu rõ thành tích và kỹ năng nổi bật',
-            'Giữ thời gian trong 2-3 phút'
-          ]
-        }
+        data: currentQuestion
       };
     } catch (error) {
       return {
@@ -131,28 +145,24 @@ export class AiInterviewController {
     @User('_id') userId: string
   ) {
     try {
-      // Trong thực tế, lấy session và question từ database
-      const mockQuestion: InterviewQuestion = {
-        id: submitAnswerDto.questionId,
-        question: 'Hãy giới thiệu về bản thân và kinh nghiệm của bạn',
-        category: 'behavioral',
-        difficulty: 'easy',
-        tips: []
-      };
-
-      const mockJobDescription = 'Software Developer position...';
-
-      const feedback = await this.aiInterviewService.evaluateAnswer(
-        mockQuestion,
-        submitAnswerDto.answer,
-        mockJobDescription
+      const feedback = await this.aiInterviewService.submitAnswer(
+        sessionId,
+        userId,
+        submitAnswerDto.questionId,
+        submitAnswerDto.answer
       );
+
+      // Lấy session để check xem còn câu hỏi nào không
+      const session = await this.aiInterviewService.getSessionById(sessionId, userId);
+      const nextQuestionAvailable = session.currentQuestionIndex < session.questions.length - 1;
 
       return {
         success: true,
         data: {
           feedback,
-          nextQuestionAvailable: true
+          nextQuestionAvailable,
+          totalQuestions: session.questions.length,
+          answeredQuestions: session.feedbacks.length
         },
         message: 'Answer submitted and evaluated successfully'
       };
@@ -177,21 +187,20 @@ export class AiInterviewController {
     @User('_id') userId: string
   ) {
     try {
-      // Trong thực tế, lấy session và question từ database
-      const mockQuestion: InterviewQuestion = {
-        id: body.questionId,
-        question: 'Hãy giới thiệu về bản thân và kinh nghiệm của bạn',
-        category: 'behavioral',
-        difficulty: 'easy',
-        tips: []
-      };
-
-      const mockJobDescription = 'Software Developer position...';
+      const session = await this.aiInterviewService.getSessionById(sessionId, userId);
+      const question = session.questions.find(q => q.id === body.questionId);
+      
+      if (!question) {
+        return {
+          success: false,
+          message: 'Question not found'
+        };
+      }
 
       const followUpQuestion = await this.aiInterviewService.generateFollowUpQuestion(
-        mockQuestion,
+        question as any,
         body.userAnswer,
-        mockJobDescription
+        session.jobDescription
       );
 
       return {
@@ -222,20 +231,19 @@ export class AiInterviewController {
     @User('_id') userId: string
   ) {
     try {
-      // Trong thực tế, lấy question từ database
-      const mockQuestion: InterviewQuestion = {
-        id: questionId,
-        question: 'Hãy giới thiệu về bản thân và kinh nghiệm của bạn',
-        category: 'behavioral',
-        difficulty: 'easy',
-        tips: []
-      };
-
-      const mockJobDescription = 'Software Developer position...';
+      const session = await this.aiInterviewService.getSessionById(sessionId, userId);
+      const question = session.questions.find(q => q.id === questionId);
+      
+      if (!question) {
+        return {
+          success: false,
+          message: 'Question not found'
+        };
+      }
 
       const sampleAnswer = await this.aiInterviewService.generateSampleAnswer(
-        mockQuestion,
-        mockJobDescription
+        question as any,
+        session.jobDescription
       );
 
       return {
@@ -265,29 +273,18 @@ export class AiInterviewController {
     @User('_id') userId: string
   ) {
     try {
-      // Trong thực tế, lấy session và tất cả feedback từ database
-      const mockSession: InterviewSession = {
-        id: sessionId,
-        jobDescription: 'Software Developer position...',
-        questions: [],
-        currentQuestionIndex: 0,
-        userAnswers: {},
-        feedback: {},
-        createdAt: new Date(),
-        completedAt: new Date()
-      };
-
-      const mockFeedbacks: InterviewFeedback[] = [];
-
-      const overallFeedback = await this.aiInterviewService.generateOverallFeedback(
-        mockSession,
-        mockFeedbacks
-      );
+      const session = await this.aiInterviewService.completeSession(sessionId, userId);
 
       return {
         success: true,
         data: {
-          overallFeedback,
+          sessionId: String(session._id),
+          overallFeedback: session.overallFeedback,
+          averageScore: session.averageScore,
+          totalQuestions: session.questions.length,
+          answeredQuestions: session.feedbacks.length,
+          feedbacks: session.feedbacks,
+          completedAt: session.completedAt,
           sessionCompleted: true
         },
         message: 'Session completed successfully'
@@ -307,15 +304,31 @@ export class AiInterviewController {
    */
   @UseGuards(JwtAuthGuard)
   @Get('history')
-  async getInterviewHistory(@User('_id') userId: string) {
+  async getInterviewHistory(
+    @User('_id') userId: string,
+    @Query('status') status?: 'in-progress' | 'completed' | 'abandoned'
+  ) {
     try {
-      // Trong thực tế, lấy từ database
+      const sessions = await this.aiInterviewService.getUserSessions(userId, status);
+      const stats = await this.aiInterviewService.getUserStats(userId);
+
       return {
         success: true,
         data: {
-          sessions: [],
-          totalSessions: 0,
-          averageScore: 0
+          sessions: sessions.map(s => ({
+            sessionId: String(s._id),
+            jobDescription: s.jobDescription,
+            jobTitle: s.jobTitle,
+            companyName: s.companyName,
+            difficulty: s.difficulty,
+            status: s.status,
+            totalQuestions: s.questions.length,
+            answeredQuestions: s.feedbacks.length,
+            averageScore: s.averageScore,
+            createdAt: s.createdAt,
+            completedAt: s.completedAt
+          })),
+          stats
         },
         message: 'Interview history retrieved successfully'
       };

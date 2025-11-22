@@ -10,6 +10,7 @@ import { AiInterviewController } from "./ai-interview.controller";
 import { CvPdfCloudService } from "./cv-pdf-cloud.service";
 import { CvController } from "./cv.controller";
 import { CvService } from "./cv.service";
+import { AiInterviewSession, AiInterviewSessionSchema } from "./schemas/ai-interview.schema";
 import { Cv, CvSchema } from "./schemas/cv.schema";
 import { AiInterviewService } from "./services/ai-interview.service";
 import { AiOptimizationService } from "./services/ai-optimization.service";
@@ -28,6 +29,7 @@ import { VietnameseContentService } from "./services/vietnamese-content.service"
       { name: Cv.name, schema: CvSchema },
       { name: CvTemplate.name, schema: CvTemplateSchema },
       { name: User.name, schema: UserSchema },
+      { name: AiInterviewSession.name, schema: AiInterviewSessionSchema },
     ]),
     MailModule,
   ],

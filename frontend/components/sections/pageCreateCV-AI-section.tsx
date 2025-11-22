@@ -22,6 +22,7 @@ import {
   CheckCircle2,
   Loader2,
   Languages,
+  LayoutTemplate,
 } from "lucide-react";
 import Image from "next/image";
 import { useCV } from "@/providers/cv-provider";
@@ -30,6 +31,8 @@ import { jwtDecode } from "jwt-decode";
 import { CVAIEditorPopupsManager } from "@/components/forms/CV-AIEditorPopup";
 import TranslateCVModal from "@/components/modals/TranslateCVModal";
 import { useLanguage } from "@/providers/global_provider";
+import CVTemplateLayoutPopup from "@/components/forms/CVTemplateLayoutPopup";
+import { getDefaultSectionPositions } from "../cvTemplate/defaultSectionPositions";
 
 // BƯỚC 2: TẠO ĐỐI TƯỢNG TRANSLATIONS ---
 const translations = {
@@ -42,6 +45,7 @@ const translations = {
     education: "Education",
     skills: "Skills",
     cvSections: "CV SECTIONS",
+    customLayout: "Custom Layout", 
 
     // Header & Buttons
     editCv: "Edit CV",
@@ -71,11 +75,10 @@ const translations = {
     pdfCreateEnvError: "Cannot create environment to export PDF.",
     pdfCreateError: "An error occurred while exporting the PDF file.",
 
-
     //translate
-    translateSuccess: "CV translated successfully!",        // ← THÊM
-    translateError: "Error occurred while translating CV",   // ← THÊM
-    aiSuggestFailed: "AI suggestion failed",                 // ← THÊM
+    translateSuccess: "CV translated successfully!",
+    translateError: "Error occurred while translating CV",
+    aiSuggestFailed: "AI suggestion failed",
     // Dynamic titles
     loadingTemplateForNew: "Loading template to create new...",
     cvTitleDefault: (title: string) => `CV - ${title}`,
@@ -90,6 +93,7 @@ const translations = {
     education: "Học vấn",
     skills: "Kỹ năng",
     cvSections: "CÁC MỤC CỦA CV",
+    customLayout: "Tùy chỉnh bố cục", 
 
     // Header & Buttons
     editCv: "Chỉnh Sửa CV",
@@ -119,11 +123,10 @@ const translations = {
     pdfCreateEnvError: "Không thể tạo môi trường để xuất PDF.",
     pdfCreateError: "Đã có lỗi xảy ra khi xuất file PDF.",
 
-
     //translate
-    translateSuccess: "Dịch CV thành công!",                 // ← THÊM
-    translateError: "Có lỗi xảy ra khi dịch CV",             // ← THÊM
-    aiSuggestFailed: "AI đề xuất mẫu thất bại",              // ← THÊM              // ← THÊM
+    translateSuccess: "Dịch CV thành công!",
+    translateError: "Có lỗi xảy ra khi dịch CV",
+    aiSuggestFailed: "AI đề xuất mẫu thất bại",
     // Dynamic titles
     loadingTemplateForNew: "Đang tải template để tạo mới...",
     cvTitleDefault: (title: string) => `CV - ${title}`,
@@ -142,7 +145,6 @@ const DropdownArrow = () => (
 );
 
 const PageCreateCVAIContent = () => {
-  // BƯỚC 3: SỬ DỤNG HOOK VÀ LẤY ĐÚNG BỘ TỪ ĐIỂN
   const { language } = useLanguage();
   const t = translations[language];
 
@@ -155,6 +157,8 @@ const PageCreateCVAIContent = () => {
     loadTemplate,
     updateUserData,
     jobDescription,
+    getSectionPositions,
+    updateSectionPositions,
   } = useCV();
 
   const [loading, setLoading] = useState(true);
@@ -178,8 +182,8 @@ const PageCreateCVAIContent = () => {
   const [suppressAutoSuggest, setSuppressAutoSuggest] =
     useState<boolean>(false);
   const [cvUiTexts, setCvUiTexts] = useState<any>(null);
+  const [showLayoutPopup, setShowLayoutPopup] = useState(false);
 
-  // BƯỚC 4: TẠO MẢNG sidebarSections ĐỘNG - sử dụng cvUiTexts nếu có, fallback về translations
   const sidebarSections = [
     { id: "info", title: cvUiTexts?.personalInformation || t.personalInfo },
     { id: "contact", title: cvUiTexts?.contact || t.contact },
@@ -189,17 +193,12 @@ const PageCreateCVAIContent = () => {
     { id: "skills", title: cvUiTexts?.skills || t.skills },
   ];
 
-  // Debug: Reset suppress flag if needed (remove this in production)
   useEffect(() => {
     if (
       typeof window !== "undefined" &&
       process.env.NODE_ENV === "development"
     ) {
       console.log("[Debug] suppressAutoSuggest:", suppressAutoSuggest);
-      console.log(
-        "[Debug] sessionStorage suppressAISuggest:",
-        sessionStorage.getItem("suppressAISuggest")
-      );
     }
   }, [suppressAutoSuggest]);
 
@@ -209,7 +208,6 @@ const PageCreateCVAIContent = () => {
   useOnClickOutside(templateDropdownRef, () => setShowTemplatePopup(false));
 
   useEffect(() => {
-    // Clear suppress flag khi vào trang lần đầu (không phải từ đổi template)
     try {
       if (typeof window !== "undefined") {
         sessionStorage.removeItem("suppressAISuggest");
@@ -234,7 +232,6 @@ const PageCreateCVAIContent = () => {
             ) {
               updateUserData(templateData.content.userData);
             }
-            // Load uiTexts nếu có
             if (templateData.content?.uiTexts) {
               setCvUiTexts(templateData.content.uiTexts);
             }
@@ -253,7 +250,6 @@ const PageCreateCVAIContent = () => {
               ) {
                 updateUserData(templateData.data.userData);
               }
-              // Load uiTexts từ template data nếu có
               if (templateData.data?.uiTexts) {
                 setCvUiTexts(templateData.data.uiTexts);
               }
@@ -267,24 +263,53 @@ const PageCreateCVAIContent = () => {
     }
   }, [id, loadTemplate, updateUserData, userData, t]);
 
-  const handleTemplateSelect = (selectedTemplate: CVTemplate) => {
-    // Khi người dùng đổi template thủ công, không auto-suggest nữa trong phiên hiện tại
-    try {
-      if (typeof window !== "undefined") {
-        sessionStorage.setItem("suppressAISuggest", "1");
-      }
-    } catch {}
+  const handleTemplateSelect = async (selectedTemplate: CVTemplate) => {
+    // Logic AI (giữ nguyên)
+    try { if (typeof window !== "undefined") sessionStorage.setItem("suppressAISuggest", "1"); } catch {}
     setSuppressAutoSuggest(true);
     setHasAutoSuggested(true);
-    // Sửa lại URL cho đúng với trang AI
-    router.push(`/createCV-AIManual?id=${selectedTemplate._id}`);
-    setCvTitle(t.cvTitleDefault(selectedTemplate.title));
     setShowTemplatePopup(false);
+
+    if (currentTemplate?._id === selectedTemplate._id) return;
+
+    try {
+      setLoading(true);
+      const newTemplateData = await getCVTemplateById(selectedTemplate._id);
+
+      if (newTemplateData) {
+        loadTemplate(newTemplateData);
+        
+        // --- FIX: Lấy vị trí chuẩn từ API của template mới ---
+        const correctPositions = newTemplateData.data?.sectionPositions || getDefaultSectionPositions(newTemplateData.title);
+        
+        // Áp dụng ngay vào userData
+        const newUserData = { ...userData, sectionPositions: correctPositions };
+        
+        updateUserData(newUserData);
+        updateSectionPositions(selectedTemplate._id, correctPositions);
+
+        router.push(`/createCV-AIManual?id=${selectedTemplate._id}`);
+        setCvTitle(t.cvTitleDefault(selectedTemplate.title));
+      }
+    } catch (error) { 
+      console.error(error); 
+    } finally { 
+      setLoading(false); 
+    }
   };
 
   const handleDataUpdate = (updatedData: any) => {
     updateUserData(updatedData);
     setIsDirty(true);
+  };
+  
+  // --- HÀM XỬ LÝ KÉO THẢ TRỰC TIẾP ---
+  const handleLayoutChange = (newPositions: any) => {
+    if (currentTemplate) {
+      updateSectionPositions(currentTemplate._id, newPositions);
+      updateUserData({ ...userData, sectionPositions: newPositions });
+      setIsDirty(true);
+    }
   };
 
   const getUserIdFromToken = (): string | null => {
@@ -316,12 +341,42 @@ const PageCreateCVAIContent = () => {
 
     setIsSaving(true);
     try {
+      const sectionPositions = getSectionPositions(currentTemplate._id) ||
+        currentTemplate.data?.sectionPositions ||
+        getDefaultSectionPositions(currentTemplate.title);
+
+      const completeUserData = {
+        firstName: userData.firstName || "",
+        lastName: userData.lastName || "",
+        professional: userData.professional || "",
+        city: userData.city || "",
+        country: userData.country || "",
+        province: userData.province || "",
+        phone: userData.phone || "",
+        email: userData.email || "",
+        avatar: userData.avatar || "",
+        summary: userData.summary || "",
+        skills: userData.skills || [],
+        workHistory: userData.workHistory || [],
+        education: userData.education || [],
+        careerObjective: userData.careerObjective || "",
+        Project: userData.Project || [],
+        certification: userData.certification || [],
+        achievement: userData.achievement || [],
+        hobby: userData.hobby || [],
+        sectionPositions: sectionPositions,
+      };
+
+      const contentData: any = {
+        userData: completeUserData
+      };
+      if (cvUiTexts) {
+        contentData.uiTexts = cvUiTexts;
+      }
+
       if (cvId) {
         const dataToUpdate: Partial<CV> = {
-          content: {
-            userData,
-            ...(cvUiTexts && { uiTexts: cvUiTexts }),
-          },
+          content: contentData,
           title: cvTitle || t.cvForUser(userData.firstName),
           updatedAt: new Date().toISOString(),
         };
@@ -332,10 +387,7 @@ const PageCreateCVAIContent = () => {
           title:
             cvTitle ||
             t.cvForUser(`${userData.firstName} ${userData.lastName}`),
-          content: {
-            userData,
-            ...(cvUiTexts && { uiTexts: cvUiTexts }),
-          },
+          content: contentData,
           isPublic: false,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
@@ -346,7 +398,6 @@ const PageCreateCVAIContent = () => {
         const newCV = await createCV(dataToCreate);
         if (newCV && newCV.id) {
           setCvId(newCV.id);
-          // Sửa lại URL cho đúng với trang AI
           router.replace(`/createCV-AIManual?id=${newCV.id}`, {
             scroll: false,
           });
@@ -383,28 +434,26 @@ const PageCreateCVAIContent = () => {
     const TemplateComponent = templateComponentMap?.[currentTemplate.title];
     if (!TemplateComponent) return null;
 
+    const sectionPositions = 
+      userData.sectionPositions || 
+      getSectionPositions(currentTemplate._id) || 
+      currentTemplate.data?.sectionPositions || 
+      getDefaultSectionPositions(currentTemplate.title); 
+
     const componentData = {
       ...currentTemplate.data,
       userData: userData,
+      sectionPositions: sectionPositions, 
     };
 
-    const fontBase64 =
-      "data:font/woff2;base64,d09GMgABAAAAA... (thay bằng chuỗi Base64 thật của font bạn dùng)";
+    const fontBase64 = "data:font/woff2;base64,d09GMgABAAAAA..."; // (Thay bằng chuỗi base64 thật)
     const fontName = "CVFont";
 
     return (
       <div>
         <style>
-          {`
-            @font-face {
-                font-family: '${fontName}'; 
-                src: url(${fontBase64}) format('woff2');
-                font-weight: normal;
-                font-style: normal;
-            }
-            `}
+          {`@font-face { font-family: '${fontName}'; src: url(${fontBase64}) format('woff2'); font-weight: normal; font-style: normal; }`}
         </style>
-
         <div style={{ fontFamily: `'${fontName}', sans-serif` }}>
           <TemplateComponent
             data={componentData}
@@ -433,11 +482,9 @@ const PageCreateCVAIContent = () => {
     }
 
     const head = iframeDoc.head;
-    document
-      .querySelectorAll('style, link[rel="stylesheet"]')
-      .forEach((node) => {
+    document.querySelectorAll('style, link[rel="stylesheet"]').forEach((node) => {
         head.appendChild(node.cloneNode(true));
-      });
+    });
 
     const mountNode = iframeDoc.createElement("div");
     iframeDoc.body.appendChild(mountNode);
@@ -453,29 +500,21 @@ const PageCreateCVAIContent = () => {
 
       await new Promise((resolve) => setTimeout(resolve, 500));
 
-      const html2pdf =
-        (await import("html2pdf.js"))?.default || (await import("html2pdf.js"));
+      const html2pdf = (await import("html2pdf.js"))?.default || (await import("html2pdf.js"));
 
-      await html2pdf()
-        .from(iframe.contentWindow.document.body)
-        .set({
+      await html2pdf().from(iframe.contentWindow.document.body).set({
           margin: 0,
           filename: `${cvTitle || "cv"}.pdf`,
           image: { type: "jpeg", quality: 0.98 },
           html2canvas: { scale: 2, useCORS: true },
           jsPDF: { unit: "px", format: [794, 1123], orientation: "portrait" },
-        })
-        .save();
+        }).save();
     } catch (error) {
       console.error(t.pdfCreateError, error);
       alert(t.pdfCreateError);
     } finally {
-      if (root) {
-        root.unmount();
-      }
-      if (document.body.contains(iframe)) {
-        document.body.removeChild(iframe);
-      }
+      if (root) root.unmount();
+      if (document.body.contains(iframe)) document.body.removeChild(iframe);
     }
   };
 
@@ -487,9 +526,17 @@ const PageCreateCVAIContent = () => {
     if (!TemplateComponent) {
       return <div>{t.templateComponentNotFound(currentTemplate.title)}</div>;
     }
+    
+    const sectionPositions = 
+      userData.sectionPositions || 
+      getSectionPositions(currentTemplate._id) || 
+      currentTemplate.data?.sectionPositions || 
+      getDefaultSectionPositions(currentTemplate.title); 
+    
     const componentData = {
       ...currentTemplate.data,
       userData: userData,
+      sectionPositions: sectionPositions,
     };
 
     const containerWidth = 700;
@@ -497,17 +544,18 @@ const PageCreateCVAIContent = () => {
     const scaleFactor = containerWidth / templateOriginalWidth;
     return (
       <div className="max-w-[1050px] origin-top" ref={previewRef} key={JSON.stringify(userData)}>
-        <div
-          style={{
+        <div style={{
             width: `${templateOriginalWidth}px`,
             height: `${templateOriginalWidth * (297 / 210)}px`,
             transformOrigin: "top",
             transform: `scale(${scaleFactor})`,
-          }}
-        >
+          }}>
+          {/* TRUYỀN onLayoutChange VÀ scale ĐỂ KÍCH HOẠT DRAG DROP */}
           <TemplateComponent
             data={componentData}
             onSectionClick={handleSectionClick}
+            onLayoutChange={handleLayoutChange}
+            scale={scaleFactor}
             language={language}
             cvUiTexts={cvUiTexts}
           />
@@ -542,7 +590,6 @@ const PageCreateCVAIContent = () => {
       alert(t.noDataToSave);
       return;
     }
-  
     setIsTranslating(true);
     try {
       const currentUiTexts = cvUiTexts || {
@@ -553,74 +600,20 @@ const PageCreateCVAIContent = () => {
         education: t.education,
         skills: t.skills,
       };
-      
-      console.log("=== TRANSLATE REQUEST ===");
-      console.log("userData:", userData);
-      console.log("targetLanguage:", targetLanguage);
-      console.log("currentUiTexts:", currentUiTexts);
-      
       const translatedData = await translateCV(userData, targetLanguage, currentUiTexts);
-      
-      console.log("=== TRANSLATE RESPONSE ===");
-      console.log("Full response:", translatedData);
-      console.log("Response type:", typeof translatedData);
-      console.log("Response keys:", Object.keys(translatedData || {}));
-      
-      // In ra từng level để xem cấu trúc
-      console.log("Level 1 - translatedData.data:", translatedData?.data);
-      console.log("Level 2 - translatedData.data.data:", translatedData?.data?.data);
-      console.log("Level 3 - translatedData.data.data.content:", translatedData?.data?.data?.content);
-      console.log("Level 4 - translatedData.data.data.content.userData:", translatedData?.data?.data?.content?.userData);
-      console.log("Level 4 - translatedData.data.data.content.uiTexts:", translatedData?.data?.data?.content?.uiTexts);
-  
-      // Try all possible paths
-      const nextUserData = 
-        translatedData?.data?.data?.content?.userData ??
-        translatedData?.data?.content?.userData ??
-        translatedData?.data?.userData ??
-        translatedData?.content?.userData ??
-        translatedData?.userData;
-        
-      const nextUiTexts = 
-        translatedData?.data?.data?.content?.uiTexts ??
-        translatedData?.data?.content?.uiTexts ??
-        translatedData?.data?.uiTexts ??
-        translatedData?.content?.uiTexts ??
-        translatedData?.uiTexts;
-      
-      console.log("=== PARSED RESULTS ===");
-      console.log("nextUserData:", nextUserData);
-      console.log("nextUiTexts:", nextUiTexts);
-      
+      const nextUserData = translatedData?.data?.data?.content?.userData ?? translatedData?.data?.content?.userData ?? translatedData?.data?.userData ?? translatedData?.content?.userData ?? translatedData?.userData;
+      const nextUiTexts = translatedData?.data?.data?.content?.uiTexts ?? translatedData?.data?.content?.uiTexts ?? translatedData?.data?.uiTexts ?? translatedData?.content?.uiTexts ?? translatedData?.uiTexts;
       
       if (nextUserData) {
-  console.log("✅ OLD userData:", userData);
-  console.log("✅ NEW userData (nextUserData):", nextUserData);
-  
-  updateUserData(nextUserData);
-  
-  // Kiểm tra sau khi update
-  setTimeout(() => {
-    console.log("✅ userData after update:", userData);
-  }, 100);
-  
-  setIsDirty(true);
-  
-  if (nextUiTexts) {
-    console.log("✅ OLD cvUiTexts:", cvUiTexts);
-    console.log("✅ NEW cvUiTexts (nextUiTexts):", nextUiTexts);
-    setCvUiTexts(nextUiTexts);
-  }
-  
-  setShowTranslateModal(false);
-  alert(t.translateSuccess);
-} else {
-        console.error("❌ nextUserData is undefined!");
-        console.error("Cannot find userData in any expected path");
+        updateUserData(nextUserData);
+        setIsDirty(true);
+        if (nextUiTexts) setCvUiTexts(nextUiTexts);
+        setShowTranslateModal(false);
+        alert(t.translateSuccess);
+      } else {
         alert(t.translateError);
       }
     } catch (error) {
-      console.error("❌ Translation error:", error);
       alert(t.translateError);
     } finally {
       setIsTranslating(false);
@@ -629,67 +622,27 @@ const PageCreateCVAIContent = () => {
   };
 
   const handleAISuggestTemplate = async () => {
-    if (!userData || !jobDescription) {
-      // Still allow suggestion with empty JD but warn
-    }
-    setIsSuggesting(true);
-    try {
-      // console.log("[AI Suggest] payload:", {
-      //   infoUser: userData || {},
-      //   jobDescription: jobDescription || "",
-      // });
-      const result = await suggestTemplateByAI(
-        userData || {},
-        jobDescription || ""
-      );
-      // console.log("[AI Suggest] raw result:", result);
-      // Always use ONLY the first suggestion from the API response
-      const first = Array.isArray(result)
-        ? result[0]
-        : Array.isArray(result?.templates)
-        ? result.templates[0]
-        : Array.isArray(result?.data)
-        ? result.data[0]
-        : result;
-      // Accept shapes: string id | {_id} | {templateId} | full template
-      const templateId =
-        typeof first === "string" ? first : first?.templateId || first?._id;
-      // console.log("[AI Suggest] first item:", first);
-      // console.log("[AI Suggest] templateId:", templateId);
-      let found: CVTemplate | undefined;
-      if (templateId) {
-        found = (allTemplates || []).find((t) => t._id === templateId);
-      }
-      const finalTemplate: CVTemplate | null =
-        found || (first && first.imageUrl && first.title ? first : null);
-      // console.log("[AI Suggest] resolved template:", finalTemplate);
-      setSuggestedTemplate(finalTemplate);
-      setShowSuggestModal(true);
-    } catch (e) {
-      console.error("[AI Suggest] error:", e);
-      alert(
-        language === "vi" ? "AI đề xuất mẫu thất bại" : "AI suggestion failed"
-      );
-    } finally {
-      setIsSuggesting(false);
-    }
+     if (!userData || !jobDescription) {}
+     setIsSuggesting(true);
+     try {
+       const result = await suggestTemplateByAI(userData || {}, jobDescription || "");
+       const first = Array.isArray(result) ? result[0] : Array.isArray(result?.templates) ? result.templates[0] : Array.isArray(result?.data) ? result.data[0] : result;
+       const templateId = typeof first === "string" ? first : first?.templateId || first?._id;
+       let found: CVTemplate | undefined;
+       if (templateId) found = (allTemplates || []).find((t) => t._id === templateId);
+       const finalTemplate: CVTemplate | null = found || (first && first.imageUrl && first.title ? first : null);
+       setSuggestedTemplate(finalTemplate);
+       setShowSuggestModal(true);
+     } catch (e) {
+       alert(language === "vi" ? "AI đề xuất mẫu thất bại" : "AI suggestion failed");
+     } finally {
+       setIsSuggesting(false);
+     }
   };
 
-  // Auto-trigger suggestion once when data is ready
   useEffect(() => {
     if (hasAutoSuggested) return;
-    const ready =
-      allTemplates &&
-      allTemplates.length > 0 &&
-      userData &&
-      Object.keys(userData).length > 0 &&
-      !suppressAutoSuggest;
-    // console.log("[Auto Suggest] Check conditions:", {
-    //   allTemplates: allTemplates?.length,
-    //   userData: userData ? Object.keys(userData).length : 0,
-    //   suppressAutoSuggest,
-    //   ready,
-    // });
+    const ready = allTemplates && allTemplates.length > 0 && userData && Object.keys(userData).length > 0 && !suppressAutoSuggest;
     if (!ready) return;
     setHasAutoSuggested(true);
     handleAISuggestTemplate();
@@ -697,10 +650,7 @@ const PageCreateCVAIContent = () => {
 
   return (
     <div className="h-screen w-full bg-slate-50 flex flex-col overflow-x-hidden mb-4">
-      <header
-        className="bg-slate-900 text-white pt-20 pb-6 px-8 flex justify-between items-center z-20"
-        style={{ backgroundColor: "#0b1b34" }}
-      >
+      <header className="bg-slate-900 text-white pt-20 pb-6 px-8 flex justify-between items-center z-20" style={{ backgroundColor: "#0b1b34" }}>
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-2">
             {isEditingTitle ? (
@@ -807,6 +757,12 @@ const PageCreateCVAIContent = () => {
 
       <main className="flex-grow flex overflow-hidden">
         <aside className="w-72 bg-white p-6 border-r border-slate-200 overflow-y-auto">
+          <button
+            onClick={() => setShowLayoutPopup(true)}
+            className="w-full flex items-center gap-3 p-3 rounded-md text-slate-700 hover:bg-slate-100 font-medium mb-2"
+          >
+            <LayoutTemplate size={20} /> {t.customLayout}
+          </button>
           <h2 className="text-sm font-bold uppercase text-slate-500 mb-4">
             {t.cvSections}
           </h2>
@@ -1069,6 +1025,29 @@ const PageCreateCVAIContent = () => {
           </div>
         </div>
       )}
+
+      {/* --- POPUP LAYOUT EDITOR --- */}
+      {showLayoutPopup && currentTemplate && (() => {
+        const currentPositions = 
+          userData?.sectionPositions || 
+          getSectionPositions(currentTemplate._id) || 
+          currentTemplate.data?.sectionPositions || 
+          getDefaultSectionPositions(currentTemplate.title); 
+        
+        return (
+          <CVTemplateLayoutPopup
+            currentPositions={currentPositions}
+            defaultPositions={getDefaultSectionPositions(currentTemplate.title)}
+            templateTitle={currentTemplate.title}
+            onSave={(newPositions) => {
+              updateSectionPositions(currentTemplate._id, newPositions);
+              updateUserData({ ...userData, sectionPositions: newPositions });
+              setShowLayoutPopup(false);
+            }}
+            onClose={() => setShowLayoutPopup(false)}
+          />
+        );
+      })()}
     </div>
   );
 };

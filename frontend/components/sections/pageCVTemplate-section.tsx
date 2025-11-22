@@ -8,7 +8,7 @@ import { motion } from "framer-motion";
 import { X } from "lucide-react";
 import { GetServerSideProps } from "next";
 import { useRouter } from "next/navigation";
-import { FC, useRef, useState } from "react";
+import React, { FC, useRef, useState } from "react";
 
 // ================== MODAL ==================
 interface TemplatePreviewModalProps {
@@ -161,6 +161,13 @@ const CvTemplatesPage: FC<Props> = ({ initialTemplates }) => {
   const [viewMode, setViewMode] = useState<"recommended" | "all">("all");
   const [selectedTemplateForPreview, setSelectedTemplateForPreview] =
     useState<CVTemplate | null>(null);
+
+  // Debug: Log template IDs
+  React.useEffect(() => {
+    if (cvTemplates.length > 0) {
+      console.log("[CVTemplatesPage] All templates received:", cvTemplates.map(t => ({ _id: t._id, title: t.title })));
+    }
+  }, [cvTemplates]);
 
   const recommendedTemplates = cvTemplates.filter((t) => t.isRecommended);
   const displayedTemplates =

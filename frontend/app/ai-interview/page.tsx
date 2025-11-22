@@ -1,31 +1,63 @@
 "use client";
 
+import { aiInterviewApi } from '@/api/aiInterviewApi';
 import AiInterviewModal from '@/components/ai-interview/AiInterviewModal';
 import InterviewHistory from '@/components/ai-interview/InterviewHistory';
 import InterviewSetupModal, { InterviewConfig } from '@/components/ai-interview/InterviewSetupModal';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Brain, Clock, History, Play, Star, TrendingUp, Users } from 'lucide-react';
-import { useState } from 'react';
+import { Brain, Clock, History, Play, Sparkles, Star, TrendingUp, Users } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 export default function AiInterviewPage() {
   const [showSetupModal, setShowSetupModal] = useState(false);
   const [showInterviewModal, setShowInterviewModal] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [interviewConfig, setInterviewConfig] = useState<InterviewConfig | null>(null);
+  const [stats, setStats] = useState({
+    totalSessions: 0,
+    completedSessions: 0,
+    averageScore: 0,
+    inProgressSessions: 0
+  });
+  const [isLoadingStats, setIsLoadingStats] = useState(true);
+
+  useEffect(() => {
+    loadStats();
+  }, []);
+
+  const loadStats = async () => {
+    try {
+      const response = await aiInterviewApi.getInterviewHistory();
+      if (response.success && response.data) {
+        setStats(response.data.stats);
+      }
+    } catch (error) {
+      console.error('Error loading stats:', error);
+    } finally {
+      setIsLoadingStats(false);
+    }
+  };
 
   const handleStartInterview = (config: InterviewConfig) => {
     setInterviewConfig(config);
     setShowInterviewModal(true);
+    setShowSetupModal(false);
   };
 
   const handleCloseInterview = () => {
     setShowInterviewModal(false);
     setInterviewConfig(null);
+    loadStats(); // Refresh stats after interview
   };
 
   const features = [
+    {
+      icon: Sparkles,
+      title: 'Auto-Difficulty Detection',
+      description: 'AI automatically determines interview difficulty based on job requirements and seniority level.'
+    },
     {
       icon: Brain,
       title: 'AI-Powered Questions',
@@ -40,19 +72,14 @@ export default function AiInterviewPage() {
       icon: Users,
       title: 'Interview Simulation',
       description: 'Practice with realistic interview scenarios and follow-up questions.'
-    },
-    {
-      icon: Clock,
-      title: 'Flexible Timing',
-      description: 'Practice at your own pace with customizable session lengths.'
     }
   ];
 
-  const stats = [
-    { label: 'Practice Sessions', value: '12', icon: Play },
-    { label: 'Average Score', value: '8.2/10', icon: Star },
-    { label: 'Total Time', value: '4h 30m', icon: Clock },
-    { label: 'Questions Answered', value: '156', icon: Brain }
+  const displayStats = [
+    { label: 'Practice Sessions', value: stats.totalSessions.toString(), icon: Play },
+    { label: 'Average Score', value: stats.averageScore > 0 ? `${stats.averageScore.toFixed(1)}/10` : 'N/A', icon: Star },
+    { label: 'Completed', value: stats.completedSessions.toString(), icon: Clock },
+    { label: 'In Progress', value: stats.inProgressSessions.toString(), icon: Brain }
   ];
 
   return (
@@ -71,7 +98,7 @@ export default function AiInterviewPage() {
 
         {/* Quick Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
-          {stats.map((stat, index) => (
+          {displayStats.map((stat, index) => (
             <Card key={index}>
               <CardContent className="p-4 text-center">
                 <stat.icon className="h-8 w-8 text-blue-600 mx-auto mb-2" />
@@ -209,6 +236,9 @@ export default function AiInterviewPage() {
             isOpen={showInterviewModal}
             onClose={handleCloseInterview}
             jobDescription={interviewConfig.jobDescription}
+            jobTitle={interviewConfig.jobTitle}
+            companyName={interviewConfig.companyName}
+            numberOfQuestions={interviewConfig.numberOfQuestions}
           />
         )}
 

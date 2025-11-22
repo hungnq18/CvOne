@@ -1,6 +1,6 @@
 "use client";
 import { CLTemplate, getCLTemplates } from "@/api/clApi";
-import AdvertisementSection from "@/components/sections/advertisement-section";
+import { AdvertisementSection, VerticalAdvertisementSection } from "@/components/sections/advertisement-section";
 import Header from "@/components/sections/header-pageclTemplate-section";
 import TemplateSection from "@/components/sections/pageCLTemplate-section";
 import { useLanguage } from "@/providers/global_provider";
@@ -24,15 +24,26 @@ export default function Page() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white py-12 sm:py-16">
       <main className="py-20">
-        <div className="container mx-auto px-4">
-          <Header />
-          <TemplateSection clTemplates={clTemplates} />
-
+        <div className="mx-auto px-4">
+          <div className="flex gap-4">
+            {/* Banner dọc bên trái */}
+            <div>
+              <VerticalAdvertisementSection />
+            </div>
+            {/* Nội dung chính ở giữa */}
+            <div className="flex-1">
+              <Header />
+              <TemplateSection clTemplates={clTemplates} />
+            </div>
+            {/* Banner dọc bên phải */}
+            <div>
+              <VerticalAdvertisementSection />
+            </div>
+          </div>
         </div>
       </main>
-      <AdvertisementSection />
     </div>
   );
 }

@@ -11,8 +11,6 @@ import {
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { OrdersService } from "./orders.service";
 import { CreateOrderDto } from "./dto/create-order.dto";
-import { RolesGuard } from "../auth/guards/roles.guard";
-import { Roles } from "src/common/decorators/roles.decorator";
 
 @Controller("orders")
 export class OrdersController {
@@ -38,17 +36,16 @@ export class OrdersController {
   ) {
     return this.ordersService.updateOrderStatusByOrderCode(orderCode, status);
   }
-  @Get()
-  @UseGuards(JwtAuthGuard)
-  getOrderByUser(@Request() req) {
-    const userId = req.user.user._id;
-    return this.ordersService.getOrderForUser(userId);
+  // API lấy order theo orderCode
+  @Get("code/:orderCode")
+  async getOrderByCode(@Param("orderCode") orderCode: string) {
+    return this.ordersService.getOrderByOrderCode(orderCode);
   }
-
-  @Get("all")
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles("admin")
-  getAllOrders() {
-    return this.ordersService.getAllOrders();
+  // order history
+  @Get("history")
+  @UseGuards(JwtAuthGuard)
+  async getOrderHistory(@Request() req) {
+    const userId = req.user.user._id;
+    return this.ordersService.getOrderHistory(userId);
   }
 }

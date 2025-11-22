@@ -148,15 +148,24 @@ export class OrdersService {
     return updatedOrder;
   }
 
-  async getOrderForUser(userId: string) {
-    const orders = await this.orderModel
-      .find({ userId: new Types.ObjectId(userId) })
-      .sort({ createdAt: -1 });
-    return orders;
+  // Lấy order theo orderCode
+  async getOrderByOrderCode(orderCode: string) {
+    const order = await this.orderModel
+      .findOne({ orderCode })
+      .populate("voucherId");
+    if (!order) {
+      throw new NotFoundException("Order not found");
+    }
+    return order;
   }
 
-  async getAllOrders() {
-    const orders = await this.orderModel.find().sort({ createdAt: -1 });
-    return orders;
+  async getOrderHistory(userId: string) {
+    return this.orderModel
+      .find({
+        userId: new Types.ObjectId(userId),
+        status: { $in: ["completed", "cancelled"] },
+      })
+      .sort({ createdAt: -1 })
+      .exec();
   }
 }

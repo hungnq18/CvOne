@@ -45,3 +45,24 @@ export async function updateOrderStatus(id: string, status: string) {
         body: JSON.stringify({ status }),
     })
 }
+
+/**
+ * Get order by orderCode
+ * @param orderCode - Order code
+ * @returns Promise with order detail
+ */
+export async function getOrderByOrderCode(orderCode: string) {
+    return fetchWithAuth(API_ENDPOINTS.ORDER.GET_ORDER_BY_CODE(orderCode), {
+        method: "GET",
+    })
+}
+
+/**
+ * Get order history 
+ * @returns Promise with list of orders
+ */
+export async function getOrderHistory() {
+    return fetchWithAuth(API_ENDPOINTS.ORDER.GET_ORDER_HISTORY, {
+        method: "GET",
+    });
+}

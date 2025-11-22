@@ -27,6 +27,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import React, { useEffect, useRef, useState } from "react";
 // BƯỚC 1: Import hook để lấy ngôn ngữ
 import { useLanguage } from "@/providers/global_provider";
+import CVTemplateLayoutPopup from "@/components/forms/CVTemplateLayoutPopup";
+import { getDefaultSectionPositions } from "../cvTemplate/defaultSectionPositions";
 
 // --- BƯỚC 2: TẠO ĐỐI TƯỢNG TRANSLATIONS ---
 const translations = {
@@ -47,16 +49,17 @@ const translations = {
     goBack: "Go Back",
     saving: "Saving...",
     complete: "Complete",
-    
+
     // Main Content & Loaders
     loadingTemplate: "Loading Template...",
-    templateComponentNotFound: (title: string) => `Component for "${title}" not found.`,
-    
+    templateComponentNotFound: (title: string) =>
+      `Component for "${title}" not found.`,
+
     // Actions
     download: "Download",
     print: "Print CV",
     email: "Email",
-    
+
     // Alerts & Messages
     errorDecodingToken: "Error decoding token:",
     noDataToSave: "No data or CV template to save.",
@@ -91,8 +94,9 @@ const translations = {
 
     // Main Content & Loaders
     loadingTemplate: "Đang tải Mẫu...",
-    templateComponentNotFound: (title: string) => `Không tìm thấy component cho "${title}".`,
-    
+    templateComponentNotFound: (title: string) =>
+      `Không tìm thấy component cho "${title}".`,
+
     // Actions
     download: "Tải về",
     print: "In CV",
@@ -106,7 +110,7 @@ const translations = {
     saveError: "Có lỗi xảy ra khi lưu CV của bạn.",
     pdfCreateEnvError: "Không thể tạo môi trường để xuất PDF.",
     pdfCreateError: "Đã có lỗi xảy ra khi xuất file PDF.",
-    
+
     // Dynamic titles
     loadingTemplateForNew: "Đang tải template để tạo mới...",
     cvTitleDefault: (title: string) => `CV - ${title}`,
@@ -123,7 +127,6 @@ interface DecodedToken {
 const DropdownArrow = () => (
   <span className="absolute -top-[8px] left-1/2 -translate-x-1/2 w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-b-[8px] border-b-white" />
 );
-
 
 const PageCreateCVContent = () => {
   // BƯỚC 3: SỬ DỤNG HOOK VÀ LẤY ĐÚNG BỘ TỪ ĐIỂN
@@ -143,7 +146,7 @@ const PageCreateCVContent = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
   const id = searchParams.get("id");
-  const { currentTemplate, userData, loadTemplate, updateUserData } = useCV();
+  const { currentTemplate, userData, loadTemplate, updateUserData, getSectionPositions, updateSectionPositions } = useCV();
 
   const [loading, setLoading] = useState(true);
   const [activeSection, setActiveSection] = useState("info");
@@ -159,38 +162,57 @@ const PageCreateCVContent = () => {
   const templateDropdownRef = useRef(null);
   const previewRef = useRef<HTMLDivElement>(null);
 
+  const [showLayoutPopup, setShowLayoutPopup] = useState(false);
+
   useOnClickOutside(templateDropdownRef, () => setShowTemplatePopup(false));
 
   useEffect(() => {
     getCVTemplates().then((data) => setAllTemplates(data));
     const idFromUrl = id;
 
+    console.log("[CreateCV] ID from URL:", idFromUrl);
+
     if (idFromUrl) {
       setLoading(true);
+      // First try to get as CV ID (for update flow)
       getCVById(idFromUrl)
         .then((templateData) => {
+          console.log("[CreateCV] Found CV with ID:", idFromUrl, templateData);
           if (templateData) {
             loadTemplate(templateData);
             if (templateData.title) {
               setCvTitle(templateData.title);
             }
-            if ((!userData || Object.keys(userData).length === 0) && templateData.content?.userData) {
+            if (
+              (!userData || Object.keys(userData).length === 0) &&
+              templateData.content?.userData
+            ) {
               updateUserData(templateData.content.userData);
             }
           }
           setLoading(false);
         })
-        .catch(() => {
+        .catch((error) => {
+          console.log("[CreateCV] Not a CV ID, trying as template ID. Error:", error);
           console.log(t.loadingTemplateForNew);
           setCvId(null);
           getCVTemplateById(idFromUrl).then((templateData) => {
+            console.log("[CreateCV] Found template with ID:", idFromUrl, templateData);
             if (templateData) {
               loadTemplate(templateData);
-              if ((!userData || Object.keys(userData).length === 0) && templateData.data?.userData) {
+              if (
+                (!userData || Object.keys(userData).length === 0) &&
+                templateData.data?.userData
+              ) {
                 updateUserData(templateData.data.userData);
               }
               setCvTitle(t.cvTitleDefault(templateData.title));
+            } else {
+              console.error("[CreateCV] Template not found with ID:", idFromUrl);
             }
+            setLoading(false);
+          }).catch((templateError) => {
+            console.error("[CreateCV] Error loading template:", templateError);
             setLoading(false);
           });
         });
@@ -200,9 +222,7 @@ const PageCreateCVContent = () => {
   }, [id, loadTemplate, updateUserData, userData, t]);
 
   const handleTemplateSelect = (selectedTemplate: CVTemplate) => {
-    router.push(
-      `/createCV?id=${selectedTemplate._id}`
-    );
+    router.push(`/createCV?id=${selectedTemplate._id}`);
     setCvTitle(t.cvTitleDefault(selectedTemplate.title));
     setShowTemplatePopup(false);
   };
@@ -210,6 +230,14 @@ const PageCreateCVContent = () => {
   const handleDataUpdate = (updatedData: any) => {
     updateUserData(updatedData);
     setIsDirty(true);
+  };
+  
+  // --- HÀM XỬ LÝ KHI KÉO THẢ TRÊN TEMPLATE ---
+  const handleLayoutChange = (newPositions: any) => {
+    if (currentTemplate) {
+      updateSectionPositions(currentTemplate._id, newPositions);
+      setIsDirty(true); // Đánh dấu là đã thay đổi để hiện popup xác nhận khi thoát
+    }
   };
 
   const getUserIdFromToken = (): string | null => {
@@ -241,18 +269,57 @@ const PageCreateCVContent = () => {
 
     setIsSaving(true);
     try {
+      // Get sectionPositions from provider
+      const sectionPositions = getSectionPositions(currentTemplate._id) ||
+        currentTemplate.data?.sectionPositions ||
+        getDefaultSectionPositions(currentTemplate.title);
+
+      // Prepare complete userData with all fields inside userData object
+      // Extract all fields that should be in userData, removing any duplicates
+      const completeUserData = {
+        // Basic user info
+        firstName: userData.firstName || "",
+        lastName: userData.lastName || "",
+        professional: userData.professional || "",
+        city: userData.city || "",
+        country: userData.country || "",
+        province: userData.province || "",
+        phone: userData.phone || "",
+        email: userData.email || "",
+        avatar: userData.avatar || "",
+        summary: userData.summary || "",
+        skills: userData.skills || [],
+        workHistory: userData.workHistory || [],
+        education: userData.education || [],
+        // All additional fields MUST be inside userData
+        careerObjective: userData.careerObjective || "",
+        Project: userData.Project || [],
+        certification: userData.certification || [],
+        achievement: userData.achievement || [],
+        hobby: userData.hobby || [],
+        sectionPositions: sectionPositions,
+      };
+
+      // Ensure content ONLY contains userData, nothing else
+      const contentData = {
+        userData: completeUserData
+      };
+
       if (cvId) {
         const dataToUpdate: Partial<CV> = {
-          content: { userData },
+          content: contentData,
           title: cvTitle || t.cvForUser(userData.firstName),
           updatedAt: new Date().toISOString(),
         };
+        console.log("[handleSaveToDB] Updating CV with data:", JSON.stringify(dataToUpdate, null, 2));
         await updateCV(cvId, dataToUpdate);
       } else {
         const dataToCreate: Omit<CV, "_id"> = {
-          userId: userId || "", 
-          title: cvTitle || t.cvForUser(`${userData.firstName} ${userData.lastName}`),
-          content: { userData },
+          userId: userId || "",
+          title:
+            cvTitle ||
+            t.cvForUser(`${userData.firstName} ${userData.lastName}`),
+          content: contentData,
           isPublic: false,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
@@ -260,6 +327,7 @@ const PageCreateCVContent = () => {
           isSaved: true,
           isFinalized: false,
         };
+        console.log("[handleSaveToDB] Creating CV with data:", JSON.stringify(dataToCreate, null, 2));
         const newCV = await createCV(dataToCreate);
         if (newCV && newCV.id) {
           setCvId(newCV.id);
@@ -286,8 +354,8 @@ const PageCreateCVContent = () => {
   };
 
   const handleSectionClick = (sectionId: string) => {
-    if(sectionId == "avatar") {
-      sectionId = "info"
+    if (sectionId == "avatar") {
+      sectionId = "info";
     }
     setActivePopup(sectionId);
   };
@@ -297,18 +365,25 @@ const PageCreateCVContent = () => {
     const TemplateComponent = templateComponentMap?.[currentTemplate.title];
     if (!TemplateComponent) return null;
 
+    const sectionPositions =
+      getSectionPositions(currentTemplate._id) ||
+      currentTemplate.data?.sectionPositions ||
+      getDefaultSectionPositions(currentTemplate.title);
+
     const componentData = {
       ...currentTemplate.data,
       userData: userData,
+      sectionPositions,
     };
 
-    const fontBase64 = "data:font/woff2;base64,d09GMgABAAAAA... (thay bằng chuỗi Base64 thật của font bạn dùng)";
-    const fontName = 'CVFont';
+    const fontBase64 =
+      "data:font/woff2;base64,d09GMgABAAAAA... (thay bằng chuỗi Base64 thật của font bạn dùng)";
+    const fontName = "CVFont";
 
     return (
       <div>
         <style>
-            {`
+          {`
             @font-face {
                 font-family: '${fontName}'; 
                 src: url(${fontBase64}) format('woff2');
@@ -318,18 +393,22 @@ const PageCreateCVContent = () => {
             `}
         </style>
         <div style={{ fontFamily: `'${fontName}', sans-serif` }}>
-             <TemplateComponent data={componentData} isPdfMode={true} language={language} />
+          <TemplateComponent
+            data={componentData}
+            isPdfMode={true}
+            language={language}
+          />
         </div>
       </div>
     );
   };
 
   const handleDownloadPDF = async () => {
-    const iframe = document.createElement('iframe');
-    iframe.style.position = 'fixed';
-    iframe.style.width = '794px';
-    iframe.style.height = '1123px';
-    iframe.style.left = '-9999px';
+    const iframe = document.createElement("iframe");
+    iframe.style.position = "fixed";
+    iframe.style.width = "794px";
+    iframe.style.height = "1123px";
+    iframe.style.left = "-9999px";
     document.body.appendChild(iframe);
 
     const iframeDoc = iframe.contentWindow?.document;
@@ -338,39 +417,41 @@ const PageCreateCVContent = () => {
       document.body.removeChild(iframe);
       return;
     }
-    
-    const head = iframeDoc.head;
-    document.querySelectorAll('style, link[rel="stylesheet"]').forEach(node => {
-        head.appendChild(node.cloneNode(true));
-    });
 
-    const mountNode = iframeDoc.createElement('div');
+    const head = iframeDoc.head;
+    document
+      .querySelectorAll('style, link[rel="stylesheet"]')
+      .forEach((node) => {
+        head.appendChild(node.cloneNode(true));
+      });
+
+    const mountNode = iframeDoc.createElement("div");
     iframeDoc.body.appendChild(mountNode);
 
     let root: any = null;
-    
-    try {
-      await new Promise(resolve => setTimeout(resolve, 300));
 
-      const { createRoot } = await import('react-dom/client');
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 300));
+
+      const { createRoot } = await import("react-dom/client");
       root = createRoot(mountNode);
       root.render(renderCVForPDF());
-      
-      await new Promise(resolve => setTimeout(resolve, 500)); 
 
-      const html2pdf = (await import("html2pdf.js"))?.default || (await import("html2pdf.js"));
-      
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      const html2pdf =
+        (await import("html2pdf.js"))?.default || (await import("html2pdf.js"));
+
       await html2pdf()
         .from(iframe.contentWindow.document.body)
         .set({
-            margin: 0,
-            filename: `${cvTitle || "cv"}.pdf`,
-            image: { type: "jpeg", quality: 0.98 },
-            html2canvas: { scale: 2, useCORS: true },
-            jsPDF: { unit: "px", format: [794, 1123], orientation: "portrait" },
+          margin: 0,
+          filename: `${cvTitle || "cv"}.pdf`,
+          image: { type: "jpeg", quality: 0.98 },
+          html2canvas: { scale: 2, useCORS: true },
+          jsPDF: { unit: "px", format: [794, 1123], orientation: "portrait" },
         })
         .save();
-
     } catch (error) {
       console.error(t.pdfCreateError, error);
       alert(t.pdfCreateError);
@@ -379,7 +460,7 @@ const PageCreateCVContent = () => {
         root.unmount();
       }
       if (document.body.contains(iframe)) {
-          document.body.removeChild(iframe);
+        document.body.removeChild(iframe);
       }
     }
   };
@@ -392,9 +473,15 @@ const PageCreateCVContent = () => {
     if (!TemplateComponent) {
       return <div>{t.templateComponentNotFound(currentTemplate.title)}</div>;
     }
+    const sectionPositions =
+      getSectionPositions(currentTemplate._id) ||
+      currentTemplate.data?.sectionPositions ||
+      getDefaultSectionPositions(currentTemplate.title);
+
     const componentData = {
       ...currentTemplate.data,
       userData: userData,
+      sectionPositions,
     };
 
     const containerWidth = 700;
@@ -410,7 +497,13 @@ const PageCreateCVContent = () => {
             transform: `scale(${scaleFactor})`,
           }}
         >
-          <TemplateComponent data={componentData} onSectionClick={handleSectionClick} />
+          {/* Truyền hàm handleLayoutChange vào template */}
+          <TemplateComponent
+            data={componentData}
+            onSectionClick={handleSectionClick}
+            onLayoutChange={handleLayoutChange}
+            language={language}
+          />
         </div>
       </div>
     );
@@ -418,9 +511,9 @@ const PageCreateCVContent = () => {
 
   const handleBackClick = () => {
     if (isDirty) {
-        setActivePopup("confirmLeave");
+      setActivePopup("confirmLeave");
     } else {
-        router.push(`/cvTemplates`);
+      router.push(`/cvTemplates`);
     }
   };
 
@@ -452,7 +545,7 @@ const PageCreateCVContent = () => {
                   value={cvTitle}
                   onChange={handleTitleChange}
                   onBlur={handleTitleSave}
-                  onKeyPress={(e) => e.key === 'Enter' && handleTitleSave()}
+                  onKeyPress={(e) => e.key === "Enter" && handleTitleSave()}
                   className="text-2xl font-bold bg-transparent border-b-2 border-blue-500 focus:outline-none text-white"
                   autoFocus
                 />
@@ -464,12 +557,15 @@ const PageCreateCVContent = () => {
                 </button>
               </div>
             ) : (
-              <h1 
+              <h1
                 className="text-2xl font-bold cursor-pointer hover:text-blue-300 transition-colors"
                 onClick={handleTitleEdit}
                 title={t.editTitleTooltip}
               >
-                {cvTitle || (currentTemplate ? t.cvTitleDefault(currentTemplate.title) : t.editCv)}
+                {cvTitle ||
+                  (currentTemplate
+                    ? t.cvTitleDefault(currentTemplate.title)
+                    : t.editCv)}
               </h1>
             )}
           </div>
@@ -546,6 +642,12 @@ const PageCreateCVContent = () => {
 
       <main className="flex-grow flex overflow-hidden">
         <aside className="w-72 bg-white p-6 border-r border-slate-200 overflow-y-auto">
+          <button
+            onClick={() => setShowLayoutPopup(true)}
+            className="w-full flex items-center gap-3 p-3 rounded-md text-slate-700 hover:bg-slate-100 font-medium"
+          >
+            ⚙️ Tùy chỉnh bố cục
+          </button>
           <h2 className="text-sm font-bold uppercase text-slate-500 mb-4">
             {t.cvSections}
           </h2>
@@ -608,6 +710,18 @@ const PageCreateCVContent = () => {
           }
         }}
       />
+      {showLayoutPopup && currentTemplate && (
+        <CVTemplateLayoutPopup
+          currentPositions={getSectionPositions(currentTemplate._id)}
+          defaultPositions={getDefaultSectionPositions(currentTemplate.title)}
+          templateTitle={currentTemplate.title}
+          onSave={(newPositions) => {
+            updateSectionPositions(currentTemplate._id, newPositions);
+            setShowLayoutPopup(false);
+          }}
+          onClose={() => setShowLayoutPopup(false)}
+        />
+      )}
     </div>
   );
 };

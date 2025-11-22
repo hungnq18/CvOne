@@ -306,7 +306,7 @@ function CreateCVwithAI() {
             )}
           </div>
         </div>
-        <aside className="flex flex-col w-1/3 bg-white p-8 border-l">
+        <aside className="flex flex-col w-1/3 bg-white p-8 border-l sticky top-0 h-screen overflow-y-auto">
           <div className="flex">
             <h3 className="text-lg font-semibold text-gray-800 mb-4">
               {t.preview}

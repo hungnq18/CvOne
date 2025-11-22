@@ -132,6 +132,10 @@ const navigationItems = {
         name: "Job",
         href: "/jobPage",
       },
+      {
+        name: "AI-Interview",
+        href: "/ai-interview",
+      },
     ],
     admin: [
       {
@@ -181,10 +185,6 @@ const navigationItems = {
       {
         name: "Saved Jobs",
         href: "/myJobs",
-      },
-      {
-        name: "Jobs",
-        href: "/jobPage",
       },
       {
         name: "My Profile",
@@ -265,6 +265,7 @@ const navigationItems = {
         name: "Hồ sơ của tôi",
         href: "/user/profile",
       },
+
     ],
   },
 };
@@ -422,6 +423,10 @@ export function Header() {
             name: language === "en" ? "My Profile" : "Hồ sơ của tôi",
             href: "/user/profile",
           },
+          {
+            name: language === "en" ? "wallet" : "ví của tôi",
+            href: "/user/wallet",
+          },
         ],
       },
       {
@@ -446,6 +451,10 @@ export function Header() {
             href: "/myJobs",
           },
         ],
+      },
+      {
+        name: "AI-Interview",
+        href: "/ai-interview",
       },
     ];
   }

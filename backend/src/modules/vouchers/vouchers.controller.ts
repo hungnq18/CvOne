@@ -1,12 +1,12 @@
 import {
   Body,
   Controller,
-  Delete,
   Get,
   Param,
   Post,
-  Put,
   Request,
+  Put,
+  Delete,
   UseGuards,
 } from "@nestjs/common";
 import { Roles } from "src/common/decorators/roles.decorator";

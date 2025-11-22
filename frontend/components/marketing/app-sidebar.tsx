@@ -42,7 +42,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     <Sidebar className="border-r-0" {...props}>
       <SidebarHeader className="h-16 border-b border-sidebar-border">
         <div className="flex items-center gap-2 px-4">
-            <div className="flex h-8 w-8 items-center justify-center rounded bg-green-600">
+            <div className="flex h-8 w-8 items-center justify-center rounded bg-blue-600">
               <LayoutDashboard className="h-4 w-4 text-white" />
             </div>
           <span className="text-xl font-bold text-sidebar-foreground">CvOne Marketing</span>
@@ -62,7 +62,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     <SidebarMenuButton
                       asChild
                       isActive={isActive}
-                      className="text-slate-200 hover:bg-slate-700 hover:text-white data-[active=true]:bg-green-600 data-[active=true]:text-white"
+                      className="text-slate-200 hover:bg-slate-700 hover:text-white data-[active=true]:bg-blue-600 data-[active=true]:text-white"
                     >
                       <a href={item.url} className="flex items-center gap-3 px-3 py-2">
                         <item.icon className="h-5 w-5" />

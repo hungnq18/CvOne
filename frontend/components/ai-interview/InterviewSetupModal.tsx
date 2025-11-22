@@ -1,13 +1,13 @@
 "use client";
 
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { FileText, Play, Settings, X } from 'lucide-react';
+import { Briefcase, FileText, Play, Settings, Sparkles, X } from 'lucide-react';
 import { useState } from 'react';
 
 interface InterviewSetupModalProps {
@@ -18,15 +18,11 @@ interface InterviewSetupModalProps {
 
 export interface InterviewConfig {
   jobDescription: string;
+  jobTitle?: string;
+  companyName?: string;
   numberOfQuestions: number;
-  difficulty: 'easy' | 'medium' | 'hard';
+  // difficulty tự động xác định từ JD
 }
-
-const difficultyDescriptions = {
-  easy: 'Basic questions suitable for entry-level positions',
-  medium: 'Standard questions for mid-level positions',
-  hard: 'Advanced questions for senior-level positions'
-};
 
 const questionCounts = [
   { value: 5, label: '5 questions (Quick practice)' },
@@ -37,8 +33,9 @@ const questionCounts = [
 
 export default function InterviewSetupModal({ isOpen, onClose, onStartInterview }: InterviewSetupModalProps) {
   const [jobDescription, setJobDescription] = useState('');
+  const [jobTitle, setJobTitle] = useState('');
+  const [companyName, setCompanyName] = useState('');
   const [numberOfQuestions, setNumberOfQuestions] = useState(10);
-  const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
   const [isLoading, setIsLoading] = useState(false);
 
   const handleStartInterview = async () => {
@@ -50,8 +47,9 @@ export default function InterviewSetupModal({ isOpen, onClose, onStartInterview 
     try {
       const config: InterviewConfig = {
         jobDescription: jobDescription.trim(),
-        numberOfQuestions,
-        difficulty
+        jobTitle: jobTitle.trim() || undefined,
+        companyName: companyName.trim() || undefined,
+        numberOfQuestions
       };
       
       onStartInterview(config);
@@ -79,6 +77,42 @@ export default function InterviewSetupModal({ isOpen, onClose, onStartInterview 
         </div>
 
         <div className="p-6 space-y-6">
+          {/* Job Information */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Briefcase className="h-5 w-5" />
+                Job Information
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="jobTitle">
+                    Job Title <span className="text-gray-400">(Optional)</span>
+                  </Label>
+                  <Input
+                    id="jobTitle"
+                    placeholder="e.g. Senior Backend Developer"
+                    value={jobTitle}
+                    onChange={(e) => setJobTitle(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="companyName">
+                    Company Name <span className="text-gray-400">(Optional)</span>
+                  </Label>
+                  <Input
+                    id="companyName"
+                    placeholder="e.g. Google"
+                    value={companyName}
+                    onChange={(e) => setCompanyName(e.target.value)}
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Job Description */}
           <Card>
             <CardHeader>
@@ -94,14 +128,17 @@ export default function InterviewSetupModal({ isOpen, onClose, onStartInterview 
                 </Label>
                 <Textarea
                   id="jobDescription"
-                  placeholder="Paste the job description here. The AI will generate relevant interview questions based on this information..."
+                  placeholder="Paste the job description here. The AI will analyze it and automatically determine the appropriate difficulty level..."
                   value={jobDescription}
                   onChange={(e) => setJobDescription(e.target.value)}
                   className="min-h-[200px]"
                 />
-                <p className="text-sm text-gray-500">
-                  The more detailed the job description, the better the AI can tailor questions to the specific role.
-                </p>
+                <div className="flex items-center gap-2 text-sm text-blue-600">
+                  <Sparkles className="h-4 w-4" />
+                  <p>
+                    <strong>AI Auto-Difficulty:</strong> Interview difficulty will be automatically determined based on experience requirements and role seniority.
+                  </p>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -131,29 +168,6 @@ export default function InterviewSetupModal({ isOpen, onClose, onStartInterview 
                   </SelectContent>
                 </Select>
               </div>
-
-              {/* Difficulty Level */}
-              <div className="space-y-2">
-                <Label htmlFor="difficulty">Difficulty Level</Label>
-                <div className="grid grid-cols-3 gap-2">
-                  {(['easy', 'medium', 'hard'] as const).map((level) => (
-                    <Button
-                      key={level}
-                      variant={difficulty === level ? 'default' : 'outline'}
-                      onClick={() => setDifficulty(level)}
-                      className="flex flex-col items-center p-4 h-auto"
-                    >
-                      <Badge variant={level === 'easy' ? 'default' : 
-                                   level === 'medium' ? 'secondary' : 'destructive'}>
-                        {level.charAt(0).toUpperCase() + level.slice(1)}
-                      </Badge>
-                      <span className="text-xs mt-1 text-center">
-                        {difficultyDescriptions[level]}
-                      </span>
-                    </Button>
-                  ))}
-                </div>
-              </div>
             </CardContent>
           </Card>
 
@@ -162,7 +176,8 @@ export default function InterviewSetupModal({ isOpen, onClose, onStartInterview 
             <AlertDescription>
               <strong>AI Interview Features:</strong>
               <ul className="mt-2 space-y-1 text-sm">
-                <li>• Personalized questions based on job description</li>
+                <li>✨ Auto-determined difficulty from job description</li>
+                <li>• Personalized questions based on job requirements</li>
                 <li>• Real-time AI feedback and scoring</li>
                 <li>• Sample answers and tips</li>
                 <li>• Follow-up questions for deeper discussion</li>

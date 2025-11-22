@@ -1,6 +1,6 @@
 "use client";
 
-import { aiInterviewApi, InterviewFeedback, InterviewQuestion, InterviewSession } from '@/api/aiInterviewApi';
+import { aiInterviewApi, InterviewFeedback, InterviewSession } from '@/api/aiInterviewApi';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -14,58 +14,72 @@ interface AiInterviewModalProps {
   isOpen: boolean;
   onClose: () => void;
   jobDescription: string;
+  jobTitle?: string;
+  companyName?: string;
+  numberOfQuestions?: number;
 }
 
-export default function AiInterviewModal({ isOpen, onClose, jobDescription }: AiInterviewModalProps) {
+export default function AiInterviewModal({ 
+  isOpen, 
+  onClose, 
+  jobDescription, 
+  jobTitle, 
+  companyName, 
+  numberOfQuestions = 10 
+}: AiInterviewModalProps) {
   const [session, setSession] = useState<InterviewSession | null>(null);
-  const [currentQuestion, setCurrentQuestion] = useState<InterviewQuestion | null>(null);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [userAnswer, setUserAnswer] = useState('');
   const [feedback, setFeedback] = useState<InterviewFeedback | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isCreatingSession, setIsCreatingSession] = useState(false);
   const [showSampleAnswer, setShowSampleAnswer] = useState(false);
   const [sampleAnswer, setSampleAnswer] = useState('');
   const [followUpQuestion, setFollowUpQuestion] = useState('');
   const [showFollowUp, setShowFollowUp] = useState(false);
 
+  // Get current question from session
+  const currentQuestion = session?.questions[currentQuestionIndex];
+  const isLastQuestion = session ? currentQuestionIndex >= session.questions.length - 1 : false;
+
   useEffect(() => {
     if (isOpen && jobDescription) {
       initializeInterview();
+    } else if (!isOpen) {
+      // Reset all states khi đóng modal
+      setSession(null);
+      setCurrentQuestionIndex(0);
+      setUserAnswer('');
+      setFeedback(null);
+      setShowSampleAnswer(false);
+      setShowFollowUp(false);
     }
   }, [isOpen, jobDescription]);
 
   const initializeInterview = async () => {
-    setIsLoading(true);
+    setIsCreatingSession(true);
     try {
       const response = await aiInterviewApi.createInterviewSession({
         jobDescription,
-        numberOfQuestions: 10,
-        difficulty: 'medium'
+        jobTitle,
+        companyName,
+        numberOfQuestions
       });
 
       if (response.success && response.data) {
         setSession(response.data);
-        loadCurrentQuestion(response.data.sessionId);
+        setCurrentQuestionIndex(0); // Start from first question
+        setUserAnswer('');
+        setFeedback(null);
+      } else {
+        alert('Failed to create interview session. Please try again.');
       }
     } catch (error) {
       console.error('Error initializing interview:', error);
+      alert('Failed to create interview session. Please try again.');
     } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const loadCurrentQuestion = async (sessionId: string) => {
-    try {
-      const response = await aiInterviewApi.getCurrentQuestion(sessionId);
-      if (response.success && response.data) {
-        setCurrentQuestion(response.data);
-        setUserAnswer('');
-        setFeedback(null);
-        setShowSampleAnswer(false);
-        setShowFollowUp(false);
-      }
-    } catch (error) {
-      console.error('Error loading current question:', error);
+      setIsCreatingSession(false);
     }
   };
 
@@ -82,17 +96,34 @@ export default function AiInterviewModal({ isOpen, onClose, jobDescription }: Ai
       if (response.success && response.data) {
         setFeedback(response.data.feedback);
         setShowFollowUp(true);
+        
+        // Update session completedQuestions count
+        setSession({
+          ...session,
+          completedQuestions: response.data.answeredQuestions
+        });
       }
     } catch (error) {
       console.error('Error submitting answer:', error);
+      alert('Failed to submit answer. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleNextQuestion = async () => {
+  const handleNextQuestion = () => {
     if (!session) return;
-    await loadCurrentQuestion(session.sessionId);
+    
+    // Reset states cho câu hỏi mới
+    setUserAnswer('');
+    setFeedback(null);
+    setShowSampleAnswer(false);
+    setShowFollowUp(false);
+    setFollowUpQuestion('');
+    setSampleAnswer('');
+    
+    // Move to next question
+    setCurrentQuestionIndex(prev => prev + 1);
   };
 
   const handleGetSampleAnswer = async () => {
@@ -139,13 +170,19 @@ export default function AiInterviewModal({ isOpen, onClose, jobDescription }: Ai
     setIsLoading(true);
     try {
       const response = await aiInterviewApi.completeSession(session.sessionId);
-      if (response.success) {
-        // Show completion message or redirect
-        alert('Interview completed! Check your overall feedback.');
+      if (response.success && response.data) {
+        // Show overall feedback
+        const message = `🎉 Interview Completed!\n\n` +
+          `Overall Score: ${response.data.averageScore.toFixed(1)}/10\n` +
+          `Questions Answered: ${response.data.answeredQuestions}/${response.data.totalQuestions}\n\n` +
+          `Check your interview history to review detailed feedback.`;
+        
+        alert(message);
         onClose();
       }
     } catch (error) {
       console.error('Error completing session:', error);
+      alert('Failed to complete session. Your answers have been saved.');
     } finally {
       setIsLoading(false);
     }
@@ -158,11 +195,56 @@ export default function AiInterviewModal({ isOpen, onClose, jobDescription }: Ai
 
   if (!isOpen) return null;
 
+  // Loading screen khi đang tạo session
+  if (isCreatingSession) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-lg p-8 max-w-md w-full text-center">
+          <div className="mb-4">
+            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto"></div>
+          </div>
+          <h3 className="text-xl font-semibold mb-2">Creating Your Interview Session</h3>
+          <p className="text-gray-600 mb-4">
+            AI is analyzing the job description and generating personalized questions...
+          </p>
+          <div className="space-y-2 text-sm text-gray-500">
+            <p>✓ Analyzing job requirements</p>
+            <p>✓ Determining difficulty level</p>
+            <p className="animate-pulse">⏳ Generating interview questions...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-6 border-b">
-          <h2 className="text-2xl font-bold">AI Interview Practice</h2>
+          <div className="flex-1">
+            <h2 className="text-2xl font-bold">AI Interview Practice</h2>
+            {session && (
+              <div className="flex items-center gap-2 mt-2">
+                {session.jobTitle && (
+                  <Badge variant="outline" className="font-normal">
+                    {session.jobTitle}
+                  </Badge>
+                )}
+                {session.companyName && (
+                  <Badge variant="outline" className="font-normal">
+                    {session.companyName}
+                  </Badge>
+                )}
+                <Badge 
+                  variant={session.difficulty === 'easy' ? 'default' : 
+                          session.difficulty === 'medium' ? 'secondary' : 'destructive'}
+                  className="font-medium"
+                >
+                  {session.difficulty.charAt(0).toUpperCase() + session.difficulty.slice(1)} Difficulty
+                </Badge>
+              </div>
+            )}
+          </div>
           <Button variant="ghost" size="sm" onClick={onClose}>
             <X className="h-4 w-4" />
           </Button>
@@ -174,13 +256,28 @@ export default function AiInterviewModal({ isOpen, onClose, jobDescription }: Ai
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span>Progress</span>
-                <span>{session.completedQuestions}/{session.totalQuestions}</span>
+                <span>{currentQuestionIndex + 1}/{session.totalQuestions} questions | {session.completedQuestions} answered</span>
               </div>
               <Progress 
-                value={(session.completedQuestions / session.totalQuestions) * 100} 
+                value={((currentQuestionIndex + 1) / session.totalQuestions) * 100} 
                 className="h-2"
               />
             </div>
+          )}
+
+          {/* No more questions */}
+          {session && !currentQuestion && (
+            <Card>
+              <CardContent className="p-8 text-center">
+                <h3 className="text-lg font-medium text-gray-900 mb-2">All Questions Completed!</h3>
+                <p className="text-gray-600 mb-4">
+                  You've gone through all {session.totalQuestions} questions. Click below to complete the interview and get your overall feedback.
+                </p>
+                <Button onClick={handleCompleteSession} disabled={isLoading} className="bg-green-600 hover:bg-green-700">
+                  {isLoading ? 'Completing...' : 'Complete Interview'}
+                </Button>
+              </CardContent>
+            </Card>
           )}
 
           {/* Current Question */}
@@ -189,7 +286,7 @@ export default function AiInterviewModal({ isOpen, onClose, jobDescription }: Ai
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-lg">
-                    Question {(session?.currentQuestionIndex || 0) + 1} of {session?.totalQuestions}
+                    Question {currentQuestionIndex + 1} of {session?.totalQuestions}
                   </CardTitle>
                   <div className="flex gap-2">
                     <Badge variant="outline">{currentQuestion.category}</Badge>
@@ -232,8 +329,11 @@ export default function AiInterviewModal({ isOpen, onClose, jobDescription }: Ai
                   </div>
 
                   <div className="flex gap-2">
-                    <Button onClick={handleSubmitAnswer} disabled={!userAnswer.trim() || isLoading}>
-                      {isLoading ? 'Submitting...' : 'Submit Answer'}
+                    <Button 
+                      onClick={handleSubmitAnswer} 
+                      disabled={!userAnswer.trim() || isLoading || !!feedback}
+                    >
+                      {isLoading ? 'Submitting...' : feedback ? 'Submitted ✓' : 'Submit Answer'}
                     </Button>
                     <Button variant="outline" onClick={handleGetSampleAnswer} disabled={isLoading}>
                       <BookOpen className="h-4 w-4 mr-2" />
@@ -316,9 +416,15 @@ export default function AiInterviewModal({ isOpen, onClose, jobDescription }: Ai
                 )}
 
                 <div className="flex gap-2">
-                  <Button onClick={handleNextQuestion}>
-                    Next Question
-                  </Button>
+                  {!isLastQuestion ? (
+                    <Button onClick={handleNextQuestion}>
+                      Next Question →
+                    </Button>
+                  ) : (
+                    <Button onClick={handleCompleteSession} disabled={isLoading} className="bg-green-600 hover:bg-green-700">
+                      {isLoading ? 'Completing...' : 'Complete Interview'}
+                    </Button>
+                  )}
                   {showFollowUp && (
                     <Button variant="outline" onClick={handleGenerateFollowUp} disabled={isLoading}>
                       Generate Follow-up Question
