@@ -16,9 +16,9 @@ export class CreditsService {
     private readonly voucherService: VouchersService
   ) {}
 
-  async createCredit(userId: string) {
+  async createCredit(userId: Types.ObjectId) {
     return await this.creditModel.create({
-      userId: new Types.ObjectId(userId),
+      userId,
     });
   }
   async updateToken(userId: string, token: number) {
