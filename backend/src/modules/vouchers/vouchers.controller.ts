@@ -48,6 +48,12 @@ export class VouchersController {
     return await this.vouchersService.getVoucherDisplayUsers();
   }
 
+  @Get(":id")
+  @UseGuards(JwtAuthGuard)
+  async getVoucherById(@Param("id") id: string) {
+    return await this.vouchersService.getVoucherById(id);
+  }
+
   @Put(":id")
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles("mkt")
@@ -55,7 +61,7 @@ export class VouchersController {
     @Param("id") id: string,
     @Body() updateVoucherDto: UpdateVoucherDirectDto,
   ) {
-    return await this.vouchersService.updateVoucherDirect(id, updateVoucherDto);
+    return await this.vouchersService.updateVoucher(id, updateVoucherDto);
   }
 
   @Delete(":id")

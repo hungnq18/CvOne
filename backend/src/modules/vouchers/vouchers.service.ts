@@ -65,6 +65,25 @@ export class VouchersService {
     return vouchers;
   }
 
+  async updateVoucher(id: string, updateVoucherDto: any) {
+    const voucher = await this.voucherModel.findById(id);
+    if (!voucher) {
+      throw new NotFoundException(`Voucher not found`);
+    }
+
+    const updateData: any = { ...updateVoucherDto };
+    if (updateVoucherDto.startDate) {
+      updateData.startDate = new Date(updateVoucherDto.startDate);
+    }
+    if (updateVoucherDto.endDate) {
+      updateData.endDate = new Date(updateVoucherDto.endDate);
+    }
+
+    Object.assign(voucher, updateData);
+    await voucher.save();
+    return voucher;
+  }
+
   async updateVoucherDirect(
     id: string,
     updateVoucherDto: UpdateVoucherDirectDto,
