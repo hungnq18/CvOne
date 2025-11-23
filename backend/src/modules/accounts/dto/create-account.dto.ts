@@ -32,7 +32,7 @@ export class CreateAccountDto {
   @IsOptional()
   @Transform(({ value }) => value || undefined)
   @ApiProperty()
-  phone?: number;
+  phone?: string;
 
   @IsString()
   @IsOptional()

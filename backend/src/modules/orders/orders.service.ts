@@ -22,8 +22,8 @@ export class OrdersService {
     @InjectModel(Order.name) private orderModel: Model<OrderDocument>,
     private readonly payosService: PayosService,
     private readonly voucherService: VouchersService,
-    private readonly creditService: CreditsService,
-  ) { }
+    private readonly creditService: CreditsService
+  ) {}
 
   generateOrderCode(): number {
     const now = new Date();
@@ -113,7 +113,7 @@ export class OrdersService {
       const payos = await this.payosService.createPaymentLink(
         orderCode,
         finalAmount,
-        `Thanh toán`,
+        `Thanh toán`
       );
       paymentLink = payos?.checkoutUrl || payos?.data?.checkoutUrl || null;
     }
@@ -129,7 +129,7 @@ export class OrdersService {
     const updatedOrder = await this.orderModel.findByIdAndUpdate(
       orderId,
       { status },
-      { new: true },
+      { new: true }
     );
     if (!updatedOrder) {
       throw new NotFoundException("Order not found");
@@ -140,7 +140,7 @@ export class OrdersService {
     const updatedOrder = await this.orderModel.findOneAndUpdate(
       { orderCode },
       { status },
-      { new: true },
+      { new: true }
     );
     if (!updatedOrder) {
       throw new NotFoundException("Order not found");

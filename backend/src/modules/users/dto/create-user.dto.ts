@@ -1,4 +1,4 @@
-import { IsMongoId, IsNotEmpty, IsString } from "class-validator";
+import { IsMongoId, IsNotEmpty, IsString, Matches } from "class-validator";
 import { Types } from "mongoose";
 
 export class CreateUserDto {
@@ -15,11 +15,14 @@ export class CreateUserDto {
   last_name: string;
 
   @IsString()
-  phone: number;
+  @Matches(/^\+?[0-9]{10,15}$/, {
+    message: "Phone number is not valid",
+  })
+  phone?: string;
 
   @IsString()
-  city: string;
+  city?: string;
 
   @IsString()
-  country: string;
+  country?: string;
 }

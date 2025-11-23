@@ -21,6 +21,7 @@ import { VerifyResetCodeDto } from "./dto/verify-reset-code.dto";
 import { Account, AccountDocument } from "./schemas/account.schema";
 import { PasswordResetCodeService } from "./password-reset-code.service";
 import { CreateAccountHRDto } from "./dto/create-account-hr.dto";
+import { CreditsService } from "../credits/credits.service";
 // ...existing code...
 @Injectable()
 export class AccountsService {
@@ -31,15 +32,15 @@ export class AccountsService {
     private mailService: MailService,
     @Inject(forwardRef(() => UsersService)) private usersService: UsersService, // Sửa ở đây
     private passwordResetCodeService: PasswordResetCodeService,
-  ) { }
+    private readonly creditService: CreditsService
+  ) {}
 
   async register(createAccountDto: CreateAccountDto): Promise<Account> {
     try {
-      const { first_name, last_name, email, password, city, phone, country } =
-        createAccountDto;
+      const { first_name, last_name, email, password } = createAccountDto;
 
       this.logger.debug(
-        `Received registration data: ${JSON.stringify({ email, first_name, last_name })}`,
+        `Received registration data: ${JSON.stringify({ email, first_name, last_name })}`
       );
 
       if (!email || email.trim() === "") {
@@ -71,7 +72,7 @@ export class AccountsService {
       this.logger.debug("Saving new account...");
       const savedAccount = await newAccount.save();
       this.logger.debug(
-        `Account saved successfully with email: ${savedAccount.email}`,
+        `Account saved successfully with email: ${savedAccount.email}`
       );
 
       try {
@@ -79,14 +80,14 @@ export class AccountsService {
         const userProfile = await this.usersService.createUser({
           first_name,
           last_name,
-          phone: phone ?? 0,
-          city: city ?? "",
-          country: country ?? "",
+
           account_id: savedAccount._id,
         });
         this.logger.debug(
-          `User profile ${userProfile ? "created" : "retrieved"} successfully`,
+          `User profile ${userProfile ? "created" : "retrieved"} successfully`
         );
+
+        await this.creditService.createCredit(userProfile._id);
 
         // Send verification email
         try {
@@ -102,19 +103,19 @@ export class AccountsService {
           // Send verification email
           await this.mailService.sendVerificationEmail(
             trimmedEmail,
-            verificationToken,
+            verificationToken
           );
           this.logger.debug(`Verification email sent to ${trimmedEmail}`);
         } catch (mailError) {
           this.logger.error(
-            `Failed to send verification email: ${mailError.message}`,
+            `Failed to send verification email: ${mailError.message}`
           );
           // Don't throw error here, just log it - user can still register
         }
       } catch (error) {
         // If user creation fails, delete the account
         this.logger.error(
-          "Failed to create user profile, rolling back account creation",
+          "Failed to create user profile, rolling back account creation"
         );
         await this.accountModel.findByIdAndDelete(savedAccount._id);
         throw error;
@@ -127,22 +128,13 @@ export class AccountsService {
         throw error;
       }
       throw new InternalServerErrorException(
-        `Registration failed: ${error.message}`,
+        `Registration failed: ${error.message}`
       );
     }
   }
 
   async registerByAdmin(createAccountDto: CreateAccountDto): Promise<Account> {
-    const {
-      first_name,
-      last_name,
-      email,
-      password,
-      role,
-      city,
-      phone,
-      country,
-    } = createAccountDto;
+    const { first_name, last_name, email, password, role } = createAccountDto;
 
     const existingAccount = await this.accountModel.findOne({
       email: email.trim(),
@@ -166,9 +158,7 @@ export class AccountsService {
       await this.usersService.createUser({
         first_name,
         last_name,
-        phone: phone ?? 0,
-        city: city ?? "",
-        country: country ?? "",
+
         account_id: savedAccount._id,
       });
     } catch (error) {
@@ -228,9 +218,9 @@ export class AccountsService {
         const createdUser = await this.usersService.createUser({
           first_name,
           last_name,
-          phone: phone ?? 0,
-          city: city ?? "",
-          country: country ?? "",
+          phone,
+          city,
+          country,
           account_id: savedAccount._id,
         });
 
@@ -252,7 +242,7 @@ export class AccountsService {
         await savedAccount.save();
         await this.mailService.sendVerificationEmail(
           trimmedEmail,
-          verificationToken,
+          verificationToken
         );
       } catch (error: any) {
         await this.accountModel.findByIdAndDelete(savedAccount._id);
@@ -266,7 +256,7 @@ export class AccountsService {
         throw error;
       }
       throw new InternalServerErrorException(
-        `HR registration failed: ${String(error)}`,
+        `HR registration failed: ${String(error)}`
       );
     }
   }
@@ -312,12 +302,12 @@ export class AccountsService {
       "Found account:",
       account
         ? {
-          id: account._id,
-          email: account.email,
-          isVerified: account.isEmailVerified,
-          tokenExpires: account.emailVerificationTokenExpires,
-        }
-        : "no account found",
+            id: account._id,
+            email: account.email,
+            isVerified: account.isEmailVerified,
+            tokenExpires: account.emailVerificationTokenExpires,
+          }
+        : "no account found"
     );
 
     // Nếu không tìm thấy account hoặc token không khớp
