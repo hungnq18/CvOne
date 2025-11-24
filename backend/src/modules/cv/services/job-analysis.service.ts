@@ -88,6 +88,12 @@ Return only valid JSON without any additional text.
 
       // Parse JSON response
       const analysis = JSON.parse(cleanResponse);
+      const usage = completion.usage || {
+        prompt_tokens: 0,
+        completion_tokens: 0,
+        total_tokens: 0,
+      };
+      console.log("Usage analysis:", usage);
 
       this.logger.log("Job description analysis completed successfully");
       return analysis;

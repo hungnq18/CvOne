@@ -8,6 +8,8 @@ export enum AiFeature {
   INTERVIEW_AI = "interviewAI",
   CV_AI = "cvAI",
   COVER_LETTER_AI = "coverLetterAI",
+  SUGGESTION_AI = "suggestionAI",
+  ANALYZE_JD = "analyzeJD",
 }
 
 @Schema({ timestamps: true })
