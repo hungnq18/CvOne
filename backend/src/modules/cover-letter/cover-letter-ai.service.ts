@@ -230,7 +230,7 @@ Rules:
       completion_tokens: 0,
       total_tokens: 0,
     };
-    console.log("Usage:", usage);
+    console.log("Usage cover letter:", usage);
 
     return {
       templateId,

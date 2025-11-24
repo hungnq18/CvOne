@@ -47,6 +47,12 @@ Chỉ trả về đoạn summary, không giải thích, không markdown.
           },
         ],
       });
+      const usage = completion.usage || {
+        prompt_tokens: 0,
+        completion_tokens: 0,
+        total_tokens: 0,
+      };
+      console.log("Usage summary:", usage);
 
       let response = completion.choices[0]?.message?.content;
       if (!response) {

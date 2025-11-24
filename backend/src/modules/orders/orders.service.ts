@@ -101,9 +101,9 @@ export class OrdersService {
     // --- Chỉ trừ voucher sau khi order đã tạo thành công ---
     if (voucher) {
       if (voucher.type === "direct") {
-        await this.voucherService.updateVoucherUsedCount(voucher._id);
+        await this.creditService.useVoucherDirect(userId, voucher._id);
       } else if (voucher.type === "saveable") {
-        await this.creditService.deleteVoucher(userId, voucher._id);
+        await this.creditService.useVoucherSaveable(userId, voucher._id);
       }
     }
 
