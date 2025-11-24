@@ -107,7 +107,7 @@ export const CVShareSection: React.FC<CVShareSectionProps> = ({
               transformOrigin: "top left",
             }}
           >
-            <TemplateComponent data={componentData} />
+            <TemplateComponent data={componentData} isPdfMode={true} />
           </div>
         </div>
       </div>

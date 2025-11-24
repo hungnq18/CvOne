@@ -15,10 +15,8 @@ import { motion } from "framer-motion";
 import { Edit, Trash2, Share2, ExternalLinkIcon, CopyIcon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-// BƯỚC 1: Import hàm lấy vị trí mặc định để fallback
 import { getDefaultSectionPositions } from "@/components/cvTemplate/defaultSectionPositions";
 
-// ... (Giữ nguyên phần translations và các hàm phụ trợ cũ) ...
 const translations = {
   en: {
     cardMyCV: {
@@ -130,21 +128,26 @@ const CardMyCV: React.FC<CardMyCVProps> = ({ cvListOverride }) => {
   const [copied, setCopied] = useState<boolean>(false);
 
   const enrichCVsWithUserData = async (list: CV[]): Promise<CV[]> => {
+    // QUAN TRỌNG: Luôn fetch lại full CV data để đảm bảo có cvTemplateId và userData mới nhất
+    // Điều này đảm bảo khi quay về từ trang update, CV sẽ hiển thị đúng template mới
     const results = await Promise.all(
       list.map(async (cv) => {
-        if (cv?.content?.userData) return cv;
         try {
+          // Luôn fetch lại full CV để có cvTemplateId và userData mới nhất
           const full = await getCVById(cv._id);
-          if (full?.content?.userData) {
+          if (full) {
             return {
               ...cv,
+              cvTemplateId: full.cvTemplateId, // Đảm bảo có cvTemplateId mới nhất
               content: {
                 ...(cv.content || {}),
-                userData: full.content.userData,
+                userData: full.content?.userData || cv.content?.userData || {},
               },
             } as CV;
           }
-        } catch {}
+        } catch (err) {
+          console.warn(`[card-MyCV] Failed to fetch full CV ${cv._id}:`, err);
+        }
         return cv;
       })
     );
@@ -238,26 +241,68 @@ const CardMyCV: React.FC<CardMyCVProps> = ({ cvListOverride }) => {
           </div>
         ) : (
           cvList.map((cv) => {
+            // QUAN TRỌNG: Đảm bảo lấy đúng template từ cvTemplateId
+            // Nếu không tìm thấy template, log warning và skip render
             const template = templates.find(
               (temp) => temp._id === cv.cvTemplateId
             );
+            
+            if (!template) {
+              console.warn("[card-MyCV] Template not found:", {
+                cvId: cv._id,
+                cvTitle: cv.title,
+                cvTemplateId: cv.cvTemplateId,
+                availableTemplateIds: templates.map(t => ({ id: t._id, title: t.title }))
+              });
+              return null;
+            }
+            
             const TemplateComponent =
-              templateComponentMap?.[template?.title || ""];
+              templateComponentMap?.[template.title || ""];
+            
+            if (!TemplateComponent) {
+              console.warn("[card-MyCV] Template component not found:", {
+                cvId: cv._id,
+                templateTitle: template.title,
+                templateId: template._id,
+                availableTemplates: Object.keys(templateComponentMap)
+              });
+              return null;
+            }
 
-            // --- BƯỚC 2: LẤY DỮ LIỆU USERDATA VÀ SECTION POSITIONS ---
             const userData = cv.content?.userData || {};
-            // Ưu tiên lấy từ userData.sectionPositions (như trong ảnh bạn gửi)
-            // Tìm đến dòng bị lỗi
-            const sectionPositions =
+            
+            // Lấy sectionPositions với ưu tiên: userData > default
+            let sectionPositions =
               userData.sectionPositions ||
-              getDefaultSectionPositions(template?.title || "");
+              getDefaultSectionPositions(template.title);
+            
+            // VALIDATION: Đảm bảo sectionPositions khớp với template hiện tại
+            // Nếu không khớp (thiếu/thừa section), reset về default
+            const defaultPositions = getDefaultSectionPositions(template.title);
+            const defaultSectionKeys = Object.keys(defaultPositions);
+            const currentSectionKeys = Object.keys(sectionPositions);
+            
+            // Nếu sectionPositions thiếu hoặc thừa section so với default, reset về default
+            if (defaultSectionKeys.length !== currentSectionKeys.length || 
+                !defaultSectionKeys.every(key => currentSectionKeys.includes(key))) {
+              console.warn("[card-MyCV] sectionPositions không khớp với template, reset về default:", {
+                cvId: cv._id,
+                templateTitle: template.title,
+                templateId: template._id,
+                cvTemplateId: cv.cvTemplateId,
+                defaultKeys: defaultSectionKeys,
+                currentKeys: currentSectionKeys
+              });
+              sectionPositions = defaultPositions;
+            }
 
             const componentData = {
-              ...template?.data,
+              ...template.data,
               userData: userData,
-              sectionPositions: sectionPositions, // Truyền prop này vào template
+              sectionPositions: sectionPositions,
+              templateTitle: template.title, // Pass template title để template có thể validate
             };
-            // ---------------------------------------------------------
 
             return (
               <Card key={cv._id} hoverable>
@@ -280,6 +325,7 @@ const CardMyCV: React.FC<CardMyCVProps> = ({ cvListOverride }) => {
                             <TemplateComponent
                               data={componentData}
                               language={language}
+                              isPdfMode={true} // <--- QUAN TRỌNG: Giúp layout hiển thị đúng khi scale nhỏ
                             />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center text-sm text-gray-500">
@@ -390,7 +436,6 @@ const CardMyCV: React.FC<CardMyCVProps> = ({ cvListOverride }) => {
           })
         )}
       </div>
-      {/* Modal Share Code (Giữ nguyên) */}
       {shareCVId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="bg-white w-full max-w-[40%] min-h-[120px] mx-4 rounded-lg shadow-xl p-5">
@@ -428,7 +473,7 @@ const CardMyCV: React.FC<CardMyCVProps> = ({ cvListOverride }) => {
                   ? "Copy"
                   : "Copy"}
               </button>
-              <Link href={`shareUrl`}>
+              <Link href={`/share-cv/${shareCVId}`}>
                 <button
                   className={`flex ${
                     language === "vi" ? "w-[60px]" : "w-[45px]"

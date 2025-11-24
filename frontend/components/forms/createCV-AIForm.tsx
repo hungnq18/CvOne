@@ -4,9 +4,48 @@ import { useLanguage } from "@/providers/global_provider";
 import { Check, Edit, PlusCircle, Trash2, Wand2, X } from "lucide-react";
 import { ChangeEvent, FC, useEffect, useState } from "react";
 
+// --- COMPONENT NÚT AI DÙNG CHUNG (ĐỂ ĐỒNG BỘ THIẾT KẾ) ---
+// Component này tạo ra nút bấm có viền gradient như yêu cầu
+const AIButton: FC<{ onClick: () => void; isLoading: boolean; text: string; disabled?: boolean }> = ({
+  onClick,
+  isLoading,
+  text,
+  disabled,
+}) => {
+  return (
+    <div
+      className={`
+        p-[2px] rounded-full inline-block
+        bg-gradient-to-r from-[#4CC9F0] to-[#4361EE]   /* Aqua → Blue */
+        shadow-sm
+        ${disabled || isLoading ? "opacity-60 cursor-not-allowed" : "hover:shadow-md transition-all"}
+      `}
+    >
+      <button
+        type="button"
+        onClick={onClick}
+        disabled={disabled || isLoading}
+        className={`
+          flex items-center gap-2 rounded-full
+          bg-[#0A1E4C]               /* Navy Blue */
+          px-5 py-2.5 text-sm font-semibold text-white
+          transition-all
+          ${disabled || isLoading ? "cursor-not-allowed" : "hover:bg-[#102B66]"}  /* hover xanh sáng */
+        `}
+      >
+        <Wand2 className={`h-5 w-5 text-white ${isLoading ? "animate-pulse" : ""}`} />
+        <span>{isLoading ? "Processing..." : text}</span>
+      </button>
+    </div>
+  );
+};
+
+
+
 // --- ĐỐI TƯỢNG TRANSLATIONS CHO TOÀN BỘ FILE ---
 const translations = {
   en: {
+    // ... (giữ nguyên infoForm và contactForm)
     infoForm: {
       uploadErrorPreset: "Image upload failed. Please check the preset configuration.",
       uploadErrorGeneral: "An error occurred while uploading the image.",
@@ -31,6 +70,7 @@ const translations = {
       tooltipAdd: "Add to career objective",
       title: "About Me and Career Objective",
       placeholder: "Introduce yourself and your career goals",
+      writeWithAI: "Write with AI", // Thêm key mới
     },
     experienceForm: {
       deleteConfirm: "Are you sure you want to delete this item?",
@@ -52,6 +92,7 @@ const translations = {
       addExperienceButton: "Add Experience",
     },
     educationForm: {
+      // ... (giữ nguyên educationForm)
       deleteConfirm: "Are you sure you want to delete this item?",
       institutionLabel: "Institution",
       majorLabel: "Major",
@@ -72,9 +113,12 @@ const translations = {
       yourSkillsTitle: "Your Skills",
       placeholder: "Add a new skill",
       addButton: "Add",
+      writeWithAI: "Suggest Skills with AI", // Thêm key mới
+      noSuggestions: "No suggestions found yet. Try using AI.", // Thêm key mới
     },
   },
   vi: {
+     // ... (giữ nguyên infoForm và contactForm)
     infoForm: {
       uploadErrorPreset: "Tải ảnh lên thất bại. Vui lòng kiểm tra lại cấu hình preset.",
       uploadErrorGeneral: "Có lỗi xảy ra khi tải ảnh lên.",
@@ -99,6 +143,7 @@ const translations = {
       tooltipAdd: "Thêm vào mục tiêu sự nghiệp",
       title: "Giới thiệu bản thân và mục tiêu nghề nghiệp",
       placeholder: "Giới thiệu bản thân và mục tiêu nghề nghiệp",
+      writeWithAI: "Viết bằng AI", // Thêm key mới
     },
     experienceForm: {
       deleteConfirm: "Bạn có chắc muốn xóa mục này?",
@@ -120,6 +165,7 @@ const translations = {
       addExperienceButton: "Thêm Kinh Nghiệp",
     },
     educationForm: {
+      // ... (giữ nguyên educationForm)
       deleteConfirm: "Bạn có chắc muốn xóa mục này?",
       institutionLabel: "Trường/Học viện",
       majorLabel: "Chuyên ngành",
@@ -140,6 +186,8 @@ const translations = {
       yourSkillsTitle: "Kỹ năng của bạn",
       placeholder: "Thêm kỹ năng mới",
       addButton: "Thêm",
+      writeWithAI: "Gợi ý kỹ năng bằng AI", // Thêm key mới
+      noSuggestions: "Chưa có gợi ý nào. Hãy thử dùng AI.", // Thêm key mới
     },
   },
 };
@@ -149,6 +197,7 @@ export interface FormProps {
   onUpdate: (updatedData: any) => void;
 }
 
+// --- GIỮ NGUYÊN InfoForm ---
 export const InfoForm: FC<FormProps> = ({ data, onUpdate }) => {
   const { language } = useLanguage();
   const t = translations[language].infoForm;
@@ -215,6 +264,7 @@ export const InfoForm: FC<FormProps> = ({ data, onUpdate }) => {
   );
 };
 
+// --- GIỮ NGUYÊN ContactForm ---
 export const ContactForm: FC<FormProps> = ({ data, onUpdate }) => {
   const { language } = useLanguage();
   const t = translations[language].contactForm;
@@ -241,31 +291,34 @@ export const ContactForm: FC<FormProps> = ({ data, onUpdate }) => {
   );
 };
 
+// --- SỬA SummaryForm ---
 export const SummaryForm: FC<FormProps> = ({ data, onUpdate }) => {
   const { language } = useLanguage();
   const t = translations[language].summaryForm;
   
   const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  // Thêm state để kiểm tra xem đã từng gọi AI chưa
+  const [hasTriggeredAI, setHasTriggeredAI] = useState(false);
 
-  useEffect(() => {
-    const fetchAISummary = async () => {
-      setLoading(true);
-      try {
-        const jobAnalysis = data?.jobAnalysis || {};
-        const res = await suggestSummary({}, jobAnalysis);
-        if (res && Array.isArray(res.summaries)) {
-          setAiSuggestions(res.summaries);
-        }
-      } catch (err) {
-        setAiSuggestions([]);
-      } finally {
-        setLoading(false);
+  // ĐÃ XÓA useEffect tự động gọi API
+
+  // Hàm xử lý khi bấm nút AI
+  const handleTriggerAI = async () => {
+    setLoading(true);
+    setHasTriggeredAI(true); // Đánh dấu là đã gọi
+    try {
+      const jobAnalysis = data?.jobAnalysis || {};
+      const res = await suggestSummary({}, jobAnalysis);
+      if (res && Array.isArray(res.summaries)) {
+        setAiSuggestions(res.summaries);
       }
-    };
-    fetchAISummary();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    } catch (err) {
+      setAiSuggestions([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleToggleSuggestion = (text: string) => {
     const current = data?.summary || "";
@@ -279,9 +332,19 @@ export const SummaryForm: FC<FormProps> = ({ data, onUpdate }) => {
   return (
     <div className="w-full flex flex-col md:flex-row gap-8">
       <div className="w-full md:w-1/2">
-        <div className="font-semibold text-gray-700 mb-2">{t.aiSuggestions}</div>
+        <div className="font-semibold text-gray-700 mb-2 flex justify-between items-center">
+          {t.aiSuggestions}
+        </div>
+        
         <div className="flex flex-col gap-4">
-          {loading ? (<div>{t.loadingSuggestions}</div>) : (
+          {/* Logic hiển thị: Nút bấm -> Loading -> Kết quả */}
+          {!hasTriggeredAI && !loading ? (
+            <div className="flex justify-start py-4">
+               <AIButton onClick={handleTriggerAI} isLoading={loading} text={t.writeWithAI} />
+            </div>
+          ) : loading ? (
+            <div className="text-blue-500 py-2">{t.loadingSuggestions}</div>
+          ) : (
             aiSuggestions.map((item, idx) => {
               const isSelected = (data?.summary || "").trim() === item.trim();
               return (
@@ -294,6 +357,14 @@ export const SummaryForm: FC<FormProps> = ({ data, onUpdate }) => {
               );
             })
           )}
+           {/* Hiển thị nút "Thử lại" nếu đã gọi rồi nhưng muốn gọi lại */}
+           {hasTriggeredAI && !loading && aiSuggestions.length > 0 && (
+             <div className="flex justify-center mt-2">
+               <button onClick={handleTriggerAI} className="text-sm text-blue-600 hover:underline flex items-center gap-1">
+                 <Wand2 size={14}/> Thử lại với AI
+               </button>
+             </div>
+           )}
         </div>
       </div>
       <div className="w-full md:w-1/2 flex flex-col">
@@ -303,6 +374,8 @@ export const SummaryForm: FC<FormProps> = ({ data, onUpdate }) => {
     </div>
   );
 };
+
+// --- SỬA ExperienceForm ---
 export const ExperienceForm: FC<FormProps> = ({ data, onUpdate }) => {
   const { language } = useLanguage();
   const t = translations[language].experienceForm;
@@ -345,7 +418,8 @@ export const ExperienceForm: FC<FormProps> = ({ data, onUpdate }) => {
     setLoadingAI(true);
     try {
       const { rewriteWorkDescription } = await import("@/api/cvapi");
-      const res = await rewriteWorkDescription(currentItem.description, "vi");
+      // Giả sử ngôn ngữ hiện tại là target language cho việc rewrite
+      const res = await rewriteWorkDescription(currentItem.description, language);
       const rewritten = res?.rewritten || res;
       setCurrentItem({ ...currentItem, description: rewritten });
     } catch (err) {
@@ -380,14 +454,20 @@ export const ExperienceForm: FC<FormProps> = ({ data, onUpdate }) => {
         <div><label className="block text-sm font-medium text-gray-700">{t.endDateLabel}</label><input type="text" name="endDate" value={currentItem.endDate || ""} onChange={handleFormChange} placeholder={t.endDatePlaceholder} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"/></div>
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700">{t.descriptionLabel}</label>
-        <div className="flex gap-2 items-start relative">
-          <textarea name="description" value={currentItem.description} onChange={handleFormChange} rows={6} className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"></textarea>
-          <div className={`absolute bottom-2 right-2 z-10 rounded-full p-0.5 bg-gradient-to-r from-[#e0f923] to-[#24C6DC] shadow-sm transition-opacity${loadingAI || !currentItem?.description ? "opacity-60" : ""}`}>
-            <button type="button" onClick={handleAIRewrite} disabled={loadingAI || !currentItem?.description} title={t.aiRewriteTooltip} className={`flex w-full items-center gap-2 rounded-full bg-white px-3 py-1 font-semibold text-sm text-[#0a2342] transition-all ${loadingAI || !currentItem?.description ? "cursor-not-allowed" : "hover:bg-gradient-to-r hover:from-yellow-100 hover:to-teal-100" }`}>
-              {loadingAI ? (<><Wand2 className="mr-2 h-5 w-5 animate-pulse" /> <span style={{ fontWeight: 500 }}>{t.aiRewriting}</span></>) : (<><Wand2 className="mr-2 h-5 w-5 " /> <span style={{ fontWeight: 500 }}>{t.aiRewriteButton}</span></>)}
-            </button>
+        <div className="flex justify-between items-center mb-2">
+          <label className="block text-sm font-medium text-gray-700">{t.descriptionLabel}</label>
+          {/* Sử dụng Component AIButton mới để đồng bộ thiết kế */}
+          <div title={t.aiRewriteTooltip}>
+             <AIButton 
+                onClick={handleAIRewrite} 
+                isLoading={loadingAI} 
+                text={t.aiRewriteButton} 
+                disabled={!currentItem?.description}
+             />
           </div>
+        </div>
+        <div className="relative">
+          <textarea name="description" value={currentItem.description} onChange={handleFormChange} rows={6} className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"></textarea>
         </div>
       </div>
       <div className="flex justify-end gap-2 mt-4">
@@ -410,6 +490,7 @@ export const ExperienceForm: FC<FormProps> = ({ data, onUpdate }) => {
   );
 };
 
+// --- GIỮ NGUYÊN EducationForm ---
 export const EducationForm: FC<FormProps> = ({ data, onUpdate }) => {
   const { language } = useLanguage();
   const t = translations[language].educationForm;
@@ -487,6 +568,7 @@ export const EducationForm: FC<FormProps> = ({ data, onUpdate }) => {
   );
 };
 
+// --- SỬA SkillsForm ---
 export const SkillsForm: FC<FormProps> = ({ data, onUpdate }) => {
   const { language } = useLanguage();
   const t = translations[language].skillsForm;
@@ -497,39 +579,53 @@ export const SkillsForm: FC<FormProps> = ({ data, onUpdate }) => {
   const [aiSkillSuggestions, setAiSkillSuggestions] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [analyzingJD, setAnalyzingJD] = useState(false);
+  // Thêm state để kiểm tra xem đã từng gọi AI chưa
+  const [hasTriggeredAI, setHasTriggeredAI] = useState(false);
 
-  useEffect(() => {
-    const fetchJDAndSkills = async () => {
-      setSkills([]);
-      if (!jobAnalysis && jobDescription) {
-        setAnalyzingJD(true);
-        try {
-          // console.log(jobDescription);
-          const result = await analyzeJD(jobDescription);
-          setJobAnalysis(result);
-        } catch (err) {
-        } finally {
-          setAnalyzingJD(false);
-        }
-      }
-      setLoading(true);
+  // ĐÃ XÓA useEffect tự động gọi API
+
+  // Hàm xử lý khi bấm nút AI
+  const handleTriggerAI = async () => {
+    setHasTriggeredAI(true);
+    setAiSkillSuggestions([]); // Reset gợi ý cũ
+
+    // 1. Phân tích JD nếu chưa có và jobDescription tồn tại
+    if (!jobAnalysis && jobDescription) {
+      setAnalyzingJD(true);
       try {
-        const res = await suggestSkills(jobAnalysis || {});
-        if (res && Array.isArray(res.skillsOptions) && res.skillsOptions.length > 0) {
-          const firstList = res.skillsOptions[0];
-          if (Array.isArray(firstList)) {
-            setAiSkillSuggestions(firstList.map((s: any) => s.name));
-          }
-        }
+        const result = await analyzeJD(jobDescription);
+        setJobAnalysis(result);
+        // Sau khi có jobAnalysis thì gọi tiếp suggestSkills
+        await fetchSuggestions(result);
       } catch (err) {
-        setAiSkillSuggestions([]);
-      } finally {
-        setLoading(false);
+        console.error("Error analyzing JD:", err);
+        setAnalyzingJD(false);
       }
-    };
-    fetchJDAndSkills();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [jobAnalysis, jobDescription]);
+    } 
+    // 2. Nếu đã có jobAnalysis hoặc không có JD để phân tích, gọi thẳng suggestSkills
+    else {
+      await fetchSuggestions(jobAnalysis || {});
+    }
+  };
+
+  const fetchSuggestions = async (analysisData: any) => {
+    setAnalyzingJD(false); // Đảm bảo tắt loading JD
+    setLoading(true);
+    try {
+      const res = await suggestSkills(analysisData);
+      if (res && Array.isArray(res.skillsOptions) && res.skillsOptions.length > 0) {
+        const firstList = res.skillsOptions[0];
+        if (Array.isArray(firstList)) {
+          setAiSkillSuggestions(firstList.map((s: any) => s.name));
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching skills:", err);
+      setAiSkillSuggestions([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const addSkill = (skillName?: string) => {
     const name = (skillName ?? newSkill).trim();
@@ -556,22 +652,47 @@ export const SkillsForm: FC<FormProps> = ({ data, onUpdate }) => {
     }
   };
 
+  const isLoadingAny = loading || analyzingJD;
+
   return (
     <div className="w-full flex flex-col md:flex-row gap-8">
       <div className="w-full md:w-1/2">
         <div className="font-semibold text-gray-700 mb-2">{t.aiSuggestionsTitle}</div>
+        
         <div className="flex flex-col gap-3 mb-4">
-          {analyzingJD && (<div className="text-blue-500 font-semibold mb-2">{t.jdAnalysisLoading}</div>)}
-          {loading ? (<div>{t.skillsLoading}</div>) : (
-            aiSkillSuggestions.map((skill, idx) => {
-              const isSelected = skills.some((s: any) => s.name === skill);
-              return (
-                <button key={skill} type="button" className={`flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium border transition-colors w-full text-left ${isSelected ? "bg-blue-400 text-white border-blue-400 hover:bg-blue-500" : "bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-200"}`} onClick={() => handleToggleAISkill(skill)} title={isSelected ? t.tooltipRemove : t.tooltipAdd}>
-                  <span className="inline-block w-6 h-6 flex items-center justify-center rounded-full bg-blue-800 text-white font-bold mr-2">{isSelected ? "-" : "+"}</span>
-                  <span className="flex-1 ">{skill}</span>
-                </button>
-              );
-            })
+           {/* Logic hiển thị: Nút bấm -> Loading -> Kết quả */}
+           {!hasTriggeredAI && !isLoadingAny ? (
+             <div className="flex justify-start py-4">
+                <AIButton onClick={handleTriggerAI} isLoading={isLoadingAny} text={t.writeWithAI} />
+             </div>
+           ) : isLoadingAny ? (
+             <div className="text-blue-500 py-2">
+               {analyzingJD ? t.jdAnalysisLoading : t.skillsLoading}
+             </div>
+           ) : (
+            <>
+              {aiSkillSuggestions.length === 0 ? (
+                <div className="text-gray-500 italic">{t.noSuggestions}</div>
+              ) : (
+                aiSkillSuggestions.map((skill, idx) => {
+                  const isSelected = skills.some((s: any) => s.name === skill);
+                  return (
+                    <button key={skill} type="button" className={`flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium border transition-colors w-full text-left ${isSelected ? "bg-blue-400 text-white border-blue-400 hover:bg-blue-500" : "bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-200"}`} onClick={() => handleToggleAISkill(skill)} title={isSelected ? t.tooltipRemove : t.tooltipAdd}>
+                      <span className="inline-block w-6 h-6 flex items-center justify-center rounded-full bg-blue-800 text-white font-bold mr-2">{isSelected ? "-" : "+"}</span>
+                      <span className="flex-1 ">{skill}</span>
+                    </button>
+                  );
+                })
+              )}
+               {/* Nút thử lại */}
+               {hasTriggeredAI && !isLoadingAny && (
+                <div className="flex justify-center mt-2">
+                  <button onClick={handleTriggerAI} className="text-sm text-blue-600 hover:underline flex items-center gap-1">
+                    <Wand2 size={14}/> Thử lại với AI
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
@@ -594,6 +715,7 @@ export const SkillsForm: FC<FormProps> = ({ data, onUpdate }) => {
   );
 };
 
+// --- GIỮ NGUYÊN Step Component ---
 export const Step: FC<{ step: { id: number; name: string }; currentStep: number; isLastStep: boolean; }> = ({ step, currentStep, isLastStep }) => {
   const status = currentStep === step.id ? "active" : currentStep > step.id ? "complete" : "upcoming";
   return (

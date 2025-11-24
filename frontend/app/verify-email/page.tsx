@@ -1,8 +1,6 @@
 "use client"
 
 import { API_ENDPOINTS, API_URL } from "@/api/apiConfig"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
@@ -10,10 +8,12 @@ import styled from "styled-components"
 
 export default function VerifyEmailPage() {
   const [isLoading, setIsLoading] = useState(false)
+  const [email, setEmail] = useState("") // Thêm state để lưu email người dùng nhập
   const router = useRouter()
   const searchParams = useSearchParams()
   const token = searchParams.get("token")
 
+  // Logic kiểm tra token trên URL để chuyển sang trang check (Giữ nguyên)
   useEffect(() => {
     if (token) {
       router.push(`/verify-email/check?token=${token}`)
@@ -21,18 +21,39 @@ export default function VerifyEmailPage() {
   }, [token, router])
 
   const handleResendVerification = async () => {
+    // Validate: Bắt buộc phải nhập email mới cho gửi
+    if (!email) {
+      toast.error("Please enter your email address")
+      return
+    }
+
     setIsLoading(true)
     try {
       const response = await fetch(`${API_URL}${API_ENDPOINTS.ACCOUNTS.RESEND_VERIFICATION}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
-        }
+        },
+        // Gửi kèm email trong body
+        body: JSON.stringify({ email: email }) 
       })
 
       const data = await response.json()
+      const message = data.message ? String(data.message).toLowerCase() : "";
+
+      // Kiểm tra các từ khóa báo hiệu email đã tồn tại/đã xác thực
+      const isAlreadyVerified = message.includes("exist") || message.includes("already") || message.includes("verified");
+
+      if (isAlreadyVerified) {
+        // YÊU CẦU CỦA BẠN: Chỉ hiện thông báo, KHÔNG NAVIGATE (không chuyển trang)
+        toast.info("Email này đã được xác thực rồi. Bạn có thể đăng nhập.")
+        // Không gọi router.push() ở đây
+        setIsLoading(false)
+        return
+      }
+
       if (response.ok) {
-        toast.success(data.message)
+        toast.success(data.message || "Verification email sent!")
       } else {
         toast.error(data.message || "Failed to resend verification email")
       }
@@ -49,14 +70,24 @@ export default function VerifyEmailPage() {
         <CardHeaderStyled>
           <CardTitleStyled>Email Verification</CardTitleStyled>
           <CardDescriptionStyled>
-            Please verify your email address
+            Enter your email to resend verification link
           </CardDescriptionStyled>
         </CardHeaderStyled>
         <CardContentStyled>
           <div className="space-y-4">
             <StyledText>
-              We've sent you a verification email. Please check your inbox and click the verification link.
+               We need your email address to resend the verification link.
             </StyledText>
+            
+            {/* Thêm ô Input nhập Email */}
+            <StyledInput 
+              type="email" 
+              placeholder="Enter your email" 
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={isLoading}
+            />
+
             <StyledButton 
               onClick={handleResendVerification}
               disabled={isLoading}
@@ -70,12 +101,15 @@ export default function VerifyEmailPage() {
   )
 }
 
+// --- STYLED COMPONENTS ---
+
 const VerifyWrapper = styled.div`
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 40px 0;
+  background-color: #f9fafb; /* Thêm màu nền nhẹ cho dễ nhìn */
 `
 
 const VerifyCard = styled.div`
@@ -91,21 +125,21 @@ const VerifyCard = styled.div`
 `
 
 const CardHeaderStyled = styled.div`
-  margin-bottom: 16px;
+  margin-bottom: 24px;
   text-align: center;
 `
 
 const CardTitleStyled = styled.h2`
   color: #1976d2;
-  font-size: 2rem;
+  font-size: 1.8rem;
   font-weight: 700;
-  margin-bottom: 4px;
-  letter-spacing: 1px;
+  margin-bottom: 8px;
+  letter-spacing: 0.5px;
 `
 
 const CardDescriptionStyled = styled.p`
-  color: #555;
-  font-size: 1rem;
+  color: #666;
+  font-size: 0.95rem;
   margin-bottom: 0;
 `
 
@@ -115,9 +149,29 @@ const CardContentStyled = styled.div`
 
 const StyledText = styled.p`
   text-align: center;
-  color: #1976d2;
-  font-size: 1.05rem;
+  color: #4b5563;
+  font-size: 1rem;
+  margin-bottom: 20px;
+  line-height: 1.5;
+`
+
+// Component Input mới thêm vào
+const StyledInput = styled.input`
+  width: 100%;
+  padding: 12px 16px;
   margin-bottom: 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 1rem;
+  outline: none;
+  transition: all 0.2s;
+  background-color: #f9fafb;
+
+  &:focus {
+    border-color: #1976d2;
+    background-color: #fff;
+    box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.1);
+  }
 `
 
 const StyledButton = styled.button`
@@ -128,21 +182,22 @@ const StyledButton = styled.button`
   background: linear-gradient(90deg, #60a5fa 0%, #1976d2 100%);
   color: #fff;
   font-weight: 600;
-  font-size: 1.1rem;
-  letter-spacing: 1px;
+  font-size: 1.05rem;
+  letter-spacing: 0.5px;
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(46,204,250,0.10);
+  box-shadow: 0 4px 6px rgba(25, 118, 210, 0.2);
   transition: all 0.2s;
-  margin-top: 8px;
+  
   &:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(46,204,250,0.15);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(25, 118, 210, 0.3);
     background: linear-gradient(90deg, #1976d2 0%, #60a5fa 100%);
   }
+  
   &:disabled {
-    background: #b3d1fa;
+    background: #cbd5e1;
     cursor: not-allowed;
     transform: none;
     box-shadow: none;
   }
-` 
+`

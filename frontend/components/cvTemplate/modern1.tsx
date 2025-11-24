@@ -1,3 +1,5 @@
+"use client";
+
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
@@ -22,6 +24,10 @@ const translations = {
     major: "MAJOR:",
     degree: "Degree:",
     defaultProfessional: "Professional",
+    certificationLabel: "CERTIFICATION",
+    achievementLabel: "ACHIEVEMENT",
+    hobbyLabel: "HOBBY",
+    projectLabel: "PROJECT",
   },
   vi: {
     avatarLabel: "Ảnh đại diện",
@@ -38,6 +44,10 @@ const translations = {
     major: "CHUYÊN NGÀNH:",
     degree: "Bằng cấp:",
     defaultProfessional: "Chuyên gia",
+    certificationLabel: "CHỨNG CHỈ",
+    achievementLabel: "THÀNH TỰU",
+    hobbyLabel: "SỞ THÍCH",
+    projectLabel: "DỰ ÁN",
   },
 };
 
@@ -80,6 +90,7 @@ interface ModernCV1Props {
   onSectionClick?: (sectionId: string) => void;
   isPdfMode?: boolean;
   language?: string;
+  cvUiTexts?: any;
   onLayoutChange?: (newPositions: any) => void;
   scale?: number;
 }
@@ -105,6 +116,7 @@ const HoverableWrapper: React.FC<HoverableWrapperProps> = ({
     contact: "hover:scale-105 hover:bg-[#004d40] hover:shadow-lg",
     summary: "hover:scale-105 hover:bg-[#004d40] hover:shadow-lg",
     skills: "hover:scale-105 hover:bg-[#004d40] hover:shadow-lg",
+    hobby: "hover:scale-105 hover:bg-[#004d40] hover:shadow-lg", // Thêm hiệu ứng cho hobby
     avatar: "hover:scale-105 hover:bg-[#004D3F] hover:shadow-lg ",
   };
 
@@ -120,7 +132,7 @@ const HoverableWrapper: React.FC<HoverableWrapperProps> = ({
       }`}
       onClick={() => onClick?.(sectionId)}
     >
-      {/* --- NÚT KÉO THẢ (Được thêm vào) --- */}
+      {/* --- NÚT KÉO THẢ --- */}
       {!isPdfMode && (
         <div
           {...dragHandleProps}
@@ -139,12 +151,12 @@ const HoverableWrapper: React.FC<HoverableWrapperProps> = ({
 
       {children}
       
-      {/* --- KHÔI PHỤC VIỀN GỐC --- */}
+      {/* --- VIỀN HOVER --- */}
       <div
         className={`absolute inset-0 ${borderRadiusClass} border-4 border-[#8BAAFC] opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none`}
       ></div>
       
-      {/* --- KHÔI PHỤC LABEL GỐC --- */}
+      {/* --- LABEL --- */}
       <div
         className={`absolute top-0 left-4 -translate-y-1/2 bg-[#8BAAFC] text-white text-sm font-bold tracking-wide px-3 py-1 opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none`}
         style={{
@@ -194,11 +206,11 @@ const Section: React.FC<SectionProps> = ({
         dragHandleProps={dragHandleProps}
         isDragging={isDragging}
       >
-        <div className="px-8 lg:px-12 py-4">
-          <h2 className="text-white-800 text-xl lg:text-2xl font-bold tracking-wider mb-1">
+        <div className="px-8 lg:px-12 py-4 overflow-hidden">
+          <h2 className="text-white-800 text-xl lg:text-2xl font-bold tracking-wider mb-1 break-words">
             {title}
           </h2>
-          <div className="pt-3 border-t-2 border-[#004d40] leading-relaxed">
+          <div className="pt-3 border-t-2 border-[#004d40] leading-relaxed break-words">
             {children}
           </div>
         </div>
@@ -212,24 +224,47 @@ const ModernCV1: React.FC<ModernCV1Props> = ({
   onSectionClick,
   isPdfMode = false,
   language,
+  cvUiTexts,
   onLayoutChange,
   scale = 1,
 }) => {
   const lang = language || "en";
-  const t = translations[lang as "en" | "vi"];
+  const defaultT = translations[lang as "en" | "vi"];
+  
+  const t = {
+    ...defaultT,
+    ...(cvUiTexts && {
+      personalInfoLabel: cvUiTexts.personalInformation || defaultT.personalInfoLabel,
+      careerObjectiveLabel: cvUiTexts.careerObjective || defaultT.careerObjectiveLabel,
+      skillsLabel: cvUiTexts.skills || defaultT.skillsLabel,
+      experienceLabel: cvUiTexts.workExperience || defaultT.experienceLabel,
+      educationLabel: cvUiTexts.education || defaultT.educationLabel,
+      phone: cvUiTexts.phone || defaultT.phone,
+      email: cvUiTexts.email || defaultT.email,
+      address: cvUiTexts.address || defaultT.address,
+    }),
+  };
   const userData = data?.userData || {};
   
   const sectionPositions =
     data?.sectionPositions ||
     getDefaultSectionPositions(data?.templateTitle || "The Signature");
 
+  const supportedSections = ["avatar", "info", "contact", "summary", "skills", "experience", "education", "certification", "achievement", "hobby", "Project"];
+  
   const leftSections = Object.entries(sectionPositions)
-    .filter(([_, pos]) => (pos as { place: number }).place === 1)
+    .filter(([key, pos]) => {
+      const place = (pos as { place: number }).place;
+      return place === 1 && place > 0 && supportedSections.includes(key);
+    })
     .sort(([, a], [, b]) => (a as { order: number }).order - (b as { order: number }).order)
     .map(([key]) => key);
 
   const rightSections = Object.entries(sectionPositions)
-    .filter(([_, pos]) => (pos as { place: number }).place === 2)
+    .filter(([key, pos]) => {
+      const place = (pos as { place: number }).place;
+      return place === 2 && place > 0 && supportedSections.includes(key);
+    })
     .sort(([, a], [, b]) => (a as { order: number }).order - (b as { order: number }).order)
     .map(([key]) => key);
 
@@ -474,6 +509,111 @@ const ModernCV1: React.FC<ModernCV1Props> = ({
                 </div>
                 <h4 className="font-bold text-lg text-gray-700">{t.major} {edu.major}</h4>
                 <p className="text-lg">{t.degree} {edu.degree}</p>
+              </div>
+            ))}
+          </Section>
+        );
+
+      case "certification":
+        return userData.certification?.length > 0 && (
+          <Section
+            key="certification"
+            title={cvUiTexts?.certification || t.certificationLabel}
+            sectionId="certification"
+            onSectionClick={onSectionClick}
+            isPdfMode={isPdfMode}
+            dragHandleProps={dragHandleProps}
+            isDragging={isDragging}
+          >
+            {(userData.certification || []).map((cert: any, i: number) => (
+              <div key={i} className="mb-8 last:mb-0 break-words">
+                <h3 className="font-bold text-xl break-words">{cert.title}</h3>
+                <div className="flex flex-wrap gap-4 text-base text-gray-600 mt-1">
+                  {cert.startDate && (
+                    <span className="whitespace-nowrap">{new Date(cert.startDate).toLocaleDateString("vi-VN", { month: "2-digit", year: "numeric" })}</span>
+                  )}
+                  {cert.endDate ? (
+                    <span className="whitespace-nowrap">- {new Date(cert.endDate).toLocaleDateString("vi-VN", { month: "2-digit", year: "numeric" })}</span>
+                  ) : cert.startDate && (
+                    <span className="whitespace-nowrap">- {t.present}</span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </Section>
+        );
+
+      case "achievement":
+        return userData.achievement?.length > 0 && (
+          <Section
+            key="achievement"
+            title={cvUiTexts?.achievement || t.achievementLabel}
+            sectionId="achievement"
+            onSectionClick={onSectionClick}
+            isPdfMode={isPdfMode}
+            dragHandleProps={dragHandleProps}
+            isDragging={isDragging}
+          >
+            <ul className="list-disc pl-6 space-y-2 text-lg leading-relaxed">
+              {(userData.achievement || []).map((ach: string, i: number) => (
+                <li key={i}>{ach}</li>
+              ))}
+            </ul>
+          </Section>
+        );
+
+      // --- PHẦN HOBBY ĐÃ ĐƯỢC REDESIGN ---
+      case "hobby":
+        return userData.hobby?.length > 0 && (
+          <HoverableWrapper
+            key="hobby"
+            label={cvUiTexts?.hobby || t.hobbyLabel}
+            sectionId="hobby"
+            onClick={onSectionClick}
+            isPdfMode={isPdfMode}
+            dragHandleProps={dragHandleProps}
+            isDragging={isDragging}
+          >
+            <div className="px-8 lg:px-12">
+               {/* Tiêu đề giống style Contact/Summary bên trái */}
+              <h2 className="text-xl lg:text-2xl font-bold mb-6 pb-3 border-b border-white/50 pt-3">
+                {cvUiTexts?.hobby || t.hobbyLabel}
+              </h2>
+              {/* Danh sách text thay vì tags để phù hợp nền tối */}
+              <ul className="space-y-3">
+                {(userData.hobby || []).map((h: string, i: number) => (
+                  <li key={i} className="text-lg lg:text-xl break-words">
+                    {h}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </HoverableWrapper>
+        );
+
+      case "Project":
+        return userData.Project?.length > 0 && (
+          <Section
+            key="Project"
+            title={cvUiTexts?.project || t.projectLabel}
+            sectionId="Project"
+            onSectionClick={onSectionClick}
+            isPdfMode={isPdfMode}
+            dragHandleProps={dragHandleProps}
+            isDragging={isDragging}
+          >
+            {(userData.Project || []).map((project: any, i: number) => (
+              <div key={i} className="mb-8 last:mb-0">
+                <h3 className="font-bold text-xl">{project.title || project["title "]}</h3>
+                {project.startDate && (
+                  <span className="text-base italic text-gray-600">
+                    {new Date(project.startDate).toLocaleDateString("vi-VN", { month: "2-digit", year: "numeric" })}
+                    {project.endDate ? ` - ${new Date(project.endDate).toLocaleDateString("vi-VN", { month: "2-digit", year: "numeric" })}` : ` - ${t.present}`}
+                  </span>
+                )}
+                {project.summary && (
+                  <p className="text-lg mt-2">{project.summary}</p>
+                )}
               </div>
             ))}
           </Section>
