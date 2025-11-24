@@ -6,13 +6,20 @@ const adminRoutes = [
   "/admin",
   "/dashboard",
   "/cv-template",
-  "/cl-template"];
+  "/cl-template",
+];
 
 const hrRoutes = [
   "/hr/dashboard",
   "/hr/manageJob",
   "/hr/manageApplyJob",
-  "/hr/manageCandidate"
+  "/hr/manageCandidate",
+];
+
+const mktRoutes = [
+  "/marketing",
+  "/marketing/ads",
+  "/marketing/voucher",
 ];
 
 const userRoutes = [
@@ -36,7 +43,7 @@ const userRoutes = [
   "/createCV-AIManual",
   "/createCV-AI",
   "/createCLTemplate",
-  "/createCV",  
+  "/createCV",
   "/chooseOption",
   "/chooseCreateCV",
 ];
@@ -56,6 +63,9 @@ adminRoutes.forEach((route) => {
 });
 hrRoutes.forEach((route) => {
   roleBasedPaths[route] = ["hr"];
+});
+mktRoutes.forEach((route) => {
+  roleBasedPaths[route] = ["mkt"];
 });
 userRoutes.forEach((route) => {
   roleBasedPaths[route] = ["user"];

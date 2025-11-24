@@ -1,22 +1,11 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-import OpenAI from "openai";
+import { OpenaiApiService } from "./openai-api.service";
 
 @Injectable()
 export class CvContentGenerationService {
   private readonly logger = new Logger(CvContentGenerationService.name);
-  private openai: OpenAI;
 
-  constructor(private configService: ConfigService) {
-    const apiKey = this.configService.get<string>("OPENAI_API_KEY");
-    if (!apiKey) {
-      this.logger.warn("OPENAI_API_KEY not found in environment variables");
-    }
-
-    this.openai = new OpenAI({
-      apiKey: apiKey,
-    });
-  }
+  constructor(private openaiApiService: OpenaiApiService) {}
 
   /**
    * Generate multiple professional summaries using OpenAI
@@ -60,7 +49,8 @@ Return only a JSON array of 3 summaries, e.g.:
 Do not include any explanation or markdown, only valid JSON.
 `;
 
-      const completion = await this.openai.chat.completions.create({
+      const openai = this.openaiApiService.getOpenAI();
+      const completion = await openai.chat.completions.create({
         model: "gpt-4o",
         messages: [
           {
@@ -170,7 +160,8 @@ Requirements:
 Return only valid JSON.
 `;
 
-      const completion = await this.openai.chat.completions.create({
+      const openai = this.openaiApiService.getOpenAI();
+      const completion = await openai.chat.completions.create({
         model: "gpt-4o",
         messages: [
           {
@@ -263,7 +254,8 @@ Return only a JSON array of 3 skills lists, e.g.:
 Do not include any explanation or markdown, only valid JSON.
 `;
 
-      const completion = await this.openai.chat.completions.create({
+      const openai = this.openaiApiService.getOpenAI();
+      const completion = await openai.chat.completions.create({
         model: "gpt-4o",
         messages: [
           {
@@ -414,6 +406,9 @@ Do not include any explanation or markdown, only valid JSON.
     // Generate education
     const education = this.generateEducation(user);
 
+    const normalizedSummary =
+      Array.isArray(summary) && summary.length > 0 ? summary[0] : summary;
+
     return {
       userData: {
         firstName: user.first_name || "",
@@ -425,10 +420,16 @@ Do not include any explanation or markdown, only valid JSON.
         phone: user.phone?.toString() || "",
         email: "", // Will be filled from account
         avatar: "",
-        summary: summary[0] || summary, // Take first summary if array
+        summary: normalizedSummary,
         skills: skills[0] || skills, // Take first skills list if array
         workHistory: workHistory[0] || workHistory, // Take first work experience if array
         education: [education],
+        careerObjective: normalizedSummary,
+        Project: [],
+        certification: [],
+        achievement: [],
+        hobby: [],
+        sectionPositions: {},
       },
     };
   }
@@ -506,8 +507,9 @@ Clear, natural phrasing - no awkward machine translations
       `;
 
       // Gọi OpenAI song song cho cả 2 phần
+      const openai = this.openaiApiService.getOpenAI();
       const [contentResponse, uiTextResponse] = await Promise.all([
-        this.openai.chat.completions.create({
+        openai.chat.completions.create({
           model: "gpt-4o",
           messages: [
             {
@@ -520,7 +522,7 @@ Clear, natural phrasing - no awkward machine translations
           temperature: 0.2,
           max_tokens: 2000,
         }),
-        this.openai.chat.completions.create({
+        openai.chat.completions.create({
           model: "gpt-4o",
           messages: [
             {

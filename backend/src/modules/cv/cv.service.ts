@@ -3,6 +3,7 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model } from "mongoose";
 import { CvTemplate } from "../cv-template/schemas/cv-template.schema";
@@ -11,7 +12,6 @@ import { CvPdfCloudService } from "./cv-pdf-cloud.service";
 import { CreateCvDto } from "./dto/create-cv.dto";
 import { Cv } from "./schemas/cv.schema";
 import { CvCacheService } from "./services/cv-cache.service";
-import { ConfigService } from "@nestjs/config";
 
 @Injectable()
 export class CvService {
@@ -59,8 +59,24 @@ export class CvService {
       throw new NotFoundException("CV template not found");
     }
 
+    // Ensure content structure is properly set with defaults for optional fields
+    const content = {
+      ...createCvDto.content,
+      userData: {
+        ...createCvDto.content.userData,
+        // Set defaults for optional fields in userData if not provided
+        Project: createCvDto.content.userData?.Project || [],
+        certification: createCvDto.content.userData?.certification || [],
+        achievement: createCvDto.content.userData?.achievement || [],
+        hobby: createCvDto.content.userData?.hobby || [],
+        sectionPositions: createCvDto.content.userData?.sectionPositions || {},
+        careerObjective: createCvDto.content.userData?.careerObjective || createCvDto.content.careerObjective,
+      },
+    };
+
     const newCV = new this.cvModel({
       ...createCvDto,
+      content,
       userId,
       isPublic: false,
       isSaved: false,
@@ -84,7 +100,6 @@ export class CvService {
 
     // Invalidate cache for this CV
     this.cvCacheService.invalidateCVCache(id, userId);
-
     return cv;
   }
 

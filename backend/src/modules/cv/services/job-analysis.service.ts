@@ -1,22 +1,11 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-import OpenAI from "openai";
+import { OpenaiApiService } from "./openai-api.service";
 
 @Injectable()
 export class JobAnalysisService {
   private readonly logger = new Logger(JobAnalysisService.name);
-  private openai: OpenAI;
 
-  constructor(private configService: ConfigService) {
-    const apiKey = this.configService.get<string>("OPENAI_API_KEY");
-    if (!apiKey) {
-      this.logger.warn("OPENAI_API_KEY not found in environment variables");
-    }
-
-    this.openai = new OpenAI({
-      apiKey: apiKey,
-    });
-  }
+  constructor(private openaiApiService: OpenaiApiService) {}
 
   /**
    * Analyze job description using OpenAI
@@ -62,7 +51,8 @@ Focus on:
 Return only valid JSON without any additional text.
 `;
 
-      const completion = await this.openai.chat.completions.create({
+      const openai = this.openaiApiService.getOpenAI();
+      const completion = await openai.chat.completions.create({
         model: "gpt-4o",
         messages: [
           {

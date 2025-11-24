@@ -265,6 +265,7 @@ const navigationItems = {
         name: "Hồ sơ của tôi",
         href: "/user/profile",
       },
+
     ],
   },
 };
@@ -425,7 +426,7 @@ export function Header() {
           {
             name: language === "en" ? "wallet" : "ví của tôi",
             href: "/user/wallet",
-          },
+          }
         ],
       },
       {
@@ -454,6 +455,10 @@ export function Header() {
       {
         name: "AI-Interview",
         href: "/ai-interview",
+      },
+      {
+        name: language === "en" ? "Voucher" : "Mã giảm giá",
+        href: "/voucher",
       },
     ];
   }

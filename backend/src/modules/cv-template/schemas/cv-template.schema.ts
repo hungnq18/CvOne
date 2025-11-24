@@ -1,5 +1,4 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
-import { Type } from "class-transformer";
 import { Document, Types } from "mongoose";
 /**s
  * Schema definition for CV Template
@@ -38,6 +37,21 @@ export class CvTemplate extends Document {
 
   @Prop({ type: Types.Array })
   tags: string[];
+
+  /**
+   * Default section layout positions for this template
+   */
+  @Prop({
+    type: Object,
+    default: {},
+  })
+  sectionPositions?: Record<
+    string,
+    {
+      place?: number;
+      order?: number;
+    }
+  >;
 }
 
 export const CvTemplateSchema = SchemaFactory.createForClass(CvTemplate);

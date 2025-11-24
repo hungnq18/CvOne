@@ -43,22 +43,28 @@ export function DashboardContent() {
     const fetchStats = async () => {
       try {
         const [users, vouchers, ads] = await Promise.all([
-            getAllUsers(),
-            getAllVouchers(),
-            getAllAds()
+          getAllUsers(),
+          getAllVouchers(),
+          getAllAds(),
         ]);
 
-        const activeCustomers = users.filter(u => u.role === 'customer' && u.isActive).length;
-        const activeHRs = users.filter(u => u.role === 'hr' && u.isActive).length;
+        // users từ API /users có dạng user + account_id (được populate với { email, role })
+        const populatedUsers = users as any[];
+        const activeCustomers = populatedUsers.filter(
+          (u) => u.account_id?.role === "user",
+        ).length;
+        const activeHRs = populatedUsers.filter(
+          (u) => u.account_id?.role === "hr",
+        ).length;
 
-        setStats([
-          { ...stats[0], value: activeCustomers.toString() },
-          { ...stats[1], value: activeHRs.toString() },
-          { ...stats[2], value: vouchers.length.toString() },
-          { ...stats[3], value: ads.length.toString() },
+        setStats((prev) => [
+          { ...prev[0], value: activeCustomers.toString() },
+          { ...prev[1], value: activeHRs.toString() },
+          { ...prev[2], value: vouchers.length.toString() },
+          { ...prev[3], value: ads.length.toString() },
         ]);
 
-        const monthlyUserData = processUserData(users);
+        const monthlyUserData = processUserData(users as User[]);
         setUserChartData(monthlyUserData);
       } catch (error) {
         console.error("Failed to fetch dashboard stats:", error)

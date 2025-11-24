@@ -1,22 +1,24 @@
 "use client";
 
 import {
-    CV,
-    CVTemplate,
-    deleteCV,
-    getAllCVs,
-    getCVTemplates,
-    getCVById,
+  CV,
+  CVTemplate,
+  deleteCV,
+  getAllCVs,
+  getCVTemplates,
+  getCVById,
 } from "@/api/cvapi";
 import { templateComponentMap } from "@/components/cvTemplate/index";
 import { useLanguage } from "@/providers/global_provider";
 import { Card } from "antd";
 import { motion } from "framer-motion";
-import { Edit, Trash2, Share2, ExternalLinkIcon , CopyIcon} from "lucide-react";
+import { Edit, Trash2, Share2, ExternalLinkIcon, CopyIcon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+// BƯỚC 1: Import hàm lấy vị trí mặc định để fallback
+import { getDefaultSectionPositions } from "@/components/cvTemplate/defaultSectionPositions";
 
-// --- ĐỐI TƯỢNG TRANSLATIONS ---
+// ... (Giữ nguyên phần translations và các hàm phụ trợ cũ) ...
 const translations = {
   en: {
     cardMyCV: {
@@ -113,8 +115,8 @@ const formatTimeAgo = (
 };
 
 type CardMyCVProps = {
-  cvListOverride?: CV[]
-}
+  cvListOverride?: CV[];
+};
 
 const CardMyCV: React.FC<CardMyCVProps> = ({ cvListOverride }) => {
   const { language } = useLanguage();
@@ -134,7 +136,13 @@ const CardMyCV: React.FC<CardMyCVProps> = ({ cvListOverride }) => {
         try {
           const full = await getCVById(cv._id);
           if (full?.content?.userData) {
-            return { ...cv, content: { ...(cv.content || {}), userData: full.content.userData } } as CV;
+            return {
+              ...cv,
+              content: {
+                ...(cv.content || {}),
+                userData: full.content.userData,
+              },
+            } as CV;
           }
         } catch {}
         return cv;
@@ -156,6 +164,7 @@ const CardMyCV: React.FC<CardMyCVProps> = ({ cvListOverride }) => {
       console.error(t.errors.fetch, err);
     }
   };
+
   const fetchTemplatesOnly = async () => {
     try {
       const templatesData = await getCVTemplates();
@@ -181,15 +190,11 @@ const CardMyCV: React.FC<CardMyCVProps> = ({ cvListOverride }) => {
 
   const handleDeleteCV = async (cvId: string, cvTitle: string) => {
     const isConfirmed = window.confirm(t.deleteDialog.confirm(cvTitle));
-
     if (!isConfirmed) return;
-
     try {
       setDeletingCVId(cvId);
       await deleteCV(cvId);
-
       setCvList((prevList) => prevList.filter((cv) => cv._id !== cvId));
-
       alert(t.deleteDialog.success);
     } catch (error) {
       console.error(t.errors.delete, error);
@@ -222,197 +227,227 @@ const CardMyCV: React.FC<CardMyCVProps> = ({ cvListOverride }) => {
 
   return (
     <>
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
-      {cvList.length === 0 ? (
-        <div className="col-span-full text-center py-8">
-          <div className="text-gray-500">
-            <Trash2 size={48} className="mx-auto mb-4 opacity-50" />
-            <p className="text-lg font-medium">{t.emptyState.title}</p>
-            <p className="text-sm">{t.emptyState.subtitle}</p>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
+        {cvList.length === 0 ? (
+          <div className="col-span-full text-center py-8">
+            <div className="text-gray-500">
+              <Trash2 size={48} className="mx-auto mb-4 opacity-50" />
+              <p className="text-lg font-medium">{t.emptyState.title}</p>
+              <p className="text-sm">{t.emptyState.subtitle}</p>
+            </div>
           </div>
-        </div>
-      ) : (
-        cvList.map((cv) => {
-          const template = templates.find(
-            (temp) => temp._id === cv.cvTemplateId
-          );
-          const TemplateComponent =
-            templateComponentMap?.[template?.title || ""];
+        ) : (
+          cvList.map((cv) => {
+            const template = templates.find(
+              (temp) => temp._id === cv.cvTemplateId
+            );
+            const TemplateComponent =
+              templateComponentMap?.[template?.title || ""];
 
-          const componentData = {
-            ...template?.data,
-            userData: cv.content?.userData || {},
-          };
+            // --- BƯỚC 2: LẤY DỮ LIỆU USERDATA VÀ SECTION POSITIONS ---
+            const userData = cv.content?.userData || {};
+            // Ưu tiên lấy từ userData.sectionPositions (như trong ảnh bạn gửi)
+            // Tìm đến dòng bị lỗi
+            const sectionPositions =
+              userData.sectionPositions ||
+              getDefaultSectionPositions(template?.title || "");
 
-          return (
-            <Card key={cv._id} hoverable>
-              <motion.div className="bg-white rounded-xl overflow-hidden w-[350px] h-[260px] items-start">
-                <div className="bg-white overflow-hidden w-[350px] h-[260px] flex gap-4 items-start">
-                  <div className="relative shrink-0 w-[180px] aspect-[210/350] bg-gray-100 border rounded-md overflow-hidden">
-                    <div
-                      className="absolute bg-white"
-                      style={{
-                        position: "absolute",
-                        width: `${templateOriginalWidth}px`,
-                        height: `${templateOriginalWidth * (350 / 210)}px`,
-                        transformOrigin: "top left",
-                        transform: `scale(${scaleFactor})`,
-                        backgroundColor: "white",
-                      }}
-                    >
-                      <div className="pointer-events-none ">
-                        {TemplateComponent ? (
-                          <TemplateComponent data={componentData} language={language} />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-sm text-gray-500">
-                            {template?.imageUrl ? (
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img
-                                src={template.imageUrl}
-                                alt={template?.title || "CV template"}
-                                style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                              />
-                            ) : (
-                              <span>Preview unavailable</span>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
+            const componentData = {
+              ...template?.data,
+              userData: userData,
+              sectionPositions: sectionPositions, // Truyền prop này vào template
+            };
+            // ---------------------------------------------------------
 
-                  <div className="flex-1 flex flex-col justify-between h-full">
-                    <div>
-                      <div className="flex items-start justify-between gap-2">
-                        <h3 className="text-lg font-semibold text-gray-900 leading-tight">
-                          {cv.title || t.card.unnamed}
-                        </h3>
-                      </div>
-                      <p className="text-sm text-blue-500 mt-1">
-                        {t.card.edited}{" "}
-                        {formatTimeAgo(cv.updatedAt, t.timeAgo, language)}
-                      </p>
-                      <div className="mt-2 text-sm text-gray-600 space-y-1">
-                        <p>
-                          {t.card.creation}{" "}
-                          {new Date(cv.createdAt).toLocaleDateString(
-                            language === "vi" ? "vi-VN" : "en-US"
+            return (
+              <Card key={cv._id} hoverable>
+                <motion.div className="bg-white rounded-xl overflow-hidden w-[350px] h-[300px] items-start">
+                  <div className="bg-white overflow-hidden w-[350px] h-[300px] flex gap-4 items-start">
+                    <div className="relative shrink-0 w-[180px] aspect-[210/350] bg-gray-100 border rounded-md overflow-hidden">
+                      <div
+                        className="absolute bg-white"
+                        style={{
+                          position: "absolute",
+                          width: `${templateOriginalWidth}px`,
+                          height: `${templateOriginalWidth * (350 / 210)}px`,
+                          transformOrigin: "top left",
+                          transform: `scale(${scaleFactor})`,
+                          backgroundColor: "white",
+                        }}
+                      >
+                        <div className="pointer-events-none ">
+                          {TemplateComponent ? (
+                            <TemplateComponent
+                              data={componentData}
+                              language={language}
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-sm text-gray-500">
+                              {template?.imageUrl ? (
+                                <img
+                                  src={template.imageUrl}
+                                  alt={template?.title || "CV template"}
+                                  style={{
+                                    width: "100%",
+                                    height: "100%",
+                                    objectFit: "cover",
+                                  }}
+                                />
+                              ) : (
+                                <span>Preview unavailable</span>
+                              )}
+                            </div>
                           )}
-                        </p>
-                        <p>
-                          {t.card.status}{" "}
-                          {cv.isFinalized
-                            ? t.card.statusFinal
-                            : t.card.statusDraft}
-                        </p>
+                        </div>
                       </div>
                     </div>
 
-                    <div className={` ${
-                            deletingCVId === cv._id && language === "vi"
-                              ? "w-[120px]"
-                              : "w-[90px]"
-                          } mt-3 flex flex-col gap-2`}>
-                      <Link href={`/updateCV?id=${cv._id}`}>
-                        <button
-                          className={`flex ${
-                            language === "vi"
-                              ? "w-[110px]"
-                              : "w-[90px]"
-                          } items-center gap-1 text-sm px-3 py-1.5 rounded-md transition-colors bg-gray-100 hover:bg-blue-100 text-blue-600 hover:text-blue-700`}
-                        >
-                          <Edit size={16} /> {t.buttons.edit}
-                        </button>
-                      </Link>
+                    <div className="flex-1 flex flex-col justify-between h-full">
+                      <div>
+                        <div className="flex items-start justify-between gap-2">
+                          <h3 className="text-lg font-semibold text-gray-900 leading-tight">
+                            {cv.title || t.card.unnamed}
+                          </h3>
+                        </div>
+                        <p className="text-sm text-blue-500 mt-1">
+                          {t.card.edited}{" "}
+                          {formatTimeAgo(cv.updatedAt, t.timeAgo, language)}
+                        </p>
+                        <div className="mt-2 text-sm text-gray-600 space-y-1">
+                          <p>
+                            {t.card.creation}{" "}
+                            {new Date(cv.createdAt).toLocaleDateString(
+                              language === "vi" ? "vi-VN" : "en-US"
+                            )}
+                          </p>
+                          <p>
+                            {t.card.status}{" "}
+                            {cv.isFinalized
+                              ? t.card.statusFinal
+                              : t.card.statusDraft}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div
+                        className={` ${
+                          deletingCVId === cv._id && language === "vi"
+                            ? "w-[120px]"
+                            : "w-[90px]"
+                        } mt-3 flex flex-col gap-2`}
+                      >
+                        <Link href={`/updateCV?id=${cv._id}`}>
+                          <button
+                            className={`flex ${
+                              language === "vi" ? "w-[110px]" : "w-[90px]"
+                            } items-center gap-1 text-sm px-3 py-1.5 rounded-md transition-colors bg-gray-100 hover:bg-blue-100 text-blue-600 hover:text-blue-700`}
+                          >
+                            <Edit size={16} /> {t.buttons.edit}
+                          </button>
+                        </Link>
                         <button
                           onClick={() => openShareModal(cv._id)}
                           className={`flex ${
-                            language === "vi"
-                              ? "w-[110px]"
-                              : "w-[90px]"
+                            language === "vi" ? "w-[110px]" : "w-[90px]"
                           } items-center gap-1 text-sm px-3 py-1.5 rounded-md transition-colors bg-gray-100 hover:bg-blue-100 text-blue-600 hover:text-blue-700`}
                         >
                           <Share2 size={16} /> {t.buttons.share}
                         </button>
-                      
-                      <div>
-                        <button
-                          onClick={() =>
-                            handleDeleteCV(cv._id, cv.title || t.card.unnamed)
-                          }
-                          disabled={deletingCVId === cv._id}
-                          className={`flex ${
-                            language === "vi"
-                              ? "w-[110px]"
-                              : "w-[90px]"
-                          } items-center gap-1 text-sm px-3 py-1.5 rounded-md transition-colors ${
-                            deletingCVId === cv._id
-                              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                              : "bg-gray-100 hover:bg-red-100 text-red-600 hover:text-red-700"
-                          }`}
-                          title={t.buttons.deleteTooltip}
-                        >
-                          {deletingCVId === cv._id ? (
-                            <>
-                              <div className="w-4 h-4 border-2 border-gray-500 border-t-transparent rounded-full animate-spin"></div>
-                              {t.buttons.deleting}
-                            </>
-                          ) : (
-                            <>
-                              <Trash2 size={16} /> {t.buttons.delete}
-                            </>
-                          )}
-                        </button>
+
+                        <div>
+                          <button
+                            onClick={() =>
+                              handleDeleteCV(cv._id, cv.title || t.card.unnamed)
+                            }
+                            disabled={deletingCVId === cv._id}
+                            className={`flex ${
+                              language === "vi" ? "w-[110px]" : "w-[90px]"
+                            } items-center gap-1 text-sm px-3 py-1.5 rounded-md transition-colors ${
+                              deletingCVId === cv._id
+                                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                                : "bg-gray-100 hover:bg-red-100 text-red-600 hover:text-red-700"
+                            }`}
+                            title={t.buttons.deleteTooltip}
+                          >
+                            {deletingCVId === cv._id ? (
+                              <>
+                                <div className="w-4 h-4 border-2 border-gray-500 border-t-transparent rounded-full animate-spin"></div>
+                                {t.buttons.deleting}
+                              </>
+                            ) : (
+                              <>
+                                <Trash2 size={16} /> {t.buttons.delete}
+                              </>
+                            )}
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              </motion.div>
-            </Card>
-          );
-        })
-      )}
-    </div>
-    {shareCVId && (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-        <div className="bg-white w-full max-w-[40%] min-h-[120px] mx-4 rounded-lg shadow-xl p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">
-              {language === "vi" ? "Chia sẻ liên kết CV" : "Share CV link"}
-            </h3>
-            <button onClick={closeShareModal} className="text-gray-500 hover:text-gray-800">×</button>
-          </div>
-          <div className="flex gap-2">
-            <input
-              value={shareUrl}
-              readOnly
-              className="flex-1 px-3 py-2 border rounded-md text-sm bg-gray-50 select-all"
-            />
-            <button
-              onClick={handleCopy}
-              className={`flex items-center gap-1 px-3 py-2 rounded-md text-sm font-medium ${copied ? "bg-green-500 text-white" : "bg-blue-600 text-white hover:bg-blue-700"}`}
-            >
-              <CopyIcon size={18} /> {copied ? (language === "vi" ? "Đã copy" : "Copied") : (language === "vi" ? "Copy" : "Copy")}
-            </button>
-            <Link href={`shareUrl`}>
-                        <button
-                          className={`flex ${
-                            language === "vi"
-                              ? "w-[60px]"
-                              : "w-[45px]"
-                          }items-center gap-1 px-3 py-2 rounded-md text-sm font-medium border border-gray-300`}
-                        >
-                          <ExternalLinkIcon size={18} />{t.buttons.openShare}
-                        </button>
-            </Link>
-          </div>
-          <div className="mt-3 text-xs text-gray-500">
-            {language === "vi" ? "Gửi liên kết này cho người nhận để xem CV của bạn." : "Send this link to let others view your CV."}
+                </motion.div>
+              </Card>
+            );
+          })
+        )}
+      </div>
+      {/* Modal Share Code (Giữ nguyên) */}
+      {shareCVId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white w-full max-w-[40%] min-h-[120px] mx-4 rounded-lg shadow-xl p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">
+                {language === "vi" ? "Chia sẻ liên kết CV" : "Share CV link"}
+              </h3>
+              <button
+                onClick={closeShareModal}
+                className="text-gray-500 hover:text-gray-800"
+              >
+                ×
+              </button>
+            </div>
+            <div className="flex gap-2">
+              <input
+                value={shareUrl}
+                readOnly
+                className="flex-1 px-3 py-2 border rounded-md text-sm bg-gray-50 select-all"
+              />
+              <button
+                onClick={handleCopy}
+                className={`flex items-center gap-1 px-3 py-2 rounded-md text-sm font-medium ${
+                  copied
+                    ? "bg-green-500 text-white"
+                    : "bg-blue-600 text-white hover:bg-blue-700"
+                }`}
+              >
+                <CopyIcon size={18} />{" "}
+                {copied
+                  ? language === "vi"
+                    ? "Đã copy"
+                    : "Copied"
+                  : language === "vi"
+                  ? "Copy"
+                  : "Copy"}
+              </button>
+              <Link href={`shareUrl`}>
+                <button
+                  className={`flex ${
+                    language === "vi" ? "w-[60px]" : "w-[45px]"
+                  }items-center gap-1 px-3 py-2 rounded-md text-sm font-medium border border-gray-300`}
+                >
+                  <ExternalLinkIcon size={18} />
+                  {t.buttons.openShare}
+                </button>
+              </Link>
+            </div>
+            <div className="mt-3 text-xs text-gray-500">
+              {language === "vi"
+                ? "Gửi liên kết này cho người nhận để xem CV của bạn."
+                : "Send this link to let others view your CV."}
+            </div>
           </div>
         </div>
-      </div>
-    )}
-  </>
+      )}
+    </>
   );
 };
 

@@ -32,12 +32,14 @@ export class VouchersController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles("mkt")
   async createVoucherSaveable(
-    @Body() createVoucherDto: CreateVoucherSaveableDto,
+    @Body() createVoucherDto: CreateVoucherSaveableDto
   ) {
     return await this.vouchersService.createVoucherDirect(createVoucherDto);
   }
 
   @Get("all")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("mkt")
   async getAllVouchers() {
     return await this.vouchersService.getAllVouchers();
   }
@@ -48,14 +50,20 @@ export class VouchersController {
     return await this.vouchersService.getVoucherDisplayUsers();
   }
 
+  @Get(":id")
+  @UseGuards(JwtAuthGuard)
+  async getVoucherById(@Param("id") id: string) {
+    return await this.vouchersService.getVoucherById(id);
+  }
+
   @Put(":id")
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles("mkt")
   async updateVoucher(
     @Param("id") id: string,
-    @Body() updateVoucherDto: UpdateVoucherDirectDto,
+    @Body() updateVoucherDto: UpdateVoucherDirectDto
   ) {
-    return await this.vouchersService.updateVoucherDirect(id, updateVoucherDto);
+    return await this.vouchersService.updateVoucher(id, updateVoucherDto);
   }
 
   @Delete(":id")

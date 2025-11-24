@@ -38,4 +38,12 @@ export class PayosController {
   async getPaymentDetail(@Param("orderCode") orderCode: number) {
     return this.payosService.getPaymentDetail(orderCode);
   }
+
+  @Post(":orderCode/cancel")
+  async cancelPayment(
+    @Param("orderCode") orderCode: number,
+    @Body("cancellationReason") cancellationReason: string
+  ) {
+    return this.payosService.cancelLinkPayment(orderCode, cancellationReason);
+  }
 }

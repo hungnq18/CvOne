@@ -78,54 +78,84 @@ export function EditVoucherModal({ voucher, onVoucherUpdated, isOpen, setIsOpen 
 
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
-            <DialogContent className="sm:max-w-[425px]">
+            <DialogContent className="sm:max-w-2xl">
                 <DialogHeader>
                     <DialogTitle>Edit Voucher</DialogTitle>
                     <DialogDescription>
                         Update the details for this voucher.
                     </DialogDescription>
                 </DialogHeader>
-                 <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto pr-4">
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="name" className="text-right">Name</Label>
-                        <Input id="name" value={formData.name || ''} onChange={handleInputChange} className="col-span-3" />
-                    </div>
-                     <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="description" className="text-right">Description</Label>
-                        <Input id="description" value={formData.description || ''} onChange={handleInputChange} className="col-span-3" />
-                    </div>
-                     <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="discountValue" className="text-right">Discount</Label>
-                        <Input id="discountValue" type="number" value={formData.discountValue || 0} onChange={handleInputChange} className="col-span-2" />
-                        <Select value={formData.discountType} onValueChange={(value) => handleSelectChange('discountType', value)}>
-                            <SelectTrigger className="col-span-1">
-                                <SelectValue placeholder="Type" />
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4 max-h-[70vh] overflow-y-auto px-1">
+                    <div className="space-y-2">
+                        <Label htmlFor="type">Type</Label>
+                        <Select value={formData.type} onValueChange={(value) => handleSelectChange('type', value)}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select type" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="percent">%</SelectItem>
-                                <SelectItem value="amount">$</SelectItem>
+                                <SelectItem value="direct">Direct (Use immediately)</SelectItem>
+                                <SelectItem value="saveable">Saveable (Save to wallet)</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
-                     <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="maxDiscountValue" className="text-right">Max Discount</Label>
-                        <Input id="maxDiscountValue" type="number" value={formData.maxDiscountValue || 0} onChange={handleInputChange} className="col-span-3" />
+
+                    <div className="space-y-2">
+                        <Label htmlFor="name">Name</Label>
+                        <Input id="name" value={formData.name || ''} onChange={handleInputChange} placeholder="Voucher Name" />
                     </div>
-                     <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="minOrderValue" className="text-right">Min Order</Label>
-                        <Input id="minOrderValue" type="number" value={formData.minOrderValue || 0} onChange={handleInputChange} className="col-span-3" />
+
+                     <div className="space-y-2 md:col-span-2">
+                        <Label htmlFor="description">Description</Label>
+                        <Input id="description" value={formData.description || ''} onChange={handleInputChange} placeholder="Voucher Description" />
                     </div>
-                     <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="usageLimit" className="text-right">Usage Limit</Label>
-                        <Input id="usageLimit" type="number" value={formData.usageLimit || 0} onChange={handleInputChange} className="col-span-3" />
+
+                     <div className="space-y-2">
+                        <Label htmlFor="discountValue">Discount</Label>
+                        <div className="flex gap-2">
+                            <Input id="discountValue" type="number" value={formData.discountValue || 0} onChange={handleInputChange} className="flex-1" />
+                            <Select value={formData.discountType} onValueChange={(value) => handleSelectChange('discountType', value)}>
+                                <SelectTrigger className="w-[100px]">
+                                    <SelectValue placeholder="Type" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="percent">%</SelectItem>
+                                    <SelectItem value="amount">$</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
                     </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="startDate" className="text-right">Start Date</Label>
-                        <Input id="startDate" type="date" value={formData.startDate || ''} onChange={handleInputChange} className="col-span-3" />
+
+                     <div className="space-y-2">
+                        <Label htmlFor="maxDiscountValue">Max Discount</Label>
+                        <Input id="maxDiscountValue" type="number" value={formData.maxDiscountValue || 0} onChange={handleInputChange} />
                     </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="endDate" className="text-right">End Date</Label>
-                        <Input id="endDate" type="date" value={formData.endDate || ''} onChange={handleInputChange} className="col-span-3" />
+
+                     <div className="space-y-2">
+                        <Label htmlFor="minOrderValue">Min Order</Label>
+                        <Input id="minOrderValue" type="number" value={formData.minOrderValue || 0} onChange={handleInputChange} />
+                    </div>
+
+                     <div className="space-y-2">
+                         <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="usageLimit">Usage Limit</Label>
+                                <Input id="usageLimit" type="number" value={formData.usageLimit || 0} onChange={handleInputChange} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="perUserLimit">User Limit</Label>
+                                <Input id="perUserLimit" type="number" value={formData.perUserLimit || 0} onChange={handleInputChange} />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label htmlFor="startDate">Start Date</Label>
+                        <Input id="startDate" type="date" value={formData.startDate || ''} onChange={handleInputChange} />
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label htmlFor="endDate">End Date</Label>
+                        <Input id="endDate" type="date" value={formData.endDate || ''} onChange={handleInputChange} />
                     </div>
                 </div>
                 <DialogFooter>

@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Calendar, Clock, Eye, RotateCcw, Star, TrendingUp } from 'lucide-react';
+import { Calendar, Eye, RotateCcw, Star, TrendingUp } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 interface InterviewSession {
@@ -43,48 +43,24 @@ export default function InterviewHistory({ onViewDetails, onRetakeInterview }: I
     try {
       const response = await aiInterviewApi.getInterviewHistory();
       if (response.success && response.data) {
-        // Mock data for demonstration
-        const mockSessions: InterviewSession[] = [
-          {
-            id: 'session_1',
-            jobTitle: 'Frontend Developer',
-            company: 'Tech Corp',
-            completedAt: '2024-01-15T10:30:00Z',
-            totalQuestions: 10,
-            completedQuestions: 10,
-            averageScore: 8.5,
-            difficulty: 'medium',
-            duration: 25
-          },
-          {
-            id: 'session_2',
-            jobTitle: 'Full Stack Developer',
-            company: 'StartupXYZ',
-            completedAt: '2024-01-10T14:20:00Z',
-            totalQuestions: 15,
-            completedQuestions: 12,
-            averageScore: 7.2,
-            difficulty: 'hard',
-            duration: 35
-          },
-          {
-            id: 'session_3',
-            jobTitle: 'React Developer',
-            company: 'Web Solutions',
-            completedAt: '2024-01-05T09:15:00Z',
-            totalQuestions: 8,
-            completedQuestions: 8,
-            averageScore: 9.1,
-            difficulty: 'easy',
-            duration: 20
-          }
-        ];
+        // Transform API data to component format
+        const transformedSessions: InterviewSession[] = response.data.sessions.map(s => ({
+          id: s.sessionId,
+          jobTitle: s.jobTitle || 'Untitled Position',
+          company: s.companyName || 'Unknown Company',
+          completedAt: s.completedAt ? new Date(s.completedAt).toISOString() : new Date(s.createdAt).toISOString(),
+          totalQuestions: s.totalQuestions,
+          completedQuestions: s.answeredQuestions,
+          averageScore: s.averageScore || 0,
+          difficulty: s.difficulty,
+          duration: 0 // Backend không có duration field này, có thể thêm sau
+        }));
 
-        setSessions(mockSessions);
+        setSessions(transformedSessions);
         setStats({
-          totalSessions: mockSessions.length,
-          averageScore: mockSessions.reduce((acc, session) => acc + session.averageScore, 0) / mockSessions.length,
-          totalTime: mockSessions.reduce((acc, session) => acc + session.duration, 0)
+          totalSessions: response.data.stats.totalSessions,
+          averageScore: response.data.stats.averageScore,
+          totalTime: 0 // Backend không có total time, có thể tính sau
         });
       }
     } catch (error) {
@@ -156,7 +132,9 @@ export default function InterviewHistory({ onViewDetails, onRetakeInterview }: I
               <Star className="h-5 w-5 text-yellow-600" />
               <div>
                 <p className="text-sm text-gray-600">Average Score</p>
-                <p className="text-2xl font-bold">{stats.averageScore.toFixed(1)}/10</p>
+                <p className="text-2xl font-bold">
+                  {stats.averageScore > 0 ? `${stats.averageScore.toFixed(1)}/10` : 'N/A'}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -165,10 +143,10 @@ export default function InterviewHistory({ onViewDetails, onRetakeInterview }: I
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
-              <Clock className="h-5 w-5 text-green-600" />
+              <TrendingUp className="h-5 w-5 text-green-600" />
               <div>
-                <p className="text-sm text-gray-600">Total Time</p>
-                <p className="text-2xl font-bold">{stats.totalTime}m</p>
+                <p className="text-sm text-gray-600">Completed</p>
+                <p className="text-2xl font-bold">{stats.totalSessions}</p>
               </div>
             </div>
           </CardContent>
@@ -208,21 +186,16 @@ export default function InterviewHistory({ onViewDetails, onRetakeInterview }: I
                       
                       <p className="text-gray-600 text-sm mb-3">{session.company}</p>
                       
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
                         <div className="flex items-center gap-1">
                           <Calendar className="h-4 w-4 text-gray-400" />
-                          <span>{formatDate(session.completedAt)}</span>
-                        </div>
-                        
-                        <div className="flex items-center gap-1">
-                          <Clock className="h-4 w-4 text-gray-400" />
-                          <span>{session.duration}m</span>
+                          <span className="text-xs">{formatDate(session.completedAt)}</span>
                         </div>
                         
                         <div className="flex items-center gap-1">
                           <TrendingUp className="h-4 w-4 text-gray-400" />
                           <span className={getScoreColor(session.averageScore)}>
-                            {session.averageScore.toFixed(1)}/10
+                            {session.averageScore > 0 ? `${session.averageScore.toFixed(1)}/10` : 'N/A'}
                           </span>
                         </div>
                         

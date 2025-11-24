@@ -31,6 +31,21 @@ const statusColors: { [key: string]: string } = {
     active: "bg-green-500",
     expired: "bg-gray-500",
     used: "bg-blue-500",
+    inactive: "bg-red-500",
+    upcoming: "bg-yellow-500",
+}
+
+const getVoucherStatus = (voucher: Voucher) => {
+    if (!voucher.isActive) return 'inactive';
+    const now = new Date();
+    const startDate = new Date(voucher.startDate);
+    const endDate = new Date(voucher.endDate);
+
+    if (now < startDate) return 'upcoming';
+    if (now > endDate) return 'expired';
+    if (voucher.usageLimit && (voucher.usedCount || 0) >= voucher.usageLimit) return 'used';
+
+    return 'active';
 }
 
 export function ManageVouchers() {
@@ -137,19 +152,29 @@ export function ManageVouchers() {
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end">
                                             <DropdownMenuItem onClick={() => handleEdit(voucher)}>Edit</DropdownMenuItem>
-                                            <DropdownMenuItem>Duplicate</DropdownMenuItem>
                                             <DropdownMenuItem className="text-red-500" onClick={() => handleDelete(voucher)}>Delete</DropdownMenuItem>
                                         </DropdownMenuContent>
                                     </DropdownMenu>
                                 </div>
-                                <p className="text-3xl font-bold text-primary">{voucher.discountValue}{voucher.discountType === 'percentage' ? '%' : '$'}</p>
+                                <p className="text-3xl font-bold text-primary">
+                                    {voucher.discountType === 'percent'
+                                        ? `${voucher.discountValue}%`
+                                        : `${voucher.discountValue.toLocaleString('vi-VN')}đ`}
+                                </p>
                             </CardHeader>
                             <CardContent className="flex-grow">
                                 <p className="text-sm text-muted-foreground">{voucher.description}</p>
                             </CardContent>
                             <CardFooter className="flex justify-between items-center text-sm text-muted-foreground">
                                 <span>Expires: {new Date(voucher.endDate).toLocaleDateString()}</span>
-                                <Badge className={`${voucher.status ? statusColors[voucher.status] : 'bg-gray-400'} text-white`}>{voucher.status || 'N/A'}</Badge>
+                                {(() => {
+                                    const status = getVoucherStatus(voucher);
+                                    return (
+                                        <Badge className={`${statusColors[status]} text-white capitalize`}>
+                                            {status}
+                                        </Badge>
+                                    );
+                                })()}
                             </CardFooter>
                         </Card>
                     ))}

@@ -131,6 +131,7 @@ const CardCVTemplate: React.FC<CardCVTemplateProps> = ({
 
     // Kiểm tra token
     if (token) {
+      console.log("[CardCVTemplate] Navigating with template ID:", _id);
       router.push(`/chooseCreateCV?id=${_id}`);
     } else {
       alert("Bạn cần đăng nhập để tạo CV!");
