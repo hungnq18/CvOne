@@ -23,6 +23,8 @@ import {
   Loader2,
   Languages,
   LayoutTemplate,
+  Plus,
+  Minus,
 } from "lucide-react";
 import Image from "next/image";
 import { useCV } from "@/providers/cv-provider";
@@ -34,20 +36,23 @@ import { useLanguage } from "@/providers/global_provider";
 import CVTemplateLayoutPopup from "@/components/forms/CVTemplateLayoutPopup";
 import { getDefaultSectionPositions } from "../cvTemplate/defaultSectionPositions";
 
-// BƯỚC 2: TẠO ĐỐI TƯỢNG TRANSLATIONS ---
+// --- TRANSLATIONS ---
 const translations = {
   en: {
-    // Sidebar Sections
     personalInfo: "Personal Information",
     contact: "Contact",
     careerObjective: "Career Objective",
     workExperience: "Work Experience",
     education: "Education",
     skills: "Skills",
+    certification: "Certification",
+    achievement: "Achievement",
+    hobby: "Hobby",
+    project: "Project",
     cvSections: "CV SECTIONS",
+    hiddenSections: "Hidden Sections",
     customLayout: "Custom Layout", 
 
-    // Header & Buttons
     editCv: "Edit CV",
     editTitleTooltip: "Click to edit title",
     cvTemplates: "CV TEMPLATES",
@@ -55,18 +60,15 @@ const translations = {
     saving: "Saving...",
     complete: "Complete",
 
-    // Main Content & Loaders
     loadingTemplate: "Loading Template...",
     templateComponentNotFound: (title: string) =>
       `Component for "${title}" not found.`,
 
-    // Actions
     download: "Download",
     print: "Print CV",
     email: "Email",
     translate: "Translate CV",
 
-    // Alerts & Messages
     errorDecodingToken: "Error decoding token:",
     noDataToSave: "No data or CV template to save.",
     cvDataEmpty: "CV data is empty, cannot save.",
@@ -75,27 +77,29 @@ const translations = {
     pdfCreateEnvError: "Cannot create environment to export PDF.",
     pdfCreateError: "An error occurred while exporting the PDF file.",
 
-    //translate
     translateSuccess: "CV translated successfully!",
     translateError: "Error occurred while translating CV",
     aiSuggestFailed: "AI suggestion failed",
-    // Dynamic titles
+    
     loadingTemplateForNew: "Loading template to create new...",
     cvTitleDefault: (title: string) => `CV - ${title}`,
     cvForUser: (name: string) => `CV for ${name || "Untitled"}`,
   },
   vi: {
-    // Sidebar Sections
     personalInfo: "Thông tin cá nhân",
     contact: "Liên hệ",
     careerObjective: "Mục tiêu sự nghiệp",
     workExperience: "Kinh nghiệm làm việc",
     education: "Học vấn",
     skills: "Kỹ năng",
+    certification: "Chứng chỉ",
+    achievement: "Thành tựu",
+    hobby: "Sở thích",
+    project: "Dự án",
     cvSections: "CÁC MỤC CỦA CV",
+    hiddenSections: "Các mục ẩn",
     customLayout: "Tùy chỉnh bố cục", 
 
-    // Header & Buttons
     editCv: "Chỉnh Sửa CV",
     editTitleTooltip: "Click để chỉnh sửa tiêu đề",
     cvTemplates: "MẪU CV",
@@ -103,18 +107,15 @@ const translations = {
     saving: "Đang lưu...",
     complete: "Hoàn Thành",
 
-    // Main Content & Loaders
     loadingTemplate: "Đang tải Mẫu...",
     templateComponentNotFound: (title: string) =>
       `Không tìm thấy component cho "${title}".`,
 
-    // Actions
     download: "Tải về",
     print: "In CV",
     email: "Email",
     translate: "Dịch CV",
 
-    // Alerts & Messages
     errorDecodingToken: "Lỗi giải mã token:",
     noDataToSave: "Chưa có dữ liệu hoặc mẫu CV để lưu.",
     cvDataEmpty: "Dữ liệu CV trống, không thể lưu.",
@@ -123,18 +124,16 @@ const translations = {
     pdfCreateEnvError: "Không thể tạo môi trường để xuất PDF.",
     pdfCreateError: "Đã có lỗi xảy ra khi xuất file PDF.",
 
-    //translate
     translateSuccess: "Dịch CV thành công!",
     translateError: "Có lỗi xảy ra khi dịch CV",
     aiSuggestFailed: "AI đề xuất mẫu thất bại",
-    // Dynamic titles
+    
     loadingTemplateForNew: "Đang tải template để tạo mới...",
     cvTitleDefault: (title: string) => `CV - ${title}`,
     cvForUser: (name: string) => `CV cho ${name || "Chưa có tên"}`,
   },
 };
 
-// --- INTERFACES & TYPES (Không đổi) ---
 interface DecodedToken {
   sub: string;
   role: string;
@@ -179,28 +178,24 @@ const PageCreateCVAIContent = () => {
     null
   );
   const [hasAutoSuggested, setHasAutoSuggested] = useState(false);
-  const [suppressAutoSuggest, setSuppressAutoSuggest] =
-    useState<boolean>(false);
+  const [suppressAutoSuggest, setSuppressAutoSuggest] = useState<boolean>(false);
   const [cvUiTexts, setCvUiTexts] = useState<any>(null);
   const [showLayoutPopup, setShowLayoutPopup] = useState(false);
 
+  // --- ĐÃ SỬA: SIDEBAR DÙNG NGÔN NGỮ HỆ THỐNG (t.xxx) THAY VÌ cvUiTexts ---
   const sidebarSections = [
-    { id: "info", title: cvUiTexts?.personalInformation || t.personalInfo },
-    { id: "contact", title: cvUiTexts?.contact || t.contact },
-    { id: "summary", title: cvUiTexts?.careerObjective || t.careerObjective },
-    { id: "experience", title: cvUiTexts?.workExperience || t.workExperience },
-    { id: "education", title: cvUiTexts?.education || t.education },
-    { id: "skills", title: cvUiTexts?.skills || t.skills },
+    { id: "info", title: t.personalInfo, isHidden: false },
+    { id: "contact", title: t.contact, isHidden: false },
+    { id: "summary", title: t.careerObjective, isHidden: false },
+    { id: "experience", title: t.workExperience, isHidden: false },
+    { id: "education", title: t.education, isHidden: false },
+    { id: "skills", title: t.skills, isHidden: false },
+    // Các section ẩn (có thể kéo thả vào CV)
+    { id: "certification", title: t.certification || "Certification", isHidden: true },
+    { id: "achievement", title: t.achievement || "Achievement", isHidden: true },
+    { id: "hobby", title: t.hobby || "Hobby", isHidden: true },
+    { id: "Project", title: t.project || "Project", isHidden: true },
   ];
-
-  useEffect(() => {
-    if (
-      typeof window !== "undefined" &&
-      process.env.NODE_ENV === "development"
-    ) {
-      console.log("[Debug] suppressAutoSuggest:", suppressAutoSuggest);
-    }
-  }, [suppressAutoSuggest]);
 
   const templateDropdownRef = useRef(null);
   const previewRef = useRef<HTMLDivElement>(null);
@@ -239,7 +234,6 @@ const PageCreateCVAIContent = () => {
           setLoading(false);
         })
         .catch(() => {
-          console.log(t.loadingTemplateForNew);
           setCvId(null);
           getCVTemplateById(idFromUrl).then((templateData) => {
             if (templateData) {
@@ -264,7 +258,6 @@ const PageCreateCVAIContent = () => {
   }, [id, loadTemplate, updateUserData, userData, t]);
 
   const handleTemplateSelect = async (selectedTemplate: CVTemplate) => {
-    // Logic AI (giữ nguyên)
     try { if (typeof window !== "undefined") sessionStorage.setItem("suppressAISuggest", "1"); } catch {}
     setSuppressAutoSuggest(true);
     setHasAutoSuggested(true);
@@ -278,13 +271,9 @@ const PageCreateCVAIContent = () => {
 
       if (newTemplateData) {
         loadTemplate(newTemplateData);
-        
-        // --- FIX: Lấy vị trí chuẩn từ API của template mới ---
         const correctPositions = newTemplateData.data?.sectionPositions || getDefaultSectionPositions(newTemplateData.title);
         
-        // Áp dụng ngay vào userData
         const newUserData = { ...userData, sectionPositions: correctPositions };
-        
         updateUserData(newUserData);
         updateSectionPositions(selectedTemplate._id, correctPositions);
 
@@ -303,7 +292,6 @@ const PageCreateCVAIContent = () => {
     setIsDirty(true);
   };
   
-  // --- HÀM XỬ LÝ KÉO THẢ TRỰC TIẾP ---
   const handleLayoutChange = (newPositions: any) => {
     if (currentTemplate) {
       updateSectionPositions(currentTemplate._id, newPositions);
@@ -341,8 +329,11 @@ const PageCreateCVAIContent = () => {
 
     setIsSaving(true);
     try {
-      const sectionPositions = getSectionPositions(currentTemplate._id) ||
-        currentTemplate.data?.sectionPositions ||
+      // QUAN TRỌNG: Lấy sectionPositions đầy đủ (bao gồm cả place = 0) để lưu vào API
+      const sectionPositions = 
+        userData.sectionPositions || // Ưu tiên từ userData (có thể đã được update)
+        getSectionPositions(currentTemplate._id) || 
+        currentTemplate.data?.sectionPositions || 
         getDefaultSectionPositions(currentTemplate.title);
 
       const completeUserData = {
@@ -364,15 +355,24 @@ const PageCreateCVAIContent = () => {
         certification: userData.certification || [],
         achievement: userData.achievement || [],
         hobby: userData.hobby || [],
+        // Lưu đầy đủ sectionPositions (bao gồm cả place = 0) vào API
         sectionPositions: sectionPositions,
       };
 
       const contentData: any = {
         userData: completeUserData
       };
+      
+      // QUAN TRỌNG: Luôn truyền cvUiTexts vào API nếu có
       if (cvUiTexts) {
         contentData.uiTexts = cvUiTexts;
       }
+      
+      console.log("[handleSaveToDB] Saving with full data:", {
+        sectionPositions: Object.keys(sectionPositions),
+        hasCvUiTexts: !!cvUiTexts,
+        cvUiTexts: cvUiTexts
+      });
 
       if (cvId) {
         const dataToUpdate: Partial<CV> = {
@@ -422,11 +422,123 @@ const PageCreateCVAIContent = () => {
     }
   };
 
-  const handleSectionClick = (sectionId: string) => {
+  // Helper function để tính toán place và order phù hợp khi thêm section mới vào CV
+  const calculatePlaceAndOrder = (sectionId: string, currentPositions: any, templateTitle: string) => {
+    // Lấy default positions của template
+    const defaultPositions = getDefaultSectionPositions(templateTitle);
+    
+    // Chỉ áp dụng logic đặc biệt cho template minimalist1 (The Vanguard)
+    const isMinimalist1 = templateTitle === "The Vanguard" || templateTitle?.includes("Vanguard");
+    const ismodern2 = templateTitle === "The Modern" || templateTitle?.includes("Modern");
+
+    let targetPlace = 2; // Mặc định là place 2
+    
+    if (isMinimalist1) {
+      // Cho template minimalist1:
+      // - certification, achievement, Project → place: 2 (sidebar bên trái)
+      // - hobby → place: 3 (main content bên phải)
+      if (sectionId === "hobby") {
+        targetPlace = 2; // Main content (bên phải)
+      } else if (sectionId === "certification" || sectionId === "achievement" || sectionId === "Project") {
+        targetPlace = 3; // Sidebar (bên trái)
+      }
+    } else if (ismodern2) {
+      targetPlace = 3;
+    } else {
+      // Cho các template khác, giữ logic cũ (ưu tiên place 2)
+      if (sectionId === "hobby") {
+        targetPlace = 1; // Main content (bên phải)
+      } else if (sectionId === "certification" || sectionId === "achievement" || sectionId === "Project") {
+        targetPlace = 2; // Sidebar (bên trái)
+      }
+    }
+    
+    // Tìm các section trong target place
+    const targetPlaceSections = Object.entries(currentPositions)
+      .filter(([_, pos]: [string, any]) => pos.place === targetPlace)
+      .sort(([, a]: [string, any], [, b]: [string, any]) => a.order - b.order);
+    
+    // Nếu có section trong target place, thêm vào cuối
+    if (targetPlaceSections.length > 0) {
+      const lastOrder = (targetPlaceSections[targetPlaceSections.length - 1][1] as any).order;
+      return { place: targetPlace, order: lastOrder + 1 };
+    }
+    
+    // Nếu không có, thêm vào target place với order 0
+    return { place: targetPlace, order: 0 };
+  };
+
+  const handleSectionClick = (sectionId: string, event?: React.MouseEvent) => {
+    // Nếu click vào icon +/-, xử lý thêm/xóa section
+    if (event && (event.target as HTMLElement).closest('.section-toggle-icon')) {
+      event.stopPropagation();
+      
+      if (!currentTemplate) return;
+      
+      const currentPositions = 
+        userData.sectionPositions || 
+        getSectionPositions(currentTemplate._id) || 
+        currentTemplate.data?.sectionPositions || 
+        getDefaultSectionPositions(currentTemplate.title);
+      
+      const sectionPosition = currentPositions[sectionId];
+      const isInCV = sectionPosition && sectionPosition.place !== 0;
+      
+      if (isInCV) {
+        // Xóa khỏi CV (set place = 0)
+        const newPositions = {
+          ...currentPositions,
+          [sectionId]: { place: 0, order: 0 }
+        };
+        
+        const newUserData = {
+          ...userData,
+          sectionPositions: newPositions
+        };
+        
+        updateUserData(newUserData);
+        updateSectionPositions(currentTemplate._id, newPositions);
+        setIsDirty(true);
+      } else {
+        // Thêm vào CV
+        const { place, order } = calculatePlaceAndOrder(sectionId, currentPositions, currentTemplate.title);
+        
+        const newPositions = {
+          ...currentPositions,
+          [sectionId]: { place, order }
+        };
+        
+        const newUserData = {
+          ...userData,
+          sectionPositions: newPositions
+        };
+        
+        updateUserData(newUserData);
+        updateSectionPositions(currentTemplate._id, newPositions);
+        setIsDirty(true);
+      }
+      return;
+    }
+    
+    // Click vào section để mở popup chỉnh sửa
     if (sectionId == "avatar") {
       sectionId = "info";
     }
+    
+    setActiveSection(sectionId);
     setActivePopup(sectionId);
+  };
+
+  // Helper function để filter ra các section có place = 0 (ẩn) khi render template
+  const filterVisibleSections = (positions: any) => {
+    if (!positions) return positions;
+    const filtered: any = {};
+    Object.entries(positions).forEach(([key, pos]: [string, any]) => {
+      if (pos.place !== 0) {
+        filtered[key] = pos;
+      }
+    });
+    return filtered;
   };
 
   const renderCVForPDF = () => {
@@ -440,13 +552,17 @@ const PageCreateCVAIContent = () => {
       currentTemplate.data?.sectionPositions || 
       getDefaultSectionPositions(currentTemplate.title); 
 
+    // Filter ra các section có place = 0 (ẩn) khi render template
+    const filteredSectionPositions = filterVisibleSections(sectionPositions);
+
     const componentData = {
       ...currentTemplate.data,
       userData: userData,
-      sectionPositions: sectionPositions, 
+      sectionPositions: filteredSectionPositions, // Chỉ truyền các section visible vào template
+      templateTitle: currentTemplate.title,
     };
 
-    const fontBase64 = "data:font/woff2;base64,d09GMgABAAAAA..."; // (Thay bằng chuỗi base64 thật)
+    const fontBase64 = "data:font/woff2;base64,d09GMgABAAAAA..."; // (Thay bằng chuỗi base64 thật của bạn)
     const fontName = "CVFont";
 
     return (
@@ -459,7 +575,7 @@ const PageCreateCVAIContent = () => {
             data={componentData}
             isPdfMode={true}
             language={language}
-            cvUiTexts={cvUiTexts}
+            cvUiTexts={cvUiTexts} // [MỚI] Truyền cvUiTexts cho PDF render
           />
         </div>
       </div>
@@ -533,10 +649,14 @@ const PageCreateCVAIContent = () => {
       currentTemplate.data?.sectionPositions || 
       getDefaultSectionPositions(currentTemplate.title); 
     
+    // Filter ra các section có place = 0 (ẩn) khi render template
+    const filteredSectionPositions = filterVisibleSections(sectionPositions);
+    
     const componentData = {
       ...currentTemplate.data,
       userData: userData,
-      sectionPositions: sectionPositions,
+      sectionPositions: filteredSectionPositions, // Chỉ truyền các section visible vào template
+      templateTitle: currentTemplate.title,
     };
 
     const containerWidth = 700;
@@ -550,14 +670,13 @@ const PageCreateCVAIContent = () => {
             transformOrigin: "top",
             transform: `scale(${scaleFactor})`,
           }}>
-          {/* TRUYỀN onLayoutChange VÀ scale ĐỂ KÍCH HOẠT DRAG DROP */}
           <TemplateComponent
             data={componentData}
             onSectionClick={handleSectionClick}
             onLayoutChange={handleLayoutChange}
             scale={scaleFactor}
             language={language}
-            cvUiTexts={cvUiTexts}
+            cvUiTexts={cvUiTexts} // [MỚI] Truyền cvUiTexts để template render đúng ngôn ngữ dịch
           />
         </div>
       </div>
@@ -585,6 +704,7 @@ const PageCreateCVAIContent = () => {
     setCvTitle(e.target.value);
   };
 
+  // --- HÀM DỊCH VỚI LOGIC CẬP NHẬT UI TEXTS MỚI ---
   const handleTranslateCV = async (targetLanguage: string) => {
     if (!userData || !currentTemplate) {
       alert(t.noDataToSave);
@@ -592,6 +712,7 @@ const PageCreateCVAIContent = () => {
     }
     setIsTranslating(true);
     try {
+      // Fallback UiTexts nếu chưa có
       const currentUiTexts = cvUiTexts || {
         personalInformation: t.personalInfo,
         contact: t.contact,
@@ -600,14 +721,20 @@ const PageCreateCVAIContent = () => {
         education: t.education,
         skills: t.skills,
       };
+      
       const translatedData = await translateCV(userData, targetLanguage, currentUiTexts);
+      
+      // Trích xuất userData và uiTexts từ response (cấu trúc có thể lồng nhau tùy API)
       const nextUserData = translatedData?.data?.data?.content?.userData ?? translatedData?.data?.content?.userData ?? translatedData?.data?.userData ?? translatedData?.content?.userData ?? translatedData?.userData;
       const nextUiTexts = translatedData?.data?.data?.content?.uiTexts ?? translatedData?.data?.content?.uiTexts ?? translatedData?.data?.uiTexts ?? translatedData?.content?.uiTexts ?? translatedData?.uiTexts;
       
       if (nextUserData) {
         updateUserData(nextUserData);
         setIsDirty(true);
+        
+        // [MỚI] Cập nhật state cvUiTexts để giao diện template đổi label
         if (nextUiTexts) setCvUiTexts(nextUiTexts);
+        
         setShowTranslateModal(false);
         alert(t.translateSuccess);
       } else {
@@ -767,23 +894,54 @@ const PageCreateCVAIContent = () => {
             {t.cvSections}
           </h2>
           <nav className="flex flex-col gap-1">
-            {sidebarSections.map((section) => (
-              <button
-                key={section.id}
-                onClick={() => {
-                  setActiveSection(section.id);
-                  setActivePopup(section.id);
-                }}
-                className={`w-full flex items-center gap-3 p-3 rounded-md font-medium text-left transition-colors
-                  ${
-                    activeSection === section.id
-                      ? "bg-blue-100 text-blue-700"
-                      : "text-slate-700 hover:bg-slate-100"
-                  }`}
-              >
-                {section.title}
-              </button>
-            ))}
+            {sidebarSections.map((section) => {
+              // Kiểm tra xem section đã được thêm vào CV chưa
+              let isInCV = true;
+              if (currentTemplate) {
+                const currentPositions = 
+                  userData.sectionPositions || 
+                  getSectionPositions(currentTemplate._id) ||
+                  currentTemplate.data?.sectionPositions ||
+                  getDefaultSectionPositions(currentTemplate.title);
+                
+                const sectionPosition = currentPositions[section.id];
+                isInCV = sectionPosition ? sectionPosition.place !== 0 : !section.isHidden;
+              }
+              
+              return (
+                <button
+                  key={section.id}
+                  onClick={(e) => handleSectionClick(section.id, e)}
+                  className={`w-full flex items-center gap-3 p-3 rounded-md font-medium text-left transition-colors
+                    ${
+                      activeSection === section.id
+                        ? "bg-blue-100 text-blue-700"
+                        : "text-slate-700 hover:bg-slate-100"
+                    }`}
+                  title={isInCV ? "Click để chỉnh sửa, click icon để ẩn khỏi CV" : "Click để thêm vào CV"}
+                >
+                  <span className="flex-1">{section.title}</span>
+                  <span 
+                    className={`section-toggle-icon flex items-center justify-center w-6 h-6 rounded-full transition-colors cursor-pointer ${
+                      isInCV 
+                        ? "bg-red-100 text-red-600 hover:bg-red-200" 
+                        : "bg-blue-100 text-blue-600 hover:bg-blue-200"
+                    }`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleSectionClick(section.id, e);
+                    }}
+                    title={isInCV ? "Ẩn khỏi CV" : "Thêm vào CV"}
+                  >
+                    {isInCV ? (
+                      <Minus size={14} strokeWidth={3} />
+                    ) : (
+                      <Plus size={14} strokeWidth={3} />
+                    )}
+                  </span>
+                </button>
+              );
+            })}
           </nav>
         </aside>
 
@@ -814,9 +972,9 @@ const PageCreateCVAIContent = () => {
             <button className="w-full flex items-center gap-3 p-3 rounded-md text-slate-700 hover:bg-slate-100 font-medium">
               <Printer size={20} /> {t.print}
             </button>
-            <button className="w-full flex items-center gap-3 p-3 rounded-md text-slate-700 hover:bg-slate-100 font-medium">
+            {/* <button className="w-full flex items-center gap-3 p-3 rounded-md text-slate-700 hover:bg-slate-100 font-medium">
               <Mail size={20} /> {t.email}
-            </button>
+            </button> */}
             <button
               className="w-full flex items-center gap-3 p-3 rounded-md text-slate-700 hover:bg-slate-100 font-medium"
               onClick={() => setShowTranslateModal(true)}
@@ -888,9 +1046,17 @@ const PageCreateCVAIContent = () => {
                                 : "Component not found"}
                             </div>
                           );
+                        // Lấy sectionPositions cho suggested template (đầy đủ, bao gồm place = 0)
+                        const suggestedSectionPositions = 
+                          getDefaultSectionPositions(suggestedTemplate.title);
+                        // Filter ra các section có place = 0 (ẩn) khi render template
+                        const filteredSuggestedPositions = filterVisibleSections(suggestedSectionPositions);
+                        
                         const componentData = {
                           ...(suggestedTemplate.data || {}),
                           userData,
+                          sectionPositions: filteredSuggestedPositions, // Chỉ truyền các section visible vào template
+                          templateTitle: suggestedTemplate.title,
                         };
                         const templateOriginalWidth = 794;
                         const templateOriginalHeight =
@@ -918,6 +1084,7 @@ const PageCreateCVAIContent = () => {
                               <TemplateComponent
                                 data={componentData}
                                 language={language}
+                                cvUiTexts={cvUiTexts} // [MỚI] Truyền cả vào preview modal
                               />
                             </div>
                           </div>
@@ -965,9 +1132,20 @@ const PageCreateCVAIContent = () => {
                           return (
                             <div className="aspect-[210/297] w-full bg-slate-100" />
                           );
+                        // Lấy sectionPositions cho current template (đầy đủ, bao gồm place = 0)
+                        const currentSectionPositions = 
+                          userData.sectionPositions || 
+                          getSectionPositions(currentTemplate._id) || 
+                          currentTemplate.data?.sectionPositions || 
+                          getDefaultSectionPositions(currentTemplate.title);
+                        // Filter ra các section có place = 0 (ẩn) khi render template
+                        const filteredCurrentPositions = filterVisibleSections(currentSectionPositions);
+                        
                         const componentData = {
                           ...(currentTemplate.data || {}),
                           userData,
+                          sectionPositions: filteredCurrentPositions, // Chỉ truyền các section visible vào template
+                          templateTitle: currentTemplate.title,
                         };
                         const templateOriginalWidth = 794;
                         const templateOriginalHeight =
@@ -995,6 +1173,7 @@ const PageCreateCVAIContent = () => {
                               <TemplateComponent
                                 data={componentData}
                                 language={language}
+                                cvUiTexts={cvUiTexts} // [MỚI] Truyền cả vào preview modal
                               />
                             </div>
                           </div>

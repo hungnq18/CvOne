@@ -21,6 +21,8 @@ import {
   Loader2,
   Mail,
   Printer,
+  Minus,
+  Plus,
 } from "lucide-react";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -40,6 +42,10 @@ const translations = {
     workExperience: "Work Experience",
     education: "Education",
     skills: "Skills",
+    certification: "Certification",
+    achievement: "Achievement",
+    hobby: "Hobby",
+    project: "Project",
     cvSections: "CV SECTIONS",
 
     // Header & Buttons
@@ -82,6 +88,10 @@ const translations = {
     workExperience: "Kinh nghiệm làm việc",
     education: "Học vấn",
     skills: "Kỹ năng",
+    certification: "Chứng chỉ",
+    achievement: "Thành tựu",
+    hobby: "Sở thích",
+    project: "Dự án",
     cvSections: "CÁC MỤC CỦA CV",
 
     // Header & Buttons
@@ -135,12 +145,16 @@ const PageCreateCVContent = () => {
 
   // BƯỚC 4: TẠO MẢNG sidebarSections ĐỘNG
   const sidebarSections = [
-    { id: "info", title: t.personalInfo },
-    { id: "contact", title: t.contact },
-    { id: "summary", title: t.careerObjective },
-    { id: "experience", title: t.workExperience },
-    { id: "education", title: t.education },
-    { id: "skills", title: t.skills },
+    { id: "info", title: t.personalInfo, isHidden: false },
+    { id: "contact", title: t.contact, isHidden: false },
+    { id: "summary", title: t.careerObjective, isHidden: false },
+    { id: "experience", title: t.workExperience, isHidden: false },
+    { id: "education", title: t.education, isHidden: false },
+    { id: "skills", title: t.skills, isHidden: false },
+    { id: "certification", title: t.certification, isHidden: true },
+    { id: "achievement", title: t.achievement, isHidden: true },
+    { id: "hobby", title: t.hobby, isHidden: true },
+    { id: "Project", title: t.project, isHidden: true },
   ];
 
   const searchParams = useSearchParams();
@@ -221,10 +235,42 @@ const PageCreateCVContent = () => {
     }
   }, [id, loadTemplate, updateUserData, userData, t]);
 
-  const handleTemplateSelect = (selectedTemplate: CVTemplate) => {
-    router.push(`/createCV?id=${selectedTemplate._id}`);
-    setCvTitle(t.cvTitleDefault(selectedTemplate.title));
+  const handleTemplateSelect = async (selectedTemplate: CVTemplate) => {
     setShowTemplatePopup(false);
+    if (currentTemplate?._id === selectedTemplate._id) return;
+
+    try {
+      setLoading(true);
+      const newTemplateData = await getCVTemplateById(selectedTemplate._id);
+
+      if (newTemplateData) {
+        loadTemplate(newTemplateData);
+        const correctPositions =
+          newTemplateData.data?.sectionPositions ||
+          getDefaultSectionPositions(newTemplateData.title);
+
+        updateSectionPositions(selectedTemplate._id, correctPositions);
+
+        const templateUserData =
+          newTemplateData.data?.userData && Object.keys(newTemplateData.data.userData).length > 0
+            ? newTemplateData.data.userData
+            : userData || {};
+
+        const newUserData = {
+          ...templateUserData,
+          sectionPositions: correctPositions,
+        };
+
+        updateUserData(newUserData);
+        setCvTitle(t.cvTitleDefault(newTemplateData.title));
+        setIsDirty(true);
+        router.push(`/createCV?id=${selectedTemplate._id}`, { scroll: false });
+      }
+    } catch (error) {
+      console.error("[handleTemplateSelect] Failed to change template:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleDataUpdate = (updatedData: any) => {
@@ -238,6 +284,109 @@ const PageCreateCVContent = () => {
       updateSectionPositions(currentTemplate._id, newPositions);
       setIsDirty(true); // Đánh dấu là đã thay đổi để hiện popup xác nhận khi thoát
     }
+  };
+
+  const calculatePlaceAndOrder = (
+    sectionId: string,
+    currentPositions: any,
+    templateTitle: string
+  ) => {
+    const defaultPositions = getDefaultSectionPositions(templateTitle);
+    const isMinimalist1 =
+      templateTitle === "The Vanguard" ||
+      templateTitle?.includes("Vanguard");
+    const isModern2 =
+      templateTitle === "The Modern" || templateTitle?.includes("Modern");
+
+    let targetPlace = 2;
+
+    if (isMinimalist1) {
+      if (sectionId === "hobby") {
+        targetPlace = 2;
+      } else if (
+        sectionId === "certification" ||
+        sectionId === "achievement" ||
+        sectionId === "Project"
+      ) {
+        targetPlace = 3;
+      }
+    } else if (isModern2) {
+      targetPlace = 3;
+    } else {
+      if (sectionId === "hobby") {
+        targetPlace = 1;
+      } else if (
+        sectionId === "certification" ||
+        sectionId === "achievement" ||
+        sectionId === "Project"
+      ) {
+        targetPlace = 2;
+      }
+    }
+
+    const targetPlaceSections = Object.entries(currentPositions)
+      .filter(([_, pos]: [string, any]) => pos.place === targetPlace)
+      .sort(([, a]: [string, any], [, b]: [string, any]) => a.order - b.order);
+
+    if (targetPlaceSections.length > 0) {
+      const lastOrder = (
+        targetPlaceSections[targetPlaceSections.length - 1][1] as any
+      ).order;
+      return { place: targetPlace, order: lastOrder + 1 };
+    }
+
+    return { place: targetPlace, order: 0 };
+  };
+
+  const handleSectionClick = (
+    sectionId: string,
+    event?: React.MouseEvent
+  ) => {
+    if (
+      event &&
+      (event.target as HTMLElement).closest(".section-toggle-icon")
+    ) {
+      event.stopPropagation();
+      if (!currentTemplate) return;
+
+      const currentPositions =
+        userData.sectionPositions ||
+        getSectionPositions(currentTemplate._id) ||
+        currentTemplate.data?.sectionPositions ||
+        getDefaultSectionPositions(currentTemplate.title);
+
+      const sectionPosition = currentPositions[sectionId];
+      const isInCV = sectionPosition && sectionPosition.place !== 0;
+
+      if (isInCV) {
+        const newPositions = {
+          ...currentPositions,
+          [sectionId]: { place: 0, order: 0 },
+        };
+        updateSectionPositions(currentTemplate._id, newPositions);
+        updateUserData({ ...userData, sectionPositions: newPositions });
+        setIsDirty(true);
+      } else {
+        const { place, order } = calculatePlaceAndOrder(
+          sectionId,
+          currentPositions,
+          currentTemplate.title
+        );
+        const newPositions = {
+          ...currentPositions,
+          [sectionId]: { place, order },
+        };
+        updateSectionPositions(currentTemplate._id, newPositions);
+        updateUserData({ ...userData, sectionPositions: newPositions });
+        setIsDirty(true);
+      }
+      return;
+    }
+
+    if (sectionId == "avatar") {
+      sectionId = "info";
+    }
+    setActivePopup(sectionId);
   };
 
   const getUserIdFromToken = (): string | null => {
@@ -351,13 +500,6 @@ const PageCreateCVContent = () => {
     if (isSuccess) {
       router.push("/myDocuments");
     }
-  };
-
-  const handleSectionClick = (sectionId: string) => {
-    if (sectionId == "avatar") {
-      sectionId = "info";
-    }
-    setActivePopup(sectionId);
   };
 
   const renderCVForPDF = () => {
@@ -487,6 +629,7 @@ const PageCreateCVContent = () => {
     const containerWidth = 700;
     const templateOriginalWidth = 794;
     const scaleFactor = containerWidth / templateOriginalWidth;
+    
     return (
       <div className="max-w-[1050px] origin-top pb-24" ref={previewRef}>
         <div
@@ -497,12 +640,13 @@ const PageCreateCVContent = () => {
             transform: `scale(${scaleFactor})`,
           }}
         >
-          {/* Truyền hàm handleLayoutChange vào template */}
+          {/* BƯỚC QUAN TRỌNG: Truyền scaleFactor vào component con */}
           <TemplateComponent
             data={componentData}
             onSectionClick={handleSectionClick}
             onLayoutChange={handleLayoutChange}
             language={language}
+            scale={scaleFactor} // <--- THÊM DÒNG NÀY
           />
         </div>
       </div>
@@ -652,23 +796,58 @@ const PageCreateCVContent = () => {
             {t.cvSections}
           </h2>
           <nav className="flex flex-col gap-1">
-            {sidebarSections.map((section) => (
-              <button
-                key={section.id}
-                onClick={() => {
-                  setActiveSection(section.id);
-                  setActivePopup(section.id);
-                }}
-                className={`w-full flex items-center gap-3 p-3 rounded-md font-medium text-left transition-colors
-                  ${
-                    activeSection === section.id
-                      ? "bg-blue-100 text-blue-700"
-                      : "text-slate-700 hover:bg-slate-100"
-                  }`}
-              >
-                {section.title}
-              </button>
-            ))}
+            {sidebarSections.map((section) => {
+              let isInCV = !section.isHidden;
+              if (currentTemplate) {
+                const currentPositions =
+                  userData.sectionPositions ||
+                  getSectionPositions(currentTemplate._id) ||
+                  currentTemplate.data?.sectionPositions ||
+                  getDefaultSectionPositions(currentTemplate.title);
+
+                const sectionPosition = currentPositions?.[section.id];
+                isInCV = sectionPosition
+                  ? sectionPosition.place !== 0
+                  : !section.isHidden;
+              }
+
+              return (
+                <button
+                  key={section.id}
+                  onClick={(e) => {
+                    handleSectionClick(section.id, e);
+                    setActiveSection(section.id);
+                  }}
+                  className={`w-full flex items-center gap-3 p-3 rounded-md font-medium text-left transition-colors
+                    ${
+                      activeSection === section.id
+                        ? "bg-blue-100 text-blue-700"
+                        : "text-slate-700 hover:bg-slate-100"
+                    }`}
+                  title={
+                    isInCV
+                      ? "Click để chỉnh sửa, click icon để ẩn khỏi CV"
+                      : "Click để thêm vào CV"
+                  }
+                >
+                  <span className="flex-1">{section.title}</span>
+                  <span
+                    className={`section-toggle-icon flex items-center justify-center w-6 h-6 rounded-full transition-colors cursor-pointer ${
+                      isInCV
+                        ? "bg-red-100 text-red-600 hover:bg-red-200"
+                        : "bg-blue-100 text-blue-600 hover:bg-blue-200"
+                    }`}
+                    onClick={(e) => handleSectionClick(section.id, e)}
+                  >
+                    {isInCV ? (
+                      <Minus size={14} strokeWidth={3} />
+                    ) : (
+                      <Plus size={14} strokeWidth={3} />
+                    )}
+                  </span>
+                </button>
+              );
+            })}
           </nav>
         </aside>
 
@@ -687,9 +866,9 @@ const PageCreateCVContent = () => {
             <button className="w-full flex items-center gap-3 p-3 rounded-md text-slate-700 hover:bg-slate-100 font-medium">
               <Printer size={20} /> {t.print}
             </button>
-            <button className="w-full flex items-center gap-3 p-3 rounded-md text-slate-700 hover:bg-slate-100 font-medium">
+            {/* <button className="w-full flex items-center gap-3 p-3 rounded-md text-slate-700 hover:bg-slate-100 font-medium">
               <Mail size={20} /> {t.email}
-            </button>
+            </button> */}
           </div>
         </aside>
       </main>

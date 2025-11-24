@@ -75,6 +75,39 @@ const translations = {
       addButton: "Add",
       rating: "Rating",
     },
+    certificationPopup: {
+      title: "Edit Certifications",
+      entryLabel: "Certification",
+      credentialLabel: "Certification Name",
+      startDateLabel: "Start Date",
+      endDateLabel: "End Date",
+      addCertificationButton: "Add Certification",
+      removeButton: "Remove",
+    },
+    achievementPopup: {
+      title: "Edit Achievements",
+      fieldLabel: "Achievement",
+      placeholder: "e.g. Employee of the Quarter, Hackathon finalist…",
+      addAchievementButton: "Add Achievement",
+      removeButton: "Remove",
+    },
+    hobbyPopup: {
+      title: "Edit Hobbies",
+      fieldLabel: "Hobby",
+      placeholder: "e.g. Chess, Marathon, Reading Sci-fi",
+      addHobbyButton: "Add Hobby",
+      removeButton: "Remove",
+    },
+    projectPopup: {
+      title: "Edit Projects",
+      entryLabel: "Project",
+      nameLabel: "Project Name",
+      summaryLabel: "Summary / Description",
+      startDateLabel: "Start Date",
+      endDateLabel: "End Date",
+      addProjectButton: "Add Project",
+      removeButton: "Remove",
+    },
     unsavedChangesPopup: {
       title: "You have unsaved changes",
       message: "Do you want to save these changes before leaving?",
@@ -149,6 +182,39 @@ const translations = {
       addButton: "Thêm",
       rating: "Đánh giá",
     },
+    certificationPopup: {
+      title: "Sửa Chứng Chỉ",
+      entryLabel: "Chứng chỉ",
+      credentialLabel: "Tên chứng chỉ",
+      startDateLabel: "Ngày bắt đầu",
+      endDateLabel: "Ngày kết thúc",
+      addCertificationButton: "Thêm chứng chỉ",
+      removeButton: "Xóa",
+    },
+    achievementPopup: {
+      title: "Sửa Thành Tựu",
+      fieldLabel: "Thành tựu",
+      placeholder: "VD: Nhân viên xuất sắc quý, Top 5 Hackathon...",
+      addAchievementButton: "Thêm thành tựu",
+      removeButton: "Xóa",
+    },
+    hobbyPopup: {
+      title: "Sửa Sở Thích",
+      fieldLabel: "Sở thích",
+      placeholder: "VD: Đọc sách, Chạy bộ, Chơi cờ vua...",
+      addHobbyButton: "Thêm sở thích",
+      removeButton: "Xóa",
+    },
+    projectPopup: {
+      title: "Sửa Dự Án",
+      entryLabel: "Dự án",
+      nameLabel: "Tên dự án",
+      summaryLabel: "Mô tả / Tổng quan",
+      startDateLabel: "Ngày bắt đầu",
+      endDateLabel: "Ngày kết thúc",
+      addProjectButton: "Thêm dự án",
+      removeButton: "Xóa",
+    },
     unsavedChangesPopup: {
       title: "Bạn có thay đổi chưa được lưu",
       message: "Bạn có muốn lưu lại những thay đổi này trước khi rời đi không?",
@@ -156,6 +222,19 @@ const translations = {
       saveAndExit: "Lưu và thoát",
     },
   },
+};
+
+type CertificationItem = {
+  title: string;
+  startDate: string;
+  endDate: string;
+};
+
+type ProjectItem = {
+  title: string;
+  summary: string;
+  startDate: string;
+  endDate: string;
 };
 
 // --- COMPONENT POPUP CƠ SỞ ---
@@ -580,6 +659,343 @@ export const SkillsPopup: FC<{ onClose: () => void; initialData: any; onSave: (u
   );
 };
 
+export const CertificationPopup: FC<{ onClose: () => void; initialData: any; onSave: (updatedData: any) => void; }> = ({ onClose, initialData, onSave }) => {
+  const { language } = useLanguage();
+  const t = translations[language].certificationPopup;
+
+  const [certifications, setCertifications] = useState<CertificationItem[]>(
+    (initialData.certification || []).map((item: any) => ({
+      title: item?.title || "",
+      startDate: item?.startDate || "",
+      endDate: item?.endDate || "",
+    }))
+  );
+
+  const handleFieldChange = (index: number, field: "title" | "startDate" | "endDate", value: string) => {
+    setCertifications((prev: CertificationItem[]) =>
+      prev.map((item, idx) => (idx === index ? { ...item, [field]: value } : item))
+    );
+  };
+
+  const addCertification = () => {
+    setCertifications((prev: CertificationItem[]) => [...prev, { title: "", startDate: "", endDate: "" }]);
+  };
+
+  const removeCertification = (index: number) => {
+    setCertifications((prev: CertificationItem[]) => prev.filter((_, idx) => idx !== index));
+  };
+
+  const handleSaveChanges = () => {
+    const sanitized = certifications
+      .map((item) => ({
+        title: item.title?.trim() || "",
+        startDate: item.startDate || "",
+        endDate: item.endDate || "",
+      }))
+      .filter((item) => item.title);
+    onSave({ ...initialData, certification: sanitized });
+    onClose();
+  };
+
+  return (
+    <Modal title={t.title} onClose={onClose} onSave={handleSaveChanges}>
+      <div className="space-y-4 max-h-[400px] overflow-y-auto pr-1">
+        {certifications.map((cert: CertificationItem, index: number) => (
+          <div key={index} className="border border-slate-200 rounded-lg p-4 space-y-3">
+            <div className="flex items-center justify-between text-sm font-semibold text-slate-600">
+              <span>
+                {t.entryLabel} #{index + 1}
+              </span>
+              <button
+                type="button"
+                onClick={() => removeCertification(index)}
+                className="text-red-600 hover:underline"
+              >
+                {t.removeButton}
+              </button>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                {t.credentialLabel}
+              </label>
+              <input
+                type="text"
+                value={cert.title}
+                onChange={(e) => handleFieldChange(index, "title", e.target.value)}
+                className="w-full border rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  {t.startDateLabel}
+                </label>
+                <input
+                  type="date"
+                  value={cert.startDate ? cert.startDate.slice(0, 10) : ""}
+                  onChange={(e) => handleFieldChange(index, "startDate", e.target.value)}
+                  className="w-full border rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  {t.endDateLabel}
+                </label>
+                <input
+                  type="date"
+                  value={cert.endDate ? cert.endDate.slice(0, 10) : ""}
+                  onChange={(e) => handleFieldChange(index, "endDate", e.target.value)}
+                  className="w-full border rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <button
+        type="button"
+        onClick={addCertification}
+        className="mt-4 w-full flex items-center justify-center gap-2 bg-blue-50 text-blue-700 font-semibold py-2 px-4 rounded-md hover:bg-blue-100"
+      >
+        <PlusCircle size={18} />
+        {t.addCertificationButton}
+      </button>
+    </Modal>
+  );
+};
+
+export const AchievementPopup: FC<{ onClose: () => void; initialData: any; onSave: (updatedData: any) => void; }> = ({ onClose, initialData, onSave }) => {
+  const { language } = useLanguage();
+  const t = translations[language].achievementPopup;
+
+  const [achievements, setAchievements] = useState<string[]>([
+    ...(initialData.achievement || []),
+  ]);
+
+  const handleChange = (index: number, value: string) => {
+    setAchievements((prev: string[]) => prev.map((item, idx) => (idx === index ? value : item)));
+  };
+
+  const addAchievement = () => setAchievements((prev) => [...prev, ""]);
+
+  const removeAchievement = (index: number) =>
+    setAchievements((prev: string[]) => prev.filter((_, idx) => idx !== index));
+
+  const handleSaveChanges = () => {
+    const sanitized = achievements.map((item) => item.trim()).filter(Boolean);
+    onSave({ ...initialData, achievement: sanitized });
+    onClose();
+  };
+
+  return (
+    <Modal title={t.title} onClose={onClose} onSave={handleSaveChanges}>
+      <div className="space-y-4 max-h-[360px] overflow-y-auto pr-1">
+        {achievements.map((achievement: string, index: number) => (
+          <div key={index} className="flex items-start gap-3">
+            <textarea
+              className="flex-1 border rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              rows={2}
+              placeholder={t.placeholder}
+              value={achievement}
+              onChange={(e) => handleChange(index, e.target.value)}
+            />
+            <button
+              type="button"
+              onClick={() => removeAchievement(index)}
+              className="text-red-600 text-sm hover:underline mt-2"
+            >
+              {t.removeButton}
+            </button>
+          </div>
+        ))}
+      </div>
+      <button
+        type="button"
+        onClick={addAchievement}
+        className="mt-4 w-full flex items-center justify-center gap-2 bg-blue-50 text-blue-700 font-semibold py-2 px-4 rounded-md hover:bg-blue-100"
+      >
+        <PlusCircle size={18} />
+        {t.addAchievementButton}
+      </button>
+    </Modal>
+  );
+};
+
+export const HobbyPopup: FC<{ onClose: () => void; initialData: any; onSave: (updatedData: any) => void; }> = ({ onClose, initialData, onSave }) => {
+  const { language } = useLanguage();
+  const t = translations[language].hobbyPopup;
+
+  const [hobbies, setHobbies] = useState<string[]>([...(initialData.hobby || [])]);
+
+  const handleChange = (index: number, value: string) => {
+    setHobbies((prev: string[]) => prev.map((item, idx) => (idx === index ? value : item)));
+  };
+
+  const addHobby = () => setHobbies((prev) => [...prev, ""]);
+
+  const removeHobby = (index: number) =>
+    setHobbies((prev: string[]) => prev.filter((_, idx) => idx !== index));
+
+  const handleSaveChanges = () => {
+    const sanitized = hobbies.map((item) => item.trim()).filter(Boolean);
+    onSave({ ...initialData, hobby: sanitized });
+    onClose();
+  };
+
+  return (
+    <Modal title={t.title} onClose={onClose} onSave={handleSaveChanges}>
+      <div className="space-y-3 max-h-[320px] overflow-y-auto pr-1">
+        {hobbies.map((hobby: string, index: number) => (
+          <div key={index} className="flex items-center gap-3">
+            <input
+              type="text"
+              className="flex-1 border rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder={t.placeholder}
+              value={hobby}
+              onChange={(e) => handleChange(index, e.target.value)}
+            />
+            <button
+              type="button"
+              onClick={() => removeHobby(index)}
+              className="text-red-600 text-sm hover:underline"
+            >
+              {t.removeButton}
+            </button>
+          </div>
+        ))}
+      </div>
+      <button
+        type="button"
+        onClick={addHobby}
+        className="mt-4 w-full flex items-center justify-center gap-2 bg-blue-50 text-blue-700 font-semibold py-2 px-4 rounded-md hover:bg-blue-100"
+      >
+        <PlusCircle size={18} />
+        {t.addHobbyButton}
+      </button>
+    </Modal>
+  );
+};
+
+export const ProjectPopup: FC<{ onClose: () => void; initialData: any; onSave: (updatedData: any) => void; }> = ({ onClose, initialData, onSave }) => {
+  const { language } = useLanguage();
+  const t = translations[language].projectPopup;
+
+  const [projects, setProjects] = useState<ProjectItem[]>(
+    (initialData.Project || []).map((item: any) => ({
+      title: item?.title || item?.["title "] || "",
+      summary: item?.summary || "",
+      startDate: item?.startDate || "",
+      endDate: item?.endDate || "",
+    }))
+  );
+
+  const handleFieldChange = (
+    index: number,
+    field: "title" | "summary" | "startDate" | "endDate",
+    value: string
+  ) => {
+    setProjects((prev: ProjectItem[]) =>
+      prev.map((item, idx) => (idx === index ? { ...item, [field]: value } : item))
+    );
+  };
+
+  const addProject = () =>
+    setProjects((prev: ProjectItem[]) => [...prev, { title: "", summary: "", startDate: "", endDate: "" }]);
+
+  const removeProject = (index: number) =>
+    setProjects((prev: ProjectItem[]) => prev.filter((_, idx) => idx !== index));
+
+  const handleSaveChanges = () => {
+    const sanitized = projects
+      .map((item) => ({
+        title: item.title?.trim() || "",
+        summary: item.summary || "",
+        startDate: item.startDate || "",
+        endDate: item.endDate || "",
+      }))
+      .filter((item) => item.title);
+    onSave({ ...initialData, Project: sanitized });
+    onClose();
+  };
+
+  return (
+    <Modal title={t.title} onClose={onClose} onSave={handleSaveChanges}>
+      <div className="space-y-4 max-h-[420px] overflow-y-auto pr-1">
+        {projects.map((project: ProjectItem, index: number) => (
+          <div key={index} className="border border-slate-200 rounded-lg p-4 space-y-3">
+            <div className="flex items-center justify-between text-sm font-semibold text-slate-600">
+              <span>
+                {t.entryLabel} #{index + 1}
+              </span>
+              <button
+                type="button"
+                onClick={() => removeProject(index)}
+                className="text-red-600 hover:underline"
+              >
+                {t.removeButton}
+              </button>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                {t.nameLabel}
+              </label>
+              <input
+                type="text"
+                value={project.title}
+                onChange={(e) => handleFieldChange(index, "title", e.target.value)}
+                className="w-full border rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                {t.summaryLabel}
+              </label>
+              <textarea
+                rows={3}
+                value={project.summary}
+                onChange={(e) => handleFieldChange(index, "summary", e.target.value)}
+                className="w-full border rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  {t.startDateLabel}
+                </label>
+                <input
+                  type="date"
+                  value={project.startDate ? project.startDate.slice(0, 10) : ""}
+                  onChange={(e) => handleFieldChange(index, "startDate", e.target.value)}
+                  className="w-full border rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  {t.endDateLabel}
+                </label>
+                <input
+                  type="date"
+                  value={project.endDate ? project.endDate.slice(0, 10) : ""}
+                  onChange={(e) => handleFieldChange(index, "endDate", e.target.value)}
+                  className="w-full border rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <button
+        type="button"
+        onClick={addProject}
+        className="mt-4 w-full flex items-center justify-center gap-2 bg-blue-50 text-blue-700 font-semibold py-2 px-4 rounded-md hover:bg-blue-100"
+      >
+        <PlusCircle size={18} />
+        {t.addProjectButton}
+      </button>
+    </Modal>
+  );
+};
+
 export const UnsavedChangesPopup: FC<{ onSaveAndLeave: () => void; onLeaveWithoutSaving: () => void; onCancel: () => void; isSaving: boolean; }> = ({ onSaveAndLeave, onLeaveWithoutSaving, onCancel, isSaving }) => {
   const { language } = useLanguage();
   const t = translations[language].unsavedChangesPopup;
@@ -624,6 +1040,10 @@ export const CVEditorPopupsManager: FC<CVEditorPopupsProps> = ({ activePopup, on
     case "experience": return <ExperiencePopup onClose={onClose} initialData={userData} onSave={handleDataUpdate} />;
     case "education": return <EducationPopup onClose={onClose} initialData={userData} onSave={handleDataUpdate} />;
     case "skills": return <SkillsPopup onClose={onClose} initialData={userData} onSave={handleDataUpdate} />;
+    case "certification": return <CertificationPopup onClose={onClose} initialData={userData} onSave={handleDataUpdate} />;
+    case "achievement": return <AchievementPopup onClose={onClose} initialData={userData} onSave={handleDataUpdate} />;
+    case "hobby": return <HobbyPopup onClose={onClose} initialData={userData} onSave={handleDataUpdate} />;
+    case "Project": return <ProjectPopup onClose={onClose} initialData={userData} onSave={handleDataUpdate} />;
     case "confirmLeave": return <UnsavedChangesPopup isSaving={isSaving} onCancel={onClose} onLeaveWithoutSaving={onLeaveWithoutSaving} onSaveAndLeave={onSaveAndLeave} />;
     default: return null;
   }

@@ -27,6 +27,10 @@ const translations = {
     degree: "Degree:",
     defaultProfessional: "Professional",
     introLabel: "Introduction",
+    certificationLabel: "CERTIFICATION",
+    achievementLabel: "ACHIEVEMENT",
+    hobbyLabel: "HOBBY",
+    projectLabel: "PROJECT",
   },
   vi: {
     avatarLabel: "Ảnh đại diện",
@@ -46,6 +50,10 @@ const translations = {
     degree: "Bằng cấp:",
     defaultProfessional: "Chuyên gia",
     introLabel: "Giới thiệu",
+    certificationLabel: "CHỨNG CHỈ",
+    achievementLabel: "THÀNH TỰU",
+    hobbyLabel: "SỞ THÍCH",
+    projectLabel: "DỰ ÁN",
   },
 };
 
@@ -194,6 +202,10 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
     skills: "skills",
     experience: "experience",
     education: "education",
+    certification: "certification",
+    achievement: "achievement",
+    hobby: "hobby",
+    Project: "Project",
   };
 
   // --- Logic lấy vị trí ---
@@ -203,13 +215,23 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
 
   type SectionPosition = { place: number; order: number };
 
+  // QUAN TRỌNG: Chỉ lấy các sections có place > 0 (place = 0 nghĩa là ẩn/không hiển thị)
+  // Và chỉ lấy các sections thực sự được hỗ trợ trong template này
+  const supportedSections = ["avatar", "info", "contact", "summary", "skills", "experience", "education", "certification", "achievement", "hobby", "Project"];
+  
   const leftSections = Object.entries(sectionPositions)
-    .filter(([_, pos]) => (pos as SectionPosition).place === 1)
+    .filter(([key, pos]) => {
+      const place = (pos as SectionPosition).place;
+      return place === 1 && place > 0 && supportedSections.includes(key);
+    })
     .sort(([, a], [, b]) => (a as SectionPosition).order - (b as SectionPosition).order)
     .map(([key]) => key);
 
   const rightSections = Object.entries(sectionPositions)
-    .filter(([_, pos]) => (pos as SectionPosition).place === 2)
+    .filter(([key, pos]) => {
+      const place = (pos as SectionPosition).place;
+      return place === 2 && place > 0 && supportedSections.includes(key);
+    })
     .sort(([, a], [, b]) => (a as SectionPosition).order - (b as SectionPosition).order)
     .map(([key]) => key);
 
@@ -550,6 +572,150 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
                     <p className="text-sm font-medium text-green-700">
                       {edu.startDate?.slice(0, 4)} - {edu.endDate?.slice(0, 4)}
                     </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </HoverableWrapper>
+        );
+
+      case "certification":
+        return userData.certification?.length > 0 && (
+          <HoverableWrapper
+            key="certification"
+            label={cvUiTexts?.certification || t.certificationLabel}
+            sectionId={sectionMap.certification}
+            onClick={onSectionClick}
+            isPdfMode={isPdfMode}
+            dragHandleProps={dragHandleProps}
+            isDragging={isDragging}
+          >
+            <div className="px-8 lg:px-12 py-6 overflow-hidden">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-xl bg-green-700 flex items-center justify-center shrink-0">
+                  <Award className="w-5 h-5 text-white" />
+                </div>
+                <h2 className="text-xl lg:text-2xl font-bold tracking-tight text-gray-900 uppercase break-words">
+                  {cvUiTexts?.certification || t.certificationLabel}
+                </h2>
+              </div>
+              <div className="space-y-4">
+                {userData.certification.map((cert: any, i: number) => (
+                  <div key={i} className="bg-white p-5 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 border-l-4 border-lime-500 break-words overflow-hidden">
+                    <h3 className="text-lg font-bold text-gray-900 mb-2 break-words">{cert.title}</h3>
+                    <div className="flex flex-wrap gap-4 text-sm text-gray-600">
+                      {cert.startDate && (
+                        <span className="whitespace-nowrap">{new Date(cert.startDate).toLocaleDateString("vi-VN", { month: "2-digit", year: "numeric" })}</span>
+                      )}
+                      {cert.endDate ? (
+                        <span className="whitespace-nowrap">- {new Date(cert.endDate).toLocaleDateString("vi-VN", { month: "2-digit", year: "numeric" })}</span>
+                      ) : cert.startDate && (
+                        <span className="whitespace-nowrap">- {t.present}</span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </HoverableWrapper>
+        );
+
+      case "achievement":
+        return userData.achievement?.length > 0 && (
+          <HoverableWrapper
+            key="achievement"
+            label={cvUiTexts?.achievement || t.achievementLabel}
+            sectionId={sectionMap.achievement}
+            onClick={onSectionClick}
+            isPdfMode={isPdfMode}
+            dragHandleProps={dragHandleProps}
+            isDragging={isDragging}
+          >
+            <div className="px-8 lg:px-12 py-6 overflow-hidden">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-xl bg-green-700 flex items-center justify-center shrink-0">
+                  <Award className="w-5 h-5 text-white" />
+                </div>
+                <h2 className="text-xl lg:text-2xl font-bold tracking-tight text-gray-900 uppercase break-words">
+                  {cvUiTexts?.achievement || t.achievementLabel}
+                </h2>
+              </div>
+              <ul className="list-disc pl-4 space-y-2 text-sm leading-relaxed text-gray-700 break-words">
+                {userData.achievement.map((ach: string, i: number) => (
+                  <li key={i} className="break-words">{ach}</li>
+                ))}
+              </ul>
+            </div>
+          </HoverableWrapper>
+        );
+
+      case "hobby":
+        return userData.hobby?.length > 0 && (
+          <HoverableWrapper
+            key="hobby"
+            label={cvUiTexts?.hobby || t.hobbyLabel}
+            sectionId={sectionMap.hobby}
+            onClick={onSectionClick}
+            isPdfMode={isPdfMode}
+            dragHandleProps={dragHandleProps}
+            isDragging={isDragging}
+          >
+            <div className="px-4 lg:px-6">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="h-1 w-8 bg-green-700 rounded-full"></div>
+                <h2 className="text-lg font-bold tracking-wider text-green-900">
+                  {cvUiTexts?.hobby || t.hobbyLabel}
+                </h2>
+              </div>
+              <div className="bg-white/60 backdrop-blur-sm p-4 rounded-xl shadow-md">
+                <div className="flex flex-wrap gap-2">
+                  {userData.hobby.map((h: string, i: number) => (
+                    <span
+                      key={i}
+                      className="bg-green-200 text-black px-4 py-2 rounded-lg text-sm font-medium shadow-sm hover:bg-green-300 transition-colors"
+                    >
+                      {h}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </HoverableWrapper>
+        );
+
+      case "Project":
+        return userData.Project?.length > 0 && (
+          <HoverableWrapper
+            key="Project"
+            label={cvUiTexts?.project || t.projectLabel}
+            sectionId={sectionMap.Project}
+            onClick={onSectionClick}
+            isPdfMode={isPdfMode}
+            dragHandleProps={dragHandleProps}
+            isDragging={isDragging}
+          >
+            <div className="px-8 lg:px-12 py-6 overflow-hidden">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-xl bg-green-700 flex items-center justify-center shrink-0">
+                  <Briefcase className="w-5 h-5 text-white" />
+                </div>
+                <h2 className="text-xl lg:text-2xl font-bold tracking-tight text-gray-900 uppercase break-words">
+                  {cvUiTexts?.project || t.projectLabel}
+                </h2>
+              </div>
+              <div className="space-y-4">
+                {userData.Project.map((project: any, i: number) => (
+                  <div key={i} className="bg-white p-5 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 border-l-4 border-lime-500 break-words overflow-hidden">
+                    <h3 className="text-lg font-bold text-gray-900 mb-2 break-words">{project.title || project["title "]}</h3>
+                    {project.startDate && (
+                      <span className="text-sm text-gray-600 whitespace-nowrap">
+                        {new Date(project.startDate).toLocaleDateString("vi-VN", { month: "2-digit", year: "numeric" })}
+                        {project.endDate ? ` - ${new Date(project.endDate).toLocaleDateString("vi-VN", { month: "2-digit", year: "numeric" })}` : ` - ${t.present}`}
+                      </span>
+                    )}
+                    {project.summary && (
+                      <p className="text-sm text-gray-700 mt-2 break-words">{project.summary}</p>
+                    )}
                   </div>
                 ))}
               </div>

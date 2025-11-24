@@ -223,63 +223,76 @@ export function useRegisterForm(formType: "user" | "hr" = "user") {
     setIsLoading(true)
     setMessage("")
     setIsSuccess(false)
-
+  
     const { email, first_name, last_name, password, confirmPassword, phone_number, company_name, terms } = formData
-
+  
+    // Validate Email Format
     if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email!)) {
       setMessage(t.invalidEmail)
       setIsLoading(false)
       return
     }
-
+  
+    // Validate Password Match
     if (password !== confirmPassword) {
       setMessage(t.passwordMismatch)
       setIsLoading(false)
       return
     }
-
+  
     if (formType === "user") {
+      // Validate Required Fields for User
       if (!email || !first_name || !last_name || !password || !confirmPassword) {
         setMessage(t.requiredFields)
         setIsLoading(false)
         return
       }
+  
       try {
+        // 1. Gọi API đăng ký
         await register(first_name, email, password, last_name)
+  
+        // 2. Gửi email xác thực (Optional: nếu lỗi gửi mail vẫn cho qua để user đăng nhập rồi gửi lại sau)
         try {
           await verifyEmail(email)
-        } catch (err) {}
+        } catch (err) {
+          console.warn("Failed to auto-send verify email:", err)
+        }
+  
+        // 3. Navigate CHỈ KHI đăng ký thành công
+        router.push("verify-email")
+  
       } catch (error) {
         console.error("Registration error:", error)
+        // Hiển thị lỗi (Ví dụ: Email đã tồn tại)
         setMessage(error instanceof Error ? error.message : t.registerFailed)
       } finally {
+        // Dù thành công hay thất bại thì cũng tắt loading
         setIsLoading(false)
-        router.push("verify-email")
       }
+  
     } else if (formType === "hr") {
+      // Validate Required Fields for HR
       if (!email || !password || !confirmPassword || !first_name || !last_name || !phone_number || !company_name) {
         setMessage(t.requiredFields)
         setIsLoading(false)
         return
       }
-
+  
       if (!terms) {
         setMessage(t.agreeToTerms)
         setIsLoading(false)
         return
       }
+  
       try {
-        // The register function might need to be adapted for HR registration
-        // For now, this is a placeholder.
+        // Logic đăng ký cho HR (hiện tại đang là placeholder)
         console.log("Registering HR with data:", formData)
-        // await register(full_name, email, password, ...other fields)
-
-        // Simulating a successful registration for UI purposes
+        
+        // Giả lập thành công
         setMessage(t.registerSuccess)
         setIsSuccess(true)
-
-        // Optionally, send verification email
-        // await verifyEmail(email)
+  
       } catch (error) {
         console.error("Registration error:", error)
         setMessage(error instanceof Error ? error.message : t.registerFailed)

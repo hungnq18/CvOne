@@ -26,6 +26,10 @@ const translations = {
     major: "MAJOR:",
     degree: "Degree:",
     defaultProfessional: "Professional",
+    certificationLabel: "CERTIFICATION",
+    achievementLabel: "ACHIEVEMENT",
+    hobbyLabel: "HOBBY",
+    projectLabel: "PROJECT",
   },
   vi: {
     avatarLabel: "Ảnh đại diện",
@@ -44,6 +48,10 @@ const translations = {
     major: "CHUYÊN NGÀNH:",
     degree: "Bằng cấp:",
     defaultProfessional: "Chuyên gia",
+    certificationLabel: "CHỨNG CHỈ",
+    achievementLabel: "THÀNH TỰU",
+    hobbyLabel: "SỞ THÍCH",
+    projectLabel: "DỰ ÁN",
   },
 };
 
@@ -87,6 +95,7 @@ interface Modern2Props {
   onSectionClick?: (sectionId: string) => void;
   isPdfMode?: boolean;
   language?: string;
+  cvUiTexts?: any;
   onLayoutChange?: (newPositions: any) => void;
   scale?: number;
 }
@@ -193,13 +202,13 @@ const Section: React.FC<SectionProps> = ({
           <div className="mb-4 relative">
             <div className="flex items-center gap-3 mb-2">
               <div className="w-1.5 h-8 bg-gradient-to-b from-primary to-accent rounded-full"></div>
-              <h2 className="font-serif text-xl font-semibold text-foreground tracking-tight">
+              <h2 className="font-serif text-xl font-semibold text-foreground tracking-tight break-words">
                 {title}
               </h2>
             </div>
             <div className="ml-6 w-20 h-0.5 bg-gradient-to-r from-primary to-transparent"></div>
           </div>
-          <div className="text-card-foreground relative z-10">{children}</div>
+          <div className="text-card-foreground relative z-10 break-words overflow-hidden">{children}</div>
         </div>
       </HoverableWrapper>
     </div>
@@ -212,11 +221,28 @@ const Modern2: React.FC<Modern2Props> = ({
   onSectionClick,
   isPdfMode = false,
   language,
+  cvUiTexts,
   onLayoutChange,
   scale = 1,
 }) => {
   const lang = language || "vi";
-  const t = translations[lang as "en" | "vi"];
+  const defaultT = translations[lang as "en" | "vi"];
+  // Sử dụng cvUiTexts từ API nếu có, fallback về translations mặc định
+  const t = {
+    ...defaultT,
+    ...(cvUiTexts && {
+      personalInfoLabel: cvUiTexts.personalInformation || defaultT.personalInfoLabel,
+      careerObjectiveLabel: cvUiTexts.careerObjective || defaultT.careerObjectiveLabel,
+      skillsLabel: cvUiTexts.skills || defaultT.skillsLabel,
+      experienceLabel: cvUiTexts.workExperience || defaultT.experienceLabel,
+      educationLabel: cvUiTexts.education || defaultT.educationLabel,
+      phone: cvUiTexts.phone || defaultT.phone,
+      email: cvUiTexts.email || defaultT.email,
+      address: cvUiTexts.address || defaultT.address,
+      dateOfBirth: cvUiTexts.dateOfBirth || defaultT.dateOfBirth,
+      gender: cvUiTexts.gender || defaultT.gender,
+    }),
+  };
 
   const userData = data?.userData || {};
   const professionalTitle = userData.professional || t.defaultProfessional;
@@ -229,6 +255,10 @@ const Modern2: React.FC<Modern2Props> = ({
     experience: "experience",
     skills: "skills",
     avatar: "avatar",
+    certification: "certification",
+    achievement: "achievement",
+    hobby: "hobby",
+    Project: "Project",
   };
 
   // --- Tính toán vị trí hiển thị section ---
@@ -242,7 +272,15 @@ const Modern2: React.FC<Modern2Props> = ({
   // Hoặc nếu logic của bạn chia cột thì phải chia Droppable tương ứng.
   // Dựa trên code cũ, template này render từ trên xuống dưới -> 1 cột.
   
+  // QUAN TRỌNG: Chỉ lấy các sections có place > 0 (place = 0 nghĩa là ẩn/không hiển thị)
+  // Và chỉ lấy các sections thực sự được hỗ trợ trong template này
+  const supportedSections = ["info", "contact", "summary", "education", "experience", "skills", "certification", "achievement", "hobby", "Project"];
+  
   const sections = Object.entries(sectionPositions)
+    .filter(([key, pos]) => {
+      const posA = pos as SectionPosition;
+      return posA.place > 0 && supportedSections.includes(key);
+    })
     .sort(([, a], [, b]) => {
       const posA = a as SectionPosition;
       const posB = b as SectionPosition;
@@ -498,7 +536,7 @@ const Modern2: React.FC<Modern2Props> = ({
             <Section
               key="skills"
               title={t.skillsLabel}
-              sectionId={sectionMap.skills}
+              sectionId={sectionMap.certification}
               onSectionClick={onSectionClick}
               isPdfMode={isPdfMode}
               dragHandleProps={dragHandleProps}
@@ -529,6 +567,110 @@ const Modern2: React.FC<Modern2Props> = ({
                 })}
               </div>
             </Section>
+        );
+
+      case "certification":
+        return userData.certification?.length > 0 && (
+          <Section
+            key="certification"
+            title={cvUiTexts?.certification || t.certificationLabel}
+            sectionId={sectionMap.certification}
+            onSectionClick={onSectionClick}
+            isPdfMode={isPdfMode}
+            dragHandleProps={dragHandleProps}
+            isDragging={isDragging}
+          >
+            <div className="space-y-4">
+              {userData.certification.map((cert: any, i: number) => (
+                <div key={i} className="professional-card bg-slate-50 p-6 border-l-4 border-blue-500 break-words overflow-hidden">
+                  <h3 className="text-lg font-bold text-slate-800 mb-1 break-words">{cert.title}</h3>
+                  <div className="flex flex-wrap gap-4 text-sm text-slate-600 mt-2">
+                    {cert.startDate && (
+                      <span className="whitespace-nowrap">{new Date(cert.startDate).toLocaleDateString("vi-VN", { month: "2-digit", year: "numeric" })}</span>
+                    )}
+                    {cert.endDate ? (
+                      <span className="whitespace-nowrap">- {new Date(cert.endDate).toLocaleDateString("vi-VN", { month: "2-digit", year: "numeric" })}</span>
+                    ) : cert.startDate && (
+                      <span className="whitespace-nowrap">- {t.present}</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Section>
+        );
+
+      case "achievement":
+        return userData.achievement?.length > 0 && (
+          <Section
+            key="achievement"
+            title={cvUiTexts?.achievement || t.achievementLabel}
+            sectionId={sectionMap.achievement}
+            onSectionClick={onSectionClick}
+            isPdfMode={isPdfMode}
+            dragHandleProps={dragHandleProps}
+            isDragging={isDragging}
+          >
+            <ul className="space-y-2 text-base leading-relaxed break-words overflow-hidden">
+              {userData.achievement.map((ach: string, i: number) => (
+                <li key={i} className="flex gap-3">
+                  <span className="text-primary mt-1.5 shrink-0">•</span>
+                  <span className="text-foreground break-words">{ach}</span>
+                </li>
+              ))}
+            </ul>
+          </Section>
+        );
+
+      case "hobby":
+        return userData.hobby?.length > 0 && (
+          <Section
+            key="hobby"
+            title={cvUiTexts?.hobby || t.hobbyLabel}
+            sectionId={sectionMap.hobby}
+            onSectionClick={onSectionClick}
+            isPdfMode={isPdfMode}
+            dragHandleProps={dragHandleProps}
+            isDragging={isDragging}
+          >
+            <div className="flex flex-wrap gap-2">
+              {userData.hobby.map((h: string, i: number) => (
+                <span key={i} className="bg-slate-700 text-white px-4 py-2 rounded-full text-sm">
+                  {h}
+                </span>
+              ))}
+            </div>
+          </Section>
+        );
+
+      case "Project":
+        return userData.Project?.length > 0 && (
+          <Section
+            key="Project"
+            title={cvUiTexts?.project || t.projectLabel}
+            sectionId={sectionMap.Project}
+            onSectionClick={onSectionClick}
+            isPdfMode={isPdfMode}
+            dragHandleProps={dragHandleProps}
+            isDragging={isDragging}
+          >
+            <div className="space-y-4">
+              {userData.Project.map((project: any, i: number) => (
+                <div key={i} className="professional-card bg-slate-50 p-6 border-l-4 border-slate-700 break-words overflow-hidden">
+                  <h3 className="text-lg font-bold text-slate-800 mb-1 break-words">{project.title || project["title "]}</h3>
+                  {project.startDate && (
+                    <span className="text-sm text-slate-600 whitespace-nowrap">
+                      {new Date(project.startDate).toLocaleDateString("vi-VN", { month: "2-digit", year: "numeric" })}
+                      {project.endDate ? ` - ${new Date(project.endDate).toLocaleDateString("vi-VN", { month: "2-digit", year: "numeric" })}` : ` - ${t.present}`}
+                    </span>
+                  )}
+                  {project.summary && (
+                    <p className="text-sm text-slate-700 mt-2 break-words">{project.summary}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </Section>
         );
 
       default:

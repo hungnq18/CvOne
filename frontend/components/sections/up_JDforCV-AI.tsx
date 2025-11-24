@@ -3,9 +3,9 @@
 import { analyzeJD } from "@/api/cvapi";
 import { useCV } from "@/providers/cv-provider";
 import { useLanguage } from "@/providers/global_provider";
-import { FC, ReactNode, useState } from "react";
+import { FC, ReactNode, useEffect, useState } from "react";
 
-// --- ĐỐI TƯỢNG TRANSLATIONS ---
+// --- ĐỐI TƯỢNG TRANSLATIONS (GIỮ NGUYÊN) ---
 const translations = {
   en: {
     jdAnalysis: {
@@ -15,6 +15,7 @@ const translations = {
         placeholder: "Paste the job description, requirements, and responsibilities here.",
         buttonAnalyzing: "Analyzing...",
         buttonAnalyze: "Analyze Job Description with AI",
+        reAnalyze: "Re-analyze", // Thêm nút phân tích lại
       },
       alerts: {
         emptyDescription: "Please enter a job description before analyzing.",
@@ -54,6 +55,7 @@ const translations = {
         placeholder: "Dán nội dung mô tả công việc, yêu cầu và trách nhiệm vào đây.",
         buttonAnalyzing: "Đang phân tích...",
         buttonAnalyze: "Phân tích Mô tả công việc bằng AI",
+        reAnalyze: "Phân tích lại", // Thêm nút phân tích lại
       },
       alerts: {
         emptyDescription: "Vui lòng nhập mô tả công việc trước khi phân tích.",
@@ -89,7 +91,7 @@ const translations = {
 
 interface UpJdStepProps {}
 
-// --- CÁC COMPONENT CON ĐỂ HIỂN THỊ KẾT QUẢ ĐẸP HƠN ---
+// --- CÁC COMPONENT CON (GIỮ NGUYÊN) ---
 const AnalysisSection: FC<{ icon: string; title: string; children: ReactNode; }> = ({ icon, title, children }) => (
   <div className="mb-5">
     <h4 className="text-md font-semibold text-gray-800 mb-2 flex items-center">
@@ -106,9 +108,13 @@ const AnalysisList: FC<{ items: string[] }> = ({ items }) => (
   </ul>
 );
 
-// --- HÀM formatAnalysisResult ĐÃ ĐƯỢC NÂNG CẤP ĐỂ TRẢ VỀ JSX ---
 const formatAnalysisResult = (result: any, t_results: typeof translations.vi.jdAnalysis.results): ReactNode => {
   try {
+    // Check if result is empty object or null
+    if (!result || (typeof result === 'object' && Object.keys(result).length === 0)) {
+       return null;
+    }
+
     if (typeof result === 'string' || result.analysis || result.message) {
       return <div className="whitespace-pre-wrap">{result.analysis || result.message || result}</div>;
     }
@@ -145,14 +151,28 @@ const UpJdStep: React.FC<UpJdStepProps> = () => {
   const { language } = useLanguage();
   const t = translations[language].jdAnalysis;
 
-  const { jobDescription, setJobDescription, setJobAnalysis } = useCV();
+  // Lấy cả jobAnalysis từ context
+  const { jobDescription, setJobDescription, setJobAnalysis, jobAnalysis } = useCV();
 
   const [analysisResult, setAnalysisResult] = useState<ReactNode | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisError, setAnalysisError] = useState<string>("");
 
   const maxLength = 5000;
-  const currentLength = jobDescription.length;
+  const currentLength = jobDescription?.length || 0; // Safe check
+
+  // --- SỬA ĐỔI QUAN TRỌNG: Load kết quả cũ từ context khi component mount ---
+  useEffect(() => {
+    // Nếu trong context đã có kết quả phân tích (do người dùng đã làm bước này rồi quay lại)
+    // thì hiển thị luôn, không bắt người dùng phân tích lại.
+    if (jobAnalysis && Object.keys(jobAnalysis).length > 0) {
+      console.log("Found existing JD analysis in context:", jobAnalysis);
+      const formattedResult = formatAnalysisResult(jobAnalysis, t.results);
+      setAnalysisResult(formattedResult);
+    }
+  }, [jobAnalysis, t.results]); 
+  // Dependency là jobAnalysis để nếu context thay đổi bên ngoài thì UI cũng cập nhật theo
+
 
   const handleAnalyzeAI = async () => {
     if (!jobDescription.trim()) {
@@ -162,13 +182,20 @@ const UpJdStep: React.FC<UpJdStepProps> = () => {
 
     setIsAnalyzing(true);
     setAnalysisError("");
-    setAnalysisResult(null);
+    setAnalysisResult(null); // Reset UI tạm thời
 
     try {
+      console.log("Sending JD to API:", jobDescription);
       const result = await analyzeJD(jobDescription);
+      console.log("Received JD analysis result:", result);
+      
+      // 1. Lưu vào Global Context để các bước sau (SkillsForm) dùng được
       setJobAnalysis(result);
+
+      // 2. Hiển thị ra UI tại bước này
       const formattedResult = formatAnalysisResult(result, t.results);
       setAnalysisResult(formattedResult);
+
     } catch (error) {
       console.error("Error analyzing job description:", error);
       setAnalysisError(t.alerts.analysisError);
@@ -213,7 +240,7 @@ const UpJdStep: React.FC<UpJdStepProps> = () => {
                 : "bg-yellow-400 hover:bg-yellow-500 text-white"
             }`}
           >
-            {isAnalyzing ? t.ui.buttonAnalyzing : t.ui.buttonAnalyze}
+            {isAnalyzing ? t.ui.buttonAnalyzing : (analysisResult ? t.ui.reAnalyze : t.ui.buttonAnalyze)}
           </button>
           
           {analysisError && (
@@ -223,7 +250,7 @@ const UpJdStep: React.FC<UpJdStepProps> = () => {
           )}
           
           {analysisResult && (
-            <div className="w-full max-w-2xl min-h-[200px] border border-gray-200 rounded-lg bg-gray-50 p-6">
+            <div className="w-full max-w-2xl min-h-[200px] border border-gray-200 rounded-lg bg-gray-50 p-6 animate-in fade-in duration-300">
               <h3 className="text-xl font-bold text-gray-900 mb-4 border-b pb-2">{t.results.title}</h3>
               {analysisResult}
             </div>
