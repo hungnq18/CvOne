@@ -183,7 +183,8 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
     ...defaultT,
     ...(cvUiTexts && {
       contactLabel: cvUiTexts.contact || defaultT.contactLabel,
-      careerObjectiveLabel: cvUiTexts.careerObjective || defaultT.careerObjectiveLabel,
+      careerObjectiveLabel:
+        cvUiTexts.careerObjective || defaultT.careerObjectiveLabel,
       skillsLabel: cvUiTexts.skills || defaultT.skillsLabel,
       experienceLabel: cvUiTexts.workExperience || defaultT.experienceLabel,
       educationLabel: cvUiTexts.education || defaultT.educationLabel,

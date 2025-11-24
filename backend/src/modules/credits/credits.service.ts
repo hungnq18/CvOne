@@ -13,19 +13,19 @@ export class CreditsService {
   constructor(
     @InjectModel(Credit.name) private creditModel: Model<CreditDocument>,
 
-    private readonly voucherService: VouchersService,
-  ) { }
+    private readonly voucherService: VouchersService
+  ) {}
 
-  async createCredit(userId: string) {
+  async createCredit(userId: Types.ObjectId) {
     return await this.creditModel.create({
-      userId: new Types.ObjectId(userId),
+      userId,
     });
   }
   async updateToken(userId: string, token: number) {
     const credit = await this.creditModel.findOneAndUpdate(
       { userId: new Types.ObjectId(userId) },
       { $inc: { token: token } },
-      { new: true },
+      { new: true }
     );
     if (!credit) {
       throw new NotFoundException("Credit not found");
@@ -58,8 +58,8 @@ export class CreditsService {
     const startDate = new Date();
     const endDate = voucher.durationDays
       ? new Date(
-        startDate.getTime() + voucher.durationDays * 24 * 60 * 60 * 1000,
-      )
+          startDate.getTime() + voucher.durationDays * 24 * 60 * 60 * 1000
+        )
       : voucher.endDate;
 
     // Add to user's credit (or create if not exists)
@@ -74,7 +74,7 @@ export class CreditsService {
           },
         },
       },
-      { upsert: true },
+      { upsert: true }
     );
 
     return { message: "Voucher saved successfully" };
@@ -106,11 +106,131 @@ export class CreditsService {
     const credit = await this.creditModel.findOneAndUpdate(
       { userId: new Types.ObjectId(userId) },
       { $pull: { vouchers: { voucherId: new Types.ObjectId(voucherId) } } },
-      { new: true },
+      { new: true }
     );
     if (!credit) {
       throw new NotFoundException("Credit not found");
     }
     return credit;
+  }
+  async useToken(userId: string, token: number) {
+    const credit = await this.creditModel.findOneAndUpdate(
+      { userId: new Types.ObjectId(userId) },
+      { $inc: { token: -token } },
+      { new: true }
+    );
+    if (!credit) {
+      throw new NotFoundException("Credit not found");
+    }
+    return credit;
+  }
+  async updateUsageVoucher(
+    userId: string,
+    voucherId: string,
+    voucherType: string
+  ) {
+    const userObjId = new Types.ObjectId(userId);
+    const voucherObjId = new Types.ObjectId(voucherId);
+
+    // 1. Check user đã dùng voucher chưa
+    const existed = await this.creditModel.findOne({
+      userId: userObjId,
+      "usedVouchers.voucherId": voucherObjId,
+    });
+
+    if (existed) {
+      throw new BadRequestException("User already used this voucher");
+    }
+
+    const updateQuery: any = {
+      $addToSet: {
+        usedVouchers: {
+          voucherId: voucherObjId,
+          usedAt: new Date(),
+        },
+      },
+    };
+
+    // 2. Nếu voucher là saveable → phải pull khỏi credit.vouchers
+    if (voucherType === "saveable") {
+      updateQuery.$pull = { vouchers: { voucherId: voucherObjId } };
+    }
+
+    // 3. Update credit log
+    const credit = await this.creditModel.findOneAndUpdate(
+      { userId: userObjId },
+      updateQuery,
+      { new: true }
+    );
+
+    if (!credit) throw new NotFoundException("Credit not found");
+
+    return credit;
+  }
+
+  async hasUserUsedVoucher(
+    userId: string,
+    voucherId: string
+  ): Promise<boolean> {
+    const credit = await this.creditModel.findOne(
+      {
+        userId: new Types.ObjectId(userId),
+        usedVouchers: {
+          $elemMatch: { voucherId: new Types.ObjectId(voucherId) },
+        },
+      },
+      { _id: 1 } // chỉ lấy _id cho nhẹ
+    );
+
+    return !!credit; // true = đã dùng, false = chưa dùng
+  }
+
+  async useVoucherDirect(userId: string, voucherId: string) {
+    const used = await this.hasUserUsedVoucher(userId, voucherId);
+
+    if (used) {
+      throw new BadRequestException("User has already used this voucher");
+    }
+    // 1. Atomic increase usage count
+    await this.voucherService.incrementVoucherUsageAtomic(voucherId);
+
+    // 2. Save usage log
+    const updatedCredit = await this.creditModel.findOneAndUpdate(
+      { userId: userId },
+      {
+        $addToSet: {
+          usedVouchers: {
+            voucherId: voucherId,
+            usedAt: new Date(),
+          },
+        },
+      },
+      { new: true, upsert: true }
+    );
+
+    return updatedCredit;
+  }
+
+  async useVoucherSaveable(userId: string, voucherId: string) {
+    const used = await this.hasUserUsedVoucher(userId, voucherId);
+
+    if (used) {
+      throw new BadRequestException("User has already used this voucher");
+    }
+    await this.deleteVoucher(userId, voucherId);
+    const updatedCredit = await this.creditModel.findOneAndUpdate(
+      { userId: userId },
+      {
+        $addToSet: {
+          usedVouchers: {
+            voucherId: voucherId,
+            usedAt: new Date(),
+          },
+        },
+      },
+      { new: true, upsert: true }
+    );
+
+    return updatedCredit;
   }
 }

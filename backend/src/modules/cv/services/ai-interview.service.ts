@@ -1,7 +1,9 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import * as crypto from 'crypto';
 import { Model, Types } from 'mongoose';
 import { AiInterviewSession } from '../schemas/ai-interview.schema';
+import { InterviewQuestionPool } from '../schemas/interview-question-pool.schema';
 import { JobAnalysisService } from './job-analysis.service';
 import { OpenaiApiService } from './openai-api.service';
 
@@ -31,6 +33,8 @@ export class AiInterviewService {
   constructor(
     @InjectModel(AiInterviewSession.name)
     private aiInterviewSessionModel: Model<AiInterviewSession>,
+    @InjectModel(InterviewQuestionPool.name)
+    private interviewQuestionPoolModel: Model<InterviewQuestionPool>,
     private readonly openaiApiService: OpenaiApiService,
     private readonly jobAnalysisService: JobAnalysisService
   ) {}
@@ -46,6 +50,186 @@ export class AiInterviewService {
       cleanResponse = cleanResponse.replace(/^```\s*/, '').replace(/\s*```$/, '');
     }
     return JSON.parse(cleanResponse);
+  }
+
+  /**
+   * Generate hash from job description for pool lookup (without difficulty)
+   */
+  private generateJobDescriptionHash(jobDescription: string): string {
+    const normalized = jobDescription.toLowerCase().trim().replace(/\s+/g, ' ');
+    return crypto.createHash('sha256').update(normalized).digest('hex');
+  }
+
+  /**
+   * Generate hash with difficulty for pool lookup
+   */
+  private generatePoolHash(jobDescription: string, difficulty: 'easy' | 'medium' | 'hard'): string {
+    const baseHash = this.generateJobDescriptionHash(jobDescription);
+    return crypto.createHash('sha256').update(`${baseHash}_${difficulty}`).digest('hex');
+  }
+
+  /**
+   * Check pool for existing questions (check all difficulty levels)
+   * Returns pool and difficulty if found, null otherwise
+   */
+  async findExistingPool(
+    jobDescription: string,
+    numberOfQuestions: number
+  ): Promise<{ pool: InterviewQuestionPool; difficulty: 'easy' | 'medium' | 'hard' } | null> {
+    // Try to find existing pool with any difficulty level
+    const difficulties: ('easy' | 'medium' | 'hard')[] = ['easy', 'medium', 'hard'];
+    
+    for (const difficulty of difficulties) {
+      const hash = this.generatePoolHash(jobDescription, difficulty);
+      const pool = await this.interviewQuestionPoolModel.findOne({ 
+        jobDescriptionHash: hash,
+        difficulty 
+      });
+
+      if (pool && pool.questions.length >= numberOfQuestions) {
+        this.logger.log(`Found existing pool with ${pool.questions.length} questions (difficulty: ${difficulty})`);
+        return { pool, difficulty };
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Get questions from pool or generate new ones and save to pool
+   * Tối ưu: Check pool trước, chỉ determine difficulty khi không có pool
+   */
+  async getOrGenerateQuestions(
+    jobDescription: string,
+    numberOfQuestions: number,
+    jobTitle?: string,
+    companyName?: string
+  ): Promise<{ questions: InterviewQuestion[]; difficulty: 'easy' | 'medium' | 'hard' }> {
+    // Bước 1: Check pool trước (không tốn token)
+    const existingPool = await this.findExistingPool(jobDescription, numberOfQuestions);
+    
+    if (existingPool) {
+      // Có pool rồi - dùng luôn, không cần gọi AI
+      const { pool, difficulty } = existingPool;
+      
+      // Update usage stats
+      pool.usageCount += 1;
+      pool.lastUsedAt = new Date();
+      await pool.save();
+
+      // Return requested number of questions
+      const questions = pool.questions.slice(0, numberOfQuestions).map(q => ({
+        id: q.id,
+        question: q.question,
+        category: q.category,
+        difficulty: q.difficulty,
+        tips: q.tips || [],
+        expectedAnswer: q.expectedAnswer
+      }));
+
+      this.logger.log(`✅ Using cached questions from pool (difficulty: ${difficulty}, saved ${pool.usageCount} tokens)`);
+      return { questions, difficulty };
+    }
+
+    // Bước 2: Không có pool - phải generate mới (tốn token)
+    this.logger.log(`⚠️ No pool found, generating new questions (will cost tokens)`);
+    
+    // Determine difficulty (tốn token lần đầu)
+    const difficulty = await this.determineDifficulty(jobDescription);
+    
+    // Double-check pool sau khi determine difficulty (có thể request khác đã tạo)
+    const doubleCheckPool = await this.findExistingPool(jobDescription, numberOfQuestions);
+    if (doubleCheckPool) {
+      this.logger.log(`✅ Pool found after difficulty determination (race condition handled)`);
+      const { pool, difficulty: foundDifficulty } = doubleCheckPool;
+      pool.usageCount += 1;
+      pool.lastUsedAt = new Date();
+      await pool.save();
+      
+      const questions = pool.questions.slice(0, numberOfQuestions).map(q => ({
+        id: q.id,
+        question: q.question,
+        category: q.category,
+        difficulty: q.difficulty,
+        tips: q.tips || [],
+        expectedAnswer: q.expectedAnswer
+      }));
+      
+      return { questions, difficulty: foundDifficulty };
+    }
+    
+    // Generate questions (tốn token)
+    const questions = await this.generateInterviewQuestions(
+      jobDescription,
+      numberOfQuestions,
+      difficulty
+    );
+
+    // Save to pool với upsert để tránh duplicate key error (race condition)
+    const hash = this.generatePoolHash(jobDescription, difficulty);
+    
+    try {
+      // Sử dụng findOneAndUpdate với upsert để tránh duplicate key
+      const pool = await this.interviewQuestionPoolModel.findOneAndUpdate(
+        { jobDescriptionHash: hash, difficulty },
+        {
+          $setOnInsert: {
+            jobDescriptionHash: hash,
+            jobDescription,
+            jobTitle,
+            companyName,
+            difficulty,
+            questions: questions.map(q => ({
+              id: q.id,
+              question: q.question,
+              category: q.category,
+              difficulty: q.difficulty,
+              tips: q.tips || [],
+              expectedAnswer: q.expectedAnswer
+            })),
+            usageCount: 0,
+            lastUsedAt: new Date()
+          },
+          $inc: { usageCount: 1 },
+          $set: { lastUsedAt: new Date() }
+        },
+        { 
+          upsert: true, 
+          new: true,
+          setDefaultsOnInsert: true
+        }
+      );
+
+      this.logger.log(`💾 Saved ${questions.length} questions to pool (difficulty: ${difficulty})`);
+      return { questions, difficulty };
+    } catch (error) {
+      // Nếu vẫn bị duplicate (race condition), load pool đã có
+      if (error.code === 11000) {
+        this.logger.warn(`Duplicate key detected, loading existing pool`);
+        const existingPool = await this.interviewQuestionPoolModel.findOne({ 
+          jobDescriptionHash: hash,
+          difficulty 
+        });
+        
+        if (existingPool) {
+          existingPool.usageCount += 1;
+          existingPool.lastUsedAt = new Date();
+          await existingPool.save();
+          
+          const existingQuestions = existingPool.questions.slice(0, numberOfQuestions).map(q => ({
+            id: q.id,
+            question: q.question,
+            category: q.category,
+            difficulty: q.difficulty,
+            tips: q.tips || [],
+            expectedAnswer: q.expectedAnswer
+          }));
+          
+          return { questions: existingQuestions, difficulty };
+        }
+      }
+      throw error;
+    }
   }
 
   /**
@@ -103,6 +287,7 @@ Trả về JSON với format:
 
   /**
    * Tạo session phỏng vấn mới
+   * Tối ưu: Check pool trước, chỉ gọi AI khi không có pool
    */
   async createInterviewSession(
     userId: string,
@@ -112,14 +297,12 @@ Trả về JSON với format:
     companyName?: string
   ): Promise<AiInterviewSession> {
     try {
-      // Tự động xác định độ khó từ JD
-      const difficulty = await this.determineDifficulty(jobDescription);
-      
-      // Tạo câu hỏi phỏng vấn
-      const questions = await this.generateInterviewQuestions(
+      // Lấy câu hỏi từ pool hoặc generate mới (tự động check pool trước)
+      const { questions, difficulty } = await this.getOrGenerateQuestions(
         jobDescription,
         numberOfQuestions,
-        difficulty
+        jobTitle,
+        companyName
       );
 
       // Tạo session mới
@@ -138,12 +321,80 @@ Trả về JSON với format:
       });
 
       await session.save();
-      this.logger.log(`Created interview session ${session._id} for user ${userId} with difficulty: ${difficulty}`);
+      this.logger.log(`Created interview session ${session._id} for user ${userId} with difficulty: ${difficulty} (${questions.length} questions)`);
       
       return session;
     } catch (error) {
       this.logger.error(`Error creating interview session: ${error.message}`, error.stack);
       throw new Error('Failed to create interview session');
+    }
+  }
+
+  /**
+   * Pre-generate questions cho job description (dùng để tạo trước, không tốn token khi user dùng)
+   * Có thể gọi từ admin panel hoặc batch job
+   */
+  async preGenerateQuestions(
+    jobDescription: string,
+    numberOfQuestions: number = 10,
+    jobTitle?: string,
+    companyName?: string,
+    difficulty?: 'easy' | 'medium' | 'hard'
+  ): Promise<InterviewQuestionPool> {
+    try {
+      // Check xem đã có pool chưa
+      const existingPool = await this.findExistingPool(jobDescription, numberOfQuestions);
+      if (existingPool) {
+        this.logger.log(`Pool already exists for this job description`);
+        return existingPool.pool;
+      }
+
+      // Determine difficulty nếu chưa có
+      const finalDifficulty = difficulty || await this.determineDifficulty(jobDescription);
+      
+      // Generate questions
+      const questions = await this.generateInterviewQuestions(
+        jobDescription,
+        numberOfQuestions,
+        finalDifficulty
+      );
+
+      // Save to pool với upsert để tránh duplicate key error
+      const hash = this.generatePoolHash(jobDescription, finalDifficulty);
+
+      const pool = await this.interviewQuestionPoolModel.findOneAndUpdate(
+        { jobDescriptionHash: hash, difficulty: finalDifficulty },
+        {
+          $setOnInsert: {
+            jobDescriptionHash: hash,
+            jobDescription,
+            jobTitle,
+            companyName,
+            difficulty: finalDifficulty,
+            questions: questions.map(q => ({
+              id: q.id,
+              question: q.question,
+              category: q.category,
+              difficulty: q.difficulty,
+              tips: q.tips || [],
+              expectedAnswer: q.expectedAnswer
+            })),
+            usageCount: 0,
+            lastUsedAt: undefined
+          }
+        },
+        { 
+          upsert: true, 
+          new: true,
+          setDefaultsOnInsert: true
+        }
+      );
+
+      this.logger.log(`Pre-generated ${questions.length} questions for pool (difficulty: ${finalDifficulty})`);
+      return pool;
+    } catch (error) {
+      this.logger.error(`Error pre-generating questions: ${error.message}`, error.stack);
+      throw new Error('Failed to pre-generate questions');
     }
   }
 

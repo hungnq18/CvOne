@@ -1,22 +1,11 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-import OpenAI from "openai";
+import { OpenaiApiService } from "./openai-api.service";
 
 @Injectable()
 export class CvContentGenerationService {
   private readonly logger = new Logger(CvContentGenerationService.name);
-  private openai: OpenAI;
 
-  constructor(private configService: ConfigService) {
-    const apiKey = this.configService.get<string>("OPENAI_API_KEY");
-    if (!apiKey) {
-      this.logger.warn("OPENAI_API_KEY not found in environment variables");
-    }
-
-    this.openai = new OpenAI({
-      apiKey: apiKey,
-    });
-  }
+  constructor(private openaiApiService: OpenaiApiService) {}
 
   /**
    * Generate multiple professional summaries using OpenAI
@@ -24,7 +13,7 @@ export class CvContentGenerationService {
   async generateProfessionalSummary(
     userProfile: any,
     jobAnalysis: any,
-    additionalRequirements?: string,
+    additionalRequirements?: string
   ): Promise<string[]> {
     try {
       const prompt = `
@@ -60,7 +49,8 @@ Return only a JSON array of 3 summaries, e.g.:
 Do not include any explanation or markdown, only valid JSON.
 `;
 
-      const completion = await this.openai.chat.completions.create({
+      const openai = this.openaiApiService.getOpenAI();
+      const completion = await openai.chat.completions.create({
         model: "gpt-4o",
         messages: [
           {
@@ -79,6 +69,12 @@ Do not include any explanation or markdown, only valid JSON.
       if (!response) {
         throw new Error("No response from OpenAI");
       }
+      const usage = completion.usage || {
+        prompt_tokens: 0,
+        completion_tokens: 0,
+        total_tokens: 0,
+      };
+      console.log("Usage summary:", usage);
       // Remove markdown if present
       let cleanResponse = response.trim();
       if (cleanResponse.startsWith("```json")) {
@@ -96,17 +92,18 @@ Do not include any explanation or markdown, only valid JSON.
       if (Array.isArray(summaries) && summaries.length === 3) {
         return summaries;
       }
+
       // fallback: wrap single summary in array
       return [cleanResponse];
     } catch (error) {
       this.logger.error(
         `Error generating professional summary: ${error.message}`,
-        error.stack,
+        error.stack
       );
       // fallback: return 3 copies of fallback summary
       const fallback = this.generateFallbackSummary(
         userProfile,
-        jobAnalysis || {},
+        jobAnalysis || {}
       );
       return [fallback, fallback, fallback];
     }
@@ -117,7 +114,7 @@ Do not include any explanation or markdown, only valid JSON.
    */
   async generateWorkExperience(
     jobAnalysis: any,
-    experienceLevel: string,
+    experienceLevel: string
   ): Promise<
     Array<{
       title: string;
@@ -135,7 +132,7 @@ Do not include any explanation or markdown, only valid JSON.
             ? 3
             : 1;
       const startDate = new Date(
-        Date.now() - years * 365 * 24 * 60 * 60 * 1000,
+        Date.now() - years * 365 * 24 * 60 * 60 * 1000
       );
       const endDate = new Date();
 
@@ -170,7 +167,8 @@ Requirements:
 Return only valid JSON.
 `;
 
-      const completion = await this.openai.chat.completions.create({
+      const openai = this.openaiApiService.getOpenAI();
+      const completion = await openai.chat.completions.create({
         model: "gpt-4o",
         messages: [
           {
@@ -184,7 +182,12 @@ Return only valid JSON.
           },
         ],
       });
-
+      const usage = completion.usage || {
+        prompt_tokens: 0,
+        completion_tokens: 0,
+        total_tokens: 0,
+      };
+      console.log("Usage summary:", usage);
       const response = completion.choices[0]?.message?.content;
       if (!response) {
         throw new Error("No response from OpenAI");
@@ -200,19 +203,19 @@ Return only valid JSON.
     } catch (error) {
       this.logger.error(
         `Error generating work experience: ${error.message}`,
-        error.stack,
+        error.stack
       );
 
       // Check if it's a quota exceeded error
       if (error.message.includes("429") || error.message.includes("quota")) {
         this.logger.warn(
-          "OpenAI quota exceeded, using fallback work experience",
+          "OpenAI quota exceeded, using fallback work experience"
         );
       }
 
       return this.generateFallbackWorkExperience(
         jobAnalysis || {},
-        experienceLevel,
+        experienceLevel
       );
     }
   }
@@ -222,7 +225,7 @@ Return only valid JSON.
    */
   async generateSkillsSection(
     jobAnalysis: any,
-    userSkills?: Array<{ name: string; rating: number }>,
+    userSkills?: Array<{ name: string; rating: number }>
   ): Promise<Array<Array<{ name: string; rating: number }>>> {
     try {
       const existingSkills =
@@ -263,7 +266,8 @@ Return only a JSON array of 3 skills lists, e.g.:
 Do not include any explanation or markdown, only valid JSON.
 `;
 
-      const completion = await this.openai.chat.completions.create({
+      const openai = this.openaiApiService.getOpenAI();
+      const completion = await openai.chat.completions.create({
         model: "gpt-4o",
         messages: [
           {
@@ -282,6 +286,12 @@ Do not include any explanation or markdown, only valid JSON.
       if (!response) {
         throw new Error("No response from OpenAI");
       }
+      const usage = completion.usage || {
+        prompt_tokens: 0,
+        completion_tokens: 0,
+        total_tokens: 0,
+      };
+      console.log("Usage skills :", usage);
       // Remove markdown if present
       let cleanResponse = response.trim();
       if (cleanResponse.startsWith("```json")) {
@@ -306,12 +316,12 @@ Do not include any explanation or markdown, only valid JSON.
         // Filter and reassign rating if found in userSkills
         return list
           .filter((skillObj) =>
-            validSkills.includes(skillObj.name.toLowerCase()),
+            validSkills.includes(skillObj.name.toLowerCase())
           )
           .map((skillObj) => {
             if (userSkills) {
               const found = userSkills.find(
-                (s) => s.name.toLowerCase() === skillObj.name.toLowerCase(),
+                (s) => s.name.toLowerCase() === skillObj.name.toLowerCase()
               );
               if (found) {
                 return { ...skillObj, rating: found.rating };
@@ -323,12 +333,13 @@ Do not include any explanation or markdown, only valid JSON.
       if (Array.isArray(skillsLists) && skillsLists.length === 3) {
         return skillsLists.map(filterSkills);
       }
+
       // fallback: wrap single list in array
       return [filterSkills(skillsLists)];
     } catch (error) {
       this.logger.error(
         `Error generating skills section: ${error.message}`,
-        error.stack,
+        error.stack
       );
       // fallback: return 3 copies of fallback skills
       const fallback = this.generateFallbackSkills(jobAnalysis || {});
@@ -350,7 +361,7 @@ Do not include any explanation or markdown, only valid JSON.
 
   private generateFallbackWorkExperience(
     jobAnalysis: any,
-    experienceLevel: string,
+    experienceLevel: string
   ): Array<any> {
     const years =
       experienceLevel === "senior"
@@ -374,13 +385,14 @@ Do not include any explanation or markdown, only valid JSON.
   }
 
   private generateFallbackSkills(
-    jobAnalysis: any,
+    jobAnalysis: any
   ): Array<{ name: string; rating: number }> {
     const allSkills = [
       ...(jobAnalysis?.requiredSkills || []),
       ...(jobAnalysis?.technologies || []),
     ];
     const uniqueSkills = [...new Set(allSkills)];
+    console.log("uniqueSkills", uniqueSkills);
 
     return uniqueSkills.slice(0, 8).map((skill) => ({
       name: skill.charAt(0).toUpperCase() + skill.slice(1),
@@ -393,13 +405,13 @@ Do not include any explanation or markdown, only valid JSON.
   async generateCvContent(
     user: any,
     jobAnalysis: any,
-    additionalRequirements?: string,
+    additionalRequirements?: string
   ): Promise<any> {
     // Generate professional summary using OpenAI
     const summary = await this.generateProfessionalSummary(
       user,
       jobAnalysis,
-      additionalRequirements,
+      additionalRequirements
     );
 
     // Generate skills section using OpenAI
@@ -408,7 +420,7 @@ Do not include any explanation or markdown, only valid JSON.
     // Generate work experience using OpenAI
     const workHistory = await this.generateWorkExperience(
       jobAnalysis,
-      jobAnalysis.experienceLevel,
+      jobAnalysis.experienceLevel
     );
 
     // Generate education
@@ -467,7 +479,7 @@ Do not include any explanation or markdown, only valid JSON.
   async translateCvContent(
     content: any,
     uiTexts: any,
-    targetLanguage: string,
+    targetLanguage: string
   ): Promise<any> {
     try {
       const languageNote = targetLanguage
@@ -515,8 +527,9 @@ Clear, natural phrasing - no awkward machine translations
       `;
 
       // Gọi OpenAI song song cho cả 2 phần
+      const openai = this.openaiApiService.getOpenAI();
       const [contentResponse, uiTextResponse] = await Promise.all([
-        this.openai.chat.completions.create({
+        openai.chat.completions.create({
           model: "gpt-4o",
           messages: [
             {
@@ -529,7 +542,7 @@ Clear, natural phrasing - no awkward machine translations
           temperature: 0.2,
           max_tokens: 2000,
         }),
-        this.openai.chat.completions.create({
+        openai.chat.completions.create({
           model: "gpt-4o",
           messages: [
             {
@@ -558,6 +571,14 @@ Clear, natural phrasing - no awkward machine translations
         .trim();
 
       const translatedContent = JSON.parse(contentTranslated);
+      const contentTokens = contentResponse.usage?.total_tokens ?? 0;
+      const uiTextTokens = uiTextResponse.usage?.total_tokens ?? 0;
+
+      const totalTokens = contentTokens + uiTextTokens;
+
+      console.log("Content Tokens:", contentTokens);
+      console.log("UI Tokens:", uiTextTokens);
+      console.log("Total Tokens:", totalTokens);
 
       // ======= Xử lý phần uiTexts =======
       let uiTranslated = uiTextResponse.choices[0]?.message?.content?.trim();
@@ -578,12 +599,12 @@ Clear, natural phrasing - no awkward machine translations
           translatedUiTexts = parsed;
         } else {
           this.logger.warn(
-            "UI Texts translation is not object, fallback to empty object",
+            "UI Texts translation is not object, fallback to empty object"
           );
         }
       } catch {
         this.logger.warn(
-          "Invalid JSON returned for uiTexts, fallback to empty object",
+          "Invalid JSON returned for uiTexts, fallback to empty object"
         );
       }
 
@@ -597,7 +618,7 @@ Clear, natural phrasing - no awkward machine translations
     } catch (error) {
       this.logger.error(
         `Error translating CV content: ${error.message}`,
-        error.stack,
+        error.stack
       );
       throw new Error(`Translate failed: ${error.message}`);
     }

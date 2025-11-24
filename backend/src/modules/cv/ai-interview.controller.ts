@@ -340,4 +340,48 @@ export class AiInterviewController {
       };
     }
   }
+
+  /**
+   * Pre-generate questions cho job description (admin/batch job)
+   * Tạo trước để không tốn token khi user thực hiện interview
+   */
+  @UseGuards(JwtAuthGuard)
+  @Post('pre-generate-questions')
+  async preGenerateQuestions(
+    @Body() body: {
+      jobDescription: string;
+      numberOfQuestions?: number;
+      jobTitle?: string;
+      companyName?: string;
+      difficulty?: 'easy' | 'medium' | 'hard';
+    }
+  ) {
+    try {
+      const pool = await this.aiInterviewService.preGenerateQuestions(
+        body.jobDescription,
+        body.numberOfQuestions || 10,
+        body.jobTitle,
+        body.companyName,
+        body.difficulty
+      );
+
+      return {
+        success: true,
+        data: {
+          poolId: String(pool._id),
+          jobDescription: pool.jobDescription,
+          difficulty: pool.difficulty,
+          questionsCount: pool.questions.length,
+          createdAt: pool.createdAt
+        },
+        message: `Pre-generated ${pool.questions.length} questions successfully`
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message,
+        message: 'Failed to pre-generate questions'
+      };
+    }
+  }
 }

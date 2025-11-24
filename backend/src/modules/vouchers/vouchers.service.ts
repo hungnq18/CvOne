@@ -17,8 +17,8 @@ import { UpdateVoucherSaveableDto } from "./dto/update-voucher-saveable.dto";
 @Injectable()
 export class VouchersService {
   constructor(
-    @InjectModel(Voucher.name) private voucherModel: Model<VoucherDocument>,
-  ) { }
+    @InjectModel(Voucher.name) private voucherModel: Model<VoucherDocument>
+  ) {}
 
   async createVoucherDirect(voucher: CreateVoucherDirectDto) {
     const newVoucher = {
@@ -65,9 +65,28 @@ export class VouchersService {
     return vouchers;
   }
 
+  async updateVoucher(id: string, updateVoucherDto: any) {
+    const voucher = await this.voucherModel.findById(id);
+    if (!voucher) {
+      throw new NotFoundException(`Voucher not found`);
+    }
+
+    const updateData: any = { ...updateVoucherDto };
+    if (updateVoucherDto.startDate) {
+      updateData.startDate = new Date(updateVoucherDto.startDate);
+    }
+    if (updateVoucherDto.endDate) {
+      updateData.endDate = new Date(updateVoucherDto.endDate);
+    }
+
+    Object.assign(voucher, updateData);
+    await voucher.save();
+    return voucher;
+  }
+
   async updateVoucherDirect(
     id: string,
-    updateVoucherDto: UpdateVoucherDirectDto,
+    updateVoucherDto: UpdateVoucherDirectDto
   ) {
     const voucher = await this.voucherModel.findById(id);
     if (!voucher) {
@@ -94,7 +113,7 @@ export class VouchersService {
   }
   async updateVoucherSaveable(
     id: string,
-    updateVoucherDto: UpdateVoucherSaveableDto,
+    updateVoucherDto: UpdateVoucherSaveableDto
   ) {
     const voucher = await this.voucherModel.findById(id);
     if (!voucher) {
@@ -127,12 +146,12 @@ export class VouchersService {
         $expr: { $lt: ["$usedCount", "$usageLimit"] }, // atomic check
       },
       { $inc: { usedCount: 1 } },
-      { new: true },
+      { new: true }
     );
 
     if (!updated) {
       throw new BadRequestException(
-        "Voucher has reached usage limit or not found",
+        "Voucher has reached usage limit or not found"
       );
     }
   }

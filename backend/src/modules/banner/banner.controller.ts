@@ -17,20 +17,20 @@ import { UpdateBannerDto } from "./dto/update-banner.dto";
 
 @Controller("banner")
 export class BannerController {
-  constructor(private readonly bannerService: BannerService) { }
+  constructor(private readonly bannerService: BannerService) {}
 
+  @Get()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles("mkt")
-  @Get()
   getAllBanners() {
     return this.bannerService.getAllBanners();
   }
 
+  @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles("mkt")
-  @Post()
-  createBanner(@Body() createBannerDto: CreateBannerDto) {
-    return this.bannerService.createBanner(createBannerDto);
+  createBanner(@Body() banner: CreateBannerDto) {
+    return this.bannerService.createBanner(banner);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -38,7 +38,7 @@ export class BannerController {
   @Patch(":id")
   updateBanner(
     @Param("id") id: string,
-    @Body() updateBannerDto: UpdateBannerDto,
+    @Body() updateBannerDto: UpdateBannerDto
   ) {
     return this.bannerService.updateBanner(id, updateBannerDto);
   }
@@ -48,5 +48,11 @@ export class BannerController {
   @Delete(":id")
   deleteBanner(@Param("id") id: string) {
     return this.bannerService.deleteBanner(id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get("for-user")
+  getBannerActive() {
+    return this.bannerService.getBannerActive();
   }
 }

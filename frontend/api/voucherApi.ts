@@ -17,6 +17,8 @@ export interface Voucher {
     startDate: string;
     endDate: string;
     status?: "active" | "expired" | "used"; // Assuming status is handled by frontend based on dates
+    isActive?: boolean;
+    usedCount?: number;
 }
 
 /**

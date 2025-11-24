@@ -5,6 +5,7 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
+  Matches,
   MinLength,
 } from "class-validator";
 
@@ -33,8 +34,11 @@ export class CreateAccountHRDto {
 
   @IsOptional()
   @Transform(({ value }) => value || undefined)
+  @Matches(/^\+?[0-9]{10,15}$/, {
+    message: "Phone number is not valid",
+  })
   @ApiProperty()
-  phone?: number;
+  phone?: string;
 
   @IsString()
   @IsOptional()

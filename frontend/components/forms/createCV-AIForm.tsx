@@ -47,7 +47,8 @@ const translations = {
   en: {
     // ... (giữ nguyên infoForm và contactForm)
     infoForm: {
-      uploadErrorPreset: "Image upload failed. Please check the preset configuration.",
+      uploadErrorPreset:
+        "Image upload failed. Please check the preset configuration.",
       uploadErrorGeneral: "An error occurred while uploading the image.",
       title: "Basic Information",
       avatarLabel: "Avatar",
@@ -120,7 +121,8 @@ const translations = {
   vi: {
      // ... (giữ nguyên infoForm và contactForm)
     infoForm: {
-      uploadErrorPreset: "Tải ảnh lên thất bại. Vui lòng kiểm tra lại cấu hình preset.",
+      uploadErrorPreset:
+        "Tải ảnh lên thất bại. Vui lòng kiểm tra lại cấu hình preset.",
       uploadErrorGeneral: "Có lỗi xảy ra khi tải ảnh lên.",
       title: "Thông tin cơ bản",
       avatarLabel: "Ảnh Đại Diện",
@@ -213,11 +215,17 @@ export const InfoForm: FC<FormProps> = ({ data, onUpdate }) => {
     setIsUploading(true);
     const formData = new FormData();
     formData.append("file", file);
-    formData.append("upload_preset", process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET!);
+    formData.append(
+      "upload_preset",
+      process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET!
+    );
     const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
     const uploadUrl = `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`;
     try {
-      const response = await fetch(uploadUrl, { method: "POST", body: formData });
+      const response = await fetch(uploadUrl, {
+        method: "POST",
+        body: formData,
+      });
       if (!response.ok) {
         throw new Error(t.uploadErrorPreset);
       }
@@ -235,12 +243,32 @@ export const InfoForm: FC<FormProps> = ({ data, onUpdate }) => {
     <div className="space-y-6">
       <h3 className="text-lg font-semibold text-gray-800">{t.title}</h3>
       <div className="mb-4">
-        <label className="block text-gray-700 text-sm font-bold mb-2">{t.avatarLabel}</label>
+        <label className="block text-gray-700 text-sm font-bold mb-2">
+          {t.avatarLabel}
+        </label>
         <div className="flex items-center gap-4 mt-1">
-          {data.avatar && (<img src={data.avatar} alt="Avatar Preview" className="w-20 h-20 rounded-full object-cover border-2 border-gray-200"/>)}
+          {data.avatar && (
+            <img
+              src={data.avatar}
+              alt="Avatar Preview"
+              className="w-20 h-20 rounded-full object-cover border-2 border-gray-200"
+            />
+          )}
           <div className="relative">
-            <input type="file" id="avatar-upload" accept="image/png, image/jpeg, image/jpg" onChange={handleAvatarUpload} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" disabled={isUploading} />
-            <button type="button" className="bg-blue-500 text-white font-bold py-2 px-4 rounded-md hover:bg-blue-600 disabled:bg-gray-400 transition-colors" disabled={isUploading} onClick={() => document.getElementById("avatar-upload")?.click()}>
+            <input
+              type="file"
+              id="avatar-upload"
+              accept="image/png, image/jpeg, image/jpg"
+              onChange={handleAvatarUpload}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              disabled={isUploading}
+            />
+            <button
+              type="button"
+              className="bg-blue-500 text-white font-bold py-2 px-4 rounded-md hover:bg-blue-600 disabled:bg-gray-400 transition-colors"
+              disabled={isUploading}
+              onClick={() => document.getElementById("avatar-upload")?.click()}
+            >
               {isUploading ? t.uploading : t.chooseImage}
             </button>
           </div>
@@ -248,17 +276,50 @@ export const InfoForm: FC<FormProps> = ({ data, onUpdate }) => {
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">{t.firstNameLabel}</label>
-          <input type="text" id="firstName" value={data?.firstName || ""} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"/>
+          <label
+            htmlFor="firstName"
+            className="block text-sm font-medium text-gray-700"
+          >
+            {t.firstNameLabel}
+          </label>
+          <input
+            type="text"
+            id="firstName"
+            value={data?.firstName || ""}
+            onChange={handleChange}
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+          />
         </div>
         <div>
-          <label htmlFor="lastName" className="block text-sm font-medium text-gray-700">{t.lastNameLabel}</label>
-          <input type="text" id="lastName" value={data?.lastName || ""} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"/>
+          <label
+            htmlFor="lastName"
+            className="block text-sm font-medium text-gray-700"
+          >
+            {t.lastNameLabel}
+          </label>
+          <input
+            type="text"
+            id="lastName"
+            value={data?.lastName || ""}
+            onChange={handleChange}
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+          />
         </div>
       </div>
       <div>
-        <label htmlFor="professional" className="block text-sm font-medium text-gray-700">{t.professionLabel}</label>
-        <input type="text" id="professional" value={data?.professional || ""} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"/>
+        <label
+          htmlFor="professional"
+          className="block text-sm font-medium text-gray-700"
+        >
+          {t.professionLabel}
+        </label>
+        <input
+          type="text"
+          id="professional"
+          value={data?.professional || ""}
+          onChange={handleChange}
+          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+        />
       </div>
     </div>
   );
@@ -276,16 +337,49 @@ export const ContactForm: FC<FormProps> = ({ data, onUpdate }) => {
     <div className="space-y-6">
       <h3 className="text-lg font-semibold text-gray-800">{t.title}</h3>
       <div>
-        <label htmlFor="email" className="block text-sm font-medium text-gray-700">{t.emailLabel}</label>
-        <input type="email" id="email" placeholder={data?.email || ""} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"/>
+        <label
+          htmlFor="email"
+          className="block text-sm font-medium text-gray-700"
+        >
+          {t.emailLabel}
+        </label>
+        <input
+          type="email"
+          id="email"
+          placeholder={data?.email || ""}
+          onChange={handleChange}
+          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+        />
       </div>
       <div>
-        <label htmlFor="phone" className="block text-sm font-medium text-gray-700">{t.phoneLabel}</label>
-        <input type="tel" id="phone" placeholder={data?.phone || ""} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"/>
+        <label
+          htmlFor="phone"
+          className="block text-sm font-medium text-gray-700"
+        >
+          {t.phoneLabel}
+        </label>
+        <input
+          type="tel"
+          id="phone"
+          placeholder={data?.phone || ""}
+          onChange={handleChange}
+          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+        />
       </div>
       <div>
-        <label htmlFor="city" className="block text-sm font-medium text-gray-700">{t.addressLabel}</label>
-        <input type="text" id="city" placeholder={data?.city || ""} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"/>
+        <label
+          htmlFor="city"
+          className="block text-sm font-medium text-gray-700"
+        >
+          {t.addressLabel}
+        </label>
+        <input
+          type="text"
+          id="city"
+          placeholder={data?.city || ""}
+          onChange={handleChange}
+          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+        />
       </div>
     </div>
   );
@@ -295,7 +389,7 @@ export const ContactForm: FC<FormProps> = ({ data, onUpdate }) => {
 export const SummaryForm: FC<FormProps> = ({ data, onUpdate }) => {
   const { language } = useLanguage();
   const t = translations[language].summaryForm;
-  
+
   const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   // Thêm state để kiểm tra xem đã từng gọi AI chưa
@@ -348,11 +442,27 @@ export const SummaryForm: FC<FormProps> = ({ data, onUpdate }) => {
             aiSuggestions.map((item, idx) => {
               const isSelected = (data?.summary || "").trim() === item.trim();
               return (
-                <div key={idx} className="flex items-start gap-3 p-4 border border-blue-100 rounded-2xl bg-white shadow-sm min-h-[64px]">
-                  <button type="button" className={`flex items-center justify-center w-9 h-9 rounded-full text-xl font-bold mt-1 focus:outline-none transition-colors ${isSelected ? "bg-blue-500 text-white hover:bg-blue-600" : "bg-blue-900 text-white hover:bg-blue-700"}`} onClick={() => handleToggleSuggestion(item)} title={isSelected ? t.tooltipRemove : t.tooltipAdd}>
+                <div
+                  key={idx}
+                  className="flex items-start gap-3 p-4 border border-blue-100 rounded-2xl bg-white shadow-sm min-h-[64px]"
+                >
+                  <button
+                    type="button"
+                    className={`flex items-center justify-center w-9 h-9 rounded-full text-xl font-bold mt-1 focus:outline-none transition-colors ${
+                      isSelected
+                        ? "bg-blue-500 text-white hover:bg-blue-600"
+                        : "bg-blue-900 text-white hover:bg-blue-700"
+                    }`}
+                    onClick={() => handleToggleSuggestion(item)}
+                    title={isSelected ? t.tooltipRemove : t.tooltipAdd}
+                  >
                     {isSelected ? "-" : "+"}
                   </button>
-                  <div className="flex-1 text-[15px] leading-snug"><div className="text-gray-800 break-words whitespace-pre-line break-all">{item}</div></div>
+                  <div className="flex-1 text-[15px] leading-snug">
+                    <div className="text-gray-800 break-words whitespace-pre-line break-all">
+                      {item}
+                    </div>
+                  </div>
                 </div>
               );
             })
@@ -368,8 +478,25 @@ export const SummaryForm: FC<FormProps> = ({ data, onUpdate }) => {
         </div>
       </div>
       <div className="w-full md:w-1/2 flex flex-col">
-        <label htmlFor="summary" className="block text-sm font-medium text-gray-700 mb-2">{t.title}</label>
-        <textarea id="summary" placeholder={data?.summary || t.placeholder} onChange={(e) => onUpdate({ ...data, summary: e.target.value })} className="h-48 mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" rows={20} aria-placeholder={data?.summary || ""} value={typeof data.summary === "string" && data.summary.length > 0 ? data.summary : ""}></textarea>
+        <label
+          htmlFor="summary"
+          className="block text-sm font-medium text-gray-700 mb-2"
+        >
+          {t.title}
+        </label>
+        <textarea
+          id="summary"
+          placeholder={data?.summary || t.placeholder}
+          onChange={(e) => onUpdate({ ...data, summary: e.target.value })}
+          className="h-48 mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+          rows={20}
+          aria-placeholder={data?.summary || ""}
+          value={
+            typeof data.summary === "string" && data.summary.length > 0
+              ? data.summary
+              : ""
+          }
+        ></textarea>
       </div>
     </div>
   );
@@ -392,7 +519,13 @@ export const ExperienceForm: FC<FormProps> = ({ data, onUpdate }) => {
   };
 
   const handleAddNew = () => {
-    setCurrentItem({ title: "", company: "", startDate: "", endDate: "", description: "" });
+    setCurrentItem({
+      title: "",
+      company: "",
+      startDate: "",
+      endDate: "",
+      description: "",
+    });
     setEditingIndex(null);
     setIsEditing(true);
   };
@@ -405,11 +538,15 @@ export const ExperienceForm: FC<FormProps> = ({ data, onUpdate }) => {
 
   const handleDelete = (indexToDelete: number) => {
     if (window.confirm(t.deleteConfirm)) {
-      updateParent(experiences.filter((_: any, index: number) => index !== indexToDelete));
+      updateParent(
+        experiences.filter((_: any, index: number) => index !== indexToDelete)
+      );
     }
   };
 
-  const handleFormChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleFormChange = (
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     setCurrentItem({ ...currentItem, [e.target.name]: e.target.value });
   };
 
@@ -447,11 +584,57 @@ export const ExperienceForm: FC<FormProps> = ({ data, onUpdate }) => {
 
   return isEditing ? (
     <div className="space-y-4">
-      <div><label className="block text-sm font-medium text-gray-700">{t.positionLabel}</label><input type="text" name="title" value={currentItem.title} onChange={handleFormChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"/></div>
-      <div><label className="block text-sm font-medium text-gray-700">{t.companyLabel}</label><input type="text" name="company" value={currentItem.company} onChange={handleFormChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"/></div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700">
+          {t.positionLabel}
+        </label>
+        <input
+          type="text"
+          name="title"
+          value={currentItem.title}
+          onChange={handleFormChange}
+          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700">
+          {t.companyLabel}
+        </label>
+        <input
+          type="text"
+          name="company"
+          value={currentItem.company}
+          onChange={handleFormChange}
+          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+        />
+      </div>
       <div className="grid grid-cols-2 gap-4">
-        <div><label className="block text-sm font-medium text-gray-700">{t.startDateLabel}</label><input type="text" name="startDate" value={currentItem.startDate || ""} onChange={handleFormChange} placeholder={t.startDatePlaceholder} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"/></div>
-        <div><label className="block text-sm font-medium text-gray-700">{t.endDateLabel}</label><input type="text" name="endDate" value={currentItem.endDate || ""} onChange={handleFormChange} placeholder={t.endDatePlaceholder} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"/></div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700">
+            {t.startDateLabel}
+          </label>
+          <input
+            type="text"
+            name="startDate"
+            value={currentItem.startDate || ""}
+            onChange={handleFormChange}
+            placeholder={t.startDatePlaceholder}
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700">
+            {t.endDateLabel}
+          </label>
+          <input
+            type="text"
+            name="endDate"
+            value={currentItem.endDate || ""}
+            onChange={handleFormChange}
+            placeholder={t.endDatePlaceholder}
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+          />
+        </div>
       </div>
       <div>
         <div className="flex justify-between items-center mb-2">
@@ -471,19 +654,51 @@ export const ExperienceForm: FC<FormProps> = ({ data, onUpdate }) => {
         </div>
       </div>
       <div className="flex justify-end gap-2 mt-4">
-        <button onClick={() => setIsEditing(false)} className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md text-sm">{t.cancelButton}</button>
-        <button onClick={handleFormSubmit} className="bg-blue-500 text-white px-4 py-2 rounded-md text-sm">{editingIndex !== null ? t.saveButton : t.addButton}</button>
+        <button
+          onClick={() => setIsEditing(false)}
+          className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md text-sm"
+        >
+          {t.cancelButton}
+        </button>
+        <button
+          onClick={handleFormSubmit}
+          className="bg-blue-500 text-white px-4 py-2 rounded-md text-sm"
+        >
+          {editingIndex !== null ? t.saveButton : t.addButton}
+        </button>
       </div>
     </div>
   ) : (
     <div className="space-y-4">
       {experiences.map((exp: any, index: number) => (
-        <div key={index} className="p-3 border rounded-md bg-gray-50 flex justify-between items-center">
-          <div><p className="font-bold text-gray-800">{exp.title}</p><p className="text-sm text-gray-600">{exp.company}</p></div>
-          <div className="flex gap-2"><button onClick={() => handleEdit(index)} className="p-2 text-gray-500 hover:text-blue-600 hover:bg-gray-200 rounded-full"><Edit size={16} /></button><button onClick={() => handleDelete(index)} className="p-2 text-gray-500 hover:text-red-600 hover:bg-gray-200 rounded-full"><Trash2 size={16} /></button></div>
+        <div
+          key={index}
+          className="p-3 border rounded-md bg-gray-50 flex justify-between items-center"
+        >
+          <div>
+            <p className="font-bold text-gray-800">{exp.title}</p>
+            <p className="text-sm text-gray-600">{exp.company}</p>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => handleEdit(index)}
+              className="p-2 text-gray-500 hover:text-blue-600 hover:bg-gray-200 rounded-full"
+            >
+              <Edit size={16} />
+            </button>
+            <button
+              onClick={() => handleDelete(index)}
+              className="p-2 text-gray-500 hover:text-red-600 hover:bg-gray-200 rounded-full"
+            >
+              <Trash2 size={16} />
+            </button>
+          </div>
         </div>
       ))}
-      <button onClick={handleAddNew} className="w-full mt-4 flex items-center justify-center gap-2 bg-blue-50 text-blue-700 font-semibold py-2 px-4 rounded-md hover:bg-blue-100">
+      <button
+        onClick={handleAddNew}
+        className="w-full mt-4 flex items-center justify-center gap-2 bg-blue-50 text-blue-700 font-semibold py-2 px-4 rounded-md hover:bg-blue-100"
+      >
         <PlusCircle size={18} /> {t.addExperienceButton}
       </button>
     </div>
@@ -506,7 +721,13 @@ export const EducationForm: FC<FormProps> = ({ data, onUpdate }) => {
   };
 
   const handleAddNew = () => {
-    setCurrentItem({ institution: "", major: "", degree: "", startDate: "", endDate: "" });
+    setCurrentItem({
+      institution: "",
+      major: "",
+      degree: "",
+      startDate: "",
+      endDate: "",
+    });
     setEditingIndex(null);
     setIsEditing(true);
   };
@@ -519,10 +740,12 @@ export const EducationForm: FC<FormProps> = ({ data, onUpdate }) => {
 
   const handleDelete = (indexToDelete: number) => {
     if (window.confirm(t.deleteConfirm)) {
-      updateParent(educations.filter((_: any, index: number) => index !== indexToDelete));
+      updateParent(
+        educations.filter((_: any, index: number) => index !== indexToDelete)
+      );
     }
   };
-  
+
   const handleFormChange = (e: ChangeEvent<HTMLInputElement>) => {
     setCurrentItem({ ...currentItem, [e.target.name]: e.target.value });
   };
@@ -541,27 +764,114 @@ export const EducationForm: FC<FormProps> = ({ data, onUpdate }) => {
 
   return isEditing ? (
     <div className="space-y-4">
-      <div><label className="block text-sm font-medium text-gray-700">{t.institutionLabel}</label><input type="text" name="institution" value={currentItem.institution} onChange={handleFormChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"/></div>
-      <div><label className="block text-sm font-medium text-gray-700">{t.majorLabel}</label><input type="text" name="major" value={currentItem.major} onChange={handleFormChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"/></div>
-      <div><label className="block text-sm font-medium text-gray-700">{t.degreeLabel}</label><input type="text" name="degree" value={currentItem.degree} onChange={handleFormChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"/></div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700">
+          {t.institutionLabel}
+        </label>
+        <input
+          type="text"
+          name="institution"
+          value={currentItem.institution}
+          onChange={handleFormChange}
+          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700">
+          {t.majorLabel}
+        </label>
+        <input
+          type="text"
+          name="major"
+          value={currentItem.major}
+          onChange={handleFormChange}
+          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700">
+          {t.degreeLabel}
+        </label>
+        <input
+          type="text"
+          name="degree"
+          value={currentItem.degree}
+          onChange={handleFormChange}
+          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+        />
+      </div>
       <div className="grid grid-cols-2 gap-4">
-        <div><label className="block text-sm font-medium text-gray-700">{t.startDateLabel}</label><input type="text" name="startDate" value={currentItem.startDate} onChange={handleFormChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"/></div>
-        <div><label className="block text-sm font-medium text-gray-700">{t.endDateLabel}</label><input type="text" name="endDate" value={currentItem.endDate} onChange={handleFormChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"/></div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700">
+            {t.startDateLabel}
+          </label>
+          <input
+            type="text"
+            name="startDate"
+            value={currentItem.startDate}
+            onChange={handleFormChange}
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700">
+            {t.endDateLabel}
+          </label>
+          <input
+            type="text"
+            name="endDate"
+            value={currentItem.endDate}
+            onChange={handleFormChange}
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+          />
+        </div>
       </div>
       <div className="flex justify-end gap-2 mt-4">
-        <button onClick={() => setIsEditing(false)} className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md text-sm">{t.cancelButton}</button>
-        <button onClick={handleFormSubmit} className="bg-blue-500 text-white px-4 py-2 rounded-md text-sm">{editingIndex !== null ? t.saveButton : t.addButton}</button>
+        <button
+          onClick={() => setIsEditing(false)}
+          className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md text-sm"
+        >
+          {t.cancelButton}
+        </button>
+        <button
+          onClick={handleFormSubmit}
+          className="bg-blue-500 text-white px-4 py-2 rounded-md text-sm"
+        >
+          {editingIndex !== null ? t.saveButton : t.addButton}
+        </button>
       </div>
     </div>
   ) : (
     <div className="space-y-4">
       {educations.map((edu: any, index: number) => (
-        <div key={index} className="p-3 border rounded-md bg-gray-50 flex justify-between items-center">
-          <div><p className="font-bold text-gray-800">{edu.institution}</p><p className="text-sm text-gray-600">{edu.major}</p></div>
-          <div className="flex gap-2"><button onClick={() => handleEdit(index)} className="p-2 text-gray-500 hover:text-blue-600 hover:bg-gray-200 rounded-full"><Edit size={16} /></button><button onClick={() => handleDelete(index)} className="p-2 text-gray-500 hover:text-red-600 hover:bg-gray-200 rounded-full"><Trash2 size={16} /></button></div>
+        <div
+          key={index}
+          className="p-3 border rounded-md bg-gray-50 flex justify-between items-center"
+        >
+          <div>
+            <p className="font-bold text-gray-800">{edu.institution}</p>
+            <p className="text-sm text-gray-600">{edu.major}</p>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => handleEdit(index)}
+              className="p-2 text-gray-500 hover:text-blue-600 hover:bg-gray-200 rounded-full"
+            >
+              <Edit size={16} />
+            </button>
+            <button
+              onClick={() => handleDelete(index)}
+              className="p-2 text-gray-500 hover:text-red-600 hover:bg-gray-200 rounded-full"
+            >
+              <Trash2 size={16} />
+            </button>
+          </div>
         </div>
       ))}
-      <button onClick={handleAddNew} className="w-full mt-4 flex items-center justify-center gap-2 bg-blue-50 text-blue-700 font-semibold py-2 px-4 rounded-md hover:bg-blue-100">
+      <button
+        onClick={handleAddNew}
+        className="w-full mt-4 flex items-center justify-center gap-2 bg-blue-50 text-blue-700 font-semibold py-2 px-4 rounded-md hover:bg-blue-100"
+      >
         <PlusCircle size={18} /> {t.addEducationButton}
       </button>
     </div>
@@ -638,7 +948,9 @@ export const SkillsForm: FC<FormProps> = ({ data, onUpdate }) => {
   };
 
   const removeSkill = (indexToRemove: number) => {
-    const updated = skills.filter((_: any, index: number) => index !== indexToRemove);
+    const updated = skills.filter(
+      (_: any, index: number) => index !== indexToRemove
+    );
     setSkills(updated);
     onUpdate({ ...data, skills: updated });
   };
@@ -697,16 +1009,38 @@ export const SkillsForm: FC<FormProps> = ({ data, onUpdate }) => {
         </div>
       </div>
       <div className="w-full md:w-1/2 flex flex-col">
-        <div className="font-semibold text-gray-700 mb-2">{t.yourSkillsTitle}</div>
+        <div className="font-semibold text-gray-700 mb-2">
+          {t.yourSkillsTitle}
+        </div>
         <div className="flex gap-2 mb-4">
-          <input type="text" value={newSkill} onChange={(e) => setNewSkill(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addSkill()} className="flex-grow shadow-sm border rounded w-full py-2 px-3" placeholder={t.placeholder}/>
-          <button onClick={() => addSkill()} className="bg-blue-500 text-white font-semibold px-4 rounded-md hover:bg-blue-600">{t.addButton}</button>
+          <input
+            type="text"
+            value={newSkill}
+            onChange={(e) => setNewSkill(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && addSkill()}
+            className="flex-grow shadow-sm border rounded w-full py-2 px-3"
+            placeholder={t.placeholder}
+          />
+          <button
+            onClick={() => addSkill()}
+            className="bg-blue-500 text-white font-semibold px-4 rounded-md hover:bg-blue-600"
+          >
+            {t.addButton}
+          </button>
         </div>
         <div className="flex flex-wrap gap-2 mb-4">
           {skills.map((skill: any, index: number) => (
-            <div key={index} className="bg-blue-100 text-blue-800 text-sm font-medium px-3 py-1 rounded-full flex items-center gap-2">
+            <div
+              key={index}
+              className="bg-blue-100 text-blue-800 text-sm font-medium px-3 py-1 rounded-full flex items-center gap-2"
+            >
               {skill.name}
-              <button onClick={() => removeSkill(index)} className="hover:text-red-500"><X size={14} /></button>
+              <button
+                onClick={() => removeSkill(index)}
+                className="hover:text-red-500"
+              >
+                <X size={14} />
+              </button>
             </div>
           ))}
         </div>
@@ -721,12 +1055,41 @@ export const Step: FC<{ step: { id: number; name: string }; currentStep: number;
   return (
     <>
       <div className="flex items-center gap-x-3">
-        <div className="relative z-10 flex h-9 w-8 items-center justify-center" aria-hidden="true">
-          {status === "complete" ? (<div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600"><Check className="h-5 w-5 text-white" /></div>) : status === "active" ? (<div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-blue-500 bg-gray-800"><span className="h-2.5 w-2.5 rounded-full bg-blue-500" /></div>) : (<div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-gray-600 bg-gray-800" />)}
+        <div
+          className="relative z-10 flex h-9 w-8 items-center justify-center"
+          aria-hidden="true"
+        >
+          {status === "complete" ? (
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600">
+              <Check className="h-5 w-5 text-white" />
+            </div>
+          ) : status === "active" ? (
+            <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-blue-500 bg-gray-800">
+              <span className="h-2.5 w-2.5 rounded-full bg-blue-500" />
+            </div>
+          ) : (
+            <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-gray-600 bg-gray-800" />
+          )}
         </div>
-        <span className={`text-sm font-medium ${status === "active" ? "text-blue-400" : "text-gray-400"}`}>{step.name}</span>
+        <span
+          className={`text-sm font-medium ${
+            status === "active" ? "text-blue-400" : "text-gray-400"
+          }`}
+        >
+          {step.name}
+        </span>
       </div>
-      {!isLastStep && (<div className={`absolute left-[15px] top-9 h-full w-0.5 ${status === "complete" || status === "active" ? "bg-blue-600" : "bg-gray-600"}`} style={{ height: "calc(100% - 2.25rem)" }} aria-hidden="true" />)}
+      {!isLastStep && (
+        <div
+          className={`absolute left-[15px] top-9 h-full w-0.5 ${
+            status === "complete" || status === "active"
+              ? "bg-blue-600"
+              : "bg-gray-600"
+          }`}
+          style={{ height: "calc(100% - 2.25rem)" }}
+          aria-hidden="true"
+        />
+      )}
     </>
   );
 };

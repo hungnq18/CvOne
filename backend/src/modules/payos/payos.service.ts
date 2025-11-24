@@ -82,4 +82,23 @@ export class PayosService {
       throw new HttpException(error.response?.data || error.message, 500);
     }
   }
+
+  async cancelLinkPayment(orderCode: number, cancellationReason: string) {
+    try {
+      const res = await axios.post(
+        `${this.baseUrl}/${orderCode}/cancel`,
+        { cancellationReason },
+        {
+          headers: {
+            "x-client-id": this.clientId,
+            "x-api-key": this.apiKey,
+          },
+        }
+      );
+
+      return res.data;
+    } catch (error) {
+      throw new HttpException(error.response?.data || error.message, 500);
+    }
+  }
 }
