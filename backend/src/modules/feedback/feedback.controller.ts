@@ -1,8 +1,17 @@
 // form-feedback.controller.ts
-import { Controller, Post, Body, Get, Param } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Request,
+  UseGuards,
+} from "@nestjs/common";
 import { FormFeedbackService } from "./feedback.service";
 import { CreateFormFeedbackDto } from "./dto/create-feedback.dto";
 import { FormFeedback } from "./schemas/feedback.schema";
+import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 
 @Controller("feedback")
 export class FormFeedbackController {
@@ -10,6 +19,7 @@ export class FormFeedbackController {
 
   // Endpoint từ web hoặc Apps Script
   @Post("google-form")
+  @UseGuards(JwtAuthGuard)
   async createFromGoogleForm(
     @Body() createDto: CreateFormFeedbackDto,
   ): Promise<FormFeedback> {
@@ -22,6 +32,7 @@ export class FormFeedbackController {
   }
 
   @Get("feature/:feature")
+  @UseGuards(JwtAuthGuard)
   async findByFeature(
     @Param("feature") feature: string,
   ): Promise<FormFeedback[]> {

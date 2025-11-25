@@ -13,7 +13,7 @@ export class CreditsService {
   constructor(
     @InjectModel(Credit.name) private creditModel: Model<CreditDocument>,
 
-    private readonly voucherService: VouchersService
+    private readonly voucherService: VouchersService,
   ) {}
 
   async createCredit(userId: Types.ObjectId) {
@@ -25,7 +25,7 @@ export class CreditsService {
     const credit = await this.creditModel.findOneAndUpdate(
       { userId: new Types.ObjectId(userId) },
       { $inc: { token: token } },
-      { new: true }
+      { new: true },
     );
     if (!credit) {
       throw new NotFoundException("Credit not found");
@@ -58,7 +58,7 @@ export class CreditsService {
     const startDate = new Date();
     const endDate = voucher.durationDays
       ? new Date(
-          startDate.getTime() + voucher.durationDays * 24 * 60 * 60 * 1000
+          startDate.getTime() + voucher.durationDays * 24 * 60 * 60 * 1000,
         )
       : voucher.endDate;
 
@@ -74,7 +74,7 @@ export class CreditsService {
           },
         },
       },
-      { upsert: true }
+      { upsert: true },
     );
 
     return { message: "Voucher saved successfully" };
@@ -106,7 +106,7 @@ export class CreditsService {
     const credit = await this.creditModel.findOneAndUpdate(
       { userId: new Types.ObjectId(userId) },
       { $pull: { vouchers: { voucherId: new Types.ObjectId(voucherId) } } },
-      { new: true }
+      { new: true },
     );
     if (!credit) {
       throw new NotFoundException("Credit not found");
@@ -117,7 +117,7 @@ export class CreditsService {
     const credit = await this.creditModel.findOneAndUpdate(
       { userId: new Types.ObjectId(userId) },
       { $inc: { token: -token } },
-      { new: true }
+      { new: true },
     );
     if (!credit) {
       throw new NotFoundException("Credit not found");
@@ -127,7 +127,7 @@ export class CreditsService {
   async updateUsageVoucher(
     userId: string,
     voucherId: string,
-    voucherType: string
+    voucherType: string,
   ) {
     const userObjId = new Types.ObjectId(userId);
     const voucherObjId = new Types.ObjectId(voucherId);
@@ -160,7 +160,7 @@ export class CreditsService {
     const credit = await this.creditModel.findOneAndUpdate(
       { userId: userObjId },
       updateQuery,
-      { new: true }
+      { new: true },
     );
 
     if (!credit) throw new NotFoundException("Credit not found");
@@ -170,7 +170,7 @@ export class CreditsService {
 
   async hasUserUsedVoucher(
     userId: string,
-    voucherId: string
+    voucherId: string,
   ): Promise<boolean> {
     const credit = await this.creditModel.findOne(
       {
@@ -179,7 +179,7 @@ export class CreditsService {
           $elemMatch: { voucherId: new Types.ObjectId(voucherId) },
         },
       },
-      { _id: 1 } // chỉ lấy _id cho nhẹ
+      { _id: 1 }, // chỉ lấy _id cho nhẹ
     );
 
     return !!credit; // true = đã dùng, false = chưa dùng
@@ -205,7 +205,7 @@ export class CreditsService {
           },
         },
       },
-      { new: true, upsert: true }
+      { new: true, upsert: true },
     );
 
     return updatedCredit;
@@ -228,7 +228,7 @@ export class CreditsService {
           },
         },
       },
-      { new: true, upsert: true }
+      { new: true, upsert: true },
     );
 
     return updatedCredit;
@@ -236,14 +236,29 @@ export class CreditsService {
 
   async addVoucherForUserFeedback(userId: string) {
     const voucherId = "79b3ba37b477064174e2f107";
+
+    const startDate = new Date();
+    const endDate = new Date(startDate);
+    endDate.setMonth(endDate.getMonth() + 1); // +1 tháng
+
     const credit = await this.creditModel.findOneAndUpdate(
       { userId: new Types.ObjectId(userId) },
-      { $addToSet: { vouchers: { voucherId: new Types.ObjectId(voucherId) } } },
-      { new: true }
+      {
+        $addToSet: {
+          vouchers: {
+            voucherId: new Types.ObjectId(voucherId),
+            startDate,
+            endDate,
+          },
+        },
+      },
+      { new: true },
     );
+
     if (!credit) {
       throw new NotFoundException("Credit not found");
     }
+
     return credit;
   }
 }
