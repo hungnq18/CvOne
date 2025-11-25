@@ -21,12 +21,12 @@ import { ApplyJobModule } from "./modules/apply-job/apply-job.module";
 import { SavedJobModule } from "./modules/saved-job/saved-job.module";
 import { UploadModule } from "./modules/upload/upload.module";
 import { ScheduleModule } from "@nestjs/schedule";
-
 import { BannerModule } from "./modules/banner/banner.module";
 import { PayosModule } from "./modules/payos/payos.module";
 import { VouchersModule } from "./modules/vouchers/vouchers.module";
 import { OrdersModule } from "./modules/orders/orders.module";
 import { CreditsModule } from "./modules/credits/credits.module";
+import { FormFeedbackModule } from "./modules/feedback/feedback.module";
 @Module({
   imports: [
     ScheduleModule.forRoot(),
@@ -86,6 +86,7 @@ import { CreditsModule } from "./modules/credits/credits.module";
     VouchersModule,
     OrdersModule,
     CreditsModule,
+    FormFeedbackModule,
   ],
 })
 export class AppModule {}
