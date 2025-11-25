@@ -233,4 +233,17 @@ export class CreditsService {
 
     return updatedCredit;
   }
+
+  async addVoucherForUserFeedback(userId: string) {
+    const voucherId = "79b3ba37b477064174e2f107";
+    const credit = await this.creditModel.findOneAndUpdate(
+      { userId: new Types.ObjectId(userId) },
+      { $addToSet: { vouchers: { voucherId: new Types.ObjectId(voucherId) } } },
+      { new: true }
+    );
+    if (!credit) {
+      throw new NotFoundException("Credit not found");
+    }
+    return credit;
+  }
 }

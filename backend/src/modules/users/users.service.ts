@@ -163,4 +163,12 @@ export class UsersService {
   async findByAccountId(accountId: string): Promise<User | null> {
     return this.userModel.findOne({ account_id: accountId }).exec();
   }
+
+  async getUserByEmail(email: string) {
+    const account = await this.accountsService.findByEmail(email);
+    if (!account) {
+      return null;
+    }
+    return this.findByAccountId(account._id.toString());
+  }
 }
