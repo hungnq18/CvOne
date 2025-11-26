@@ -22,9 +22,14 @@ async function bootstrap() {
   // Increase payload size limit for JSON and urlencoded
   app.use(bodyParser.json({ limit: "10mb" }));
   app.use(bodyParser.urlencoded({ limit: "10mb", extended: true }));
+
+  const allowedOrigins = [
+    "http://localhost:3000",
+    process.env.FRONTEND_URL,
+  ].filter(Boolean) as string[];
   // Enable CORS
   app.enableCors({
-    origin: ["http://localhost:3000", process.env.FRONTEND_URL as string], // Frontend URL
+    origin: allowedOrigins, // Frontend URL
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     credentials: true,
     allowedHeaders: ["Content-Type", "Authorization", "Accept"],
