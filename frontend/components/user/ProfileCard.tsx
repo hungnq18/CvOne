@@ -5,7 +5,7 @@ interface ProfileCardProps {
     user: User;
 }
 
-const ProfileCard: React.FC<ProfileCardProps> = ({ user }) => {
+const ProfileCardComponent: React.FC<ProfileCardProps> = ({ user }) => {
     return (
         <div className="card bg-white/80 backdrop-blur-sm border border-blue-100 shadow-lg mt-5">
             <div className="card-body">
@@ -25,5 +25,8 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ user }) => {
         </div>
     );
 };
+
+// Memo để tránh re-render khi parent re-render mà props không đổi
+const ProfileCard = React.memo(ProfileCardComponent);
 
 export default ProfileCard; 
