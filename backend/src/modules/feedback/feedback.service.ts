@@ -14,7 +14,7 @@ export class FormFeedbackService {
     @InjectModel(FormFeedback.name)
     private feedbackModel: Model<FormFeedbackDocument>,
     private readonly usersService: UsersService,
-    private readonly creditService: CreditsService,
+    private readonly creditService: CreditsService
   ) {}
 
   async create(createDto: CreateFormFeedbackDto): Promise<FormFeedback> {
@@ -33,14 +33,9 @@ export class FormFeedbackService {
     if (!user) {
       return await created.save();
     }
+    await created.save();
     await this.creditService.addVoucherForUserFeedback(user._id.toString());
-    const voucher = await this.creditService.addVoucherForUserFeedback(
-      user._id.toString(),
-    );
-    console.log("Added voucher for user feedback:", email);
-    console.log("Added user:", user);
-    console.log("Added voucher:", voucher);
-    return await created.save();
+    return created;
   }
 
   async findAll(): Promise<FormFeedback[]> {
