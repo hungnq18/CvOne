@@ -10,7 +10,7 @@ import { ValidationPipe } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
 import { NestExpressApplication } from "@nestjs/platform-express";
 import { IoAdapter } from "@nestjs/platform-socket.io";
-import * as bodyParser from 'body-parser';
+import * as bodyParser from "body-parser";
 import * as dotenv from "dotenv";
 import { join } from "path";
 import { AppModule } from "./app.module";
@@ -20,11 +20,11 @@ dotenv.config();
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   // Increase payload size limit for JSON and urlencoded
-  app.use(bodyParser.json({ limit: '10mb' }));
-  app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }));
+  app.use(bodyParser.json({ limit: "10mb" }));
+  app.use(bodyParser.urlencoded({ limit: "10mb", extended: true }));
   // Enable CORS
   app.enableCors({
-    origin: ["http://localhost:3000"], // Frontend URL
+    origin: ["http://localhost:3000", process.env.FRONTEND_URL as string], // Frontend URL
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     credentials: true,
     allowedHeaders: ["Content-Type", "Authorization", "Accept"],
