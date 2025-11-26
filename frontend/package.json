@@ -13,6 +13,7 @@
     "@ant-design/icons": "^6.0.0",
     "@hello-pangea/dnd": "^18.0.1",
     "@hookform/resolvers": "^3.9.1",
+    "@netlify/plugin-nextjs": "^5.15.0",
     "@next/bundle-analyzer": "^15.5.3",
     "@radix-ui/react-accordion": "1.2.2",
     "@radix-ui/react-alert-dialog": "1.1.4",
