@@ -1,8 +1,9 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { API_ENDPOINTS, API_URL as BASE_API_URL } from "@/api/apiConfig"
 import { useToast } from "@/hooks/use-toast"
 import { useRouter, useSearchParams } from "next/navigation"
+import { useEffect, useState } from "react"
 
 export function useVerifyEmail() {
   const [isLoading, setIsLoading] = useState(true)
@@ -23,7 +24,9 @@ export function useVerifyEmail() {
       }
 
       try {
-        const res = await fetch("http://localhost:8000/api/auth/verify", {
+        const apiBase = BASE_API_URL ?? "/api"
+        const verifyUrl = `${apiBase}${API_ENDPOINTS.AUTH.VERIFY_EMAIL ?? "/auth/verify"}`
+        const res = await fetch(verifyUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ token }),
