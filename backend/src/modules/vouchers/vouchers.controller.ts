@@ -16,6 +16,7 @@ import { VouchersService } from "./vouchers.service";
 import { CreateVoucherDirectDto } from "./dto/create-voucher-direct.dto";
 import { CreateVoucherSaveableDto } from "./dto/create-voucher-saveable.dto";
 import { UpdateVoucherDirectDto } from "./dto/update-voucher-direct.dto";
+import { UpdateVoucherSaveableDto } from "./dto/update-voucher-saveable.dto";
 
 @Controller("vouchers")
 export class VouchersController {
@@ -59,11 +60,24 @@ export class VouchersController {
   @Put(":id")
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles("mkt")
-  async updateVoucher(
+  async updateVoucherDirect(
     @Param("id") id: string,
     @Body() updateVoucherDto: UpdateVoucherDirectDto
   ) {
-    return await this.vouchersService.updateVoucher(id, updateVoucherDto);
+    return await this.vouchersService.updateVoucherDirect(id, updateVoucherDto);
+  }
+
+  @Put(":id")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("mkt")
+  async updateVoucherSaveable(
+    @Param("id") id: string,
+    @Body() updateVoucherDto: UpdateVoucherSaveableDto
+  ) {
+    return await this.vouchersService.updateVoucherSaveable(
+      id,
+      updateVoucherDto
+    );
   }
 
   @Delete(":id")
