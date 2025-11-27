@@ -206,6 +206,10 @@ const navigationItems = {
         name: "Công việc",
         href: "/listJob",
       },
+      {
+        name: "AI-Phỏng vấn",
+        href: "/ai-interview",
+      },
     ],
     admin: [
       {

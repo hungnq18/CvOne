@@ -1,6 +1,6 @@
 import React from 'react';
 
-const SocialIcons: React.FC = () => {
+const SocialIconsComponent: React.FC = () => {
     return (
         <div className="card bg-white/80 backdrop-blur-sm border border-blue-100 shadow-lg mt-5">
             <div className="card-body">
@@ -84,5 +84,8 @@ const SocialIcons: React.FC = () => {
         </div>
     );
 };
+
+// Component tĩnh, memo để tránh re-render không cần thiết
+const SocialIcons = React.memo(SocialIconsComponent);
 
 export default SocialIcons; 

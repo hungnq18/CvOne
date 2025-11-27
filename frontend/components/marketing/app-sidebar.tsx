@@ -33,6 +33,11 @@ const menuItems = [
     url: "/marketing/ads",
     icon: Megaphone,
   },
+  {
+    title: "Manage Feedback",
+    url: "/marketing/feedback",
+    icon: GalleryHorizontal,
+  },
 ]
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {

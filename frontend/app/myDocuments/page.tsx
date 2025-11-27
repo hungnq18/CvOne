@@ -118,12 +118,14 @@ export default function Page() {
   const onTabChange = (key: string) => setActiveTab(key);
   const onSearch = (value: string) => setSearchValue(value);
 
+  const normalizedSearch = searchValue.toLowerCase();
+
   const filteredCVList = cvList.filter((cv) =>
-    cv.title?.toLowerCase().includes(searchValue.toLowerCase())
+    cv.title?.toLowerCase().includes(normalizedSearch)
   );
 
   const filteredCoverLetterList = coverLetterList.filter((cl) =>
-    cl.title.toLowerCase().includes(searchValue.toLowerCase())
+    (cl.title || "").toLowerCase().includes(normalizedSearch)
   );
 
   const items = [

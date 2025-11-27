@@ -1,6 +1,7 @@
 export const API_URL = "http://localhost:8000/api";
 
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+// export const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 // API Endpoints
 export const API_ENDPOINTS = {
@@ -152,11 +153,16 @@ export const API_ENDPOINTS = {
     UPDATE_VOUCHER: (voucherId: string) => `/credits/save-voucher/${voucherId}`, // @PATCH
     GET_CREDIT: "/credits",
   },
+  FEEDBACK: {
+    GET_ALL: "/feedback",
+    GET_BY_FEATURE: (feature: string) => `/feedback/feature/${feature}`,
+  },
   BANNER: {
     GET_ALL: "/banner",
     CREATE: "/banner",
     UPDATE: (id: string) => `/banner/${id}`,
     DELETE: (id: string) => `/banner/${id}`,
+    FOR_USER: "/banner/for-user",
   },
   AVERAGE_AI: {
     GET_ALL_AVERAGE: "/ai-average/average-stats",

@@ -5,11 +5,13 @@ import { X, Gift, MessageSquare } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 interface FeedbackPopupProps {
-    feature: "job" | "interview" | "cv" | "cover-letter" | "translate"// truyền đi từ trang chính để đến đúng form feedback
+    feature: "job" | "interview" | "cv" | "cover-letter" | "translate" // truyền đi từ trang chính để đến đúng form feedback
     onClose?: () => void
+    // Callback được gọi khi user bấm "Gửi phản hồi"
+    onFeedbackSent?: () => void
 }
 
-export function FeedbackPopup({ feature, onClose }: FeedbackPopupProps) {
+export function FeedbackPopup({ feature, onClose, onFeedbackSent }: FeedbackPopupProps) {
     const [isOpen, setIsOpen] = useState(true)
 
     const feedbackForms = {
@@ -40,6 +42,12 @@ export function FeedbackPopup({ feature, onClose }: FeedbackPopupProps) {
     const handleClose = () => {
         setIsOpen(false)
         onClose?.()
+    }
+
+    const handleSendFeedback = () => {
+        window.open(currentForm.url, "_blank")
+        setIsOpen(false)
+        onFeedbackSent?.()
     }
 
     if (!isOpen) return null
@@ -86,10 +94,7 @@ export function FeedbackPopup({ feature, onClose }: FeedbackPopupProps) {
 
                     <div className="flex gap-3">
                         <Button
-                            onClick={() => {
-                                window.open(currentForm.url, "_blank")
-                                handleClose()
-                            }}
+                            onClick={handleSendFeedback}
                             className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-medium"
                         >
                             Gửi phản hồi
