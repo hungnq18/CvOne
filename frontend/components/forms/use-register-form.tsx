@@ -92,7 +92,7 @@ const translations: {
       and: "and",
       privacyLink: "Privacy Policy",
       of: "of CVOne.",
-      submitButton: "Complete",
+      submitButton: "Create Account",
       haveAccount: "Already have an account?",
       loginLink: "Login now",
       requiredFields: "Please fill in all required fields!",
@@ -163,7 +163,7 @@ const translations: {
       and: "và",
       privacyLink: "Chính sách bảo mật",
       of: "của CVOne.",
-      submitButton: "Hoàn tất",
+      submitButton: "Tạo tài khoản",
       haveAccount: "Đã có tài khoản?",
       loginLink: "Đăng nhập ngay",
       requiredFields: "Vui lòng nhập đầy đủ thông tin bắt buộc!",
@@ -223,23 +223,23 @@ export function useRegisterForm(formType: "user" | "hr" = "user") {
     setIsLoading(true)
     setMessage("")
     setIsSuccess(false)
-  
+
     const { email, first_name, last_name, password, confirmPassword, phone_number, company_name, terms } = formData
-  
+
     // Validate Email Format
     if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email!)) {
       setMessage(t.invalidEmail)
       setIsLoading(false)
       return
     }
-  
+
     // Validate Password Match
     if (password !== confirmPassword) {
       setMessage(t.passwordMismatch)
       setIsLoading(false)
       return
     }
-  
+
     if (formType === "user") {
       // Validate Required Fields for User
       if (!email || !first_name || !last_name || !password || !confirmPassword) {
@@ -247,21 +247,21 @@ export function useRegisterForm(formType: "user" | "hr" = "user") {
         setIsLoading(false)
         return
       }
-  
+
       try {
         // 1. Gọi API đăng ký
         await register(first_name, email, password, last_name)
-  
+
         // 2. Gửi email xác thực (Optional: nếu lỗi gửi mail vẫn cho qua để user đăng nhập rồi gửi lại sau)
         try {
           await verifyEmail(email)
         } catch (err) {
           console.warn("Failed to auto-send verify email:", err)
         }
-  
+
         // 3. Navigate CHỈ KHI đăng ký thành công
         router.push("verify-email")
-  
+
       } catch (error) {
         console.error("Registration error:", error)
         // Hiển thị lỗi (Ví dụ: Email đã tồn tại)
@@ -270,7 +270,7 @@ export function useRegisterForm(formType: "user" | "hr" = "user") {
         // Dù thành công hay thất bại thì cũng tắt loading
         setIsLoading(false)
       }
-  
+
     } else if (formType === "hr") {
       // Validate Required Fields for HR
       if (!email || !password || !confirmPassword || !first_name || !last_name || !phone_number || !company_name) {
@@ -278,21 +278,21 @@ export function useRegisterForm(formType: "user" | "hr" = "user") {
         setIsLoading(false)
         return
       }
-  
+
       if (!terms) {
         setMessage(t.agreeToTerms)
         setIsLoading(false)
         return
       }
-  
+
       try {
         // Logic đăng ký cho HR (hiện tại đang là placeholder)
         console.log("Registering HR with data:", formData)
-        
+
         // Giả lập thành công
         setMessage(t.registerSuccess)
         setIsSuccess(true)
-  
+
       } catch (error) {
         console.error("Registration error:", error)
         setMessage(error instanceof Error ? error.message : t.registerFailed)
