@@ -5,6 +5,7 @@ import { useOnClickOutside } from "@/hooks/useOnClickOutside";
 import { useLanguage } from "@/providers/global_provider";
 import { Edit, Loader2, PlusCircle, Trash2, X } from "lucide-react";
 import { ChangeEvent, FC, ReactNode, useRef, useState } from "react";
+import { notify } from "@/lib/notify";
 
 // --- ĐỐI TƯỢNG TRANSLATIONS CHO TOÀN BỘ FILE ---
 const translations = {
@@ -53,6 +54,7 @@ const translations = {
       useThisResult: "Use this result",
       cancelButton: "Cancel",
       addButton: "Add",
+      updateButton: "Update",
       addExperienceButton: "Add Experience",
     },
     educationPopup: {
@@ -67,6 +69,7 @@ const translations = {
       endDatePlaceholder: "YYYY-MM",
       cancelButton: "Cancel",
       addButton: "Add",
+      updateButton: "Update",
       addEducationButton: "Add Education",
     },
     skillsPopup: {
@@ -160,6 +163,7 @@ const translations = {
       useThisResult: "Dùng kết quả này",
       cancelButton: "Hủy",
       addButton: "Thêm",
+      updateButton: "Cập nhật",
       addExperienceButton: "Thêm Kinh Nghiệm",
     },
     educationPopup: {
@@ -174,6 +178,7 @@ const translations = {
       endDatePlaceholder: "YYYY-MM",
       cancelButton: "Hủy",
       addButton: "Thêm",
+      updateButton: "Cập nhật",
       addEducationButton: "Thêm Học Vấn",
     },
     skillsPopup: {
@@ -237,7 +242,7 @@ type ProjectItem = {
   endDate: string;
 };
 
-// --- COMPONENT POPUP CƠ SỞ ---
+// --- COMPONENT POPUP CƠ SỞ (REDESIGNED) ---
 export const Modal: FC<{ title: string; onClose: () => void; children: ReactNode; onSave?: () => void; isSaving?: boolean; }> = ({ title, onClose, children, onSave, isSaving = false }) => {
   const { language } = useLanguage();
   const t = translations[language].modal;
@@ -246,31 +251,52 @@ export const Modal: FC<{ title: string; onClose: () => void; children: ReactNode
   useOnClickOutside(modalRef, onClose);
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-30 flex justify-center items-center p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-lg" ref={modalRef} style={{ maxWidth: "36%" }}>
-        <div className="flex justify-between items-center bg-gray-100 py-3 px-5 rounded-t-lg">
-          <h2 className="text-lg font-semibold">{title}</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-800 hover:bg-gray-200 rounded-full p-1">
-            <X size={20} />
-          </button>
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex justify-center items-center p-4">
+      <div 
+        className="bg-white rounded-2xl shadow-2xl w-full animate-in fade-in zoom-in-95 duration-200 flex flex-col" 
+        ref={modalRef} 
+        style={{ maxWidth: "36%", maxHeight: "90vh" }}
+      >
+        {/* Header với gradient */}
+        <div className="relative overflow-hidden rounded-t-2xl flex-shrink-0">
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-800 via-slate-900 to-slate-800" />
+          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAwIDEwIEwgNDAgMTAgTSAxMCAwIEwgMTAgNDAgTSAwIDIwIEwgNDAgMjAgTSAyMCAwIEwgMjAgNDAgTSAwIDMwIEwgNDAgMzAgTSAzMCAwIEwgMzAgNDAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzMzMyIgb3BhY2l0eT0iMC4xIiBzdHJva2Utd2lkdGg9IjEiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JpZCkiLz48L3N2Zz4=')] opacity-30" />
+          <div className="relative flex justify-between items-center py-4 px-6">
+            <h2 className="text-lg font-bold text-white tracking-wide">{title}</h2>
+            <button
+              onClick={onClose}
+              className="text-slate-400 hover:text-white hover:bg-white/10 rounded-lg p-1.5 transition-colors"
+            >
+              <X size={20} />
+            </button>
+          </div>
         </div>
-        <div className="p-5">
+        
+        {/* Content - Scrollable */}
+        <div className="p-6 overflow-y-auto flex-1">
           {children}
-          {onSave && (
-            <div className="flex justify-end mt-6">
-              <button onClick={onClose} disabled={isSaving} className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-md mr-2 disabled:opacity-50">
-                {t.cancel}
-              </button>
-              <button onClick={() => {
-                onSave();
-                onClose();
-              }} disabled={isSaving} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-md focus:outline-none focus:shadow-outline flex items-center justify-center disabled:opacity-50">
-                {isSaving && <Loader2 className="animate-spin mr-2" size={18} />}
-                {t.saveChanges}
-              </button>
-            </div>
-          )}
         </div>
+        
+        {/* Footer Buttons - Fixed at bottom */}
+        {onSave && (
+          <div className="flex justify-end gap-3 px-6 py-4 border-t border-slate-100 bg-slate-50/50 rounded-b-2xl flex-shrink-0">
+            <button 
+              onClick={onClose} 
+              disabled={isSaving} 
+              className="px-5 py-2.5 rounded-xl text-sm font-semibold text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 transition-colors disabled:opacity-50"
+            >
+              {t.cancel}
+            </button>
+            <button 
+              onClick={() => { onSave(); onClose(); }} 
+              disabled={isSaving} 
+              className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 shadow-lg shadow-blue-500/25 transition-all disabled:opacity-50 flex items-center gap-2"
+            >
+              {isSaving && <Loader2 className="animate-spin" size={16} />}
+              {t.saveChanges}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -307,7 +333,7 @@ export const InfoPopup: FC<{ onClose: () => void; initialData: any; onSave: (upd
       setFormData((prevData: any) => ({ ...prevData, avatar: responseData.secure_url }));
     } catch (error) {
       console.error(error);
-      alert(error instanceof Error ? error.message : t.uploadErrorGeneral);
+      notify.error(error instanceof Error ? error.message : t.uploadErrorGeneral);
     } finally {
       setIsUploading(false);
     }
@@ -320,31 +346,47 @@ export const InfoPopup: FC<{ onClose: () => void; initialData: any; onSave: (upd
 
   return (
     <Modal title={t.title} onClose={onClose} onSave={handleSaveChanges}>
-      <div className="mb-4">
-        <label className="block text-gray-700 text-sm font-bold mb-2">{t.avatarLabel}</label>
-        <div className="flex items-center gap-4 mt-1">
-          {formData.avatar && (<img src={formData.avatar} alt="Avatar Preview" className="w-20 h-20 rounded-full object-cover border-2 border-gray-200"/>)}
+      {/* Avatar Upload */}
+      <div className="mb-6">
+        <label className="block text-slate-700 text-sm font-semibold mb-3 flex items-center gap-2">
+          <span className="w-1 h-5 bg-blue-500 rounded-full"></span>
+          {t.avatarLabel}
+        </label>
+        <div className="flex items-center gap-5">
+          <div className="relative">
+            {formData.avatar ? (
+              <img src={formData.avatar} alt="Avatar Preview" className="w-24 h-24 rounded-2xl object-cover border-2 border-slate-200 shadow-lg"/>
+            ) : (
+              <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center border-2 border-dashed border-slate-300">
+                <span className="text-slate-400 text-3xl">👤</span>
+              </div>
+            )}
+          </div>
           <div className="relative">
             <input type="file" id="avatar-upload-popup" accept="image/png, image/jpeg, image/jpg" onChange={handleAvatarUpload} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" disabled={isUploading}/>
-            <button type="button" className="bg-blue-500 text-white font-bold py-2 px-4 rounded-md hover:bg-blue-600 disabled:bg-gray-400 transition-colors" disabled={isUploading} onClick={() => document.getElementById("avatar-upload-popup")?.click()}>
+            <button type="button" className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold py-2.5 px-5 rounded-xl hover:from-blue-600 hover:to-indigo-700 disabled:opacity-50 transition-all shadow-lg shadow-blue-500/25" disabled={isUploading} onClick={() => document.getElementById("avatar-upload-popup")?.click()}>
               {isUploading ? t.uploading : t.chooseImage}
             </button>
           </div>
         </div>
       </div>
+      
+      {/* Name Fields */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         <div>
-          <label htmlFor="firstName" className="block text-gray-700 text-sm font-bold mb-2">{t.firstNameLabel}</label>
-          <input type="text" id="firstName" value={formData.firstName || ""} onChange={handleChange} className="shadow-sm appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+          <label htmlFor="firstName" className="block text-slate-700 text-sm font-semibold mb-2">{t.firstNameLabel}</label>
+          <input type="text" id="firstName" value={formData.firstName || ""} onChange={handleChange} className="w-full py-2.5 px-4 border border-slate-200 rounded-xl text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"/>
         </div>
         <div>
-          <label htmlFor="lastName" className="block text-gray-700 text-sm font-bold mb-2">{t.lastNameLabel}</label>
-          <input type="text" id="lastName" value={formData.lastName || ""} onChange={handleChange} className="shadow-sm appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+          <label htmlFor="lastName" className="block text-slate-700 text-sm font-semibold mb-2">{t.lastNameLabel}</label>
+          <input type="text" id="lastName" value={formData.lastName || ""} onChange={handleChange} className="w-full py-2.5 px-4 border border-slate-200 rounded-xl text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"/>
         </div>
       </div>
+      
+      {/* Profession */}
       <div className="mb-4">
-        <label htmlFor="professional" className="block text-gray-700 text-sm font-bold mb-2">{t.professionLabel}</label>
-        <input type="text" id="professional" value={formData.professional || ""} onChange={handleChange} className="shadow-sm appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+        <label htmlFor="professional" className="block text-slate-700 text-sm font-semibold mb-2">{t.professionLabel}</label>
+        <input type="text" id="professional" value={formData.professional || ""} onChange={handleChange} className="w-full py-2.5 px-4 border border-slate-200 rounded-xl text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"/>
       </div>
     </Modal>
   );
@@ -368,22 +410,24 @@ export const ContactPopup: FC<{ onClose: () => void; initialData: any; onSave: (
 
   return (
     <Modal title={t.title} onClose={onClose} onSave={handleSaveChanges}>
-      <div className="mb-4">
-        <label htmlFor="email" className="block text-gray-700 text-sm font-bold mb-2">{t.emailLabel}</label>
-        <input type="email" id="email" value={formData.email || ""} onChange={handleChange} className="shadow-sm appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"/>
-      </div>
-      <div className="mb-4">
-        <label htmlFor="phone" className="block text-gray-700 text-sm font-bold mb-2">{t.phoneLabel}</label>
-        <input type="tel" id="phone" value={formData.phone || ""} onChange={handleChange} className="shadow-sm appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"/>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+      <div className="space-y-4">
         <div>
-          <label htmlFor="city" className="block text-gray-700 text-sm font-bold mb-2">{t.cityLabel}</label>
-          <input type="text" id="city" value={formData.city || ""} onChange={handleChange} className="shadow-sm appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+          <label htmlFor="email" className="block text-slate-700 text-sm font-semibold mb-2">{t.emailLabel}</label>
+          <input type="email" id="email" value={formData.email || ""} onChange={handleChange} className="w-full py-2.5 px-4 border border-slate-200 rounded-xl text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"/>
         </div>
         <div>
-          <label htmlFor="country" className="block text-gray-700 text-sm font-bold mb-2">{t.countryLabel}</label>
-          <input type="text" id="country" value={formData.country || ""} onChange={handleChange} className="shadow-sm appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+          <label htmlFor="phone" className="block text-slate-700 text-sm font-semibold mb-2">{t.phoneLabel}</label>
+          <input type="tel" id="phone" value={formData.phone || ""} onChange={handleChange} className="w-full py-2.5 px-4 border border-slate-200 rounded-xl text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"/>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label htmlFor="city" className="block text-slate-700 text-sm font-semibold mb-2">{t.cityLabel}</label>
+            <input type="text" id="city" value={formData.city || ""} onChange={handleChange} className="w-full py-2.5 px-4 border border-slate-200 rounded-xl text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"/>
+          </div>
+          <div>
+            <label htmlFor="country" className="block text-slate-700 text-sm font-semibold mb-2">{t.countryLabel}</label>
+            <input type="text" id="country" value={formData.country || ""} onChange={handleChange} className="w-full py-2.5 px-4 border border-slate-200 rounded-xl text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"/>
+          </div>
         </div>
       </div>
     </Modal>
@@ -449,7 +493,7 @@ export const ExperiencePopup: FC<{ onClose: () => void; initialData: any; onSave
       const rewritten = res?.rewritten || res;
       setCurrentItem({ ...currentItem, description: rewritten });
     } catch (err) {
-      alert(t.aiRewriteError);
+      notify.error(t.aiRewriteError);
     } finally {
       setLoadingAI(false);
     }
@@ -457,7 +501,7 @@ export const ExperiencePopup: FC<{ onClose: () => void; initialData: any; onSave
 
   const handleFormSubmit = () => {
     if (!currentItem.title || !currentItem.company) {
-      alert(t.validationError);
+      notify.error(t.validationError);
       return;
     }
     let updatedExperiences = [...experiences];
@@ -477,7 +521,7 @@ export const ExperiencePopup: FC<{ onClose: () => void; initialData: any; onSave
   };
 
   return (
-    <Modal title={t.title} onClose={onClose} onSave={handleSaveChanges}>
+    <Modal title={t.title} onClose={onClose} onSave={isEditing ? undefined : handleSaveChanges}>
       {isEditing ? (
         <div className="space-y-4">
           <div><label className="block text-sm font-medium text-gray-700">{t.positionLabel}</label><input type="text" name="title" value={currentItem.title} onChange={handleFormChange} className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm"/></div>
@@ -503,7 +547,7 @@ export const ExperiencePopup: FC<{ onClose: () => void; initialData: any; onSave
           </div>
           <div className="flex justify-end gap-2 mt-4">
             <button onClick={() => setIsEditing(false)} className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md text-sm">{t.cancelButton}</button>
-            <button onClick={handleFormSubmit} className="bg-blue-500 text-white px-4 py-2 rounded-md text-sm">{t.addButton}</button>
+            <button onClick={handleFormSubmit} className="bg-blue-500 text-white px-4 py-2 rounded-md text-sm">{editingIndex !== null ? t.updateButton : t.addButton}</button>
           </div>
         </div>
       ) : (
@@ -575,7 +619,7 @@ export const EducationPopup: FC<{ onClose: () => void; initialData: any; onSave:
   };
 
   return (
-    <Modal title={t.title} onClose={onClose} onSave={handleSaveChanges}>
+    <Modal title={t.title} onClose={onClose} onSave={isEditing ? undefined : handleSaveChanges}>
       {isEditing ? (
         <div className="space-y-4">
           <div><label className="block text-sm font-medium text-gray-700">{t.institutionLabel}</label><input type="text" name="institution" value={currentItem.institution} onChange={handleFormChange} className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm"/></div>
@@ -587,7 +631,7 @@ export const EducationPopup: FC<{ onClose: () => void; initialData: any; onSave:
           </div>
           <div className="flex justify-end gap-2 mt-4">
             <button onClick={() => setIsEditing(false)} className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md text-sm">{t.cancelButton}</button>
-            <button onClick={handleFormSubmit} className="bg-blue-500 text-white px-4 py-2 rounded-md text-sm">{t.addButton}</button>
+            <button onClick={handleFormSubmit} className="bg-blue-500 text-white px-4 py-2 rounded-md text-sm">{editingIndex !== null ? t.updateButton : t.addButton}</button>
           </div>
         </div>
       ) : (
@@ -880,14 +924,52 @@ export const ProjectPopup: FC<{ onClose: () => void; initialData: any; onSave: (
   const { language } = useLanguage();
   const t = translations[language].projectPopup;
 
-  const [projects, setProjects] = useState<ProjectItem[]>(
-    (initialData.Project || []).map((item: any) => ({
-      title: item?.title || item?.["title "] || "",
-      summary: item?.summary || "",
-      startDate: item?.startDate || "",
-      endDate: item?.endDate || "",
-    }))
-  );
+  const [projects, setProjects] = useState<ProjectItem[]>(() => {
+    // Nếu không có Project hoặc Project rỗng, tạo một project mẫu
+    if (!initialData.Project || initialData.Project.length === 0) {
+      return [{
+        title: "",
+        summary: "",
+        startDate: "",
+        endDate: "",
+      }];
+    }
+    
+    // Chuyển đổi từ ISO date string sang format YYYY-MM-DD cho input date
+    return initialData.Project.map((item: any) => {
+      let startDate = "";
+      let endDate = "";
+      
+      if (item?.startDate) {
+        try {
+          const date = new Date(item.startDate);
+          if (!isNaN(date.getTime())) {
+            startDate = date.toISOString().split("T")[0];
+          }
+        } catch (e) {
+          startDate = item.startDate;
+        }
+      }
+      
+      if (item?.endDate) {
+        try {
+          const date = new Date(item.endDate);
+          if (!isNaN(date.getTime())) {
+            endDate = date.toISOString().split("T")[0];
+          }
+        } catch (e) {
+          endDate = item.endDate;
+        }
+      }
+      
+      return {
+        title: item?.title || item?.["title "] || "",
+        summary: item?.summary || "",
+        startDate: startDate,
+        endDate: endDate,
+      };
+    });
+  });
 
   const handleFieldChange = (
     index: number,
@@ -907,14 +989,31 @@ export const ProjectPopup: FC<{ onClose: () => void; initialData: any; onSave: (
 
   const handleSaveChanges = () => {
     const sanitized = projects
-      .map((item) => ({
-        title: item.title?.trim() || "",
-        summary: item.summary || "",
-        startDate: item.startDate || "",
-        endDate: item.endDate || "",
-      }))
+      .map((item) => {
+        // Chuyển đổi date string (YYYY-MM-DD) sang ISO format
+        const startDateISO = item.startDate 
+          ? new Date(item.startDate + "T00:00:00").toISOString()
+          : "";
+        const endDateISO = item.endDate 
+          ? new Date(item.endDate + "T00:00:00").toISOString()
+          : "";
+        
+        return {
+          title: item.title?.trim() || "",
+          summary: item.summary || "",
+          startDate: startDateISO,
+          endDate: endDateISO,
+        };
+      })
       .filter((item) => item.title);
-    onSave({ ...initialData, Project: sanitized });
+    
+    // Đảm bảo Project luôn là mảng
+    const updatedData = {
+      ...initialData,
+      Project: sanitized.length > 0 ? sanitized : [],
+    };
+    
+    onSave(updatedData);
     onClose();
   };
 

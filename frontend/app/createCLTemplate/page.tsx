@@ -12,6 +12,7 @@ import { API_ENDPOINTS } from "@/api/apiConfig";
 import { toast } from "react-hot-toast";
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { notify } from "@/lib/notify";
 
 interface LetterData {
     firstName: string;
@@ -277,7 +278,7 @@ const CoverLetterBuilderContent = () => {
             if (clId) {
                 // Update existing CL
                 await updateCL(clId, { data: clDataToSave, title: title });
-                alert('Cover letter updated successfully!');
+                notify.success('Cover letter updated successfully!');
                 router.push('/myDocuments');
             } else if (templateId) {
                 // Create new CL
@@ -290,14 +291,14 @@ const CoverLetterBuilderContent = () => {
 
                 await createCL(newCL);
                 localStorage.removeItem('pendingCL');
-                alert('Cover letter saved successfully!');
+                notify.success('Cover letter saved successfully!');
                 router.push('/myDocuments');
             } else {
-                alert("Template not selected!");
+                notify.error("Template not selected!");
             }
         } catch (error) {
             console.error("Failed to save cover letter:", error);
-            alert("Failed to save cover letter. Please try again.");
+            notify.error("Failed to save cover letter. Please try again.");
         } finally {
             setIsSaving(false);
         }
@@ -307,7 +308,7 @@ const CoverLetterBuilderContent = () => {
         const token = Cookies.get('token');
         if (!token) {
             if (!templateId) {
-                alert("Please select a template first.");
+                notify.error("Please select a template first.");
                 router.push('/clTemplate');
                 return;
             }
@@ -324,7 +325,7 @@ const CoverLetterBuilderContent = () => {
 
     const handleSaveWithTitle = () => {
         if (!clTitle.trim()) {
-            alert('Vui lòng nhập tiêu đề cho Cover Letter.');
+            notify.error('Vui lòng nhập tiêu đề cho Cover Letter.');
             return;
         }
         saveCoverLetter(letterData, clTitle.trim());

@@ -10,6 +10,7 @@ import SocialIcons from './SocialIcons';
 import UserInfo from './UserInfo';
 import JobInProfile from './JobInProfile';
 import { fetchUserDataFromToken, updateUserProfile, changePassword, getUserIdFromToken, getUserById } from '@/api/userApi';
+import { notify } from "@/lib/notify";
 
 const UserProfile: React.FC = () => {
     const [user, setUser] = useState<User | null>(null);
@@ -58,7 +59,7 @@ const UserProfile: React.FC = () => {
             await changePassword(currentPassword, newPassword);
             setIsChangePasswordModalOpen(false);
             setError(null);
-            alert("Password changed successfully!");
+            notify.success("Password changed successfully!");
         } catch (err) {
             console.error("Error changing password:", err);
             setError(err instanceof Error ? err.message : "Failed to change password. Please try again later.");

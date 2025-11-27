@@ -16,6 +16,7 @@ import {
     X,
 } from "lucide-react";
 import { ChangeEvent, FC, ReactNode, useEffect, useRef, useState } from "react";
+import { notify } from "@/lib/notify";
 
 // --- ĐỐI TƯỢNG TRANSLATIONS CHO TOÀN BỘ FILE ---
 const translations = {
@@ -69,6 +70,7 @@ const translations = {
       aiRewriteButton: "Rewrite with AI",
       cancelButton: "Cancel",
       addButton: "Add",
+      updateButton: "Update",
       addExperienceButton: "Add Experience",
     },
     educationPopup: {
@@ -83,6 +85,7 @@ const translations = {
       endDatePlaceholder: "YYYY-MM",
       cancelButton: "Cancel",
       addButton: "Add",
+      updateButton: "Update",
       addEducationButton: "Add Education",
     },
     skillsPopup: {
@@ -184,6 +187,7 @@ const translations = {
       aiRewriteButton: "Viết lại với AI",
       cancelButton: "Hủy",
       addButton: "Thêm",
+      updateButton: "Cập nhật",
       addExperienceButton: "Thêm Kinh Nghiệm",
     },
     educationPopup: {
@@ -198,6 +202,7 @@ const translations = {
       endDatePlaceholder: "YYYY-MM",
       cancelButton: "Hủy",
       addButton: "Thêm",
+      updateButton: "Cập nhật",
       addEducationButton: "Thêm Học Vấn",
     },
     skillsPopup: {
@@ -264,7 +269,49 @@ type ProjectItem = {
   endDate: string;
 };
 
-// --- COMPONENT POPUP CƠ SỞ ---
+// --- AI BUTTON COMPONENT (THIẾT KẾ ĐẸP VỚI SHIMMER EFFECT) ---
+const AIButton: FC<{ onClick: () => void; isLoading: boolean; text: string; disabled?: boolean; size?: "sm" | "md" }> = ({
+  onClick,
+  isLoading,
+  text,
+  disabled,
+  size = "md",
+}) => {
+  const sizeClasses = size === "sm" 
+    ? "px-4 py-2 text-xs gap-2" 
+    : "px-5 py-2.5 text-sm gap-2.5";
+  
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled || isLoading}
+      className={`
+        group relative inline-flex items-center ${sizeClasses}
+        rounded-xl font-semibold text-white
+        bg-gradient-to-r from-violet-600 via-indigo-600 to-blue-600
+        shadow-lg shadow-indigo-500/25
+        overflow-hidden transition-all duration-300
+        ${disabled || isLoading 
+          ? "opacity-60 cursor-not-allowed" 
+          : "hover:shadow-xl hover:shadow-indigo-500/35 hover:scale-[1.02] active:scale-[0.98]"
+        }
+      `}
+    >
+      <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+      <span className={`relative ${isLoading ? "animate-spin" : ""}`}>
+        {isLoading ? (
+          <Loader2 className="w-4 h-4" />
+        ) : (
+          <Wand2 className="w-4 h-4 group-hover:rotate-12 transition-transform duration-300" />
+        )}
+      </span>
+      <span className="relative">{text}</span>
+    </button>
+  );
+};
+
+// --- COMPONENT POPUP CƠ SỞ (REDESIGNED) ---
 export const Modal: FC<{
   title: string;
   onClose: () => void;
@@ -279,48 +326,55 @@ export const Modal: FC<{
   useOnClickOutside(modalRef, onClose);
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-30 flex justify-center items-center p-4">
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex justify-center items-center p-4">
       <div
-        className="bg-white rounded-lg shadow-xl w-full max-w-lg"
+        className="bg-white rounded-2xl shadow-2xl w-full animate-in fade-in zoom-in-95 duration-200 flex flex-col"
         ref={modalRef}
-        style={{ maxWidth: "60%" }}
+        style={{ maxWidth: "60%", maxHeight: "90vh" }}
       >
-        <div className="flex justify-between items-center bg-gray-100 py-3 px-5 rounded-t-lg">
-          <h2 className="text-lg font-semibold">{title}</h2>
-          <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-gray-800 hover:bg-gray-200 rounded-full p-1"
-          >
-            <X size={20} />
-          </button>
+        {/* Header với gradient */}
+        <div className="relative overflow-hidden rounded-t-2xl flex-shrink-0">
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-800 via-slate-900 to-slate-800" />
+          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAwIDEwIEwgNDAgMTAgTSAxMCAwIEwgMTAgNDAgTSAwIDIwIEwgNDAgMjAgTSAyMCAwIEwgMjAgNDAgTSAwIDMwIEwgNDAgMzAgTSAzMCAwIEwgMzAgNDAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzMzMyIgb3BhY2l0eT0iMC4xIiBzdHJva2Utd2lkdGg9IjEiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JpZCkiLz48L3N2Zz4=')] opacity-30" />
+          <div className="relative flex justify-between items-center py-4 px-6">
+            <h2 className="text-lg font-bold text-white tracking-wide">{title}</h2>
+            <button
+              onClick={onClose}
+              className="text-slate-400 hover:text-white hover:bg-white/10 rounded-lg p-1.5 transition-colors"
+            >
+              <X size={20} />
+            </button>
+          </div>
         </div>
-        <div className="p-5">
+        
+        {/* Content - Scrollable */}
+        <div className="p-6 overflow-y-auto flex-1">
           {children}
-          {onSave && (
-            <div className="flex justify-end mt-6">
-              <button
-                onClick={onClose}
-                disabled={isSaving}
-                className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-md mr-2 disabled:opacity-50"
-              >
-                {t.cancel}
-              </button>
-              <button
-                onClick={() => {
-                  onSave();
-                  onClose();
-                }}
-                disabled={isSaving}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-md focus:outline-none focus:shadow-outline flex items-center justify-center disabled:opacity-50"
-              >
-                {isSaving && (
-                  <Loader2 className="animate-spin mr-2" size={18} />
-                )}
-                {t.saveChanges}
-              </button>
-            </div>
-          )}
         </div>
+        
+        {/* Footer Buttons - Fixed at bottom */}
+        {onSave && (
+          <div className="flex justify-end gap-3 px-6 py-4 border-t border-slate-100 bg-slate-50/50 rounded-b-2xl flex-shrink-0">
+            <button
+              onClick={onClose}
+              disabled={isSaving}
+              className="px-5 py-2.5 rounded-xl text-sm font-semibold text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 transition-colors disabled:opacity-50"
+            >
+              {t.cancel}
+            </button>
+            <button
+              onClick={() => {
+                onSave();
+                onClose();
+              }}
+              disabled={isSaving}
+              className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 shadow-lg shadow-blue-500/25 transition-all disabled:opacity-50 flex items-center gap-2"
+            >
+              {isSaving && <Loader2 className="animate-spin" size={16} />}
+              {t.saveChanges}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -370,7 +424,7 @@ export const InfoPopup: FC<{
       }));
     } catch (error) {
       console.error(error);
-      alert(error instanceof Error ? error.message : t.uploadErrorGeneral);
+      notify.error(error instanceof Error ? error.message : t.uploadErrorGeneral);
     } finally {
       setIsUploading(false);
     }
@@ -566,23 +620,24 @@ export const TargetPopup: FC<{
   const [summary, setSummary] = useState(initialData.summary || "");
   const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [hasLoadedAI, setHasLoadedAI] = useState(false);
 
-  useEffect(() => {
-    const fetchAISummary = async () => {
-      setLoading(true);
-      try {
-        const res = await suggestSummary({}, jobAnalysis || {});
-        if (res && Array.isArray(res.summaries)) {
-          setAiSuggestions(res.summaries);
-        }
-      } catch (err) {
-        setAiSuggestions([]);
-      } finally {
-        setLoading(false);
+  // CHỈ GỌI API KHI BẤM NÚT AI
+  const handleFetchAISuggestions = async () => {
+    setLoading(true);
+    try {
+      const res = await suggestSummary({}, jobAnalysis || {});
+      if (res && Array.isArray(res.summaries)) {
+        setAiSuggestions(res.summaries);
       }
-    };
-    fetchAISummary();
-  }, [jobAnalysis]);
+      setHasLoadedAI(true);
+    } catch (err) {
+      setAiSuggestions([]);
+      notify.error(language === "vi" ? "Không thể lấy gợi ý AI" : "Failed to get AI suggestions");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleToggleSuggestion = (text: string) => {
     if (summary.trim() === text.trim()) {
@@ -598,64 +653,90 @@ export const TargetPopup: FC<{
 
   return (
     <Modal title={t.title} onClose={onClose} onSave={handleSaveChanges}>
-      <div>
-        <div className="h-[90%] w-full relative ">
-          <div className="w-full flex flex-col h-full">
-            <label
-              htmlFor="summary"
-              className="block text-sm font-medium text-gray-700 mb-2"
-            >
-              {t.label}
-            </label>
-            <textarea
-              id="summary"
-              value={summary}
-              onChange={(e) => setSummary(e.target.value)}
-              className="flex-1 mt-1 block w-[49%] px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-              rows={12}
-              placeholder={t.placeholder}
-            ></textarea>
-          </div>
-          <div className="absolute top-0 right-0 h-full w-full md:w-[49%] flex flex-col bg-gray-50 bg-opacity-90 backdrop-blur-sm border-l border-gray-200 shadow-xl p-4">
-            <div className="font-semibold text-gray-800 mb-2">
+      <div className="min-h-[350px] w-full relative">
+        {/* LEFT: Text Area */}
+        <div className="w-full flex flex-col h-full">
+          <label htmlFor="summary" className="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+            <span className="w-1 h-5 bg-blue-500 rounded-full"></span>
+            {t.label}
+          </label>
+          <textarea
+            id="summary"
+            value={summary}
+            onChange={(e) => setSummary(e.target.value)}
+            className="flex-1 mt-1 block w-[49%] px-4 py-3 border border-slate-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none transition-all"
+            rows={12}
+            placeholder={t.placeholder}
+          ></textarea>
+        </div>
+
+        {/* RIGHT: AI Suggestions Panel */}
+        <div className="absolute top-0 right-0 h-full w-full md:w-[49%] flex flex-col bg-gradient-to-br from-slate-50 to-slate-100 border-l border-slate-200 rounded-r-xl p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="font-semibold text-slate-700 flex items-center gap-2">
+              <Wand2 size={16} className="text-indigo-500" />
               {t.aiSuggestions}
             </div>
-            <div className="flex flex-col gap-4 overflow-y-auto pr-1 flex-1">
-              {loading ? (
-                <div className="flex flex-col items-center justify-center h-full space-y-4">
-                <Loader2 className="animate-spin h-8 w-8 text-blue-500" />
-                <p className="text-gray-600 text-lg">{t.loadingAISuggestions}</p>
+            {!hasLoadedAI && (
+              <AIButton 
+                onClick={handleFetchAISuggestions} 
+                isLoading={loading} 
+                text={language === "vi" ? "Gợi ý AI" : "Get AI"}
+                size="sm"
+              />
+            )}
+          </div>
+          
+          <div className="flex flex-col gap-3 overflow-y-auto pr-1 flex-1">
+            {!hasLoadedAI && !loading ? (
+              <div className="flex flex-col items-center justify-center h-full text-center px-4">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-100 to-violet-100 flex items-center justify-center mb-4">
+                  <Wand2 size={28} className="text-indigo-500" />
+                </div>
+                <p className="text-slate-500 text-sm">
+                  {language === "vi" 
+                    ? "Bấm nút 'Gợi ý AI' để nhận gợi ý mục tiêu sự nghiệp phù hợp" 
+                    : "Click 'Get AI' to receive career objective suggestions"}
+                </p>
               </div>
-              ) : (
-                aiSuggestions.map((item, idx) => {
-                  const isSelected = summary.trim() === item.trim();
-                  return (
-                    <div
-                      key={idx}
-                      className="flex items-start gap-3 p-4 border border-blue-100 rounded-2xl bg-white shadow-sm "
+            ) : loading ? (
+              <div className="flex flex-col items-center justify-center h-full space-y-4">
+                <div className="relative">
+                  <div className="w-12 h-12 rounded-full border-4 border-indigo-100 border-t-indigo-500 animate-spin"></div>
+                </div>
+                <p className="text-slate-600 text-sm font-medium">{t.loadingAISuggestions}</p>
+              </div>
+            ) : (
+              aiSuggestions.map((item, idx) => {
+                const isSelected = summary.trim() === item.trim();
+                return (
+                  <div
+                    key={idx}
+                    className={`flex items-start gap-3 p-4 rounded-xl transition-all cursor-pointer ${
+                      isSelected 
+                        ? "bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-lg" 
+                        : "bg-white border border-slate-200 hover:border-indigo-300 hover:shadow-md"
+                    }`}
+                    onClick={() => handleToggleSuggestion(item)}
+                  >
+                    <button
+                      type="button"
+                      className={`flex items-center justify-center w-8 h-8 rounded-full text-lg font-bold flex-shrink-0 transition-all ${
+                        isSelected
+                          ? "bg-white/20 text-white"
+                          : "bg-gradient-to-r from-indigo-500 to-violet-500 text-white shadow-md"
+                      }`}
+                      title={isSelected ? t.tooltipRemove : t.tooltipAdd}
                     >
-                      <button
-                        type="button"
-                        className={`flex items-center justify-center w-9 h-9 rounded-full text-xl font-bold mt-1 focus:outline-none transition-colors ${
-                          isSelected
-                            ? "bg-blue-500 text-white hover:bg-blue-600"
-                            : "bg-blue-900 text-white hover:bg-blue-700"
-                        }`}
-                        onClick={() => handleToggleSuggestion(item)}
-                        title={isSelected ? t.tooltipRemove : t.tooltipAdd}
-                      >
-                        {isSelected ? "-" : "+"}
-                      </button>
-                      <div className="flex-1 text-[14px] leading-snug">
-                        <div className="text-gray-800 break-words whitespace-normal">
-                          {item}
-                        </div>
-                      </div>
+                      {isSelected ? <CheckCircle2 size={18} /> : <PlusCircle size={18} />}
+                    </button>
+                    <div className={`flex-1 text-sm leading-relaxed ${isSelected ? "text-white" : "text-slate-700"}`}>
+                      {item}
                     </div>
-                  );
-                })
-              )}
-            </div>
+                  </div>
+                );
+              })
+            )}
           </div>
         </div>
       </div>
@@ -719,7 +800,7 @@ export const ExperiencePopup: FC<{
       const rewritten = res?.rewritten || res;
       setCurrentItem({ ...currentItem, description: rewritten });
     } catch (err) {
-      alert(t.aiRewriteError);
+      notify.error(t.aiRewriteError);
     } finally {
       setLoadingAI(false);
     }
@@ -727,7 +808,7 @@ export const ExperiencePopup: FC<{
 
   const handleFormSubmit = () => {
     if (!currentItem.title || !currentItem.company) {
-      alert(t.validationError);
+      notify.error(t.validationError);
       return;
     }
     let updatedExperiences = [...experiences];
@@ -746,7 +827,7 @@ export const ExperiencePopup: FC<{
   };
 
   return (
-    <Modal title={t.title} onClose={onClose} onSave={handleSaveChanges}>
+    <Modal title={t.title} onClose={onClose} onSave={isEditing ? undefined : handleSaveChanges}>
       {isEditing ? (
         <div className="space-y-4">
           <div>
@@ -857,7 +938,7 @@ export const ExperiencePopup: FC<{
               onClick={handleFormSubmit}
               className="bg-blue-500 text-white px-4 py-2 rounded-md text-sm"
             >
-              {t.addButton}
+              {editingIndex !== null ? t.updateButton : t.addButton}
             </button>
           </div>
         </div>
@@ -962,7 +1043,7 @@ export const EducationPopup: FC<{
   };
 
   return (
-    <Modal title={t.title} onClose={onClose} onSave={handleSaveChanges}>
+    <Modal title={t.title} onClose={onClose} onSave={isEditing ? undefined : handleSaveChanges}>
       {isEditing ? (
         <div className="space-y-4">
           <div>
@@ -1040,7 +1121,7 @@ export const EducationPopup: FC<{
               onClick={handleFormSubmit}
               className="bg-blue-500 text-white px-4 py-2 rounded-md text-sm"
             >
-              {t.addButton}
+              {editingIndex !== null ? t.updateButton : t.addButton}
             </button>
           </div>
         </div>
@@ -1096,45 +1177,32 @@ export const SkillsPopup: FC<{
   const [newSkill, setNewSkill] = useState("");
   const [aiSkillSuggestions, setAiSkillSuggestions] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [hasLoadedAI, setHasLoadedAI] = useState(false);
   const { jobDescription, jobAnalysis, setJobAnalysis } = useCV();
-  const [analyzingJD, setAnalyzingJD] = useState(false);
 
-  useEffect(() => {
-    let isMounted = true;
-    const fetchAll = async () => {
-      setLoading(true);
-      try {
-        if (!jobAnalysis && jobDescription) {
-          setAnalyzingJD(true);
-          try {
-            const result = await analyzeJD(jobDescription);
-            if (isMounted) setJobAnalysis(result);
-          } finally {
-            if (isMounted) setAnalyzingJD(false);
-          }
-        }
-        const res = await suggestSkills(jobAnalysis || {});
-        if (
-          res &&
-          Array.isArray(res.skillsOptions) &&
-          res.skillsOptions.length > 0
-        ) {
-          const firstList = res.skillsOptions[0];
-          if (Array.isArray(firstList) && isMounted) {
-            setAiSkillSuggestions(firstList.map((s: any) => s.name));
-          }
-        }
-      } catch (err) {
-        if (isMounted) setAiSkillSuggestions([]);
-      } finally {
-        if (isMounted) setLoading(false);
+  // CHỈ GỌI API KHI BẤM NÚT AI
+  const handleFetchAISuggestions = async () => {
+    setLoading(true);
+    try {
+      if (!jobAnalysis && jobDescription) {
+        const result = await analyzeJD(jobDescription);
+        setJobAnalysis(result);
       }
-    };
-    fetchAll();
-    return () => {
-      isMounted = false;
-    };
-  }, [jobAnalysis, jobDescription]);
+      const res = await suggestSkills(jobAnalysis || {});
+      if (res && Array.isArray(res.skillsOptions) && res.skillsOptions.length > 0) {
+        const firstList = res.skillsOptions[0];
+        if (Array.isArray(firstList)) {
+          setAiSkillSuggestions(firstList.map((s: any) => s.name));
+        }
+      }
+      setHasLoadedAI(true);
+    } catch (err) {
+      setAiSkillSuggestions([]);
+      notify.error(language === "vi" ? "Không thể lấy gợi ý AI" : "Failed to get AI suggestions");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const addSkill = (skillName?: string) => {
     const skillToAdd = (skillName || newSkill).trim();
@@ -1164,9 +1232,11 @@ export const SkillsPopup: FC<{
 
   return (
     <Modal title={t.title} onClose={onClose} onSave={handleSaveChanges}>
-      <div className="w-full min-h-[300px] relative">
+      <div className="w-full min-h-[350px] relative">
+        {/* LEFT: Your Skills */}
         <div className="w-[49%] flex flex-col h-full">
-          <div className="font-semibold text-gray-700 mb-2">
+          <div className="font-semibold text-slate-700 mb-3 flex items-center gap-2">
+            <span className="w-1 h-5 bg-blue-500 rounded-full"></span>
             {t.yourSkillsLabel}
           </div>
           <div className="flex gap-2 mb-4">
@@ -1175,47 +1245,72 @@ export const SkillsPopup: FC<{
               value={newSkill}
               onChange={(e) => setNewSkill(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && addSkill()}
-              className="flex-grow shadow-sm border rounded w-full py-2 px-3"
+              className="flex-grow border border-slate-200 rounded-xl py-2.5 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
               placeholder={t.placeholder}
             />
             <button
               onClick={() => addSkill()}
-              className="bg-blue-500 text-white font-semibold px-4 rounded-md hover:bg-blue-600"
+              className="bg-blue-500 text-white font-semibold px-4 rounded-xl hover:bg-blue-600 transition-colors shadow-md shadow-blue-500/20"
             >
               {t.addButton}
             </button>
           </div>
-          <div className="flex flex-col gap-2 flex-1 overflow-y-auto pr-1">
+          <div className="flex flex-col gap-2 flex-1 overflow-y-auto pr-1 max-h-[280px]">
             {skills.map((skill: any, index: number) => (
-              <div key={index} className="flex items-center w-full bg-blue-50/60 border border-blue-100 px-3 py-2 rounded-lg hover:shadow-sm">
-                <span className="text-blue-900 font-medium truncate pr-3 max-w-[55%]">{skill.name}</span>
+              <div key={index} className="flex items-center w-full bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 px-3 py-2.5 rounded-xl hover:shadow-md transition-all group">
+                <span className="text-slate-700 font-medium truncate pr-3 max-w-[45%]">{skill.name}</span>
                 <div className="ml-auto flex items-center gap-1">
                   {[1,2,3,4,5].map((n) => (
                     <button
                       key={n}
                       type="button"
                       onClick={() => setSkills((prev:any[]) => prev.map((s, i) => i === index ? { ...s, rating: n } : s))}
-                      className={`${(skill.rating||0) >= n ? 'bg-blue-600' : 'bg-blue-200'} w-6 h-2 rounded transition-colors`}
+                      className={`${(skill.rating||0) >= n ? 'bg-gradient-to-r from-blue-500 to-indigo-500' : 'bg-slate-200'} w-6 h-2 rounded-full transition-all hover:scale-110`}
                       aria-label={`rating ${n}`}
                     />
                   ))}
                 </div>
-                <button onClick={() => removeSkill(skill.name)} className="pl-3 text-blue-900 hover:text-red-500"><X size={16} /></button>
+                <button onClick={() => removeSkill(skill.name)} className="pl-3 text-slate-400 hover:text-red-500 transition-colors"><X size={16} /></button>
               </div>
             ))}
           </div>
         </div>
-        <div className=" absolute top-0 right-0 h-full w-full md:w-[49%] flex flex-col bg-gray-50 bg-opacity-90 backdrop-blur-sm border-l border-gray-200 shadow-xl p-4">
-          <div className="font-semibold text-gray-800 mb-2">
-            {t.aiSuggestions}
+
+        {/* RIGHT: AI Suggestions Panel */}
+        <div className="absolute top-0 right-0 h-full w-full md:w-[49%] flex flex-col bg-gradient-to-br from-slate-50 to-slate-100 border-l border-slate-200 rounded-r-xl p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="font-semibold text-slate-700 flex items-center gap-2">
+              <Wand2 size={16} className="text-indigo-500" />
+              {t.aiSuggestions}
+            </div>
+            {!hasLoadedAI && (
+              <AIButton 
+                onClick={handleFetchAISuggestions} 
+                isLoading={loading} 
+                text={language === "vi" ? "Gợi ý AI" : "Get AI"}
+                size="sm"
+              />
+            )}
           </div>
-          <div className="flex flex-col gap-3 flex-1 overflow-y-auto pr-1 ">
-            {loading ? (
-              <div className="flex flex-col items-center justify-center h-full space-y-4">
-                <Loader2 className="animate-spin h-8 w-8 text-blue-500" />
-                <p className="text-gray-600 text-lg">
-                  {t.skillsLoading}
+          
+          <div className="flex flex-col gap-2 flex-1 overflow-y-auto pr-1">
+            {!hasLoadedAI && !loading ? (
+              <div className="flex flex-col items-center justify-center h-full text-center px-4">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-100 to-violet-100 flex items-center justify-center mb-4">
+                  <Wand2 size={28} className="text-indigo-500" />
+                </div>
+                <p className="text-slate-500 text-sm">
+                  {language === "vi" 
+                    ? "Bấm nút 'Gợi ý AI' để nhận gợi ý kỹ năng phù hợp với công việc của bạn" 
+                    : "Click 'Get AI' to receive skill suggestions tailored to your job"}
                 </p>
+              </div>
+            ) : loading ? (
+              <div className="flex flex-col items-center justify-center h-full space-y-4">
+                <div className="relative">
+                  <div className="w-12 h-12 rounded-full border-4 border-indigo-100 border-t-indigo-500 animate-spin"></div>
+                </div>
+                <p className="text-slate-600 text-sm font-medium">{t.skillsLoading}</p>
               </div>
             ) : (
               aiSkillSuggestions.map((skill) => {
@@ -1224,17 +1319,17 @@ export const SkillsPopup: FC<{
                   <button
                     key={skill}
                     type="button"
-                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium border transition-colors w-full text-left ${
+                    className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium border transition-all w-full text-left ${
                       isSelected
-                        ? "bg-blue-100 text-blue-800 border-blue-200"
-                        : "bg-white hover:bg-gray-100"
+                        ? "bg-gradient-to-r from-blue-500 to-indigo-500 text-white border-transparent shadow-md"
+                        : "bg-white hover:bg-slate-50 border-slate-200 hover:border-indigo-300 hover:shadow-sm"
                     }`}
                     onClick={() => handleToggleAISkill(skill)}
                   >
                     {isSelected ? (
-                      <CheckCircle2 size={16} className="text-blue-600" />
+                      <CheckCircle2 size={18} className="text-white" />
                     ) : (
-                      <PlusCircle size={16} className="text-blue-600" />
+                      <PlusCircle size={18} className="text-indigo-500" />
                     )}
                     <span className="flex-1">{skill}</span>
                   </button>
@@ -1467,14 +1562,52 @@ export const ProjectPopup: FC<{ onClose: () => void; initialData: any; onSave: (
   const { language } = useLanguage();
   const t = translations[language].projectPopup;
 
-  const [projects, setProjects] = useState<ProjectItem[]>(
-    (initialData.Project || []).map((item: any) => ({
-      title: item?.title || item?.["title "] || "",
-      summary: item?.summary || "",
-      startDate: item?.startDate || "",
-      endDate: item?.endDate || "",
-    }))
-  );
+  const [projects, setProjects] = useState<ProjectItem[]>(() => {
+    // Nếu không có Project hoặc Project rỗng, tạo một project mẫu
+    if (!initialData.Project || initialData.Project.length === 0) {
+      return [{
+        title: "",
+        summary: "",
+        startDate: "",
+        endDate: "",
+      }];
+    }
+    
+    // Chuyển đổi từ ISO date string sang format YYYY-MM-DD cho input date
+    return initialData.Project.map((item: any) => {
+      let startDate = "";
+      let endDate = "";
+      
+      if (item?.startDate) {
+        try {
+          const date = new Date(item.startDate);
+          if (!isNaN(date.getTime())) {
+            startDate = date.toISOString().split("T")[0];
+          }
+        } catch (e) {
+          startDate = item.startDate;
+        }
+      }
+      
+      if (item?.endDate) {
+        try {
+          const date = new Date(item.endDate);
+          if (!isNaN(date.getTime())) {
+            endDate = date.toISOString().split("T")[0];
+          }
+        } catch (e) {
+          endDate = item.endDate;
+        }
+      }
+      
+      return {
+        title: item?.title || item?.["title "] || "",
+        summary: item?.summary || "",
+        startDate: startDate,
+        endDate: endDate,
+      };
+    });
+  });
 
   const handleFieldChange = (
     index: number,
@@ -1494,14 +1627,31 @@ export const ProjectPopup: FC<{ onClose: () => void; initialData: any; onSave: (
 
   const handleSaveChanges = () => {
     const sanitized = projects
-      .map((item) => ({
-        title: item.title?.trim() || "",
-        summary: item.summary || "",
-        startDate: item.startDate || "",
-        endDate: item.endDate || "",
-      }))
+      .map((item) => {
+        // Chuyển đổi date string (YYYY-MM-DD) sang ISO format
+        const startDateISO = item.startDate 
+          ? new Date(item.startDate + "T00:00:00").toISOString()
+          : "";
+        const endDateISO = item.endDate 
+          ? new Date(item.endDate + "T00:00:00").toISOString()
+          : "";
+        
+        return {
+          title: item.title?.trim() || "",
+          summary: item.summary || "",
+          startDate: startDateISO,
+          endDate: endDateISO,
+        };
+      })
       .filter((item) => item.title);
-    onSave({ ...initialData, Project: sanitized });
+    
+    // Đảm bảo Project luôn là mảng
+    const updatedData = {
+      ...initialData,
+      Project: sanitized.length > 0 ? sanitized : [],
+    };
+    
+    onSave(updatedData);
     onClose();
   };
 

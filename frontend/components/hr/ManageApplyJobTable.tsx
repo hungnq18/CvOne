@@ -18,6 +18,7 @@ import html2pdf from "html2pdf.js";
 import { Check, Search, X } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import FilterByDateHr from './filterBydateHr';
+import { notify } from "@/lib/notify";
 
 interface ManageApplyJobTableProps {
     applications: any[];
@@ -118,18 +119,18 @@ const ManageApplyJobTable: React.FC<ManageApplyJobTableProps> = ({
             return;
         }
         if (!cvData || !cvData.content?.userData || !(cvData.cvTemplateId || cvData.templateId)) {
-            alert("Không đủ dữ liệu để xuất PDF");
+            notify.error("Không đủ dữ liệu để xuất PDF");
             return;
         }
         const templateId = cvData.cvTemplateId || cvData.templateId;
         const template = allTemplates.find((t) => t._id === templateId);
         if (!template) {
-            alert("Không tìm thấy template phù hợp để xuất PDF");
+            notify.error("Không tìm thấy template phù hợp để xuất PDF");
             return;
         }
         const TemplateComponent = templateComponentMap[template.title];
         if (!TemplateComponent) {
-            alert("Không tìm thấy component template để xuất PDF");
+            notify.error("Không tìm thấy component template để xuất PDF");
             return;
         }
         const templateData = { ...template.data, userData: cvData.content.userData };
@@ -142,7 +143,7 @@ const ManageApplyJobTable: React.FC<ManageApplyJobTableProps> = ({
         document.body.appendChild(iframe);
         const iframeDoc = iframe.contentWindow?.document;
         if (!iframeDoc) {
-            alert("Không thể tạo môi trường để xuất PDF.");
+            notify.error("Không thể tạo môi trường để xuất PDF.");
             document.body.removeChild(iframe);
             return;
         }
@@ -180,7 +181,7 @@ const ManageApplyJobTable: React.FC<ManageApplyJobTableProps> = ({
                 .save();
         } catch (error) {
             console.error("Lỗi khi tạo PDF:", error);
-            alert("Đã có lỗi xảy ra khi xuất file PDF.");
+            notify.error("Đã có lỗi xảy ra khi xuất file PDF.");
         } finally {
             if (root) root.unmount();
             if (document.body.contains(iframe)) document.body.removeChild(iframe);

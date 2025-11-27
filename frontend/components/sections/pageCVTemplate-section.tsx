@@ -9,6 +9,7 @@ import { X } from "lucide-react";
 import { GetServerSideProps } from "next";
 import { useRouter } from "next/navigation";
 import React, { FC, useRef, useState } from "react";
+import { notify } from "@/lib/notify";
 
 // ================== MODAL ==================
 interface TemplatePreviewModalProps {
@@ -86,7 +87,7 @@ const TemplatePreviewModal: FC<TemplatePreviewModalProps> = ({
     if (token) {
       router.push(`/chooseCreateCV?id=${templateId}`);
     } else {
-      alert("Bạn cần đăng nhập trước khi tạo CV!");
+      notify.error("Bạn cần đăng nhập trước khi tạo CV!");
       router.push("/login");
     }
     onClose();
@@ -117,7 +118,7 @@ const TemplatePreviewModal: FC<TemplatePreviewModalProps> = ({
             </div>
           ) : (
             <div className="mt-8 w-full max-w-[1050px] shadow-2xl origin-top scale-[0.6] md:scale-[0.7] lg:scale-[0.8]">
-              <TemplateComponent data={defaultPreviewData} language={language} />
+              <TemplateComponent data={defaultPreviewData} language={language} isPdfMode={true}/>
             </div>
           )}
         </div>

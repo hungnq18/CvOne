@@ -6,6 +6,7 @@ import { createPortal } from "react-dom";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import { GripVertical } from "lucide-react";
 import { getDefaultSectionPositions } from "./defaultSectionPositions";
+import { notify } from "@/lib/notify";
 
 // --- TRANSLATIONS ---
 const translations = {
@@ -257,14 +258,20 @@ const CVTemplateInspired: React.FC<CVTemplateProps> = ({
     ...defaultT,
     ...(cvUiTexts && {
       personalInfo: cvUiTexts.personalInformation || defaultT.personalInfo,
+      personalInfoLower: cvUiTexts.personalInformation || defaultT.personalInfoLower,
+      contact: cvUiTexts.contact || defaultT.personalInfo,
       careerObjective: cvUiTexts.careerObjective || defaultT.careerObjective,
+      careerObjectiveLower: cvUiTexts.careerObjective || defaultT.careerObjectiveLower,
       skills: cvUiTexts.skills || defaultT.skills,
+      skillsLower: cvUiTexts.skills || defaultT.skillsLower,
       workExperience: cvUiTexts.workExperience || defaultT.workExperience,
       education: cvUiTexts.education || defaultT.education,
       certificationLabel: cvUiTexts.certification || defaultT.certificationLabel,
       achievementLabel: cvUiTexts.achievement || defaultT.achievementLabel,
       hobbyLabel: cvUiTexts.hobby || defaultT.hobbyLabel,
       projectLabel: cvUiTexts.project || defaultT.projectLabel,
+      avatarLabel: cvUiTexts.avatar || defaultT.avatarLabel,
+      fullNameAndTitleLabel: cvUiTexts.fullNameAndTitle || defaultT.fullNameAndTitleLabel,
       
       phone: cvUiTexts.phone || defaultT.phone,
       email: cvUiTexts.email || defaultT.email,
@@ -291,6 +298,11 @@ const CVTemplateInspired: React.FC<CVTemplateProps> = ({
     data?.sectionPositions ||
     getDefaultSectionPositions(data?.templateTitle || "The Vanguard");
 
+  const dragWarningMessage =
+    lang === "vi"
+      ? "Bạn chỉ có thể thả mục trong khu vực bố cục cho phép."
+      : "Please drop sections inside the allowed layout areas.";
+
   type SectionPosition = { place: number; order: number };
 
   const supportedSections = ["avatar", "info", "contact", "summary", "skills", "experience", "education", "certification", "achievement", "hobby", "Project"];
@@ -309,13 +321,24 @@ const CVTemplateInspired: React.FC<CVTemplateProps> = ({
   const mainSections = getSectionsByPlace(3);
 
   const handleDragEnd = (result: DropResult) => {
-    if (!onLayoutChange || !result.destination) return;
+    if (!result.destination) {
+      notify.error(dragWarningMessage);
+      return;
+    }
+    if (!onLayoutChange) return;
     const { source, destination } = result;
 
     if (source.droppableId === destination.droppableId && source.index === destination.index) return;
 
     const sourcePlace = parseInt(source.droppableId);
     const destPlace = parseInt(destination.droppableId);
+    
+    // CHẶN: Không cho phép kéo thả sang place khác
+    if (sourcePlace !== destPlace) {
+      notify.error(dragWarningMessage);
+      return;
+    }
+    
     const newPositions = { ...sectionPositions };
 
     const getKeys = (place: number) => Object.entries(newPositions)
@@ -324,16 +347,15 @@ const CVTemplateInspired: React.FC<CVTemplateProps> = ({
       .map(([key]) => key);
 
     const sourceKeys = getKeys(sourcePlace);
-    const destKeys = sourcePlace === destPlace ? sourceKeys : getKeys(destPlace);
+    const destKeys = [...sourceKeys];
 
-    const [moved] = sourceKeys.splice(source.index, 1);
+    // Chỉ cho phép sắp xếp lại thứ tự trong cùng một place
+    const [moved] = destKeys.splice(source.index, 1);
     destKeys.splice(destination.index, 0, moved);
 
-    // Cập nhật lại order cho toàn bộ các key bị ảnh hưởng
-    if (sourcePlace !== destPlace) {
-       sourceKeys.forEach((key, index) => { newPositions[key] = { ...newPositions[key], order: index }; });
-    }
-    destKeys.forEach((key, index) => { newPositions[key] = { place: destPlace, order: index }; });
+    destKeys.forEach((key, index) => { 
+      newPositions[key] = { place: destPlace, order: index }; 
+    });
 
     onLayoutChange(newPositions);
   };
@@ -370,25 +392,28 @@ const CVTemplateInspired: React.FC<CVTemplateProps> = ({
               dragHandleProps={dragHandleProps}
               isDragging={isDragging}
             >
-              <div className="w-full h-full rounded-full overflow-hidden border-4 border-white/80">
-                <div className="w-full h-full relative aspect-square">
-                  {isPdfMode ? (
-                    <img
-                      src={userData.avatar || "/avatar-female.png"}
-                      alt="Avatar"
-                      crossOrigin="anonymous"
-                      className="rounded-full w-full h-full object-cover"
-                    />
-                  ) : (
-                    <Image
-                      src={userData.avatar || "/avatar-female.png"}
-                      alt="Avatar"
-                      fill
-                      style={{ objectFit: "cover" }}
-                      className="rounded-full"
-                    />
-                  )}
-                </div>
+              <div className="w-full h-full rounded-full overflow-hidden border-4 border-white/80 relative">
+                {isPdfMode ? (
+                  <div
+                    style={{ 
+                      width: '100%', 
+                      height: '100%', 
+                      backgroundImage: `url(${userData.avatar || "/avatar-female.png"})`,
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center',
+                      backgroundRepeat: 'no-repeat',
+                      borderRadius: '9999px'
+                    }}
+                  />
+                ) : (
+                  <Image
+                    src={userData.avatar || "/avatar-female.png"}
+                    alt="Avatar"
+                    fill
+                    style={{ objectFit: "cover" }}
+                    className="rounded-full"
+                  />
+                )}
               </div>
             </HoverableWrapper>
           </div>
@@ -584,7 +609,7 @@ const CVTemplateInspired: React.FC<CVTemplateProps> = ({
         return userData.certification?.length > 0 && (
           <div key="certification" className={containerClass}>
             <HoverableWrapper
-              label={cvUiTexts?.certification || t.certificationLabel}
+              label={t.certificationLabel}
               sectionId={sectionMap.certification}
               onClick={onSectionClick}
               className={`${innerPadding} relative w-[100%]`}
@@ -593,7 +618,7 @@ const CVTemplateInspired: React.FC<CVTemplateProps> = ({
               isDragging={isDragging}
             >
               <h2 className="text-xl font-bold text-gray-800 uppercase tracking-wider mb-4 pb-2 border-b-2 border-gray-300 break-words">
-                {cvUiTexts?.certification || t.certificationLabel}
+                {t.certificationLabel}
               </h2>
               <div className="space-y-4 w-full">
                 {userData.certification.map((cert: any, i: number) => (
@@ -620,7 +645,7 @@ const CVTemplateInspired: React.FC<CVTemplateProps> = ({
         return userData.achievement?.length > 0 && (
           <div key="achievement" className={containerClass}>
             <HoverableWrapper
-              label={cvUiTexts?.achievement || t.achievementLabel}
+              label={t.achievementLabel}
               sectionId={sectionMap.achievement}
               onClick={onSectionClick}
               className={`${innerPadding} relative w-full`}
@@ -629,7 +654,7 @@ const CVTemplateInspired: React.FC<CVTemplateProps> = ({
               isDragging={isDragging}
             >
               <h2 className="text-xl font-bold text-gray-800 uppercase tracking-wider mb-4 pb-2 border-b-2 border-gray-300 break-words">
-                {cvUiTexts?.achievement || t.achievementLabel}
+                {t.achievementLabel}
               </h2>
               <ul className="list-disc pl-6 space-y-2 text-gray-700 w-full">
                 {userData.achievement.map((ach: string, i: number) => (
@@ -644,7 +669,7 @@ const CVTemplateInspired: React.FC<CVTemplateProps> = ({
         return userData.hobby?.length > 0 && (
           <div key="hobby" className={containerClass}>
             <HoverableWrapper
-              label={cvUiTexts?.hobby || t.hobbyLabel}
+              label={t.hobbyLabel}
               sectionId={sectionMap.hobby}
               onClick={onSectionClick}
               className={`${innerPadding} relative w-full`}
@@ -653,7 +678,7 @@ const CVTemplateInspired: React.FC<CVTemplateProps> = ({
               isDragging={isDragging}
             >
               <h2 className="text-xl font-bold text-gray-800 uppercase tracking-wider mb-4 pb-2 border-b-2 border-gray-300 break-words">
-                {cvUiTexts?.hobby || t.hobbyLabel}
+                {t.hobbyLabel}
               </h2>
               <ul className="list-disc pl-5 mt-2 space-y-1 text-gray-700 w-full break-words">
                 {userData.hobby.map((h: string, i: number) => (
@@ -668,7 +693,7 @@ const CVTemplateInspired: React.FC<CVTemplateProps> = ({
         return userData.Project?.length > 0 && (
           <div key="Project" className={containerClass}>
             <HoverableWrapper
-              label={cvUiTexts?.project || t.projectLabel}
+              label={t.projectLabel}
               sectionId={sectionMap.Project}
               onClick={onSectionClick}
               className={`${innerPadding} relative w-full`}
@@ -677,7 +702,7 @@ const CVTemplateInspired: React.FC<CVTemplateProps> = ({
               isDragging={isDragging}
             >
               <h2 className="text-xl font-bold text-gray-800 uppercase tracking-wider mb-4 pb-2 border-b-2 border-gray-300 break-words">
-                {cvUiTexts?.project || t.projectLabel}
+                {t.projectLabel}
               </h2>
               <div className="space-y-4 w-full">
                 {userData.Project.map((project: any, i: number) => (

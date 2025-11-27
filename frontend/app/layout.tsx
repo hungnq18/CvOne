@@ -44,7 +44,7 @@ export default function RootLayout({
 }>) {
   const role = getRoleFromToken();
   return (
-    <html lang="en" className="overflow-x-hidden" suppressHydrationWarning>
+    <html lang="en" className="overflow-x-hidden light" suppressHydrationWarning style={{ colorScheme: 'light' }}>
       <body className={`${inter.className} min-h-screen flex flex-col overflow-x-hidden`}>
         <StyledComponentsRegistry>
           <GlobalProvider>
@@ -52,8 +52,8 @@ export default function RootLayout({
               <EmailVerificationProvider>
                 <ThemeProvider
                   attribute="class"
-                  defaultTheme="system"
-                  enableSystem
+                  defaultTheme="light"
+                  forcedTheme="light"
                   disableTransitionOnChange
                 >
                   <ChatProvider>
@@ -69,7 +69,7 @@ export default function RootLayout({
                         </div>
                       )}
                       <IconChatAndNotification /> {/* use */}
-                      <Toaster /> {/* use */}
+                      <Toaster /> {/* For all toast notifications (shadcn) */}
                     </CVProvider>
                   </ChatProvider> {/* use */}
                 </ThemeProvider>

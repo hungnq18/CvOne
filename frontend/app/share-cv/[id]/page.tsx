@@ -6,6 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { getSharedCV, getCVTemplateById } from '@/api/cvapi';
 import { templateComponentMap } from '@/components/cvTemplate/index';
 import { Loader2 } from 'lucide-react';
+import { notify } from "@/lib/notify";
 
 // Dynamic import để tránh lỗi hydration
 const CVShareSection = dynamic(() => import('@/components/sections/share-cv-section'), {
@@ -55,7 +56,7 @@ export default function ShareCVPage() {
 
   const handleDownloadPDF = async () => {
     if (!cvData || !cvData.content?.userData) {
-      alert("CV data is not available");
+      notify.error("CV data is not available");
       return;
     }
 
@@ -63,7 +64,7 @@ export default function ShareCVPage() {
       const component = templateComponentMap?.[cvData.cvTemplate?.title || 'modern1'];
       
       if (!component) {
-        alert("Template not found");
+        notify.error("Template not found");
         return;
       }
 
@@ -77,7 +78,7 @@ export default function ShareCVPage() {
 
       const iframeDoc = iframe.contentWindow?.document;
       if (!iframeDoc) {
-        alert("Cannot create environment to export PDF.");
+        notify.error("Cannot create environment to export PDF.");
         document.body.removeChild(iframe);
         return;
       }
@@ -127,7 +128,7 @@ export default function ShareCVPage() {
           .save();
       } catch (error) {
         console.error("Error generating PDF:", error);
-        alert("An error occurred while exporting the PDF file.");
+        notify.error("An error occurred while exporting the PDF file.");
       } finally {
         if (root) {
           root.unmount();
@@ -138,7 +139,7 @@ export default function ShareCVPage() {
       }
     } catch (err) {
       console.error("Error in download:", err);
-      alert("Failed to generate PDF");
+      notify.error("Failed to generate PDF");
     }
   };
 
