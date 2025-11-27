@@ -9,6 +9,7 @@ import { Model, Types } from "mongoose";
 import { VouchersService } from "../vouchers/vouchers.service";
 import { Credit, CreditDocument } from "./schemas/credit.schema";
 import { exists } from "fs";
+import { FeedbackFeature } from "../feedback/schemas/feedback.schema";
 @Injectable()
 export class CreditsService {
   constructor(
@@ -249,9 +250,7 @@ export class CreditsService {
     return updatedCredit;
   }
 
-  async addVoucherForUserFeedback(userId: string) {
-    const voucherId = "79b3ba37b477064174e2f107";
-
+  async addVoucherForUserFeedback(userId: string, voucherId: string) {
     const credit = await this.saveVoucher(userId, voucherId);
     return credit;
   }
