@@ -152,11 +152,16 @@ export const API_ENDPOINTS = {
     UPDATE_VOUCHER: (voucherId: string) => `/credits/save-voucher/${voucherId}`, // @PATCH
     GET_CREDIT: "/credits",
   },
+  FEEDBACK: {
+    GET_ALL: "/feedback",
+    GET_BY_FEATURE: (feature: string) => `/feedback/feature/${feature}`,
+  },
   BANNER: {
     GET_ALL: "/banner",
     CREATE: "/banner",
     UPDATE: (id: string) => `/banner/${id}`,
     DELETE: (id: string) => `/banner/${id}`,
+    FOR_USER: "/banner/for-user",
   },
   AVERAGE_AI: {
     GET_ALL_AVERAGE: "/ai-average/average-stats",

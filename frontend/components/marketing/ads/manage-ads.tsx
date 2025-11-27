@@ -160,7 +160,6 @@ export function ManageAds() {
                                             >
                                                 Edit Ad
                                             </DropdownMenuItem>
-                                            <DropdownMenuItem>Deactivate</DropdownMenuItem>
                                             <DropdownMenuItem
                                                 className="text-red-500"
                                                 onClick={() => handleDelete(ad)}
