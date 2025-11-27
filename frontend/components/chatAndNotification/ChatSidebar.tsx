@@ -218,6 +218,4 @@ function ChatSidebar({
         </div>
     );
 }
-
-// Memoize component để tránh re-render không cần thiết
 export default memo(ChatSidebar);

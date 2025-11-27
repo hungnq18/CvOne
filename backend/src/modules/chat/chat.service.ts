@@ -12,7 +12,7 @@ export class ChatService {
     @InjectModel(Message.name) private messageModel: Model<Message>,
     @InjectModel(Conversation.name) private convModel: Model<Conversation>,
     private userService: UsersService,
-  ) {}
+  ) { }
 
   async saveMessage(dto: SendMessageDto) {
     const conversationId = new Types.ObjectId(dto.conversationId);
@@ -64,14 +64,22 @@ export class ChatService {
 
     await conversation.save();
 
-    return message;
+    // Populate senderId trước khi trả về cho socket
+    const populatedMessage = await this.messageModel
+      .findById(message._id)
+      .populate("senderId", "first_name last_name")
+      .lean()
+      .exec();
+
+    return populatedMessage || message;
   }
 
   async getMessagesByConversationId(conversationId: string) {
     return this.messageModel
       .find({ conversationId: new Types.ObjectId(conversationId) })
       .sort({ createdAt: 1 }) // tăng dần theo thời gian
-      .populate("senderId", "name") // nếu muốn lấy info người gửi
+      .populate("senderId", "first_name last_name") // Populate đúng fields từ User schema
+      .lean()
       .exec();
   }
 

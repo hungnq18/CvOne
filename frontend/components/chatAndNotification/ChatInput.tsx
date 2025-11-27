@@ -1,10 +1,12 @@
+import React, { memo } from 'react';
+
 interface ChatInputProps {
     content: string;
     onContentChange: (content: string) => void;
     onSend: () => void;
 }
 
-export default function ChatInput({
+function ChatInput({
     content,
     onContentChange,
     onSend
@@ -36,4 +38,7 @@ export default function ChatInput({
             </div>
         </div>
     );
-} 
+}
+
+// Memoize component để tránh re-render không cần thiết
+export default memo(ChatInput);
