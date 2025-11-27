@@ -4,35 +4,66 @@ const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL ?? "http://localhost:8000"
 
 class SocketInstance {
   private socket: Socket | null = null;
+  private reconnectAttempts = 0;
+  private maxReconnectAttempts = 5;
 
   getSocket(): Socket {
     if (!this.socket) {
       this.socket = io(SOCKET_URL, {
-        transports: ["websocket"],
+        transports: ["websocket", "polling"], // Fallback to polling if websocket fails
         autoConnect: true,
-        auth: () => {
+        reconnection: true,
+        reconnectionDelay: 1000,
+        reconnectionDelayMax: 5000,
+        reconnectionAttempts: this.maxReconnectAttempts,
+        timeout: 20000,
+        forceNew: false, // Reuse existing connection if available
+        upgrade: true, // Allow upgrade from polling to websocket
+        auth: (cb) => {
           // Tự động gửi token từ cookie (nếu có)
           if (typeof window !== "undefined") {
             const token = document.cookie
               .split("; ")
               .find(row => row.startsWith("token="))
               ?.split("=")[1];
-            return token ? { token: `Bearer ${token}` } : {};
+            const authData = token ? { token: `Bearer ${token}` } : {};
+            cb(authData);
+          } else {
+            cb({});
           }
-          return {};
         },
       });
 
       this.socket.on("connect", () => {
-        console.log("Socket connected!", this.socket?.id);
+        this.reconnectAttempts = 0; // Reset reconnect attempts on successful connection
       });
 
       this.socket.on("connect_error", (err) => {
-        console.error("Socket connection error:", err.message);
+        this.reconnectAttempts++;
+        console.error("❌ Socket connection error:", err.message);
+        if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+          console.error("❌ Max reconnection attempts reached. Please refresh the page.");
+        }
       });
 
-      this.socket.on("disconnect", () => {
-        console.log("Socket disconnected");
+      this.socket.on("disconnect", (reason) => {
+        if (reason === "io server disconnect") {
+          // Server disconnected the client, need to manually reconnect
+          this.socket?.connect();
+        }
+        // Connection lost, will auto-reconnect
+      });
+
+      this.socket.on("reconnect", () => {
+        this.reconnectAttempts = 0;
+      });
+
+      this.socket.on("reconnect_error", (error) => {
+        console.error("❌ Reconnection error:", error.message);
+      });
+
+      this.socket.on("reconnect_failed", () => {
+        console.error("❌ Reconnection failed. Please refresh the page.");
       });
     }
 

@@ -54,35 +54,50 @@ const ConversationItem = memo(({
         lastMessage: Message | null;
     } | null;
 }) => {
+    // Normalize userId để so sánh
+    const normalizedUserId = userId ? String(userId) : null;
+
     // Ưu tiên otherUser từ conv, nếu không có thì lấy từ selectedConversationDetail
     let otherUser = conv.otherUser;
 
+
     // Nếu không có otherUser và đây là conversation được chọn, lấy từ selectedConversationDetail
-    if (!otherUser && isSelected && selectedConversationDetail) {
+    if ((!otherUser || !otherUser.first_name) && isSelected && selectedConversationDetail) {
         const otherParticipant = selectedConversationDetail.participants?.find((p: any) => {
-            const pid = typeof p === "object" && p._id ? p._id.toString() : p;
-            return userId && pid !== userId;
+            if (!p) return false;
+            const pid = typeof p === "object" && p._id
+                ? String(p._id)
+                : String(p);
+            return normalizedUserId && pid !== normalizedUserId;
         });
-        if (otherParticipant && typeof otherParticipant === "object") {
+        if (otherParticipant && typeof otherParticipant === "object" && (otherParticipant.first_name || otherParticipant._id)) {
             otherUser = otherParticipant;
         }
     }
 
     // Nếu vẫn không có, thử lấy từ participants của conv
-    if (!otherUser && conv.participants) {
+    if ((!otherUser || !otherUser.first_name) && conv.participants && Array.isArray(conv.participants)) {
         const otherParticipant = conv.participants.find((p: any) => {
-            const pid = typeof p === "object" && p._id ? p._id.toString() : p;
-            return userId && pid !== userId;
+            if (!p) return false;
+            const pid = typeof p === "object" && p._id
+                ? String(p._id)
+                : String(p);
+            return normalizedUserId && pid !== normalizedUserId;
         });
-        if (otherParticipant && typeof otherParticipant === "object" && otherParticipant.first_name) {
-            otherUser = otherParticipant;
+        if (otherParticipant) {
+            // Nếu là object có first_name, dùng trực tiếp
+            if (typeof otherParticipant === "object" && otherParticipant.first_name) {
+                otherUser = otherParticipant;
+            } else if (typeof otherParticipant === "string") {
+                // Nếu là string ID, cần fetch user data (sẽ được xử lý bởi processConversationsData)
+                // Nhưng ở đây chúng ta không có access đến userCache, nên skip
+            }
         }
     }
 
     // Tìm số chưa đọc
     let unread = 0;
-    if (Array.isArray(conv.unreadCount) && userId) {
-        const normalizedUserId = typeof userId === "string" ? userId : String(userId);
+    if (Array.isArray(conv.unreadCount) && normalizedUserId) {
         const entry = conv.unreadCount.find((u: any) => {
             if (!u || !u.userId) return false;
             const uid = typeof u.userId === "object" && u.userId && u.userId._id
@@ -95,10 +110,48 @@ const ConversationItem = memo(({
         unread = conv.unreadCount;
     }
 
-    // Lấy tên user
-    const displayName = otherUser && typeof otherUser === "object" && otherUser.first_name
-        ? `${otherUser.first_name} ${otherUser.last_name || ''}`.trim()
-        : 'Unknown User';
+    // Lấy tên user - Kiểm tra kỹ hơn
+    let displayName = 'Unknown User';
+    if (otherUser) {
+        if (typeof otherUser === "object") {
+            if (otherUser.first_name) {
+                displayName = `${otherUser.first_name} ${otherUser.last_name || ''}`.trim();
+            } else if (otherUser._id) {
+                // Có _id nhưng không có first_name - có thể chưa được populate
+                console.warn("⚠️ otherUser has _id but no first_name:", otherUser);
+            }
+        } else if (typeof otherUser === "string") {
+            // otherUser là string ID - không thể hiển thị tên
+            console.warn("⚠️ otherUser is string ID, cannot display name:", otherUser);
+        }
+    }
+
+    // Debug log nếu vẫn là Unknown User
+    if (displayName === 'Unknown User') {
+        console.warn("⚠️ Cannot find display name for conversation:", {
+            convId: conv._id,
+            otherUser,
+            otherUserType: typeof otherUser,
+            hasFirstName: otherUser && typeof otherUser === "object" ? !!otherUser.first_name : false,
+            participants: conv.participants,
+        });
+    }
+
+    // Helper để lấy avatar color
+    const getAvatarColorForUser = (user: any): string => {
+        if (user && typeof user === "object" && user.first_name) {
+            return getAvatarColor((user.first_name || '') + (user.last_name || ''));
+        }
+        return '#888';
+    };
+
+    // Helper để lấy avatar initials
+    const getAvatarInitials = (user: any): string => {
+        if (user && typeof user === "object" && user.first_name) {
+            return `${(user.first_name || 'U')[0]}${(user.last_name || 'U')[0]}`.toUpperCase();
+        }
+        return 'U';
+    };
 
     return (
         <div
@@ -106,11 +159,9 @@ const ConversationItem = memo(({
             className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors hover:bg-muted/50 ${isSelected ? "bg-muted" : ""}`}
         >
             <div className="relative">
-                <Avatar className="h-12 w-12" style={{ background: otherUser && typeof otherUser === "object" && otherUser.first_name ? getAvatarColor((otherUser.first_name || '') + (otherUser.last_name || '')) : '#888' }}>
+                <Avatar className="h-12 w-12" style={{ background: getAvatarColorForUser(otherUser) }}>
                     <span className="text-2xl text-white font-semibold flex items-center justify-center w-full h-full">
-                        {otherUser && typeof otherUser === "object" && otherUser.first_name
-                            ? `${(otherUser.first_name || 'U')[0]}${(otherUser.last_name || 'U')[0]}`.toUpperCase()
-                            : 'U'}
+                        {getAvatarInitials(otherUser)}
                     </span>
                 </Avatar>
                 {/* Online dot */}

@@ -12,7 +12,13 @@ import { NotificationsGateway } from "../notifications/notifications.gateway";
 import { NotificationsService } from "../notifications/notifications.service";
 import { ConversationService } from "../conversation/conversation.service";
 
-@WebSocketGateway({ cors: true })
+@WebSocketGateway({
+  cors: {
+    origin: process.env.FRONTEND_URL || "http://localhost:3000",
+    credentials: true,
+  },
+  transports: ["websocket", "polling"], // Support both transports
+})
 export class ChatGateway {
   @WebSocketServer() server: Server;
 
@@ -28,9 +34,21 @@ export class ChatGateway {
     @MessageBody() dto: SendMessageDto,
     @ConnectedSocket() client: Socket,
   ) {
-    const message = await this.chatService.saveMessage(dto);
+    try {
+      const message = await this.chatService.saveMessage(dto);
 
-    this.server.to(dto.conversationId).emit("newMessage", message);
+      // Emit về tất cả clients trong room (bao gồm cả sender)
+      this.server.to(dto.conversationId).emit("newMessage", message);
+
+      // Đảm bảo emit về cả sender nếu chưa join room
+      client.emit("newMessage", message);
+    } catch (error) {
+      console.error("❌ Error in handleSendMessage:", error);
+      // Emit error về client
+      client.emit("messageError", {
+        error: error.message || "Failed to send message",
+      });
+    }
   }
 
   @SubscribeMessage("joinRoom")

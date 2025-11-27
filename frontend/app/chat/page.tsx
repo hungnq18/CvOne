@@ -42,6 +42,20 @@ export default function ChatPage() {
       setUserId(id);
       socketRef.current = socket.getSocket();
 
+      // Listen for socket connection status
+      const currentSocket = socketRef.current;
+
+      const handleConnect = () => {
+        // Socket connected
+      };
+
+      const handleDisconnect = () => {
+        // Socket disconnected
+      };
+
+      currentSocket.on("connect", handleConnect);
+      currentSocket.on("disconnect", handleDisconnect);
+
       const fetchConversations = async () => {
         try {
           const conversations = await getUserConversations(id);
@@ -54,6 +68,11 @@ export default function ChatPage() {
         }
       };
       fetchConversations();
+
+      return () => {
+        currentSocket.off("connect", handleConnect);
+        currentSocket.off("disconnect", handleDisconnect);
+      };
     }
   }, []);
 
@@ -82,17 +101,6 @@ export default function ChatPage() {
           selectedConversationId
         );
         if (!cancelled) {
-          console.log("📥 Fetched conversation detail:", {
-            id: conversationDetail._id,
-            participantsCount: conversationDetail.participants?.length,
-            participants: conversationDetail.participants?.map((p: any) => ({
-              raw: p,
-              type: typeof p,
-              hasId: !!p?._id,
-              idValue: p?._id,
-              firstName: p?.first_name,
-            })),
-          });
           setSelectedConversationDetail(conversationDetail);
         }
       } catch (err) {
@@ -140,17 +148,8 @@ export default function ChatPage() {
         : String(msg.conversationId || "");
       const currentConvId = String(selectedConversationId || "");
 
-      console.log("📨 Received newMessage event:", {
-        msgConversationId: msgConvId,
-        currentConversationId: currentConvId,
-        match: msgConvId === currentConvId,
-        messageId: msg._id,
-        content: msg.content,
-      });
-
       // Nếu là conversation đang mở, thêm vào messages
       if (msgConvId === currentConvId) {
-        console.log("✅ Message belongs to current conversation, adding to messages");
         const { message } = await handleNewMessage(msg, userId);
         setMessages((prev) => {
           // Normalize message IDs để so sánh
@@ -165,7 +164,6 @@ export default function ChatPage() {
           });
 
           if (exists) {
-            console.log("⚠️ Message already exists, replacing optimistic message");
             // Thay thế message tạm (optimistic) bằng message thật từ server
             return prev.map((m: Message) => {
               const mid = typeof m._id === "object" && (m._id as any)?._id
@@ -178,7 +176,6 @@ export default function ChatPage() {
             });
           }
 
-          console.log("✅ Adding new message to state");
           // Loại bỏ optimistic message nếu có và thêm message thật
           const filtered = prev.filter((m: Message) => {
             const mid = typeof m._id === "object" && (m._id as any)?._id
@@ -188,8 +185,6 @@ export default function ChatPage() {
           });
           return [...filtered, message];
         });
-      } else {
-        console.log("ℹ️ Message belongs to different conversation, skipping");
       }
 
       // Đẩy conversation có tin nhắn mới lên đầu - Tối ưu state update
@@ -259,9 +254,17 @@ export default function ChatPage() {
 
     currentSocket.on("newMessage", handleNewMessageSocket);
 
+    // Listen for errors from backend
+    const handleMessageError = (error: any) => {
+      console.error("❌ Message error from server:", error);
+      alert(`Lỗi gửi tin nhắn: ${error.error || "Unknown error"}`);
+    };
+    currentSocket.on("messageError", handleMessageError);
+
     return () => {
       cancelled = true;
       currentSocket.off("newMessage", handleNewMessageSocket);
+      currentSocket.off("messageError", handleMessageError);
       currentSocket.emit("leaveRoom", selectedConversationId);
     };
   }, [selectedConversationId, userId]);
@@ -312,30 +315,15 @@ export default function ChatPage() {
   ): string => {
     const normalizedCurrentUserId = normalizeParticipantId(currentUserId);
     if (!normalizedCurrentUserId) {
-      console.error("Invalid currentUserId:", currentUserId);
       return "";
     }
 
     // Thử lấy từ selectedConversationDetail trước (có thể mới hơn)
     if (selectedConversationDetail && selectedConversationDetail._id === conversationId) {
       const participants = selectedConversationDetail.participants || [];
-      console.log("🔍 Checking selectedConversationDetail participants:", {
-        count: participants.length,
-        participants: participants.map((p: any) => ({
-          raw: p,
-          normalized: normalizeParticipantId(p),
-          type: typeof p,
-          hasId: !!p?._id,
-          idValue: p?._id,
-        })),
-        currentUserId: normalizedCurrentUserId,
-      });
-
       for (const p of participants) {
         const pid = normalizeParticipantId(p);
-        console.log(`  - Participant: ${JSON.stringify(p)}, normalized: ${pid}, match: ${pid !== normalizedCurrentUserId}`);
         if (pid && pid !== normalizedCurrentUserId) {
-          console.log("✅ Found receiverId from selectedConversationDetail:", pid);
           return pid;
         }
       }
@@ -346,12 +334,10 @@ export default function ChatPage() {
 
     // ƯU TIÊN: Lấy từ unreadCount array (chắc chắn có cả 2 userId)
     if (conv && Array.isArray(conv.unreadCount)) {
-      console.log("🔍 Checking unreadCount array for userIds:", conv.unreadCount);
       for (const entry of conv.unreadCount) {
         if (!entry || !entry.userId) continue;
         const uid = normalizeParticipantId(entry.userId);
         if (uid && uid !== normalizedCurrentUserId) {
-          console.log("✅ Found receiverId from unreadCount array:", uid);
           return uid;
         }
       }
@@ -359,36 +345,13 @@ export default function ChatPage() {
 
     // Fallback: Lấy từ participants
     if (conv && conv.participants) {
-      console.log("🔍 Checking conversations list participants:", {
-        count: conv.participants.length,
-        participants: conv.participants.map((p: any) => ({
-          raw: p,
-          normalized: normalizeParticipantId(p),
-          type: typeof p,
-          hasId: !!p?._id,
-          idValue: p?._id,
-        })),
-        currentUserId: normalizedCurrentUserId,
-      });
-
       for (const p of conv.participants) {
         const pid = normalizeParticipantId(p);
         if (pid && pid !== normalizedCurrentUserId) {
-          console.log("✅ Found receiverId from conversations list participants:", pid);
           return pid;
         }
       }
     }
-
-    console.error("Cannot find receiverId:", {
-      conversationId,
-      currentUserId: normalizedCurrentUserId,
-      hasSelectedDetail: !!selectedConversationDetail,
-      selectedDetailParticipants: selectedConversationDetail?.participants,
-      conversationsLength: conversations.length,
-      convParticipants: conv?.participants,
-      convUnreadCount: conv?.unreadCount,
-    });
 
     return "";
   }, [conversations, selectedConversationDetail, normalizeParticipantId]);
@@ -403,100 +366,43 @@ export default function ChatPage() {
     );
 
     if (!receiverId) {
-      console.warn("Cannot find receiverId, attempting fallback...", {
-        conversationId: selectedConversationId,
-        userId,
-        normalizedUserId: normalizeParticipantId(userId),
-        hasSelectedDetail: !!selectedConversationDetail,
-        selectedDetailId: selectedConversationDetail?._id,
-        selectedDetailParticipants: selectedConversationDetail?.participants?.map((p: any) => ({
-          raw: p,
-          normalized: normalizeParticipantId(p),
-          type: typeof p,
-          hasId: !!p?._id,
-          idValue: p?._id,
-        })),
-        conversationsCount: conversations.length,
-      });
-
-      // Fallback: Thử lấy trực tiếp từ selectedConversationDetail với debug chi tiết
+      // Fallback: Thử lấy trực tiếp từ selectedConversationDetail
       if (selectedConversationDetail?.participants) {
         const normalizedUserId = normalizeParticipantId(userId);
-        console.log("🔧 Trying fallback with normalizedUserId:", normalizedUserId);
-        console.log("📋 All participants in selectedConversationDetail:",
-          selectedConversationDetail.participants.map((p: any) => ({
-            raw: p,
-            normalized: normalizeParticipantId(p),
-            isCurrentUser: normalizeParticipantId(p) === normalizedUserId,
-            type: typeof p,
-            hasId: !!p?._id,
-            idValue: p?._id,
-            firstName: p?.first_name,
-          }))
-        );
-
         for (const p of selectedConversationDetail.participants) {
           const pid = normalizeParticipantId(p);
-          const isMatch = pid && pid !== normalizedUserId;
-          console.log(`  🔍 Participant check:`, {
-            raw: JSON.stringify(p),
-            normalized: pid,
-            isMatch,
-            isCurrentUser: pid === normalizedUserId,
-          });
-          if (isMatch) {
+          if (pid && pid !== normalizedUserId) {
             receiverId = pid;
-            console.log("✅ Found receiverId via fallback:", receiverId);
             break;
           }
         }
       }
 
-      // Fallback này đã được xử lý trong getReceiverIdFromMultipleSources rồi
-
       // Fallback cuối cùng: Fetch lại conversation từ backend và lấy receiverId
-      // Có thể backend chỉ populate 1 participant nên cần fetch lại
       if (!receiverId) {
-        console.log("🔧 Last resort: Fetching conversation directly from API...");
         try {
           const directConv = await getConversationDetail(selectedConversationId);
-          console.log("📥 Direct conversation response:", directConv);
-
           if (directConv?.participants && Array.isArray(directConv.participants)) {
             const normalizedUserId = normalizeParticipantId(userId);
-            console.log("🔍 Checking direct conversation participants:", {
-              count: directConv.participants.length,
-              participants: directConv.participants.map((p: any) => ({
-                raw: p,
-                normalized: normalizeParticipantId(p),
-                isCurrentUser: normalizeParticipantId(p) === normalizedUserId,
-              })),
-            });
-
             for (const p of directConv.participants) {
               const pid = normalizeParticipantId(p);
               if (pid && pid !== normalizedUserId) {
                 receiverId = pid;
-                console.log("✅ Found receiverId from direct API fetch:", receiverId);
-                // Cập nhật selectedConversationDetail để tránh fetch lại lần sau
                 setSelectedConversationDetail(directConv);
                 break;
               }
             }
           }
         } catch (err) {
-          console.error("❌ Error in last resort fetch:", err);
+          console.error("Error in last resort fetch:", err);
         }
       }
 
       if (!receiverId) {
-        console.error("❌ Still cannot find receiverId after all fallbacks, aborting send");
         alert("Không thể tìm thấy người nhận tin nhắn. Conversation ID: " + selectedConversationId + "\nVui lòng refresh trang và thử lại.");
         return;
       }
     }
-
-    console.log("✅ Sending message with receiverId:", receiverId);
 
     const messageDto = {
       conversationId: selectedConversationId,
@@ -519,7 +425,6 @@ export default function ChatPage() {
       readBy: [],
     };
 
-    console.log("💬 Adding optimistic message:", optimisticMessage);
     setMessages((prev) => {
       // Kiểm tra xem đã có message tạm chưa
       const hasTemp = prev.some(m => m._id?.toString().startsWith('temp-'));
@@ -597,18 +502,30 @@ export default function ChatPage() {
               <div className="flex items-center gap-3">
                 <div>
                   <h2 className="font-semibold">
-                    {selectedConversationDetail?.participants
-                      ?.filter((p: any) => {
-                        const pid = typeof p === "object" && p._id ? p._id.toString() : p;
-                        return userId && pid !== userId;
-                      })
-                      .map((p: any) => {
-                        if (typeof p === "object" && p.first_name) {
-                          return `${p.first_name} ${p.last_name || ''}`.trim();
-                        }
-                        return p;
-                      })
-                      .join(", ") || "Người dùng"}
+                    {(() => {
+                      const normalizedUserId = userId ? String(userId) : null;
+                      if (!selectedConversationDetail?.participants) return "Người dùng";
+
+                      const otherParticipant = selectedConversationDetail.participants.find((p: any) => {
+                        if (!p) return false;
+                        const pid = typeof p === "object" && p._id
+                          ? String(p._id)
+                          : String(p);
+                        return normalizedUserId && pid !== normalizedUserId;
+                      });
+
+                      if (otherParticipant && typeof otherParticipant === "object" && otherParticipant.first_name) {
+                        return `${otherParticipant.first_name} ${otherParticipant.last_name || ''}`.trim();
+                      }
+
+                      // Fallback: Tìm từ conversations list
+                      const conv = conversations.find(c => c._id === selectedConversationId);
+                      if (conv?.otherUser && typeof conv.otherUser === "object" && conv.otherUser.first_name) {
+                        return `${conv.otherUser.first_name} ${conv.otherUser.last_name || ''}`.trim();
+                      }
+
+                      return "Người dùng";
+                    })()}
                   </h2>
                   <p className="text-sm text-muted-foreground">
                     {/* Có thể hiển thị trạng thái online nếu có */}

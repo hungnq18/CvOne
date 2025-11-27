@@ -16,15 +16,15 @@ export interface Message {
 
 export interface Conversation {
   _id: string;
-  participants: string[] | any[]; // Backend trả về ObjectId[] hoặc populated User[]
+  participants: string[] | any[];
   lastMessage?: {
     _id: string;
     content: string;
-    senderId: string | any; // Có thể là ObjectId hoặc populated User
+    senderId: string | any;
     createdAt: string;
     sender?: User;
   };
-  unreadCount: number | { userId: string | any; count: number }[]; // Backend trả về array, frontend có thể normalize thành number
+  unreadCount: number | { userId: string | any; count: number }[];
   otherUser?: User;
   currentUser?: User;
 }
