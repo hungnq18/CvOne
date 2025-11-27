@@ -8,7 +8,7 @@ interface UserInfoProps {
     onChangePassword: () => void;
 }
 
-const UserInfo: React.FC<UserInfoProps> = ({ user, onEdit, onChangePassword }) => {
+const UserInfoComponent: React.FC<UserInfoProps> = ({ user, onEdit, onChangePassword }) => {
     return (
         <div className="card mb-6 bg-white/80 backdrop-blur-sm border border-blue-100 shadow-lg mt-5">
             <div className="card-body">
@@ -51,5 +51,8 @@ const UserInfo: React.FC<UserInfoProps> = ({ user, onEdit, onChangePassword }) =
         </div>
     );
 };
+
+// Chỉ re-render khi user hoặc callback props thay đổi
+const UserInfo = React.memo(UserInfoComponent);
 
 export default UserInfo; 

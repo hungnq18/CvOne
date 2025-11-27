@@ -1,6 +1,9 @@
 "use client";
 import { CLTemplate, getCLTemplates } from "@/api/clApi";
-import { AdvertisementSection, VerticalAdvertisementSection } from "@/components/sections/advertisement-section";
+import {
+  AdvertisementSection,
+  VerticalAdvertisementSection,
+} from "@/components/sections/advertisement-section";
 import Header from "@/components/sections/header-pageclTemplate-section";
 import TemplateSection from "@/components/sections/pageCLTemplate-section";
 import { useLanguage } from "@/providers/global_provider";
@@ -30,7 +33,7 @@ export default function Page() {
           <div className="flex gap-4">
             {/* Banner dọc bên trái */}
             <div>
-              <VerticalAdvertisementSection />
+              <VerticalAdvertisementSection position="left" />
             </div>
             {/* Nội dung chính ở giữa */}
             <div className="flex-1">
@@ -39,7 +42,7 @@ export default function Page() {
             </div>
             {/* Banner dọc bên phải */}
             <div>
-              <VerticalAdvertisementSection />
+              <VerticalAdvertisementSection position="right" />
             </div>
           </div>
         </div>
