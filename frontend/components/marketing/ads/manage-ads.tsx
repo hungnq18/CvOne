@@ -115,10 +115,6 @@ export function ManageAds() {
                     </p>
                 </div>
                 <div className="flex items-center gap-2">
-                    <Button variant="outline">
-                        <FileDown className="h-4 w-4 mr-2" />
-                        Export
-                    </Button>
                     <AddAdModal onAdAdded={fetchAds} />
                 </div>
             </div>

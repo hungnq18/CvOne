@@ -1,8 +1,13 @@
 import { CL } from "@/api/clApi";
 import { useLanguage } from "@/providers/global_provider";
 import { Button, Card, Col, Row, Table } from "antd";
+import dynamic from "next/dynamic";
 import React from "react";
 import { FaFileAlt, FaPlus } from "react-icons/fa";
+
+const CardMyCL = dynamic(() => import("@/components/card/CardMyCL"), {
+  ssr: false,
+});
 
 interface CLListProps {
   coverLetters: CL[];
@@ -59,20 +64,14 @@ const CoverLetterList: React.FC<CLListProps> = ({ coverLetters, viewMode }) => {
           <Button
             type="primary"
             icon={<FaPlus />}
-            href="/clTemplates"
+            href="/clTemplate"
             className="bg-blue-500 hover:bg-blue-600 border-0 shadow-md"
           >
             {t.new}
           </Button>
         </div>
         <Row gutter={[16, 16]}>
-          {coverLetters.map((cl) => (
-            <Col xs={24} sm={12} md={8} lg={8} key={cl._id}>
-              <Card hoverable className="min-h-[200px]">
-                <h3 className="text-lg font-semibold">{cl.title}</h3>
-              </Card>
-            </Col>
-          ))}
+          <CardMyCL clListOverride={coverLetters} />
         </Row>
       </div>
     );
@@ -88,7 +87,7 @@ const CoverLetterList: React.FC<CLListProps> = ({ coverLetters, viewMode }) => {
         <Button
           type="primary"
           icon={<FaPlus />}
-          href="/clTemplates"
+          href="/clTemplate"
           className="bg-blue-500 hover:bg-blue-600 border-0 shadow-md"
         >
           {t.new}

@@ -4,9 +4,16 @@ import { useState } from "react"
 import { X, Gift } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
-export function FeedbackSuccessPopup() {
+interface FeedbackSuccessPopupProps {
+    onClose?: () => void
+}
+
+export function FeedbackSuccessPopup({ onClose }: FeedbackSuccessPopupProps) {
     const [isOpen, setIsOpen] = useState(true)
-    const handleClose = () => setIsOpen(false)
+    const handleClose = () => {
+        setIsOpen(false)
+        onClose?.()
+    }
 
     if (!isOpen) return null
 
