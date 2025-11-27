@@ -1,5 +1,5 @@
 import { fetchWithAuth } from "./apiClient";
-import { API_ENDPOINTS } from './apiConfig';
+import { API_ENDPOINTS } from "./apiConfig";
 
 export interface Ad {
   _id: string;
@@ -7,8 +7,8 @@ export interface Ad {
   redirectUrl?: string;
   imageUrl?: string;
   position?: string;
-  startDate?: Date;
-  endDate?: Date;
+  startDate?: string | Date;
+  endDate?: string | Date;
   isActive?: boolean;
 }
 
@@ -17,8 +17,17 @@ export interface Ad {
  * @returns Promise with array of ad data
  */
 export const getAllAds = async (): Promise<Ad[]> => {
-    const response = await fetchWithAuth(API_ENDPOINTS.BANNER.GET_ALL);
-    return response as Ad[];
+  const response = await fetchWithAuth(API_ENDPOINTS.BANNER.GET_ALL);
+  return response as Ad[];
+};
+
+/**
+ * Get active ads (banners) for end users
+ * @returns Promise with array of active ad data
+ */
+export const getAdsForUser = async (): Promise<Ad[]> => {
+  const response = await fetchWithAuth(API_ENDPOINTS.BANNER.FOR_USER);
+  return response as Ad[];
 };
 
 /**
@@ -26,15 +35,20 @@ export const getAllAds = async (): Promise<Ad[]> => {
  * @param adData - The data for the new ad
  * @returns Promise with the created ad data
  */
-export const createAd = async (adData: Omit<Ad, '_id' | 'isActive' | 'startDate' | 'endDate'> & { startDate: string; endDate: string; }): Promise<Ad> => {
-    const response = await fetchWithAuth(API_ENDPOINTS.BANNER.CREATE, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(adData),
-    });
-    return response as Ad;
+export const createAd = async (
+  adData: Omit<Ad, "_id" | "isActive" | "startDate" | "endDate"> & {
+    startDate: string;
+    endDate: string;
+  },
+): Promise<Ad> => {
+  const response = await fetchWithAuth(API_ENDPOINTS.BANNER.CREATE, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(adData),
+  });
+  return response as Ad;
 };
 
 /**
@@ -45,7 +59,7 @@ export const createAd = async (adData: Omit<Ad, '_id' | 'isActive' | 'startDate'
  */
 export const updateAd = async (
   id: string,
-  adData: Partial<Omit<Ad, '_id' | 'isActive' | 'startDate' | 'endDate'>> & {
+  adData: Partial<Omit<Ad, "_id" | "isActive" | "startDate" | "endDate">> & {
     startDate?: string;
     endDate?: string;
   },
