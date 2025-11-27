@@ -86,8 +86,8 @@ function VirtualizedMessages({
 }: VirtualizedMessagesProps) {
     const containerRef = useRef<HTMLDivElement>(null);
     const [visibleRange, setVisibleRange] = useState({ start: 0, end: 100 });
-    const itemHeight = 80; // Estimated height per message
-    const buffer = 10; // Number of items to render outside viewport
+    const itemHeight = 90;
+    const buffer = 10;
     const previousConversationIdRef = useRef<string | null>(null);
     const hasScrolledToBottomRef = useRef(false);
 
@@ -172,7 +172,7 @@ function VirtualizedMessages({
             ref={containerRef}
             className="flex-1 flex flex-col h-full bg-gray-50 overflow-y-auto"
             onScroll={() => handleScroll()}
-
+            style={{ paddingBottom: '50px' }} // ← thêm margin/padding-bottom
         >
             <div className="p-4" style={{ paddingTop: `${topPadding}px` }}>
                 {visibleMessages.map((msg) => (

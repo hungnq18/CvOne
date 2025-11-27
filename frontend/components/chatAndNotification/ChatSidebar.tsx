@@ -174,11 +174,13 @@ const ConversationItem = memo(({
                     <h3 className="font-medium truncate">{displayName}</h3>
                     <span className="text-xs text-muted-foreground">{conv.lastMessage ? formatTime(conv.lastMessage.createdAt) : ''}</span>
                 </div>
-                <div className="flex items-center justify-between">
-                    <p className="text-sm text-muted-foreground truncate">{conv.lastMessage?.content || ''}</p>
+                <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm text-muted-foreground line-clamp-1 break-all min-w-0">
+                        {conv.lastMessage?.content || 'Chưa có tin nhắn'}
+                    </p>
                     {unread > 0 && (
-                        <span className="bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                            {unread}
+                        <span className="bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center flex-shrink-0">
+                            {unread > 99 ? '99+' : unread}
                         </span>
                     )}
                 </div>
