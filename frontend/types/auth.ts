@@ -9,6 +9,7 @@ export interface User {
   role?: 'customer' | 'hr' | 'admin' | 'mkt';
   isActive?: boolean;
   createdAt?: string;
+  country_iso2?: string;
 }
 
 export interface AuthResponse {

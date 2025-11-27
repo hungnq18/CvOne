@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { getAppliedJobsByUser, getJobById, Job, ApplyJob } from '@/api/jobApi';
+import { getAppliedJobsByUser, Job, ApplyJob } from '@/api/jobApi';
 import { MapPin, DollarSign, Calendar, Briefcase } from "lucide-react";
 
 const getStatusColor = (status: string) => {
@@ -26,13 +26,24 @@ const formatDate = (dateString: string) => {
     });
 };
 
-const JobInProfile: React.FC = () => {
-    const [jobs, setJobs] = useState<(Job | undefined)[]>([]);
-    const [applies, setApplies] = useState<ApplyJob[]>([]);
-    const [loading, setLoading] = useState(true);
+interface JobInProfileProps {
+    initialJobs?: (Job | undefined)[];
+    initialApplies?: ApplyJob[];
+}
+
+const JobInProfileComponent: React.FC<JobInProfileProps> = ({ initialJobs, initialApplies }) => {
+    const [jobs, setJobs] = useState<(Job | undefined)[]>(initialJobs ?? []);
+    const [applies, setApplies] = useState<ApplyJob[]>(initialApplies ?? []);
+    const [loading, setLoading] = useState(!(initialApplies && initialApplies.length > 0));
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
+        // Nếu đã có dữ liệu từ server thì không cần fetch lại
+        if (initialApplies && initialApplies.length > 0) {
+            setLoading(false);
+            return;
+        }
+
         const fetchJobs = async () => {
             setLoading(true);
             try {
@@ -50,10 +61,22 @@ const JobInProfile: React.FC = () => {
             }
         };
         fetchJobs();
-    }, []);
+    }, [initialApplies]);
 
     if (loading) {
-        return <div className="flex justify-center items-center py-8">Loading...</div>;
+        return (
+            <div className="card bg-white/80 backdrop-blur-sm border border-blue-200 shadow-xl">
+                <div className="card-body py-6">
+                    <div className="animate-pulse space-y-4">
+                        <div className="h-4 bg-blue-100 rounded w-1/3"></div>
+                        <div className="space-y-3">
+                            <div className="h-20 bg-gray-100 rounded-xl"></div>
+                            <div className="h-20 bg-gray-100 rounded-xl"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
     }
     if (error) {
         return <div className="flex justify-center items-center text-red-500 py-8">{error}</div>;
@@ -126,5 +149,8 @@ const JobInProfile: React.FC = () => {
         </div>
     );
 };
+
+// Memo để tránh re-render khi parent thay đổi state khác (JobInProfile không nhận props)
+const JobInProfile = React.memo(JobInProfileComponent);
 
 export default JobInProfile; 
