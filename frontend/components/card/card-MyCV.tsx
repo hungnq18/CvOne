@@ -16,6 +16,7 @@ import { Edit, Trash2, Share2, ExternalLinkIcon, CopyIcon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { getDefaultSectionPositions } from "@/components/cvTemplate/defaultSectionPositions";
+import { notify } from "@/lib/notify";
 
 const translations = {
   en: {
@@ -198,10 +199,10 @@ const CardMyCV: React.FC<CardMyCVProps> = ({ cvListOverride }) => {
       setDeletingCVId(cvId);
       await deleteCV(cvId);
       setCvList((prevList) => prevList.filter((cv) => cv._id !== cvId));
-      alert(t.deleteDialog.success);
+      notify.success(t.deleteDialog.success);
     } catch (error) {
       console.error(t.errors.delete, error);
-      alert(t.deleteDialog.error);
+      notify.error(t.deleteDialog.error);
     } finally {
       setDeletingCVId(null);
     }

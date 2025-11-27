@@ -80,6 +80,7 @@ const LoginForm = styled.form`
 const Title = styled.h2`
   text-align: center;
   margin-bottom: 8px;
+  font-size: 32px;
   color: #058ac3;
   letter-spacing: 1px;
 `
@@ -288,7 +289,7 @@ export default function LoginPage() {
                 disabled={isLoading}
                 style={{ backgroundColor: "#f5f5f5" }}
               />
-              <EyeIcon onClick={() => setShowPassword(!showPassword)} style={{ marginTop: "3%" }}>
+              <EyeIcon onClick={() => setShowPassword(!showPassword)}>
                 {showPassword ? <FaEyeSlash /> : <FaEye />}
               </EyeIcon>
             </PasswordWrapper>

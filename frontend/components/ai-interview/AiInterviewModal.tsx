@@ -9,6 +9,7 @@ import { Progress } from '@/components/ui/progress';
 import { Textarea } from '@/components/ui/textarea';
 import { BookOpen, Lightbulb, Mic, MicOff, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { notify } from "@/lib/notify";
 
 interface AiInterviewModalProps {
   isOpen: boolean;
@@ -73,11 +74,11 @@ export default function AiInterviewModal({
         setUserAnswer('');
         setFeedback(null);
       } else {
-        alert('Failed to create interview session. Please try again.');
+        notify.error('Failed to create interview session. Please try again.');
       }
     } catch (error) {
       console.error('Error initializing interview:', error);
-      alert('Failed to create interview session. Please try again.');
+      notify.error('Failed to create interview session. Please try again.');
     } finally {
       setIsCreatingSession(false);
     }
@@ -105,7 +106,7 @@ export default function AiInterviewModal({
       }
     } catch (error) {
       console.error('Error submitting answer:', error);
-      alert('Failed to submit answer. Please try again.');
+      notify.error('Failed to submit answer. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -177,12 +178,12 @@ export default function AiInterviewModal({
           `Questions Answered: ${response.data.answeredQuestions}/${response.data.totalQuestions}\n\n` +
           `Check your interview history to review detailed feedback.`;
         
-        alert(message);
+        notify.success(message);
         onClose();
       }
     } catch (error) {
       console.error('Error completing session:', error);
-      alert('Failed to complete session. Your answers have been saved.');
+      notify.error('Failed to complete session. Your answers have been saved.');
     } finally {
       setIsLoading(false);
     }

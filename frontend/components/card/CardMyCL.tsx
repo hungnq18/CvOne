@@ -8,6 +8,7 @@ import { motion } from "framer-motion";
 import { Edit, Trash2, Share2, ExternalLinkIcon, CopyIcon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { notify } from "@/lib/notify";
 
 const translations = {
   en: {
@@ -140,10 +141,10 @@ const CardMyCL: React.FC<CardMyCLProps> = ({ clListOverride }) => {
 
       setClList((prevList: CL[]) => prevList.filter((cl: CL) => cl._id !== clId));
 
-      alert(t.deleteDialog.success);
+      notify.success(t.deleteDialog.success);
     } catch (error) {
       console.error(t.errors.delete, error);
-      alert(t.deleteDialog.error);
+      notify.error(t.deleteDialog.error);
     } finally {
       setDeletingCLId(null);
     }

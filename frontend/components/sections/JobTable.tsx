@@ -8,6 +8,7 @@ import { Space, Table, Tag, Tooltip } from 'antd';
 import type { ColumnsType, TablePaginationConfig } from 'antd/es/table';
 import { useRouter } from 'next/navigation';
 import React from 'react';
+import { notify } from "@/lib/notify";
 
 interface JobTableProps {
     jobs: Job[];
@@ -30,7 +31,7 @@ const JobTable: React.FC<JobTableProps> = ({ jobs, translations, onRemove, pagin
             if (onRemove) onRemove(jobId);
         } catch (err) {
             console.error('Failed to remove saved job', err);
-            alert('Failed to remove saved job');
+            notify.error('Failed to remove saved job');
         }
     };
 

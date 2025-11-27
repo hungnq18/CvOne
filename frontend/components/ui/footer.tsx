@@ -163,19 +163,6 @@ export function Footer({ show = true }: FooterProps) {
         </div>
 
         {/* Quick Access Icons */}
-        <div className="fixed right-0 top-1/2 transform -translate-y-1/2 bg-white rounded-l-lg shadow-lg">
-          <div className="flex flex-col space-y-3 p-2">
-            <button className="text-blue-600 hover:text-blue-800">
-              <FaRobot size={18} />
-            </button>
-            <button className="text-blue-600 hover:text-blue-800">
-              <BsMessenger size={18} />
-            </button>
-            <button className="text-blue-600 hover:text-blue-800">
-              <FaGamepad size={18} />
-            </button>
-          </div>
-        </div>
       </div>
     </footer>
   )

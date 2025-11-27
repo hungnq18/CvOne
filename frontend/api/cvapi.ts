@@ -391,15 +391,33 @@ export async function uploadJDPdfAndAnalyze(file: File) {
  * @returns Promise with translated CV data including userData and uiTexts
  */
 export async function translateCV(userData: any, targetLanguage: string, uiTexts?: any) {
+  // Backend expect: 
+  // - @Body("content") content: { userData }
+  // - @Body("uiTexts") uiTexts: Record<string, string>
+  // - @Body("targetLanguage") targetLanguage: string
   const content: any = { userData };
+  const requestBody: any = {
+    targetLanguage,
+    content,
+  };
+  
+  // Gửi uiTexts riêng biệt như backend expect (không nằm trong content)
   if (uiTexts) {
-    content.uiTexts = uiTexts;
+    requestBody.uiTexts = uiTexts;
   }
+  
+  console.log("[translateCV] Request body structure:", {
+    targetLanguage,
+    contentKeys: Object.keys(content),
+    contentUserDataKeys: Object.keys(content.userData || {}),
+    uiTextsKeys: uiTexts ? Object.keys(uiTexts) : [],
+    uiTexts: uiTexts,
+  });
   
   return fetchWithAuth(API_ENDPOINTS.CV.TRANSLATE_CV, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ targetLanguage, content })
+    body: JSON.stringify(requestBody)
   });
 }
 

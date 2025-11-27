@@ -35,16 +35,27 @@ export const processMessageData = async (msg: any): Promise<Message> => {
   try {
     const senderId =
       typeof msg.senderId === "object" ? msg.senderId._id : msg.senderId;
-    const userResponse = await fetchWithAuth(
-      API_ENDPOINTS.USER.GET_BY_ID(senderId)
-    );
+    
+    // Fetch sender user - skip if fails (user might not exist)
+    let sender: User | undefined;
+    try {
+      sender = await fetchWithAuth(
+        API_ENDPOINTS.USER.GET_BY_ID(senderId)
+      );
+    } catch (err) {
+      // 404 means user doesn't exist - this is OK, just skip
+      if ((err as any)?.status !== 404) {
+        console.warn(`[processMessageData] Failed to fetch sender ${senderId}:`, err);
+      }
+    }
 
     return {
       ...msg,
       senderId,
-      sender: userResponse,
+      sender,
     };
   } catch (err) {
+    console.error("[processMessageData] Error processing message:", err);
     return msg;
   }
 };
@@ -57,15 +68,34 @@ export const processConversationData = async (
   currentUserId: string
 ): Promise<Conversation> => {
   try {
-    const otherParticipantId = conv.participants.find(
+    const otherParticipantId = conv.participants?.find(
       (id: string) => id !== currentUserId
     );
-    const currentUserResponse = await fetchWithAuth(
-      API_ENDPOINTS.USER.GET_BY_ID(currentUserId)
-    );
-    const otherUserResponse = otherParticipantId
-      ? await fetchWithAuth(API_ENDPOINTS.USER.GET_BY_ID(otherParticipantId))
-      : undefined;
+    
+    // Fetch current user - skip if fails (user might not exist)
+    let currentUserResponse: User | undefined;
+    try {
+      currentUserResponse = await fetchWithAuth(
+        API_ENDPOINTS.USER.GET_BY_ID(currentUserId)
+      );
+    } catch (err) {
+      console.warn(`[processConversationData] Failed to fetch current user ${currentUserId}:`, err);
+    }
+    
+    // Fetch other user - skip if fails (user might not exist or be deleted)
+    let otherUserResponse: User | undefined;
+    if (otherParticipantId) {
+      try {
+        otherUserResponse = await fetchWithAuth(
+          API_ENDPOINTS.USER.GET_BY_ID(otherParticipantId)
+        );
+      } catch (err) {
+        // 404 means user doesn't exist - this is OK, just skip
+        if ((err as any)?.status !== 404) {
+          console.warn(`[processConversationData] Failed to fetch other user ${otherParticipantId}:`, err);
+        }
+      }
+    }
 
     return {
       ...conv,
@@ -73,6 +103,7 @@ export const processConversationData = async (
       currentUser: currentUserResponse,
     };
   } catch (err) {
+    console.error("[processConversationData] Error processing conversation:", err);
     return conv;
   }
 };

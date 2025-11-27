@@ -12,8 +12,7 @@ import { API_ENDPOINTS } from "@/api/apiConfig";
 import { toast } from "react-hot-toast";
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
-import { FeedbackPopup } from "@/components/modals/feedbackPopup";
-import { FeedbackSuccessPopup } from "@/components/modals/voucherPopup";
+import { notify } from "@/lib/notify";
 
 interface LetterData {
     firstName: string;
@@ -271,8 +270,6 @@ const CoverLetterBuilderContent = () => {
     const [isSaving, setIsSaving] = useState(false);
     const [isTitleModalOpen, setIsTitleModalOpen] = useState(false);
     const [clTitle, setClTitle] = useState('');
-    const [isFeedbackPopupOpen, setIsFeedbackPopupOpen] = useState(false);
-    const [isVoucherPopupOpen, setIsVoucherPopupOpen] = useState(false);
 
     const saveCoverLetter = async (clDataToSave: LetterData, title: string) => {
         if (isSaving) return;
@@ -281,11 +278,8 @@ const CoverLetterBuilderContent = () => {
             if (clId) {
                 // Update existing CL
                 await updateCL(clId, { data: clDataToSave, title: title });
-                toast.success('Cover letter updated successfully!');
-                // Hiển thị popup feedback sau khi user đã thấy thông báo thành công
-                setTimeout(() => {
-                    setIsFeedbackPopupOpen(true);
-                }, 1500);
+                notify.success('Cover letter updated successfully!');
+                router.push('/myDocuments');
             } else if (templateId) {
                 // Create new CL
                 const newCL: CreateCLDto = {
@@ -296,17 +290,14 @@ const CoverLetterBuilderContent = () => {
                 };
                 await createCL(newCL);
                 localStorage.removeItem('pendingCL');
-                toast.success('Cover letter saved successfully!');
-                // Hiển thị popup feedback sau khi user đã thấy thông báo thành công
-                setTimeout(() => {
-                    setIsFeedbackPopupOpen(true);
-                }, 1500);
+                notify.success('Cover letter saved successfully!');
+                router.push('/myDocuments');
             } else {
-                toast.error("Template not selected!");
+                notify.error("Template not selected!");
             }
         } catch (error) {
             console.error("Failed to save cover letter:", error);
-            toast.error("Failed to save cover letter. Please try again.");
+            notify.error("Failed to save cover letter. Please try again.");
         } finally {
             setIsSaving(false);
         }
@@ -316,7 +307,7 @@ const CoverLetterBuilderContent = () => {
         const token = Cookies.get('token');
         if (!token) {
             if (!templateId) {
-                toast.error("Please select a template first.");
+                notify.error("Please select a template first.");
                 router.push('/clTemplate');
                 return;
             }
@@ -333,7 +324,7 @@ const CoverLetterBuilderContent = () => {
 
     const handleSaveWithTitle = () => {
         if (!clTitle.trim()) {
-            toast.error('Vui lòng nhập tiêu đề cho Cover Letter.');
+            notify.error('Vui lòng nhập tiêu đề cho Cover Letter.');
             return;
         }
         saveCoverLetter(letterData, clTitle.trim());
@@ -894,30 +885,6 @@ const CoverLetterBuilderContent = () => {
                 </div>
             )}
 
-            {/* Feedback & Voucher Popups sau khi tạo CL thành công */}
-            {isFeedbackPopupOpen && (
-                <FeedbackPopup
-                    feature="cover-letter"
-                    onClose={() => {
-                        setIsFeedbackPopupOpen(false);
-                        // Nếu user bỏ qua feedback, vẫn chuyển tới trang myDocuments
-                        router.push('/myDocuments');
-                    }}
-                    onFeedbackSent={() => {
-                        setIsFeedbackPopupOpen(false);
-                        setIsVoucherPopupOpen(true);
-                    }}
-                />
-            )}
-
-            {isVoucherPopupOpen && (
-                <FeedbackSuccessPopup
-                    onClose={() => {
-                        setIsVoucherPopupOpen(false);
-                        router.push('/myDocuments');
-                    }}
-                />
-            )}
         </div>
     );
 };
