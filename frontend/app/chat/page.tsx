@@ -2,323 +2,174 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { getUserIdFromToken } from "@/api/userApi";
-import socket from "@/utils/socket/client";
-import {
-  Message,
-  Conversation,
-  getUserConversations,
-  getMessages,
-  sendMessage,
-  handleNewMessage,
-  getConversationDetail,
-} from "@/api/apiChat";
+import { Message, Conversation } from "@/api/apiChat";
 import ChatSidebar from "@/components/chatAndNotification/ChatSidebar";
-import ChatMessages from "@/components/chatAndNotification/ChatMessages";
+import VirtualizedMessages from "@/components/chatAndNotification/VirtualizedMessages";
 import ChatInput from "@/components/chatAndNotification/ChatInput";
 import { useChat } from "@/providers/ChatProvider";
-import React from "react";
+import { useChatData } from "@/hooks/useChatData";
+import { useChatSocket } from "@/hooks/useChatSocket";
+import { normalizeId } from "@/utils/normalizeId";
+import React, { memo } from "react";
 
-export default function ChatPage() {
+function ChatPage() {
   const [userId, setUserId] = useState<string | null>(null);
-  const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [selectedConversationId, setSelectedConversationId] = useState<
-    string | null
-  >(null);
-  const [selectedConversationDetail, setSelectedConversationDetail] = useState<{
-    _id: string;
-    participants: any[];
-    lastMessage: Message | null;
-  } | null>(null);
-  const [messages, setMessages] = useState<Message[]>([]);
   const [content, setContent] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const socketRef = useRef<ReturnType<typeof socket.getSocket> | null>(null);
+  const [shouldScroll, setShouldScroll] = useState(false);
+  const previousConversationIdRef = useRef<string | null>(null);
   const { markConversationAsRead } = useChat();
 
-  // Initialize socket và user ID - chỉ chạy 1 lần
+  const {
+    conversations,
+    setConversations,
+    selectedConversationId,
+    setSelectedConversationId,
+    selectedConversationDetail,
+    setSelectedConversationDetail,
+    messages,
+    setMessages,
+  } = useChatData(userId);
+
+  // Handle new message from socket - Optimized với normalizeId
+  const handleNewMessage = useCallback((message: Message) => {
+    setMessages((prev) => {
+      // Normalize incoming message id (server id should be a 24-hex string)
+      const msgId = normalizeId(message._id);
+      if (!msgId) return prev;
+
+      // Helper to get raw id as string (works for temp ids like 'temp-123')
+      const getRawIdString = (m: Message) => {
+        if (!m || m._id === undefined || m._id === null) return "";
+        if (typeof m._id === "string") return m._id;
+        try {
+          // If it's an object (e.g. ObjectId or populated object), try toString or _id
+          if ((m._id as any)._id) return String((m._id as any)._id);
+          if (typeof (m._id as any).toString === "function") return String((m._id as any).toString());
+        } catch {
+          return String(m._id);
+        }
+        return String(m._id);
+      };
+
+      const exists = prev.some((m: Message) => {
+        const mid = normalizeId(m._id);
+        return mid === msgId;
+      });
+
+      if (exists) {
+        // Replace any existing message with same normalized id.
+        // Also replace optimistic temp messages (raw id starting with 'temp-')
+        return prev.map((m: Message) => {
+          const mid = normalizeId(m._id);
+          const raw = getRawIdString(m);
+          if (mid === msgId || (raw && raw.startsWith("temp-"))) {
+            return message;
+          }
+          return m;
+        });
+      }
+
+      // Remove any optimistic temp messages (their raw id starts with 'temp-')
+      const filtered = prev.filter((m: Message) => {
+        const raw = getRawIdString(m);
+        if (raw && raw.startsWith("temp-")) return false; // drop temp
+        return true;
+      });
+
+      return [...filtered, message];
+    });
+  }, [setMessages]);
+
+  // Handle conversation update from socket - Optimized với normalizeId và debounce
+  const handleConversationUpdate = useCallback((msg: any) => {
+    if (!userId) return;
+
+    setConversations((prev) => {
+      const msgConvId = normalizeId(msg.conversationId);
+      if (!msgConvId) return prev;
+
+      const idx = prev.findIndex((c) => normalizeId(c._id) === msgConvId);
+      const normalizedSenderId = normalizeId(msg.senderId);
+      const normalizedUserId = normalizeId(userId);
+
+      if (idx !== -1) {
+        let newUnreadCount = prev[idx].unreadCount;
+        if (normalizedSenderId && normalizedUserId && normalizedSenderId !== normalizedUserId) {
+          if (typeof prev[idx].unreadCount === "number") {
+            newUnreadCount = (prev[idx].unreadCount || 0) + 1;
+          } else if (Array.isArray(prev[idx].unreadCount)) {
+            const unreadArray = [...prev[idx].unreadCount];
+            const userEntry = unreadArray.find((u: any) => {
+              const uid = normalizeId(u.userId);
+              return uid === normalizedUserId;
+            });
+            if (userEntry) {
+              userEntry.count = (userEntry.count || 0) + 1;
+            } else {
+              unreadArray.push({ userId: normalizedUserId, count: 1 });
+            }
+            newUnreadCount = unreadArray;
+          }
+        }
+
+        const updatedConv = {
+          ...prev[idx],
+          lastMessage: msg,
+          unreadCount: newUnreadCount,
+        };
+        const newList = prev.filter((c) => normalizeId(c._id) !== msgConvId);
+        return [updatedConv, ...newList];
+      } else if (normalizedSenderId && normalizedUserId) {
+        return [
+          {
+            _id: msgConvId,
+            participants: [normalizedSenderId, normalizedUserId],
+            lastMessage: msg,
+            unreadCount: normalizedSenderId === normalizedUserId ? 0 : 1,
+          },
+          ...prev,
+        ];
+      }
+      return prev;
+    });
+  }, [userId, setConversations]);
+
+  // Handle message error
+  const handleMessageError = useCallback((error: any) => {
+    console.error("Message error from server:", error);
+    alert(`Lỗi gửi tin nhắn: ${error.error || "Unknown error"}`);
+  }, []);
+
+  const { emitMessage } = useChatSocket({
+    selectedConversationId,
+    userId,
+    onNewMessage: handleNewMessage,
+    onConversationUpdate: handleConversationUpdate,
+    onMessageError: handleMessageError,
+  });
+
+  // Initialize user ID
   useEffect(() => {
     const id = getUserIdFromToken();
     if (id) {
       setUserId(id);
-      socketRef.current = socket.getSocket();
-
-      // Listen for socket connection status
-      const currentSocket = socketRef.current;
-
-      const handleConnect = () => {
-        // Socket connected
-      };
-
-      const handleDisconnect = () => {
-        // Socket disconnected
-      };
-
-      currentSocket.on("connect", handleConnect);
-      currentSocket.on("disconnect", handleDisconnect);
-
-      const fetchConversations = async () => {
-        try {
-          const conversations = await getUserConversations(id);
-          setConversations(conversations);
-          if (conversations.length > 0) {
-            setSelectedConversationId(conversations[0]._id);
-          }
-        } catch (err) {
-          // Silent error handling
-        }
-      };
-      fetchConversations();
-
-      return () => {
-        currentSocket.off("connect", handleConnect);
-        currentSocket.off("disconnect", handleDisconnect);
-      };
     }
   }, []);
 
-  // Tối ưu scroll - chỉ scroll khi có message mới, không phải mỗi lần render
-  useEffect(() => {
-    if (messages.length > 0) {
-      // Delay nhỏ để đảm bảo DOM đã render
-      const timer = setTimeout(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [messages.length]); // Chỉ phụ thuộc vào số lượng messages, không phải toàn bộ array
-
-  // Fetch conversation detail when selectedConversationId changes - Tối ưu với cleanup
-  useEffect(() => {
-    if (!selectedConversationId) {
-      setSelectedConversationDetail(null);
-      return;
-    }
-
-    let cancelled = false;
-    const fetchConversationDetail = async () => {
-      try {
-        const conversationDetail = await getConversationDetail(
-          selectedConversationId
-        );
-        if (!cancelled) {
-          setSelectedConversationDetail(conversationDetail);
-        }
-      } catch (err) {
-        if (!cancelled) {
-          console.error("Failed to fetch conversation detail:", err);
-        }
-      }
-    };
-
-    fetchConversationDetail();
-    return () => {
-      cancelled = true;
-    };
-  }, [selectedConversationId]);
-
-  // Socket listeners và message fetching - Tối ưu với proper cleanup
-  useEffect(() => {
-    if (!selectedConversationId || !userId || !socketRef.current) return;
-
-    const currentSocket = socketRef.current;
-    let cancelled = false;
-
-    // Fetch messages
-    const fetchMessages = async () => {
-      try {
-        const messages = await getMessages(selectedConversationId);
-        if (!cancelled) {
-          setMessages(messages);
-        }
-      } catch (err) {
-        // Silent error handling
-      }
-    };
-
-    fetchMessages();
-    currentSocket.emit("joinRoom", selectedConversationId);
-
-    // Handler cho new message - Tối ưu với memoization
-    const handleNewMessageSocket = async (msg: any) => {
-      if (cancelled) return;
-
-      // Normalize conversationId để so sánh đúng (có thể là string hoặc ObjectId)
-      const msgConvId = typeof msg.conversationId === "object" && msg.conversationId?._id
-        ? String(msg.conversationId._id)
-        : String(msg.conversationId || "");
-      const currentConvId = String(selectedConversationId || "");
-
-      // Nếu là conversation đang mở, thêm vào messages
-      if (msgConvId === currentConvId) {
-        const { message } = await handleNewMessage(msg, userId);
-        setMessages((prev) => {
-          // Normalize message IDs để so sánh
-          const msgId = typeof msg._id === "object" ? String(msg._id._id || msg._id) : String(msg._id);
-
-          // Kiểm tra xem message đã tồn tại chưa
-          const exists = prev.some((m: Message) => {
-            const mid = typeof m._id === "object" && (m._id as any)?._id
-              ? String((m._id as any)._id)
-              : String(m._id || "");
-            return mid === msgId;
-          });
-
-          if (exists) {
-            // Thay thế message tạm (optimistic) bằng message thật từ server
-            return prev.map((m: Message) => {
-              const mid = typeof m._id === "object" && (m._id as any)?._id
-                ? String((m._id as any)._id)
-                : String(m._id || "");
-              if (mid === msgId || mid.startsWith('temp-')) {
-                return message; // Thay thế optimistic message bằng real message
-              }
-              return m;
-            });
-          }
-
-          // Loại bỏ optimistic message nếu có và thêm message thật
-          const filtered = prev.filter((m: Message) => {
-            const mid = typeof m._id === "object" && (m._id as any)?._id
-              ? String((m._id as any)._id)
-              : String(m._id || "");
-            return !mid.startsWith('temp-');
-          });
-          return [...filtered, message];
-        });
-      }
-
-      // Đẩy conversation có tin nhắn mới lên đầu - Tối ưu state update
-      setConversations((prev) => {
-        // Normalize conversationId để tìm đúng
-        const msgConvId = typeof msg.conversationId === "object" && (msg.conversationId as any)?._id
-          ? String((msg.conversationId as any)._id)
-          : String(msg.conversationId || "");
-
-        const idx = prev.findIndex((c) => String(c._id) === msgConvId);
-        if (idx !== -1) {
-          // Nếu đã tồn tại, chỉ cập nhật và di chuyển lên đầu
-          // Xử lý unreadCount - có thể là number hoặc array
-          let newUnreadCount = prev[idx].unreadCount;
-          const normalizedSenderId = typeof msg.senderId === "object" && (msg.senderId as any)?._id
-            ? String((msg.senderId as any)._id)
-            : String(msg.senderId || "");
-          const normalizedUserId = String(userId || "");
-
-          if (normalizedSenderId !== normalizedUserId) {
-            if (typeof prev[idx].unreadCount === "number") {
-              newUnreadCount = (prev[idx].unreadCount || 0) + 1;
-            } else if (Array.isArray(prev[idx].unreadCount)) {
-              // Nếu là array, cần tìm và tăng count cho user hiện tại
-              const unreadArray = [...prev[idx].unreadCount];
-              const userEntry = unreadArray.find((u: any) => {
-                const uid = typeof u.userId === "object" && u.userId?._id
-                  ? String(u.userId._id)
-                  : String(u.userId || "");
-                return uid === normalizedUserId;
-              });
-              if (userEntry) {
-                userEntry.count = (userEntry.count || 0) + 1;
-              } else {
-                unreadArray.push({ userId: normalizedUserId, count: 1 });
-              }
-              newUnreadCount = unreadArray;
-            }
-          }
-
-          const updatedConv = {
-            ...prev[idx],
-            lastMessage: msg,
-            unreadCount: newUnreadCount,
-          };
-          const newList = prev.filter((c) => String(c._id) !== msgConvId);
-          return [updatedConv, ...newList];
-        } else {
-          // Nếu chưa có, thêm mới vào đầu
-          const normalizedSenderIdForNew = typeof msg.senderId === "object" && (msg.senderId as any)?._id
-            ? String((msg.senderId as any)._id)
-            : String(msg.senderId || "");
-          const normalizedUserIdForNew = String(userId || "");
-
-          return [
-            {
-              _id: msgConvId,
-              participants: [normalizedSenderIdForNew, normalizedUserIdForNew],
-              lastMessage: msg,
-              unreadCount: normalizedSenderIdForNew === normalizedUserIdForNew ? 0 : 1,
-            },
-            ...prev,
-          ];
-        }
-      });
-    };
-
-    currentSocket.on("newMessage", handleNewMessageSocket);
-
-    // Listen for errors from backend
-    const handleMessageError = (error: any) => {
-      console.error("❌ Message error from server:", error);
-      alert(`Lỗi gửi tin nhắn: ${error.error || "Unknown error"}`);
-    };
-    currentSocket.on("messageError", handleMessageError);
-
-    return () => {
-      cancelled = true;
-      currentSocket.off("newMessage", handleNewMessageSocket);
-      currentSocket.off("messageError", handleMessageError);
-      currentSocket.emit("leaveRoom", selectedConversationId);
-    };
-  }, [selectedConversationId, userId]);
-
-  // Helper để normalize ID từ bất kỳ format nào
+  // Sử dụng normalizeId utility đã được tối ưu với cache
   const normalizeParticipantId = useCallback((participant: any): string | null => {
-    if (!participant) return null;
-
-    // Nếu là string, kiểm tra format ObjectId
-    if (typeof participant === "string") {
-      if (/^[0-9a-fA-F]{24}$/.test(participant)) return participant;
-      return null;
-    }
-
-    // Nếu là object
-    if (typeof participant === "object") {
-      // Trường hợp 1: Có _id property (populated object)
-      if (participant._id !== undefined && participant._id !== null) {
-        const idValue = participant._id;
-        if (typeof idValue === "string" && /^[0-9a-fA-F]{24}$/.test(idValue)) {
-          return idValue;
-        }
-        if (typeof idValue === "object" && typeof idValue.toString === "function") {
-          const str = idValue.toString();
-          if (/^[0-9a-fA-F]{24}$/.test(str)) return str;
-        }
-        // Fallback: convert thành string
-        const str = String(idValue);
-        if (/^[0-9a-fA-F]{24}$/.test(str)) return str;
-      }
-
-      // Trường hợp 2: Object là ObjectId trực tiếp (có toString method)
-      if (typeof participant.toString === "function") {
-        const str = participant.toString();
-        if (str && str !== "[object Object]" && /^[0-9a-fA-F]{24}$/.test(str)) {
-          return str;
-        }
-      }
-    }
-
-    return null;
+    return normalizeId(participant);
   }, []);
 
-  // Memoize helper functions
+  // Get receiver ID from conversation
   const getReceiverIdFromConversation = useCallback((
     conversationId: string,
     currentUserId: string
   ): string => {
     const normalizedCurrentUserId = normalizeParticipantId(currentUserId);
-    if (!normalizedCurrentUserId) {
-      return "";
-    }
+    if (!normalizedCurrentUserId) return "";
 
-    // Thử lấy từ selectedConversationDetail trước (có thể mới hơn)
     if (selectedConversationDetail && selectedConversationDetail._id === conversationId) {
       const participants = selectedConversationDetail.participants || [];
       for (const p of participants) {
@@ -329,10 +180,7 @@ export default function ChatPage() {
       }
     }
 
-    // Thử lấy từ conversations list
     const conv = conversations.find((c) => c._id === conversationId);
-
-    // ƯU TIÊN: Lấy từ unreadCount array (chắc chắn có cả 2 userId)
     if (conv && Array.isArray(conv.unreadCount)) {
       for (const entry of conv.unreadCount) {
         if (!entry || !entry.userId) continue;
@@ -343,7 +191,6 @@ export default function ChatPage() {
       }
     }
 
-    // Fallback: Lấy từ participants
     if (conv && conv.participants) {
       for (const p of conv.participants) {
         const pid = normalizeParticipantId(p);
@@ -356,17 +203,13 @@ export default function ChatPage() {
     return "";
   }, [conversations, selectedConversationDetail, normalizeParticipantId]);
 
-  // Memoize handleSend để tránh re-render không cần thiết
+  // Handle send message
   const handleSend = useCallback(async () => {
-    if (!content.trim() || !userId || !selectedConversationId || !socketRef.current) return;
+    if (!content.trim() || !userId || !selectedConversationId) return;
 
-    let receiverId = getReceiverIdFromConversation(
-      selectedConversationId,
-      userId
-    );
+    let receiverId = getReceiverIdFromConversation(selectedConversationId, userId);
 
     if (!receiverId) {
-      // Fallback: Thử lấy trực tiếp từ selectedConversationDetail
       if (selectedConversationDetail?.participants) {
         const normalizedUserId = normalizeParticipantId(userId);
         for (const p of selectedConversationDetail.participants) {
@@ -378,8 +221,8 @@ export default function ChatPage() {
         }
       }
 
-      // Fallback cuối cùng: Fetch lại conversation từ backend và lấy receiverId
       if (!receiverId) {
+        const { getConversationDetail } = await import("@/api/apiChat");
         try {
           const directConv = await getConversationDetail(selectedConversationId);
           if (directConv?.participants && Array.isArray(directConv.participants)) {
@@ -412,9 +255,9 @@ export default function ChatPage() {
       content,
     };
 
-    socketRef.current.emit("sendMessage", messageDto);
+    emitMessage(messageDto);
 
-    // Optimistic update - Hiển thị message ngay lập tức trước khi nhận từ socket
+    // Optimistic update
     const tempMessageId = `temp-${Date.now()}`;
     const optimisticMessage: Message = {
       _id: tempMessageId,
@@ -426,18 +269,23 @@ export default function ChatPage() {
     };
 
     setMessages((prev) => {
-      // Kiểm tra xem đã có message tạm chưa
-      const hasTemp = prev.some(m => m._id?.toString().startsWith('temp-'));
+      const hasTemp = prev.some(m => {
+        const mid = normalizeId(m._id);
+        return mid && mid.startsWith('temp-');
+      });
       if (hasTemp) {
-        // Thay thế message tạm cũ bằng message mới
-        return prev.map(m =>
-          m._id?.toString().startsWith('temp-') ? optimisticMessage : m
-        );
+        return prev.map(m => {
+          const mid = normalizeId(m._id);
+          return mid && mid.startsWith('temp-') ? optimisticMessage : m;
+        });
       }
       return [...prev, optimisticMessage];
     });
 
-    // Optimistic update - Đẩy conversation lên đầu sidebar ngay lập tức
+    // Scroll to bottom when user sends message
+    setShouldScroll(true);
+
+    // Update conversation
     setConversations((prev) => {
       const idx = prev.findIndex((c) => c._id === selectedConversationId);
       if (idx !== -1) {
@@ -460,9 +308,9 @@ export default function ChatPage() {
     });
 
     setContent("");
-  }, [content, userId, selectedConversationId, getReceiverIdFromConversation, selectedConversationDetail, normalizeParticipantId]);
+  }, [content, userId, selectedConversationId, getReceiverIdFromConversation, selectedConversationDetail, normalizeParticipantId, emitMessage, setMessages, setConversations]);
 
-  // Memoize handleSelectConversation
+  // Handle select conversation
   const handleSelectConversation = useCallback((conversationId: string) => {
     setConversations((prev) =>
       prev.map((conv) =>
@@ -471,18 +319,55 @@ export default function ChatPage() {
     );
     setSelectedConversationId(conversationId);
     markConversationAsRead(conversationId);
-  }, [markConversationAsRead]);
+  }, [markConversationAsRead, setConversations, setSelectedConversationId]);
+
+  // Reset scroll flag after scrolling
+  const handleScrollComplete = useCallback(() => {
+    setShouldScroll(false);
+  }, []);
+
+  // Trigger scroll when conversation changes
+  useEffect(() => {
+    if (selectedConversationId !== previousConversationIdRef.current && messages.length > 0) {
+      // Conversation changed, scroll to bottom after a short delay to ensure DOM is ready
+      const timer = setTimeout(() => {
+        setShouldScroll(true);
+      }, 100);
+      previousConversationIdRef.current = selectedConversationId;
+      return () => clearTimeout(timer);
+    }
+    previousConversationIdRef.current = selectedConversationId;
+  }, [selectedConversationId, messages.length]);
+
+  // Memoize header name để tránh tính toán lại mỗi lần render
+  const headerName = useMemo(() => {
+    const normalizedUserId = userId ? String(userId) : null;
+    if (!selectedConversationDetail?.participants) return "Người dùng";
+
+    const otherParticipant = selectedConversationDetail.participants.find((p: any) => {
+      if (!p) return false;
+      const pid = normalizeId(p);
+      return normalizedUserId && pid && pid !== normalizedUserId;
+    });
+
+    if (otherParticipant && typeof otherParticipant === "object" && otherParticipant.first_name) {
+      return `${otherParticipant.first_name} ${otherParticipant.last_name || ''}`.trim();
+    }
+
+    const conv = conversations.find(c => c._id === selectedConversationId);
+    if (conv?.otherUser && typeof conv.otherUser === "object" && conv.otherUser.first_name) {
+      return `${conv.otherUser.first_name} ${conv.otherUser.last_name || ''}`.trim();
+    }
+
+    return "Người dùng";
+  }, [userId, selectedConversationDetail, selectedConversationId, conversations]);
 
   return (
     <div className="flex h-[calc(100vh-64px)] bg-background mt-[64px]">
-      {/* Sidebar - Danh sách cuộc trò chuyện */}
       <div className="w-80 border-r bg-muted/20 flex flex-col">
-        {/* Header sidebar */}
         <div className="p-4 border-b">
           <h1 className="text-xl font-semibold mb-3">Tin nhắn</h1>
-          {/* Đã xóa input search dư thừa ở đây, chỉ giữ lại search trong ChatSidebar */}
         </div>
-        {/* Danh sách cuộc trò chuyện */}
         <div className="flex-1 overflow-y-auto">
           <ChatSidebar
             conversations={conversations}
@@ -493,58 +378,28 @@ export default function ChatPage() {
           />
         </div>
       </div>
-      {/* Khu vực chat chính */}
       <div className="flex-1 flex flex-col">
         {selectedConversationId ? (
           <>
-            {/* Header chat */}
             <div className="p-4 border-b flex items-center justify-between bg-white">
               <div className="flex items-center gap-3">
                 <div>
                   <h2 className="font-semibold">
-                    {(() => {
-                      const normalizedUserId = userId ? String(userId) : null;
-                      if (!selectedConversationDetail?.participants) return "Người dùng";
-
-                      const otherParticipant = selectedConversationDetail.participants.find((p: any) => {
-                        if (!p) return false;
-                        const pid = typeof p === "object" && p._id
-                          ? String(p._id)
-                          : String(p);
-                        return normalizedUserId && pid !== normalizedUserId;
-                      });
-
-                      if (otherParticipant && typeof otherParticipant === "object" && otherParticipant.first_name) {
-                        return `${otherParticipant.first_name} ${otherParticipant.last_name || ''}`.trim();
-                      }
-
-                      // Fallback: Tìm từ conversations list
-                      const conv = conversations.find(c => c._id === selectedConversationId);
-                      if (conv?.otherUser && typeof conv.otherUser === "object" && conv.otherUser.first_name) {
-                        return `${conv.otherUser.first_name} ${conv.otherUser.last_name || ''}`.trim();
-                      }
-
-                      return "Người dùng";
-                    })()}
+                    {headerName}
                   </h2>
-                  <p className="text-sm text-muted-foreground">
-                    {/* Có thể hiển thị trạng thái online nếu có */}
-                  </p>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                {/* Các nút call/video/more nếu muốn, chỉ UI */}
-              </div>
             </div>
-            {/* Khu vực tin nhắn */}
-            <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
-              <ChatMessages
+            <div className="flex-1 overflow-hidden p-4 bg-gray-50">
+              <VirtualizedMessages
                 messages={messages}
                 userId={userId}
                 messagesEndRef={messagesEndRef}
+                shouldScroll={shouldScroll}
+                onScrollComplete={handleScrollComplete}
+                conversationId={selectedConversationId}
               />
             </div>
-            {/* Khu vực nhập tin nhắn */}
             <div className="p-4 border-t bg-white">
               <ChatInput
                 content={content}
@@ -557,7 +412,6 @@ export default function ChatPage() {
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center">
               <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
-                {/* Icon gửi */}
                 <svg
                   className="h-10 w-10 text-muted-foreground"
                   fill="none"
@@ -585,3 +439,5 @@ export default function ChatPage() {
     </div>
   );
 }
+
+export default memo(ChatPage);
