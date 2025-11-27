@@ -26,6 +26,7 @@ import { MessageSquare } from "lucide-react"
 const featureLabels: Record<string, string> = {
   translate_cv: "Translate CV with AI",
   generate_cv: "Generate CV with AI",
+  generate_cl: "Generate Cover Letter with AI",
   rebuild_cv_pdf: "Rebuild CV from PDF",
   ai_interview: "AI Interview",
 }
@@ -33,6 +34,7 @@ const featureLabels: Record<string, string> = {
 const featureColors: Record<string, string> = {
   translate_cv: "bg-blue-100 text-blue-700",
   generate_cv: "bg-emerald-100 text-emerald-700",
+  generate_cl: "bg-pink-100 text-pink-700",
   rebuild_cv_pdf: "bg-purple-100 text-purple-700",
   ai_interview: "bg-orange-100 text-orange-700",
 }
@@ -140,6 +142,7 @@ export function ManageFeedback() {
               <SelectItem value="all">Tất cả tính năng</SelectItem>
               <SelectItem value="translate_cv">{featureLabels.translate_cv}</SelectItem>
               <SelectItem value="generate_cv">{featureLabels.generate_cv}</SelectItem>
+              <SelectItem value="generate_cl">{featureLabels.generate_cl}</SelectItem>
               <SelectItem value="rebuild_cv_pdf">{featureLabels.rebuild_cv_pdf}</SelectItem>
               <SelectItem value="ai_interview">{featureLabels.ai_interview}</SelectItem>
             </SelectContent>
@@ -253,5 +256,6 @@ export function ManageFeedback() {
     </div>
   )
 }
+
 
 

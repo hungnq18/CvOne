@@ -4,6 +4,7 @@ import { API_ENDPOINTS } from "./apiConfig";
 export type FeedbackFeature =
   | "translate_cv"
   | "generate_cv"
+  | "generate_cl"
   | "rebuild_cv_pdf"
   | "ai_interview";
 
@@ -34,5 +35,6 @@ export const getFeedbackByFeature = async (
   );
   return response as Feedback[];
 };
+
 
 

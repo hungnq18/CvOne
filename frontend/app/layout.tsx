@@ -14,6 +14,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { cookies } from "next/headers";
 import React from "react";
+import Script from "next/script";
 import "./globals.css";
 import 'antd/dist/reset.css';
 
@@ -46,6 +47,23 @@ export default function RootLayout({
   return (
     <html lang="en" className="overflow-x-hidden" suppressHydrationWarning>
       <body className={`${inter.className} min-h-screen flex flex-col overflow-x-hidden`}>
+        {/* Google Analytics 4 */}
+        {process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID && (
+          <>
+            <Script
+              src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID}`}
+              strategy="afterInteractive"
+            />
+            <Script id="ga4-init" strategy="afterInteractive">
+              {`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', '${process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID}');
+              `}
+            </Script>
+          </>
+        )}
         <StyledComponentsRegistry>
           <GlobalProvider>
             <AuthProvider>
