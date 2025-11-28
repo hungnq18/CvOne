@@ -17,7 +17,6 @@ export const API_ENDPOINTS = {
     VERIFY_EMAIL: "/accounts/verify-email",
     CREATE: "/cover-letters",
     FORGOT_PASSWORD: "/auth/forgot-password",
-
   },
   ACCOUNTS: {
     VERIFY_EMAIL: "/accounts/verify-email",
@@ -145,21 +144,26 @@ export const API_ENDPOINTS = {
     CREATE_ORDER: "/orders", //BODY:{voucherId,totalToken,price,paymentMethod}
     UPDATE_ORDER_STATUS: (id: string) => `/orders/${id}/update`, //BODY:{status}
     GET_ORDER_BY_CODE: (orderCode: string) => `/orders/code/${orderCode}`,
-    GET_ORDER_HISTORY: "/orders/history" //lấy ra lịch sử order của user
+    GET_ORDER_HISTORY: "/orders/history", //lấy ra lịch sử order của user
   },
   CREDIT: {
     UPDATE_TOKEN: "/credits/update-token", //BODY:{token} @PATCH
     UPDATE_VOUCHER: (voucherId: string) => `/credits/save-voucher/${voucherId}`, // @PATCH
     GET_CREDIT: "/credits",
   },
+  FEEDBACK: {
+    GET_ALL: "/feedback",
+    GET_BY_FEATURE: (feature: string) => `/feedback/feature/${feature}`,
+  },
   BANNER: {
     GET_ALL: "/banner",
     CREATE: "/banner",
     UPDATE: (id: string) => `/banner/${id}`,
     DELETE: (id: string) => `/banner/${id}`,
+    FOR_USER: "/banner/for-user",
   },
   AVERAGE_AI: {
     GET_ALL_AVERAGE: "/ai-average/average-stats",
-    RESET_AVERAGE: "/ai-average/reset"
-  }
+    RESET_AVERAGE: "/ai-average/reset",
+  },
 } as const;

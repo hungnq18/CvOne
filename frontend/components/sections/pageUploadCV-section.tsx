@@ -5,6 +5,7 @@ import { useLanguage } from "@/providers/global_provider";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useMemo, useState } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
+import { notify } from "@/lib/notify";
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
@@ -110,7 +111,7 @@ function UploadCVPage() {
   
   const handleNextStep = () => {
     if (!pdfFile) {
-      alert(t.alerts.uploadRequired);
+      notify.error(t.alerts.uploadRequired);
       return;
     }
     

@@ -14,6 +14,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { cookies } from "next/headers";
 import React from "react";
+import Script from "next/script";
 import "./globals.css";
 import "antd/dist/reset.css";
 
@@ -54,8 +55,8 @@ export default function RootLayout({
               <EmailVerificationProvider>
                 <ThemeProvider
                   attribute="class"
-                  defaultTheme="system"
-                  enableSystem
+                  defaultTheme="light"
+                  forcedTheme="light"
                   disableTransitionOnChange
                 >
                   <SocketProvider>
@@ -71,7 +72,7 @@ export default function RootLayout({
                         </div>
                       )}
                       <IconChatAndNotification /> {/* use */}
-                      <Toaster /> {/* use */}
+                      <Toaster /> {/* For all toast notifications (shadcn) */}
                     </CVProvider>
                   </SocketProvider>{" "}
                   {/* use */}

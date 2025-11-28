@@ -8,6 +8,7 @@ import { Space, Table, Tag, Tooltip } from "antd";
 import type { ColumnsType, TablePaginationConfig } from "antd/es/table";
 import { useRouter } from "next/navigation";
 import React from "react";
+import { notify } from "@/lib/notify";
 
 interface JobTableProps {
   jobs: Job[];
@@ -29,14 +30,20 @@ const JobTable: React.FC<JobTableProps> = ({
   const router = useRouter();
 
   const handleDelete = async (jobId: string) => {
+    console.log("Deleting saved-job with id:", jobId);
     if (!jobId) return;
     try {
       await unSaveJob(jobId);
       if (onRemove) onRemove(jobId);
     } catch (err) {
       console.error("Failed to remove saved job", err);
-      alert("Failed to remove saved job");
+      notify.error("Failed to remove saved job");
     }
+  };
+
+  const handleArchive = (jobId: string) => {
+    // TODO: Implement archive functionality
+    console.log("Archive job:", jobId);
   };
 
   const handleView = (jobId: string) => {

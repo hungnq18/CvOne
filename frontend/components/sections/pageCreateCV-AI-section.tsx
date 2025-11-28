@@ -35,6 +35,7 @@ import TranslateCVModal from "@/components/modals/TranslateCVModal";
 import { useLanguage } from "@/providers/global_provider";
 import CVTemplateLayoutPopup from "@/components/forms/CVTemplateLayoutPopup";
 import { getDefaultSectionPositions } from "../cvTemplate/defaultSectionPositions";
+import { notify } from "@/lib/notify";
 
 // --- TRANSLATIONS ---
 const translations = {
@@ -333,11 +334,11 @@ const PageCreateCVAIContent = () => {
   const handleSaveToDB = async (): Promise<boolean> => {
     const userId = getUserIdFromToken();
     if (!userData || !currentTemplate) {
-      alert(t.noDataToSave);
+      notify.error(t.noDataToSave);
       return false;
     }
     if (Object.keys(userData).length === 0) {
-      alert(t.cvDataEmpty);
+      notify.error(t.cvDataEmpty);
       return false;
     }
 
@@ -411,12 +412,12 @@ const PageCreateCVAIContent = () => {
           });
         }
       }
-      alert(t.saveSuccess);
+      notify.success(t.saveSuccess);
       setIsDirty(false);
       return true;
     } catch (error) {
       console.error(t.saveError, error);
-      alert(t.saveError);
+      notify.error(t.saveError);
       return false;
     } finally {
       setIsSaving(false);
@@ -439,57 +440,81 @@ const PageCreateCVAIContent = () => {
     // Lấy default positions của template
     const defaultPositions = getDefaultSectionPositions(templateTitle);
 
-    // Chỉ áp dụng logic đặc biệt cho template minimalist1 (The Vanguard)
-    const isMinimalist1 =
-      templateTitle === "The Vanguard" || templateTitle?.includes("Vanguard");
-    const ismodern2 =
-      templateTitle === "The Modern" || templateTitle?.includes("Modern");
+    // Lấy vị trí mặc định của section từ defaultPositions
+    const defaultSectionPos = defaultPositions[sectionId];
+    if (!defaultSectionPos || defaultSectionPos.place === 0) {
+      // Nếu không có trong default hoặc bị ẩn, dùng logic fallback
+      const isMinimalist1 =
+        templateTitle === "The Vanguard" || templateTitle?.includes("Vanguard");
+      const ismodern2 =
+        templateTitle === "The Modern" || templateTitle?.includes("Modern");
 
-    let targetPlace = 2; // Mặc định là place 2
+      let targetPlace = 2;
 
-    if (isMinimalist1) {
-      // Cho template minimalist1:
-      // - certification, achievement, Project → place: 2 (sidebar bên trái)
-      // - hobby → place: 3 (main content bên phải)
-      if (sectionId === "hobby") {
-        targetPlace = 2; // Main content (bên phải)
-      } else if (
-        sectionId === "certification" ||
-        sectionId === "achievement" ||
-        sectionId === "Project"
-      ) {
-        targetPlace = 3; // Sidebar (bên trái)
+      if (isMinimalist1) {
+        if (sectionId === "hobby") {
+          targetPlace = 2;
+        } else if (
+          sectionId === "certification" ||
+          sectionId === "achievement" ||
+          sectionId === "Project"
+        ) {
+          targetPlace = 3;
+        }
+      } else if (ismodern2) {
+        targetPlace = 3;
+      } else {
+        if (sectionId === "hobby") {
+          targetPlace = 1;
+        } else if (
+          sectionId === "certification" ||
+          sectionId === "achievement" ||
+          sectionId === "Project"
+        ) {
+          targetPlace = 2;
+        }
       }
-    } else if (ismodern2) {
-      targetPlace = 3;
-    } else {
-      // Cho các template khác, giữ logic cũ (ưu tiên place 2)
-      if (sectionId === "hobby") {
-        targetPlace = 1; // Main content (bên phải)
-      } else if (
-        sectionId === "certification" ||
-        sectionId === "achievement" ||
-        sectionId === "Project"
-      ) {
-        targetPlace = 2; // Sidebar (bên trái)
+
+      const targetPlaceSections = Object.entries(currentPositions)
+        .filter(([_, pos]: [string, any]) => pos.place === targetPlace)
+        .sort(
+          ([, a]: [string, any], [, b]: [string, any]) => a.order - b.order
+        );
+
+      if (targetPlaceSections.length > 0) {
+        const lastOrder = (
+          targetPlaceSections[targetPlaceSections.length - 1][1] as any
+        ).order;
+        return { place: targetPlace, order: lastOrder + 1 };
       }
+
+      return { place: targetPlace, order: 0 };
     }
 
-    // Tìm các section trong target place
-    const targetPlaceSections = Object.entries(currentPositions)
-      .filter(([_, pos]: [string, any]) => pos.place === targetPlace)
+    // Sử dụng vị trí mặc định từ defaultPositions
+    const targetPlace = defaultSectionPos.place;
+    const targetOrder = defaultSectionPos.order;
+
+    // Tìm tất cả các section trong cùng place và có order >= targetOrder
+    const sectionsToShift = Object.entries(currentPositions)
+      .filter(([key, pos]: [string, any]) => {
+        return (
+          key !== sectionId &&
+          pos.place === targetPlace &&
+          pos.order >= targetOrder
+        );
+      })
       .sort(([, a]: [string, any], [, b]: [string, any]) => a.order - b.order);
 
-    // Nếu có section trong target place, thêm vào cuối
-    if (targetPlaceSections.length > 0) {
-      const lastOrder = (
-        targetPlaceSections[targetPlaceSections.length - 1][1] as any
-      ).order;
-      return { place: targetPlace, order: lastOrder + 1 };
-    }
+    // Đẩy các section khác xuống (tăng order lên 1)
+    sectionsToShift.forEach(([key]) => {
+      currentPositions[key] = {
+        ...currentPositions[key],
+        order: currentPositions[key].order + 1,
+      };
+    });
 
-    // Nếu không có, thêm vào target place với order 0
-    return { place: targetPlace, order: 0 };
+    return { place: targetPlace, order: targetOrder };
   };
 
   const handleSectionClick = (sectionId: string, event?: React.MouseEvent) => {
@@ -527,15 +552,17 @@ const PageCreateCVAIContent = () => {
         updateSectionPositions(currentTemplate._id, newPositions);
         setIsDirty(true);
       } else {
-        // Thêm vào CV
+        // Thêm vào CV - tạo bản copy để tránh modify trực tiếp
+        const positionsCopy = { ...currentPositions };
         const { place, order } = calculatePlaceAndOrder(
           sectionId,
-          currentPositions,
+          positionsCopy,
           currentTemplate.title
         );
 
+        // Sử dụng positionsCopy đã được update bởi calculatePlaceAndOrder
         const newPositions = {
-          ...currentPositions,
+          ...positionsCopy,
           [sectionId]: { place, order },
         };
 
@@ -623,7 +650,7 @@ const PageCreateCVAIContent = () => {
 
     const iframeDoc = iframe.contentWindow?.document;
     if (!iframeDoc) {
-      alert(t.pdfCreateEnvError);
+      notify.error(t.pdfCreateEnvError);
       document.body.removeChild(iframe);
       return;
     }
@@ -664,7 +691,7 @@ const PageCreateCVAIContent = () => {
         .save();
     } catch (error) {
       console.error(t.pdfCreateError, error);
-      alert(t.pdfCreateError);
+      notify.error(t.pdfCreateError);
     } finally {
       if (root) root.unmount();
       if (document.body.contains(iframe)) document.body.removeChild(iframe);
@@ -750,20 +777,62 @@ const PageCreateCVAIContent = () => {
   // --- HÀM DỊCH VỚI LOGIC CẬP NHẬT UI TEXTS MỚI ---
   const handleTranslateCV = async (targetLanguage: string) => {
     if (!userData || !currentTemplate) {
-      alert(t.noDataToSave);
+      notify.error(t.noDataToSave);
       return;
     }
     setIsTranslating(true);
     try {
-      // Fallback UiTexts nếu chưa có
-      const currentUiTexts = cvUiTexts || {
-        personalInformation: t.personalInfo,
-        contact: t.contact,
-        careerObjective: t.careerObjective,
-        workExperience: t.workExperience,
-        education: t.education,
-        skills: t.skills,
-      };
+      // Fallback UiTexts nếu chưa có - bao gồm TẤT CẢ các field cần thiết
+      // Sử dụng language để tạo fallback đúng ngôn ngữ
+      const defaultLabels =
+        language === "vi"
+          ? {
+              personalInformation: "Thông tin cá nhân",
+              contact: "Liên hệ",
+              careerObjective: "Mục tiêu sự nghiệp",
+              workExperience: "Kinh nghiệm làm việc",
+              education: "Học vấn",
+              skills: "Kỹ năng",
+              certification: "Chứng chỉ",
+              achievement: "Thành tựu",
+              hobby: "Sở thích",
+              project: "Dự án",
+              phone: "Điện thoại:",
+              email: "Email:",
+              address: "Địa chỉ:",
+              dateOfBirth: "Ngày sinh:",
+              gender: "Giới tính:",
+              avatar: "Ảnh đại diện",
+              fullNameAndTitle: "Họ tên & Chức danh",
+            }
+          : {
+              personalInformation: "Personal Information",
+              contact: "Contact",
+              careerObjective: "Career Objective",
+              workExperience: "Work Experience",
+              education: "Education",
+              skills: "Skills",
+              certification: "Certification",
+              achievement: "Achievement",
+              hobby: "Hobby",
+              project: "Project",
+              phone: "Phone:",
+              email: "Email:",
+              address: "Address:",
+              dateOfBirth: "Date of Birth:",
+              gender: "Gender:",
+              avatar: "Avatar",
+              fullNameAndTitle: "Full Name & Title",
+            };
+
+      const currentUiTexts = cvUiTexts || defaultLabels;
+
+      console.log("[handleTranslateCV] Sending to API:", {
+        userDataKeys: Object.keys(userData),
+        targetLanguage,
+        uiTextsKeys: Object.keys(currentUiTexts),
+        uiTexts: currentUiTexts,
+      });
 
       const translatedData = await translateCV(
         userData,
@@ -771,34 +840,58 @@ const PageCreateCVAIContent = () => {
         currentUiTexts
       );
 
-      // Trích xuất userData và uiTexts từ response (cấu trúc có thể lồng nhau tùy API)
+      // Cấu trúc response từ API (SAU KHI SỬA BACKEND):
+      // Service trả về: { success: true, data: { content: {...}, uiTexts: {...} } }
+      // Controller trả về: { success: true, data: { content: {...}, uiTexts: {...} } } (không wrap thêm)
+      // => userData nằm ở: response.data.content.userData
+      // => uiTexts nằm ở: response.data.uiTexts
+
+      console.log("[handleTranslateCV] API Response structure:", {
+        topLevel: Object.keys(translatedData || {}),
+        dataLevel: Object.keys(translatedData?.data || {}),
+        hasContent: !!translatedData?.data?.content,
+        hasUiTexts: !!translatedData?.data?.uiTexts,
+        uiTextsKeys: translatedData?.data?.uiTexts
+          ? Object.keys(translatedData.data.uiTexts)
+          : [],
+        fullPath: {
+          "data.content.userData": !!translatedData?.data?.content?.userData,
+          "data.uiTexts": !!translatedData?.data?.uiTexts,
+        },
+      });
+
+      // Trích xuất userData và uiTexts từ response (theo cấu trúc mới sau khi sửa API)
+      // Fallback cho cả cấu trúc cũ (nếu API chưa được deploy) và cấu trúc mới
       const nextUserData =
-        translatedData?.data?.data?.content?.userData ??
         translatedData?.data?.content?.userData ??
-        translatedData?.data?.userData ??
-        translatedData?.content?.userData ??
-        translatedData?.userData;
+        translatedData?.data?.data?.content?.userData;
       const nextUiTexts =
-        translatedData?.data?.data?.content?.uiTexts ??
-        translatedData?.data?.content?.uiTexts ??
-        translatedData?.data?.uiTexts ??
-        translatedData?.content?.uiTexts ??
-        translatedData?.uiTexts;
+        translatedData?.data?.uiTexts ?? translatedData?.data?.data?.uiTexts;
 
       if (nextUserData) {
         updateUserData(nextUserData);
         setIsDirty(true);
 
         // [MỚI] Cập nhật state cvUiTexts để giao diện template đổi label
-        if (nextUiTexts) setCvUiTexts(nextUiTexts);
+        // Merge với currentUiTexts để đảm bảo không mất field nào
+        if (nextUiTexts) {
+          const mergedUiTexts = {
+            ...currentUiTexts, // Giữ lại các field cũ
+            ...nextUiTexts, // Cập nhật các field mới từ API
+          };
+          setCvUiTexts(mergedUiTexts);
+        } else if (currentUiTexts) {
+          // Nếu API không trả về uiTexts, giữ nguyên currentUiTexts
+          setCvUiTexts(currentUiTexts);
+        }
 
         setShowTranslateModal(false);
-        alert(t.translateSuccess);
+        notify.success(t.translateSuccess);
       } else {
-        alert(t.translateError);
+        notify.error(t.translateError);
       }
     } catch (error) {
-      alert(t.translateError);
+      notify.error(t.translateError);
     } finally {
       setIsTranslating(false);
       setShowTranslateModal(false);
@@ -831,7 +924,7 @@ const PageCreateCVAIContent = () => {
       setSuggestedTemplate(finalTemplate);
       setShowSuggestModal(true);
     } catch (e) {
-      alert(
+      notify.error(
         language === "vi" ? "AI đề xuất mẫu thất bại" : "AI suggestion failed"
       );
     } finally {

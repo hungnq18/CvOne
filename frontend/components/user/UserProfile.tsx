@@ -8,7 +8,8 @@ import ProfileCard from './ProfileCard';
 import SocialIcons from './SocialIcons';
 import UserInfo from './UserInfo';
 import JobInProfile from './JobInProfile';
-import { updateUserProfile, changePassword, getUserIdFromToken, getUserById } from '@/api/userApi';
+import { fetchUserDataFromToken, updateUserProfile, changePassword, getUserIdFromToken, getUserById } from '@/api/userApi';
+import { notify } from "@/lib/notify";
 import type { ApplyJob, Job } from '@/api/jobApi';
 
 
@@ -89,7 +90,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ initialUser, initialJobs, ini
                 await changePassword(currentPassword, newPassword);
                 setIsChangePasswordModalOpen(false);
                 setError(null);
-                alert("Password changed successfully!");
+                notify.success("Password changed successfully!");
             } catch (err) {
                 console.error("Error changing password:", err);
                 setError(

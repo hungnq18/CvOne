@@ -416,8 +416,14 @@ export async function translateCV(
   uiTexts?: any
 ) {
   const content: any = { userData };
+  const requestBody: any = {
+    targetLanguage,
+    content,
+  };
+
+  // Gửi uiTexts riêng biệt như backend expect (không nằm trong content)
   if (uiTexts) {
-    content.uiTexts = uiTexts;
+    requestBody.uiTexts = uiTexts;
   }
 
   return fetchWithAuth(API_ENDPOINTS.CV.TRANSLATE_CV, {

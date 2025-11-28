@@ -1,11 +1,18 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useRegisterForm } from "@/components/forms/use-register-form";
 import Image from "next/image";
 import Link from "next/link";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import styled from "styled-components";
 import logoImg from "../../public/logo/logoCVOne.svg";
+import {
+  getProvinces,
+  getDistrictsByProvinceCode,
+  Province,
+  District,
+} from "@/api/locationApi";
 
 const RegisterWrapper = styled.div`
   min-height: 100vh;
@@ -106,7 +113,7 @@ const PasswordWrapper = styled.div`
 const EyeIcon = styled.span`
   position: absolute;
   right: 12px;
-  top: 50%;
+  top: 70%;
   transform: translateY(-50%);
   cursor: pointer;
   color: #888;
@@ -223,6 +230,32 @@ export default function RegisterPage() {
     setShowConfirmPassword
   } = useRegisterForm("hr")
 
+  const [provinces, setProvinces] = useState<Province[]>([])
+  const [districts, setDistricts] = useState<District[]>([])
+
+  useEffect(() => {
+    const fetchProvinces = async () => {
+      const data = await getProvinces()
+      setProvinces(data)
+    }
+
+    fetchProvinces()
+  }, [])
+
+  useEffect(() => {
+    const fetchDistricts = async () => {
+      if (!formData.city) {
+        setDistricts([])
+        return
+      }
+
+      const data = await getDistrictsByProvinceCode(Number(formData.city))
+      setDistricts(data)
+    }
+
+    fetchDistricts()
+  }, [formData.city])
+
   return (
     <RegisterWrapper>
       <RegisterContainer>
@@ -254,7 +287,7 @@ export default function RegisterPage() {
                     style={{ backgroundColor: "#f5f5f5" }}
                   />
                 </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                <PasswordWrapper>
                   <Label>{t.passwordLabel}</Label>
                   <Input
                     id="password"
@@ -265,8 +298,11 @@ export default function RegisterPage() {
                     required
                     style={{ backgroundColor: "#f5f5f5" }}
                   />
-                </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  <EyeIcon onClick={() => setShowPassword((prev) => !prev)}>
+                    {showPassword ? <FaEyeSlash /> : <FaEye />}
+                  </EyeIcon>
+                </PasswordWrapper>
+                <PasswordWrapper>
                   <Label>{t.confirmPasswordLabel}</Label>
                   <Input
                     id="confirmPassword"
@@ -277,7 +313,10 @@ export default function RegisterPage() {
                     required
                     style={{ backgroundColor: "#f5f5f5" }}
                   />
-                </div>
+                  <EyeIcon onClick={() => setShowConfirmPassword((prev) => !prev)}>
+                    {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+                  </EyeIcon>
+                </PasswordWrapper>
 
                 <Title>{t.recruiterInfoTitle}</Title>
 
@@ -335,16 +374,46 @@ export default function RegisterPage() {
                 <LocationWrapper>
                   <LocationField>
                     <Label>{t.workLocationLabel}</Label>
-                    <select id="city" name="city" style={{ padding: '10px 12px', borderRadius: '8px', border: '1px solid #d0d7de', backgroundColor: "#f5f5f5" }} value={formData.city} onChange={handleInputChange}>
+                    <select
+                      id="city"
+                      name="city"
+                      style={{
+                        padding: "10px 12px",
+                        borderRadius: "8px",
+                        border: "1px solid #d0d7de",
+                        backgroundColor: "#f5f5f5",
+                      }}
+                      value={formData.city}
+                      onChange={handleInputChange}
+                    >
                       <option value="">{t.cityPlaceholder}</option>
-                      {/* Add city options here */}
+                      {provinces.map((province) => (
+                        <option key={province.code} value={province.code}>
+                          {province.name}
+                        </option>
+                      ))}
                     </select>
                   </LocationField>
                   <LocationField>
                     <Label>{t.districtLabel}</Label>
-                    <select id="district" name="district" style={{ padding: '10px 12px', borderRadius: '8px', border: '1px solid #d0d7de', backgroundColor: "#f5f5f5" }} value={formData.district} onChange={handleInputChange}>
+                    <select
+                      id="district"
+                      name="district"
+                      style={{
+                        padding: "10px 12px",
+                        borderRadius: "8px",
+                        border: "1px solid #d0d7de",
+                        backgroundColor: "#f5f5f5",
+                      }}
+                      value={formData.district}
+                      onChange={handleInputChange}
+                    >
                       <option value="">{t.districtPlaceholder}</option>
-                       {/* Add district options here */}
+                      {districts.map((district) => (
+                        <option key={district.code} value={district.code}>
+                          {district.name}
+                        </option>
+                      ))}
                     </select>
                   </LocationField>
                 </LocationWrapper>

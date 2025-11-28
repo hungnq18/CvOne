@@ -5,6 +5,7 @@ import type React from "react"
 import { useState } from "react"
 import { CreditCard, User, Lock, Loader } from "lucide-react"
 import Link from "next/link"
+import { notify } from "@/lib/notify"
 
 interface PayWithCardFormProps {
     depositAmount: number
@@ -32,7 +33,7 @@ export default function PayWithCardForm({ depositAmount }: PayWithCardFormProps)
         // Simulate payment processing
         setTimeout(() => {
             setIsLoading(false)
-            alert("Thanh toán thành công! Số tiền đã được nạp vào tài khoản của bạn.")
+            notify.success("Thanh toán thành công! Số tiền đã được nạp vào tài khoản của bạn.")
             window.location.href = "/wallet"
         }, 2000)
     }

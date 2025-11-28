@@ -94,7 +94,7 @@ const translations: {
       and: "and",
       privacyLink: "Privacy Policy",
       of: "of CVOne.",
-      submitButton: "Complete",
+      submitButton: "Create Account",
       haveAccount: "Already have an account?",
       loginLink: "Login now",
       requiredFields: "Please fill in all required fields!",
@@ -166,7 +166,7 @@ const translations: {
       and: "và",
       privacyLink: "Chính sách bảo mật",
       of: "của CVOne.",
-      submitButton: "Hoàn tất",
+      submitButton: "Tạo tài khoản",
       haveAccount: "Đã có tài khoản?",
       loginLink: "Đăng nhập ngay",
       requiredFields: "Vui lòng nhập đầy đủ thông tin bắt buộc!",
@@ -314,6 +314,7 @@ export function useRegisterForm(formType: "user" | "hr" = "user") {
 
       try {
         // Logic đăng ký cho HR (hiện tại đang là placeholder)
+        console.log("Registering HR with data:", formData);
 
         // Giả lập thành công
         setMessage(t.registerSuccess);

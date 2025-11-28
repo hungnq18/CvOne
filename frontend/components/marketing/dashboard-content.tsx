@@ -1,6 +1,6 @@
 "use client"
 
-import { Users, UserCheck, Ticket, Megaphone } from "lucide-react"
+import { UserCheck, Ticket, Megaphone, Activity } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { UserStatsChart } from "@/components/marketing/user-stats-chart"
 import { useEffect, useState } from "react"
@@ -8,6 +8,7 @@ import { getAllUsers } from "@/api/userApi"
 import type { User } from "@/types/auth"
 import { getAllVouchers } from "@/api/voucherApi"
 import { getAllAds } from "@/api/adsApi"
+import { getActiveUsers } from "@/api/analyticsApi"
 
 interface UserData {
   month: string;
@@ -17,9 +18,9 @@ interface UserData {
 export function DashboardContent() {
   const [stats, setStats] = useState([
     {
-      title: "Active Customers",
+      title: "Active Users (GA)",
       value: "0",
-      icon: Users,
+      icon: Activity,
     },
     {
       title: "Active HRs",
@@ -42,23 +43,24 @@ export function DashboardContent() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const [users, vouchers, ads] = await Promise.all([
+        const [users, vouchers, ads, activeUsersFromGA] = await Promise.all([
           getAllUsers(),
           getAllVouchers(),
           getAllAds(),
+          getActiveUsers().catch((err) => {
+            console.error("Failed to fetch GA active users:", err)
+            return 0
+          }),
         ]);
 
         // users từ API /users có dạng user + account_id (được populate với { email, role })
         const populatedUsers = users as any[];
-        const activeCustomers = populatedUsers.filter(
-          (u) => u.account_id?.role === "user",
-        ).length;
         const activeHRs = populatedUsers.filter(
           (u) => u.account_id?.role === "hr",
         ).length;
 
         setStats((prev) => [
-          { ...prev[0], value: activeCustomers.toString() },
+          { ...prev[0], value: activeUsersFromGA.toString() },
           { ...prev[1], value: activeHRs.toString() },
           { ...prev[2], value: vouchers.length.toString() },
           { ...prev[3], value: ads.length.toString() },
@@ -82,7 +84,6 @@ export function DashboardContent() {
       if (user.createdAt) {
         const date = new Date(user.createdAt);
         const monthIndex = date.getMonth();
-        const year = date.getFullYear();
         const monthKey = `${monthNames[monthIndex]}`;
 
         if (!monthlyData[monthKey]) {

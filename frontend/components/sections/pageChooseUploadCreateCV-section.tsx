@@ -5,6 +5,7 @@ import { useCV } from "@/providers/cv-provider";
 import { useLanguage } from "@/providers/global_provider"; // Giả định hook này tồn tại
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
+import { notify } from "@/lib/notify";
 
 // --- ĐỐI TƯỢNG TRANSLATIONS ---
 const translations = {
@@ -83,13 +84,13 @@ export default function PageChooseUploadCreateCVSection() {
 
   const handleAnalyzeUploadedCV = async () => {
     if (!pdfFile) {
-      alert(t.alerts.noFile);
+      notify.error(t.alerts.noFile);
       return;
     }
 
     const MAX_FILE_SIZE = 10 * 1024 * 1024;
     if (pdfFile.length > MAX_FILE_SIZE) {
-      alert(t.alerts.fileTooLargeInitial);
+      notify.error(t.alerts.fileTooLargeInitial);
       return;
     }
 
@@ -107,9 +108,9 @@ export default function PageChooseUploadCreateCVSection() {
       router.replace(`/createCV-AIManual?id=${templateId}`);
     } catch (error) {
       if (error instanceof Error && error.message.includes("413")) {
-        alert(t.alerts.fileTooLarge413);
+        notify.error(t.alerts.fileTooLarge413);
       } else {
-        alert(t.alerts.analysisError);
+        notify.error(t.alerts.analysisError);
         console.error("Lỗi phân tích CV:", error);
       }
     } finally {

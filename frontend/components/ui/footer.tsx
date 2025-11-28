@@ -1,14 +1,14 @@
-import Link from "next/link"
-import Image from "next/image"
-import { FaFacebook, FaTwitter, FaLinkedin } from "react-icons/fa"
-import logoImg from "@/public/logo/logoCVOne.svg"
+import Link from "next/link";
+import Image from "next/image";
+import { FaFacebook, FaTwitter, FaLinkedin } from "react-icons/fa";
+import logoImg from "@/public/logo/logoCVOne.svg";
 
 interface FooterProps {
-  show?: boolean
+  show?: boolean;
 }
 
 export function Footer({ show = true }: FooterProps) {
-  if (!show) return null
+  if (!show) return null;
 
   return (
     <footer className="bg-slate-950 text-slate-50 py-8 mt-auto border-t border-slate-800">
@@ -18,12 +18,17 @@ export function Footer({ show = true }: FooterProps) {
           {/* Brand Section */}
           <div className="lg:col-span-1">
             <div className="flex items-center mb-3">
-              <Image src={logoImg || "/placeholder.svg"} alt="CVOne Logo" width={40} height={40} />
+              <Image
+                src={logoImg || "/placeholder.svg"}
+                alt="CVOne Logo"
+                width={40}
+                height={40}
+              />
               <span className="ml-2 text-base font-bold text-white">CVOne</span>
             </div>
             <p className="text-xs leading-relaxed text-slate-400 mb-4">
-              Empowering millions to find their dream career with expert insights, practical tools, and a supportive
-              community.
+              Empowering millions to find their dream career with expert
+              insights, practical tools, and a supportive community.
             </p>
             {/* Social Links */}
             <div className="flex gap-3">
@@ -50,7 +55,9 @@ export function Footer({ show = true }: FooterProps) {
 
           {/* CV Section */}
           <div>
-            <h3 className="text-xs font-semibold text-white mb-3 uppercase tracking-widest opacity-80">CV Tools</h3>
+            <h3 className="text-xs font-semibold text-white mb-3 uppercase tracking-widest opacity-80">
+              CV Tools
+            </h3>
             <ul className="space-y-2">
               <li>
                 <Link
@@ -130,40 +137,28 @@ export function Footer({ show = true }: FooterProps) {
 
           {/* Contact Section */}
           <div>
-            <h3 className="text-xs font-semibold text-white mb-3 uppercase tracking-widest opacity-80">Get In Touch</h3>
+            <h3 className="text-xs font-semibold text-white mb-3 uppercase tracking-widest opacity-80">
+              Get In Touch
+            </h3>
             <div className="space-y-2">
               <p className="text-xs text-slate-400">
-                <span className="text-slate-300 font-medium">Call:</span> 961-591-558
+                <span className="text-slate-300 font-medium">Call:</span>{" "}
+                961-591-558
               </p>
               <p className="text-xs text-slate-400">
-                <span className="text-slate-300 font-medium">Email:</span> duongvdhe173014@fpt.edu.vn
+                <span className="text-slate-300 font-medium">Email:</span>{" "}
+                duongvdhe173014@fpt.edu.vn
               </p>
               <p className="text-xs text-slate-500 mt-3 leading-relaxed">
-                Helping job seekers build professional profiles that stand out to employers.
+                Helping job seekers build professional profiles that stand out
+                to employers.
               </p>
             </div>
           </div>
         </div>
 
-        {/* Divider */}
-        <div className="border-t border-slate-800 my-4"></div>
-
-        {/* Bottom Footer */}
-        <div className="flex flex-col md:flex-row justify-between items-center gap-3 text-xs text-slate-500">
-          <p>© 2025 CVOne. All rights reserved.</p>
-          <div className="flex gap-4">
-            <Link href="/privacy" className="hover:text-slate-300 transition-colors">
-              Privacy Policy
-            </Link>
-            <Link href="/terms" className="hover:text-slate-300 transition-colors">
-              Terms of Service
-            </Link>
-            <Link href="/contact" className="hover:text-slate-300 transition-colors">
-              Contact Us
-            </Link>
-          </div>
-        </div>
+        {/* Quick Access Icons */}
       </div>
     </footer>
-  )
+  );
 }

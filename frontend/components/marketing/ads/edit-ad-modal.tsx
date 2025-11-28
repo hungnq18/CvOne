@@ -14,6 +14,13 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Ad, updateAd } from "@/api/adsApi"
 import { toast } from "@/components/ui/use-toast"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 interface EditAdModalProps {
   ad: Ad
@@ -91,6 +98,30 @@ export function EditAdModal({ ad, open, onOpenChange, onAdUpdated }: EditAdModal
               Redirect URL
             </Label>
             <Input id="redirectUrl" value={formData.redirectUrl} onChange={handleInputChange} className="col-span-3" />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="position" className="text-right">
+              Position
+            </Label>
+            <div className="col-span-3">
+              <Select
+                value={formData.position}
+                onValueChange={(value) =>
+                  setFormData((prev) => ({ ...prev, position: value }))
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select position" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="top">Top</SelectItem>
+                  <SelectItem value="bottom">Bottom</SelectItem>
+                  <SelectItem value="center">Center</SelectItem>
+                  <SelectItem value="left">Left</SelectItem>
+                  <SelectItem value="right">Right</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="startDate" className="text-right">

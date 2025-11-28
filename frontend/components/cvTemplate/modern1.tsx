@@ -3,9 +3,10 @@
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { GripVertical } from "lucide-react";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
+import { GripVertical } from "lucide-react"; 
 import { getDefaultSectionPositions } from "./defaultSectionPositions";
+import { notify } from "@/lib/notify";
 
 // --- BƯỚC 2: TẠO ĐỐI TƯỢNG TRANSLATIONS ---
 const translations = {
@@ -235,10 +236,17 @@ const ModernCV1: React.FC<ModernCV1Props> = ({
     ...defaultT,
     ...(cvUiTexts && {
       personalInfoLabel: cvUiTexts.personalInformation || defaultT.personalInfoLabel,
+      contactLabel: cvUiTexts.contact || defaultT.personalInfoLabel,
       careerObjectiveLabel: cvUiTexts.careerObjective || defaultT.careerObjectiveLabel,
       skillsLabel: cvUiTexts.skills || defaultT.skillsLabel,
       experienceLabel: cvUiTexts.workExperience || defaultT.experienceLabel,
       educationLabel: cvUiTexts.education || defaultT.educationLabel,
+      certificationLabel: cvUiTexts.certification || defaultT.certificationLabel,
+      achievementLabel: cvUiTexts.achievement || defaultT.achievementLabel,
+      hobbyLabel: cvUiTexts.hobby || defaultT.hobbyLabel,
+      projectLabel: cvUiTexts.project || defaultT.projectLabel,
+      avatarLabel: cvUiTexts.avatar || defaultT.avatarLabel,
+      fullNameAndTitleLabel: cvUiTexts.fullNameAndTitle || defaultT.fullNameAndTitleLabel,
       phone: cvUiTexts.phone || defaultT.phone,
       email: cvUiTexts.email || defaultT.email,
       address: cvUiTexts.address || defaultT.address,
@@ -249,6 +257,11 @@ const ModernCV1: React.FC<ModernCV1Props> = ({
   const sectionPositions =
     data?.sectionPositions ||
     getDefaultSectionPositions(data?.templateTitle || "The Signature");
+
+  const dragWarningMessage =
+    lang === "vi"
+      ? "Bạn chỉ có thể thả mục trong khu vực bố cục cho phép."
+      : "Please drop sections inside the allowed layout areas.";
 
   const supportedSections = ["avatar", "info", "contact", "summary", "skills", "experience", "education", "certification", "achievement", "hobby", "Project"];
   
@@ -269,7 +282,11 @@ const ModernCV1: React.FC<ModernCV1Props> = ({
     .map(([key]) => key);
 
   const handleDragEnd = (result: DropResult) => {
-    if (!onLayoutChange || !result.destination) return;
+    if (!result.destination) {
+      notify.error(dragWarningMessage);
+      return;
+    }
+    if (!onLayoutChange) return;
 
     const { source, destination } = result;
 
@@ -282,6 +299,13 @@ const ModernCV1: React.FC<ModernCV1Props> = ({
 
     const sourcePlace = parseInt(source.droppableId);
     const destPlace = parseInt(destination.droppableId);
+    
+    // CHẶN: Không cho phép kéo thả sang place khác
+    if (sourcePlace !== destPlace) {
+      notify.error(dragWarningMessage);
+      return;
+    }
+    
     const newPositions = { ...sectionPositions };
 
     const sourceKeys = Object.entries(newPositions)
@@ -289,23 +313,11 @@ const ModernCV1: React.FC<ModernCV1Props> = ({
       .sort(([, a]: [string, any], [, b]: [string, any]) => a.order - b.order)
       .map(([key]) => key);
 
-    let destKeys = sourcePlace === destPlace 
-      ? [...sourceKeys] 
-      : Object.entries(newPositions)
-          .filter(([_, pos]: [string, any]) => pos.place === destPlace)
-          .sort(([, a]: [string, any], [, b]: [string, any]) => a.order - b.order)
-          .map(([key]) => key);
+    const destKeys = [...sourceKeys];
 
-    if (sourcePlace === destPlace) {
-       const [moved] = destKeys.splice(source.index, 1);
-       destKeys.splice(destination.index, 0, moved);
-    } else {
-       const [moved] = sourceKeys.splice(source.index, 1);
-       destKeys.splice(destination.index, 0, moved);
-       sourceKeys.forEach((key, index) => {
-         newPositions[key] = { ...newPositions[key], order: index };
-       });
-    }
+    // Chỉ cho phép sắp xếp lại thứ tự trong cùng một place
+    const [moved] = destKeys.splice(source.index, 1);
+    destKeys.splice(destination.index, 0, moved);
 
     destKeys.forEach((key, index) => {
       newPositions[key] = { place: destPlace, order: index };
@@ -328,21 +340,25 @@ const ModernCV1: React.FC<ModernCV1Props> = ({
                 dragHandleProps={dragHandleProps}
                 isDragging={isDragging}
               >
-                <div className="w-40 h-40 lg:w-48 lg:h-48 rounded-full overflow-hidden border-4 border-white/80">
+                <div className="w-40 h-40 lg:w-48 lg:h-48 rounded-full overflow-hidden border-4 border-white/80 relative">
                   {isPdfMode ? (
-                    <img
-                      src={userData.avatar || "/avatar-female.png"}
-                      alt={`${userData.firstName || ""} ${userData.lastName || ""}`}
-                      crossOrigin="anonymous"
-                      className="w-full h-full object-cover"
+                    <div
+                      style={{ 
+                        width: '100%', 
+                        height: '100%', 
+                        backgroundImage: `url(${userData.avatar || "/avatar-female.png"})`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                        backgroundRepeat: 'no-repeat',
+                        borderRadius: '9999px'
+                      }}
                     />
                   ) : (
                     <Image
                       src={userData.avatar || "/avatar-female.png"}
                       alt={`${userData.firstName || ""} ${userData.lastName || ""}`}
-                      width={300}
-                      height={375}
-                      className="w-full h-full object-cover"
+                      fill
+                      style={{ objectFit: 'cover' }}
                     />
                   )}
                 </div>
@@ -355,7 +371,7 @@ const ModernCV1: React.FC<ModernCV1Props> = ({
         return (
           <HoverableWrapper
             key="contact"
-            label={t.personalInfoLabel}
+            label={t.contactLabel}
             sectionId="contact"
             onClick={onSectionClick}
             isPdfMode={isPdfMode}
@@ -364,7 +380,7 @@ const ModernCV1: React.FC<ModernCV1Props> = ({
           >
             <div className="px-8 lg:px-12">
               <h2 className="text-xl lg:text-2xl font-bold mb-6 pb-3 border-b border-white/50 pt-3">
-                {t.personalInfoLabel}
+                {t.contactLabel}
               </h2>
               <div className="space-y-4 text-lg lg:text-xl">
                 <div>
@@ -478,15 +494,10 @@ const ModernCV1: React.FC<ModernCV1Props> = ({
                     {job.startDate?.slice(5, 7)}/{job.startDate?.slice(0, 4)} -{" "}
                     {job.isCurrent || job.endDate == "Present" || job.endDate == "Hiện tại"
                       ? t.present
-                      : `${job.endDate?.slice(5, 7)}/${job.endDate?.slice(
-                          0,
-                          4
-                        )}`}
+                      : `${job.endDate?.slice(5, 7)}/${job.endDate?.slice(0, 4)}`}
                   </span>
                 </div>
-                <h4 className="font-bold text-lg text-gray-700 mb-3">
-                  {job.company}
-                </h4>
+                <h4 className="font-bold text-lg text-gray-700 mb-3">{job.company}</h4>
                 {renderDescription(job.description)}
               </div>
             ))}
@@ -523,7 +534,7 @@ const ModernCV1: React.FC<ModernCV1Props> = ({
         return userData.certification?.length > 0 && (
           <Section
             key="certification"
-            title={cvUiTexts?.certification || t.certificationLabel}
+            title={t.certificationLabel}
             sectionId="certification"
             onSectionClick={onSectionClick}
             isPdfMode={isPdfMode}
@@ -552,7 +563,7 @@ const ModernCV1: React.FC<ModernCV1Props> = ({
         return userData.achievement?.length > 0 && (
           <Section
             key="achievement"
-            title={cvUiTexts?.achievement || t.achievementLabel}
+            title={t.achievementLabel}
             sectionId="achievement"
             onSectionClick={onSectionClick}
             isPdfMode={isPdfMode}
@@ -572,7 +583,7 @@ const ModernCV1: React.FC<ModernCV1Props> = ({
         return userData.hobby?.length > 0 && (
           <HoverableWrapper
             key="hobby"
-            label={cvUiTexts?.hobby || t.hobbyLabel}
+            label={t.hobbyLabel}
             sectionId="hobby"
             onClick={onSectionClick}
             isPdfMode={isPdfMode}
@@ -582,7 +593,7 @@ const ModernCV1: React.FC<ModernCV1Props> = ({
             <div className="px-8 lg:px-12">
                {/* Tiêu đề giống style Contact/Summary bên trái */}
               <h2 className="text-xl lg:text-2xl font-bold mb-6 pb-3 border-b border-white/50 pt-3">
-                {cvUiTexts?.hobby || t.hobbyLabel}
+                {t.hobbyLabel}
               </h2>
               {/* Danh sách text thay vì tags để phù hợp nền tối */}
               <ul className="space-y-3">
@@ -600,7 +611,7 @@ const ModernCV1: React.FC<ModernCV1Props> = ({
         return userData.Project?.length > 0 && (
           <Section
             key="Project"
-            title={cvUiTexts?.project || t.projectLabel}
+            title={t.projectLabel}
             sectionId="Project"
             onSectionClick={onSectionClick}
             isPdfMode={isPdfMode}

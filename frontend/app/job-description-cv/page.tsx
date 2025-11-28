@@ -10,6 +10,7 @@ import { useLanguage } from "@/providers/global_provider";
 import { ArrowLeft, ArrowRight, Wand2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FC, ReactNode, useState } from "react";
+import { notify } from "@/lib/notify";
 
 // --- ĐỐI TƯỢNG TRANSLATIONS (KHÔNG ĐỔI) ---
 const translations = {
@@ -295,13 +296,13 @@ export default function JobDescriptionPage() {
 
   const handleContinue = async () => {
     if (!pdfFile) {
-      alert(t.alerts.pdfMissing);
+      notify.error(t.alerts.pdfMissing);
       return;
     }
 
     const maxSize = 10 * 1024 * 1024;
     if (pdfFile.length > maxSize) {
-      alert(t.alerts.pdfTooLarge);
+      notify.error(t.alerts.pdfTooLarge);
       return;
     }
 
@@ -311,7 +312,7 @@ export default function JobDescriptionPage() {
       let finalJobDescription = jobDescription;
       if (activeTab === "file") {
         if (!jdFile) {
-          alert(t.alerts.jdMissing);
+          notify.error(t.alerts.jdMissing);
           setIsCreatingCV(false);
           return;
         }
@@ -326,13 +327,13 @@ export default function JobDescriptionPage() {
           setJobDescription(extractedText);
           finalJobDescription = extractedText;
         } else {
-          alert(t.alerts.jdMissing);
+          notify.error(t.alerts.jdMissing);
           setIsCreatingCV(false);
           return;
         }
       }
       if (!finalJobDescription || !finalJobDescription.trim()) {
-        alert(t.alerts.jdMissing);
+        notify.error(t.alerts.jdMissing);
         setIsCreatingCV(false);
         return;
       }
@@ -353,22 +354,22 @@ export default function JobDescriptionPage() {
 
       if (error instanceof Error) {
         if (error.message.includes("413")) {
-          alert(t.alerts.pdfTooLarge413);
+          notify.error(t.alerts.pdfTooLarge413);
         } else if (error.message.includes("400")) {
-          alert(
+          notify.error(
             "Dữ liệu không hợp lệ. Vui lòng kiểm tra lại file CV và mô tả công việc."
           );
         } else if (error.message.includes("401")) {
-          alert("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
+          notify.error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
         } else if (error.message.includes("500")) {
-          alert("Lỗi máy chủ. Vui lòng thử lại sau.");
+          notify.error("Lỗi máy chủ. Vui lòng thử lại sau.");
         } else if (error.message.includes("Network")) {
-          alert("Lỗi kết nối mạng. Vui lòng kiểm tra kết nối internet.");
+          notify.error("Lỗi kết nối mạng. Vui lòng kiểm tra kết nối internet.");
         } else {
-          alert(t.alerts.cvAnalysisError);
+          notify.error(t.alerts.cvAnalysisError);
         }
       } else {
-        alert(t.alerts.cvAnalysisError);
+        notify.error(t.alerts.cvAnalysisError);
       }
     } finally {
       // Luôn tắt trạng thái loading ở cuối

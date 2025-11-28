@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import { X, RefreshCcw, LayoutTemplate, GripVertical, GripHorizontal, AlertCircle } from "lucide-react";
+import { X, RefreshCcw, LayoutTemplate, GripVertical, GripHorizontal, Sparkles } from "lucide-react";
+import { notify } from "@/lib/notify";
 
 // --- TYPES ---
 interface SectionPositions {
@@ -65,17 +66,6 @@ const CVTemplateLayoutPopup: React.FC<CVTemplateLayoutPopupProps> = ({
   const [positions, setPositions] = useState<SectionPositions>(
     currentPositions || defaultPositions
   );
-  
-  // State quản lý thông báo cảnh báo
-  const [warning, setWarning] = useState<string | null>(null);
-
-  // Tự động tắt thông báo sau 3 giây
-  useEffect(() => {
-    if (warning) {
-      const timer = setTimeout(() => setWarning(null), 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [warning]);
 
   const getTemplateConfig = () => {
     let config = LAYOUT_CONFIGS[templateTitle];
@@ -89,24 +79,22 @@ const CVTemplateLayoutPopup: React.FC<CVTemplateLayoutPopupProps> = ({
   const layoutConfig = getTemplateConfig();
 
   const handleDragEnd = (result: any) => {
-    if (!result.destination) return;
+    if (!result.destination) {
+      notify.error("Bạn chỉ có thể thả mục trong khu vực bố cục cho phép.");
+      return;
+    }
     
-    // 1. STRICT CHECK: Chặn kéo thả sang khu vực khác
     if (result.source.droppableId !== result.destination.droppableId) {
-      // HIỂN THỊ THÔNG BÁO
-      setWarning("Bạn chỉ có thể sắp xếp lại thứ tự trong cùng một khu vực!");
+      notify.error("Bạn chỉ có thể sắp xếp lại thứ tự trong cùng một khu vực!");
       return;
     }
 
     const placeId = parseInt(result.source.droppableId);
-
-    // Lấy danh sách items của vùng hiện tại
     const items = Object.entries(positions)
       .filter(([_, pos]) => pos.place === placeId)
       .sort(([, a], [, b]) => a.order - b.order)
       .map(([key]) => key);
 
-    // Reorder logic
     const newItems = [...items];
     const [moved] = newItems.splice(result.source.index, 1);
     newItems.splice(result.destination.index, 0, moved);
@@ -117,7 +105,6 @@ const CVTemplateLayoutPopup: React.FC<CVTemplateLayoutPopupProps> = ({
     });
     
     setPositions(newPositions);
-    setWarning(null); // Tắt cảnh báo nếu kéo thả thành công
   };
 
   const handleReset = () => {
@@ -128,33 +115,57 @@ const CVTemplateLayoutPopup: React.FC<CVTemplateLayoutPopupProps> = ({
 
   const getColorStyles = (theme: string, isDraggingOver: boolean) => {
     const styles = {
-      blue: isDraggingOver ? "bg-blue-100 border-blue-400" : "bg-blue-50/50 border-blue-200",
-      green: isDraggingOver ? "bg-emerald-100 border-emerald-400" : "bg-emerald-50/50 border-emerald-200",
-      slate: isDraggingOver ? "bg-slate-200 border-slate-400" : "bg-slate-100 border-slate-200",
-      indigo: isDraggingOver ? "bg-indigo-100 border-indigo-400" : "bg-indigo-50/50 border-indigo-200",
+      blue: isDraggingOver 
+        ? "bg-gradient-to-br from-blue-100 to-indigo-100 border-blue-400 shadow-inner" 
+        : "bg-gradient-to-br from-blue-50/80 to-indigo-50/50 border-blue-200/80",
+      green: isDraggingOver 
+        ? "bg-gradient-to-br from-emerald-100 to-teal-100 border-emerald-400 shadow-inner" 
+        : "bg-gradient-to-br from-emerald-50/80 to-teal-50/50 border-emerald-200/80",
+      slate: isDraggingOver 
+        ? "bg-gradient-to-br from-slate-200 to-gray-200 border-slate-400 shadow-inner" 
+        : "bg-gradient-to-br from-slate-100/80 to-gray-100/50 border-slate-200/80",
+      indigo: isDraggingOver 
+        ? "bg-gradient-to-br from-indigo-100 to-violet-100 border-indigo-400 shadow-inner" 
+        : "bg-gradient-to-br from-indigo-50/80 to-violet-50/50 border-indigo-200/80",
     };
     return styles[theme as keyof typeof styles] || styles.slate;
   };
 
   const getHeaderColor = (theme: string) => {
-    const colors = { blue: "bg-blue-600", green: "bg-emerald-600", slate: "bg-slate-600", indigo: "bg-indigo-600" };
+    const colors = { 
+      blue: "bg-gradient-to-r from-blue-600 to-indigo-600", 
+      green: "bg-gradient-to-r from-emerald-600 to-teal-600", 
+      slate: "bg-gradient-to-r from-slate-600 to-gray-600", 
+      indigo: "bg-gradient-to-r from-indigo-600 to-violet-600" 
+    };
     return colors[theme as keyof typeof colors] || "bg-slate-600";
   };
 
   return (
     <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center z-[9999] p-4">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-[1000px] max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in duration-200 relative">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-[1000px] max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in duration-200 relative">
         
-        {/* HEADER */}
-        <div className="px-6 py-4 bg-white border-b border-slate-200 flex justify-between items-center shrink-0 z-10">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-blue-50 text-blue-600 rounded-lg"><LayoutTemplate size={20} /></div>
-            <div>
-              <h2 className="text-lg font-bold text-slate-800">Chỉnh sửa bố cục</h2>
-              <p className="text-xs text-slate-500">Template: <span className="font-semibold text-blue-600">{templateTitle}</span></p>
+        {/* HEADER - Redesigned */}
+        <div className="relative overflow-hidden flex-shrink-0">
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-800 via-slate-900 to-slate-800" />
+          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAwIDEwIEwgNDAgMTAgTSAxMCAwIEwgMTAgNDAgTSAwIDIwIEwgNDAgMjAgTSAyMCAwIEwgMjAgNDAgTSAwIDMwIEwgNDAgMzAgTSAzMCAwIEwgMzAgNDAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzMzMyIgb3BhY2l0eT0iMC4xIiBzdHJva2Utd2lkdGg9IjEiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JpZCkiLz48L3N2Zz4=')] opacity-30" />
+          <div className="relative px-6 py-5 flex justify-between items-center">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-xl shadow-lg shadow-blue-500/30">
+                <LayoutTemplate size={22} />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                  Chỉnh sửa bố cục
+                  <Sparkles size={16} className="text-amber-400" />
+                </h2>
+                <p className="text-xs text-slate-400">Template: <span className="font-semibold text-blue-400">{templateTitle}</span></p>
+              </div>
             </div>
+            <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-xl transition-colors text-slate-400 hover:text-white">
+              <X size={22} />
+            </button>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-400 hover:text-slate-600"><X size={22} /></button>
         </div>
 
         {/* MAIN PREVIEW AREA */}
@@ -244,33 +255,30 @@ const CVTemplateLayoutPopup: React.FC<CVTemplateLayoutPopupProps> = ({
           </DragDropContext>
 
           {/* --- THÔNG BÁO TOAST (LOCAL) --- */}
-          {warning && (
-            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-50 animate-in fade-in slide-in-from-bottom-4 duration-300">
-              <div className="bg-slate-800 text-white px-4 py-3 rounded-lg shadow-2xl flex items-center gap-3 border border-slate-700 max-w-md">
-                <AlertCircle className="text-red-400 shrink-0" size={20} />
-                <div>
-                   <p className="text-sm font-medium text-red-200">Không thể di chuyển!</p>
-                   <p className="text-xs text-slate-300">{warning}</p>
-                </div>
-                <button 
-                  onClick={() => setWarning(null)}
-                  className="ml-2 p-1 hover:bg-slate-700 rounded-full transition-colors"
-                >
-                  <X size={14} className="text-slate-400" />
-                </button>
-              </div>
-            </div>
-          )}
         </div>
 
-        {/* FOOTER */}
-        <div className="px-6 py-4 bg-white border-t border-slate-200 flex justify-between items-center shrink-0 z-10">
-          <button onClick={handleReset} className="text-slate-500 hover:text-red-600 text-sm font-medium flex items-center gap-1.5 px-3 py-2 rounded-lg hover:bg-red-50 transition-colors">
-            <RefreshCcw size={16} /> Đặt lại mặc định
+        {/* FOOTER - Redesigned */}
+        <div className="px-6 py-4 bg-slate-50/80 border-t border-slate-200 flex justify-between items-center shrink-0">
+          <button 
+            onClick={handleReset} 
+            className="group text-slate-500 hover:text-red-600 text-sm font-medium flex items-center gap-2 px-4 py-2.5 rounded-xl hover:bg-red-50 border border-transparent hover:border-red-200 transition-all"
+          >
+            <RefreshCcw size={16} className="group-hover:rotate-180 transition-transform duration-500" /> 
+            Đặt lại mặc định
           </button>
           <div className="flex gap-3">
-            <button onClick={onClose} className="px-5 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-100 bg-slate-50 border border-slate-200 rounded-lg transition-colors">Hủy</button>
-            <button onClick={() => { onSave(positions); onClose(); }} className="px-6 py-2.5 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 active:scale-95 rounded-lg shadow-md shadow-blue-200 transition-all">Lưu bố cục mới</button>
+            <button 
+              onClick={onClose} 
+              className="px-5 py-2.5 text-sm font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 hover:border-slate-300 transition-all"
+            >
+              Hủy
+            </button>
+            <button 
+              onClick={() => { onSave(positions); onClose(); }} 
+              className="px-6 py-2.5 text-sm font-bold text-white bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 active:scale-[0.98] rounded-xl shadow-lg shadow-blue-500/25 transition-all"
+            >
+              ✨ Lưu bố cục mới
+            </button>
           </div>
         </div>
       </div>

@@ -7,6 +7,7 @@ import { useLanguage } from "@/providers/global_provider";
 import "@/styles/myDocuments.css";
 import { Tabs } from "antd";
 import { useEffect, useState } from "react";
+import { notify } from "@/lib/notify";
 
 const translations = {
   en: {
@@ -68,7 +69,7 @@ export default function Page() {
               isSaved: true,
             };
             await createCL(newCL);
-            alert("Your pending cover letter has been saved successfully!");
+            notify.success("Your pending cover letter has been saved successfully!");
             // After saving, we can trigger a reload of the cover letters
             // The second useEffect will handle fetching the updated list.
             setCoverLetterList(prevList => [...prevList, newCL as CL]); // Optimistic update
@@ -76,7 +77,7 @@ export default function Page() {
           }
         } catch (error) {
           console.error("Failed to save pending cover letter:", error);
-          alert("There was an error saving your pending cover letter.");
+          notify.error("There was an error saving your pending cover letter.");
           // Optional: If saving fails, you might want to put it back into localStorage
           // localStorage.setItem("pendingCL", pendingCLJSON);
         }
@@ -117,12 +118,14 @@ export default function Page() {
   const onTabChange = (key: string) => setActiveTab(key);
   const onSearch = (value: string) => setSearchValue(value);
 
+  const normalizedSearch = searchValue.toLowerCase();
+
   const filteredCVList = cvList.filter((cv) =>
-    cv.title?.toLowerCase().includes(searchValue.toLowerCase())
+    cv.title?.toLowerCase().includes(normalizedSearch)
   );
 
   const filteredCoverLetterList = coverLetterList.filter((cl) =>
-    cl.title.toLowerCase().includes(searchValue.toLowerCase())
+    (cl.title || "").toLowerCase().includes(normalizedSearch)
   );
 
   const items = [

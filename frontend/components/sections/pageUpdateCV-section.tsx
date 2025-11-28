@@ -30,6 +30,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import React, { useEffect, useRef, useState } from "react";
 import CVTemplateLayoutPopup from "@/components/forms/CVTemplateLayoutPopup";
 import { getDefaultSectionPositions } from "../cvTemplate/defaultSectionPositions";
+import { notify } from "@/lib/notify";
 
 // --- TRANSLATIONS ---
 const translations = {
@@ -233,7 +234,9 @@ const PageUpdateCVContent = () => {
         }
       } catch (error) {
         console.error(t.alerts.loadCVError, error);
-        alert(error instanceof Error ? error.message : t.alerts.cantLoadCV);
+        notify.error(
+          error instanceof Error ? error.message : t.alerts.cantLoadCV
+        );
         router.push("/myDocuments");
       }
     };
@@ -244,7 +247,7 @@ const PageUpdateCVContent = () => {
       setLoading(true);
       loadCVDataAndTemplate(cvId).finally(() => setLoading(false));
     } else {
-      alert(t.alerts.noCVId);
+      notify.error(t.alerts.noCVId);
       router.push("/myDocuments");
     }
   }, [
@@ -293,7 +296,7 @@ const PageUpdateCVContent = () => {
       }
     } catch (error) {
       console.error(t.alerts.changeTemplateError, error);
-      alert(t.alerts.changeTemplateError);
+      notify.error(t.alerts.changeTemplateError);
     } finally {
       setLoading(false);
     }
@@ -318,50 +321,84 @@ const PageUpdateCVContent = () => {
     currentPositions: any,
     templateTitle: string
   ) => {
+    // Lấy default positions của template
     const defaultPositions = getDefaultSectionPositions(templateTitle);
-    const isMinimalist1 =
-      templateTitle === "The Vanguard" || templateTitle?.includes("Vanguard");
-    const isModern2 =
-      templateTitle === "The Modern" || templateTitle?.includes("Modern");
 
-    let targetPlace = 2;
+    // Lấy vị trí mặc định của section từ defaultPositions
+    const defaultSectionPos = defaultPositions[sectionId];
+    if (!defaultSectionPos || defaultSectionPos.place === 0) {
+      // Nếu không có trong default hoặc bị ẩn, dùng logic fallback
+      const isMinimalist1 =
+        templateTitle === "The Vanguard" || templateTitle?.includes("Vanguard");
+      const isModern2 =
+        templateTitle === "The Modern" || templateTitle?.includes("Modern");
 
-    if (isMinimalist1) {
-      if (sectionId === "hobby") {
-        targetPlace = 2;
-      } else if (
-        sectionId === "certification" ||
-        sectionId === "achievement" ||
-        sectionId === "Project"
-      ) {
+      let targetPlace = 2;
+
+      if (isMinimalist1) {
+        if (sectionId === "hobby") {
+          targetPlace = 2;
+        } else if (
+          sectionId === "certification" ||
+          sectionId === "achievement" ||
+          sectionId === "Project"
+        ) {
+          targetPlace = 3;
+        }
+      } else if (isModern2) {
         targetPlace = 3;
+      } else {
+        if (sectionId === "hobby") {
+          targetPlace = 1;
+        } else if (
+          sectionId === "certification" ||
+          sectionId === "achievement" ||
+          sectionId === "Project"
+        ) {
+          targetPlace = 2;
+        }
       }
-    } else if (isModern2) {
-      targetPlace = 3;
-    } else {
-      if (sectionId === "hobby") {
-        targetPlace = 1;
-      } else if (
-        sectionId === "certification" ||
-        sectionId === "achievement" ||
-        sectionId === "Project"
-      ) {
-        targetPlace = 2;
+
+      const targetPlaceSections = Object.entries(currentPositions)
+        .filter(([_, pos]: [string, any]) => pos.place === targetPlace)
+        .sort(
+          ([, a]: [string, any], [, b]: [string, any]) => a.order - b.order
+        );
+
+      if (targetPlaceSections.length > 0) {
+        const lastOrder = (
+          targetPlaceSections[targetPlaceSections.length - 1][1] as any
+        ).order;
+        return { place: targetPlace, order: lastOrder + 1 };
       }
+
+      return { place: targetPlace, order: 0 };
     }
 
-    const targetPlaceSections = Object.entries(currentPositions)
-      .filter(([_, pos]: [string, any]) => pos.place === targetPlace)
+    // Sử dụng vị trí mặc định từ defaultPositions
+    const targetPlace = defaultSectionPos.place;
+    const targetOrder = defaultSectionPos.order;
+
+    // Tìm tất cả các section trong cùng place và có order >= targetOrder
+    const sectionsToShift = Object.entries(currentPositions)
+      .filter(([key, pos]: [string, any]) => {
+        return (
+          key !== sectionId &&
+          pos.place === targetPlace &&
+          pos.order >= targetOrder
+        );
+      })
       .sort(([, a]: [string, any], [, b]: [string, any]) => a.order - b.order);
 
-    if (targetPlaceSections.length > 0) {
-      const lastOrder = (
-        targetPlaceSections[targetPlaceSections.length - 1][1] as any
-      ).order;
-      return { place: targetPlace, order: lastOrder + 1 };
-    }
+    // Đẩy các section khác xuống (tăng order lên 1)
+    sectionsToShift.forEach(([key]) => {
+      currentPositions[key] = {
+        ...currentPositions[key],
+        order: currentPositions[key].order + 1,
+      };
+    });
 
-    return { place: targetPlace, order: 0 };
+    return { place: targetPlace, order: targetOrder };
   };
 
   // --- HÀM LƯU VÀO DB (SỬ DỤNG REF ĐỂ SỬA LỖI) ---
@@ -371,7 +408,7 @@ const PageUpdateCVContent = () => {
     const safeTemplate = currentTemplateRef.current;
 
     if (!safeUserData || !cvId || !safeTemplate) {
-      alert(t.alerts.updateMissingData);
+      notify.error(t.alerts.updateMissingData);
       return false;
     }
 
@@ -457,12 +494,12 @@ const PageUpdateCVContent = () => {
       };
 
       await updateCV(cvId, dataToUpdate);
-      alert(t.alerts.updateSuccess);
+      notify.success(t.alerts.updateSuccess);
       setIsDirty(false);
       return true;
     } catch (error) {
       console.error(t.alerts.updateCVError, error);
-      alert(t.alerts.updateCVError);
+      notify.error(t.alerts.updateCVError);
       return false;
     } finally {
       setIsSaving(false);
@@ -502,13 +539,16 @@ const PageUpdateCVContent = () => {
         updateUserData({ ...userData, sectionPositions: newPositions });
         setIsDirty(true);
       } else {
+        // Thêm vào CV - tạo bản copy để tránh modify trực tiếp
+        const positionsCopy = { ...currentPositions };
         const { place, order } = calculatePlaceAndOrder(
           sectionId,
-          currentPositions,
+          positionsCopy,
           currentTemplate.title
         );
+        // Sử dụng positionsCopy đã được update bởi calculatePlaceAndOrder
         const newPositions = {
-          ...currentPositions,
+          ...positionsCopy,
           [sectionId]: { place, order },
         };
         updateSectionPositions(currentTemplate._id, newPositions);
@@ -573,7 +613,7 @@ const PageUpdateCVContent = () => {
 
     const iframeDoc = iframe.contentWindow?.document;
     if (!iframeDoc) {
-      alert(t.alerts.pdfCreateEnvError);
+      notify.error(t.alerts.pdfCreateEnvError);
       document.body.removeChild(iframe);
       return;
     }
@@ -614,7 +654,7 @@ const PageUpdateCVContent = () => {
         .save();
     } catch (error) {
       console.error(t.alerts.pdfCreateError, error);
-      alert(t.alerts.pdfCreateError);
+      notify.error(t.alerts.pdfCreateError);
     } finally {
       if (root) root.unmount();
       if (document.body.contains(iframe)) document.body.removeChild(iframe);

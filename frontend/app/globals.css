@@ -2,6 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Force light mode - prevent browser dark mode override */
+:root,
+html,
+body {
+  color-scheme: light only !important;
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -72,6 +79,20 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+  
+  /* Force light mode for all form elements - prevent browser dark mode override */
+  input,
+  textarea,
+  select,
+  button {
+    color-scheme: light !important;
+  }
+  
+  /* Ensure text colors are always visible */
+  input::placeholder,
+  textarea::placeholder {
+    color: #9ca3af !important;
   }
 }
 
