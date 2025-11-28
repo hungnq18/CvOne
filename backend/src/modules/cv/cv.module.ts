@@ -10,9 +10,15 @@ import { AiInterviewController } from "./ai-interview.controller";
 import { CvPdfCloudService } from "./cv-pdf-cloud.service";
 import { CvController } from "./cv.controller";
 import { CvService } from "./cv.service";
-import { AiInterviewSession, AiInterviewSessionSchema } from "./schemas/ai-interview.schema";
+import {
+  AiInterviewSession,
+  AiInterviewSessionSchema,
+} from "./schemas/ai-interview.schema";
 import { Cv, CvSchema } from "./schemas/cv.schema";
-import { InterviewQuestionPool, InterviewQuestionPoolSchema } from "./schemas/interview-question-pool.schema";
+import {
+  InterviewQuestionPool,
+  InterviewQuestionPoolSchema,
+} from "./schemas/interview-question-pool.schema";
 import { AiInterviewService } from "./services/ai-interview.service";
 import { AiOptimizationService } from "./services/ai-optimization.service";
 import { CvAnalysisService } from "./services/cv-analysis.service";
@@ -24,6 +30,7 @@ import { JobAnalysisService } from "./services/job-analysis.service";
 import { OpenaiApiService } from "./services/openai-api.service";
 import { OpenAiService } from "./services/openai.service";
 import { VietnameseContentService } from "./services/vietnamese-content.service";
+import { AiUsageLogModule } from "../ai-usage-log/ai-usage-log.module";
 
 @Module({
   imports: [
@@ -35,6 +42,7 @@ import { VietnameseContentService } from "./services/vietnamese-content.service"
       { name: InterviewQuestionPool.name, schema: InterviewQuestionPoolSchema },
     ]),
     MailModule,
+    AiUsageLogModule,
   ],
   controllers: [CvController, AiInterviewController],
   providers: [
@@ -68,4 +76,4 @@ import { VietnameseContentService } from "./services/vietnamese-content.service"
     AiInterviewService,
   ],
 })
-export class CvModule { }
+export class CvModule {}

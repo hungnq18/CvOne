@@ -17,4 +17,12 @@ export class AiUsageLogService {
       tokensUsed: data.tokensUsed,
     });
   }
+
+  async getLogsByUserId(userId: string) {
+    return await this.logModel.find({ userId });
+  }
+
+  async getLogsByUserIdAndFeature(userId: string, feature: string) {
+    return await this.logModel.find({ userId, feature });
+  }
 }

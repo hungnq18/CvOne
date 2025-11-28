@@ -1,11 +1,15 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { OpenaiApiService } from "./openai-api.service";
+import { AiUsageLogService } from "src/modules/ai-usage-log/ai-usage-log.service";
 
 @Injectable()
 export class CvContentGenerationService {
   private readonly logger = new Logger(CvContentGenerationService.name);
 
-  constructor(private openaiApiService: OpenaiApiService) {}
+  constructor(
+    private openaiApiService: OpenaiApiService,
+    private readonly logService: AiUsageLogService
+  ) {}
 
   /**
    * Generate multiple professional summaries using OpenAI
@@ -13,7 +17,8 @@ export class CvContentGenerationService {
   async generateProfessionalSummary(
     userProfile: any,
     jobAnalysis: any,
-    additionalRequirements?: string
+    additionalRequirements?: string,
+    userId?: string
   ): Promise<string[]> {
     try {
       const prompt = `
@@ -75,6 +80,13 @@ Do not include any explanation or markdown, only valid JSON.
         total_tokens: 0,
       };
       console.log("Usage summary:", usage);
+      if (userId) {
+        await this.logService.createLog({
+          userId: userId,
+          feature: "suggestionSummaryCvAI",
+          tokensUsed: usage.total_tokens,
+        });
+      }
       // Remove markdown if present
       let cleanResponse = response.trim();
       if (cleanResponse.startsWith("```json")) {
@@ -114,7 +126,8 @@ Do not include any explanation or markdown, only valid JSON.
    */
   async generateWorkExperience(
     jobAnalysis: any,
-    experienceLevel: string
+    experienceLevel: string,
+    userId?: string
   ): Promise<
     Array<{
       title: string;
@@ -188,6 +201,14 @@ Return only valid JSON.
         total_tokens: 0,
       };
       console.log("Usage summary:", usage);
+
+      if (userId) {
+        await this.logService.createLog({
+          userId: userId,
+          feature: "suggestionWorksExperienceCvAI",
+          tokensUsed: usage.total_tokens,
+        });
+      }
       const response = completion.choices[0]?.message?.content;
       if (!response) {
         throw new Error("No response from OpenAI");
@@ -225,7 +246,8 @@ Return only valid JSON.
    */
   async generateSkillsSection(
     jobAnalysis: any,
-    userSkills?: Array<{ name: string; rating: number }>
+    userSkills?: Array<{ name: string; rating: number }>,
+    userId?: string
   ): Promise<Array<Array<{ name: string; rating: number }>>> {
     try {
       const existingSkills =
@@ -292,6 +314,13 @@ Do not include any explanation or markdown, only valid JSON.
         total_tokens: 0,
       };
       console.log("Usage skills :", usage);
+      if (userId) {
+        await this.logService.createLog({
+          userId: userId,
+          feature: "suggestionSkillsCvAI",
+          tokensUsed: usage.total_tokens,
+        });
+      }
       // Remove markdown if present
       let cleanResponse = response.trim();
       if (cleanResponse.startsWith("```json")) {
@@ -479,7 +508,8 @@ Do not include any explanation or markdown, only valid JSON.
   async translateCvContent(
     content: any,
     uiTexts: any,
-    targetLanguage: string
+    targetLanguage: string,
+    userId?: string
   ): Promise<any> {
     try {
       const languageNote = targetLanguage
@@ -579,7 +609,13 @@ Clear, natural phrasing - no awkward machine translations
       console.log("Content Tokens:", contentTokens);
       console.log("UI Tokens:", uiTextTokens);
       console.log("Total Tokens:", totalTokens);
-
+      if (userId) {
+        await this.logService.createLog({
+          userId,
+          feature: "transCvAI",
+          tokensUsed: totalTokens,
+        });
+      }
       // ======= Xử lý phần uiTexts =======
       let uiTranslated = uiTextResponse.choices[0]?.message?.content?.trim();
       if (!uiTranslated)

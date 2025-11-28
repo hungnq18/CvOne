@@ -33,13 +33,17 @@ export class ClTemplateService {
     }
   }
 
-  async getSuggestTemplateCl(jobDescription: string): Promise<ClTemplate[]> {
+  async getSuggestTemplateCl(
+    jobDescription: string,
+    userId: string
+  ): Promise<ClTemplate[]> {
     const tags = await this.clTemplateModel.distinct("tags").exec();
     console.log(tags);
 
     const suggestTags = await this.cvTemplateAiService.suggestTagsByAi(
       jobDescription,
-      tags
+      tags,
+      userId
     );
     console.log("suggestTags", suggestTags);
 

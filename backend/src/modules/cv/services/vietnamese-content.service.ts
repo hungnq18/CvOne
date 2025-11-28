@@ -1,18 +1,23 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { OpenaiApiService } from "./openai-api.service";
+import { AiUsageLogService } from "src/modules/ai-usage-log/ai-usage-log.service";
 
 @Injectable()
 export class VietnameseContentService {
   private readonly logger = new Logger(VietnameseContentService.name);
 
-  constructor(private openaiApiService: OpenaiApiService) {}
+  constructor(
+    private openaiApiService: OpenaiApiService,
+    private readonly logService: AiUsageLogService
+  ) {}
 
   /**
    * Generate professional summary in Vietnamese using OpenAI
    */
   async generateProfessionalSummaryVi(
     jobAnalysis: any,
-    additionalRequirements?: string
+    additionalRequirements?: string,
+    userId?: string
   ): Promise<string> {
     try {
       const prompt = `
@@ -53,7 +58,13 @@ Chỉ trả về đoạn summary, không giải thích, không markdown.
         total_tokens: 0,
       };
       console.log("Usage summary:", usage);
-
+      if (userId) {
+        await this.logService.createLog({
+          userId: userId,
+          feature: "suggestionSummaryCvAI",
+          tokensUsed: usage.total_tokens,
+        });
+      }
       let response = completion.choices[0]?.message?.content;
       if (!response) {
         throw new Error("No response from OpenAI");

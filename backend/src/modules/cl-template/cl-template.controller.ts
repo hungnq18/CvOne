@@ -13,6 +13,7 @@ import { CreateClTemplateDto } from "./dto/create-cl-template.dto";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { RolesGuard } from "../auth/guards/roles.guard";
 import { Roles } from "src/common/decorators/roles.decorator";
+import { User } from "src/common/decorators/user.decorator";
 
 @Controller("cl-templates")
 export class ClTemplateController {
@@ -41,7 +42,10 @@ export class ClTemplateController {
   }
 
   @Get("suggest-template/ai")
-  async getSuggestTemplateCv(@Body("jobDescription") jobDescription: string) {
-    return this.clTemplateService.getSuggestTemplateCl(jobDescription);
+  async getSuggestTemplateCv(
+    @Body("jobDescription") jobDescription: string,
+    @User("_id") userId: string
+  ) {
+    return this.clTemplateService.getSuggestTemplateCl(jobDescription, userId);
   }
 }
