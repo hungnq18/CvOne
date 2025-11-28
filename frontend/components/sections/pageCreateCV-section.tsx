@@ -160,7 +160,14 @@ const PageCreateCVContent = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
   const id = searchParams.get("id");
-  const { currentTemplate, userData, loadTemplate, updateUserData, getSectionPositions, updateSectionPositions } = useCV();
+  const {
+    currentTemplate,
+    userData,
+    loadTemplate,
+    updateUserData,
+    getSectionPositions,
+    updateSectionPositions,
+  } = useCV();
 
   const [loading, setLoading] = useState(true);
   const [activeSection, setActiveSection] = useState("info");
@@ -184,14 +191,11 @@ const PageCreateCVContent = () => {
     getCVTemplates().then((data) => setAllTemplates(data));
     const idFromUrl = id;
 
-    console.log("[CreateCV] ID from URL:", idFromUrl);
-
     if (idFromUrl) {
       setLoading(true);
       // First try to get as CV ID (for update flow)
       getCVById(idFromUrl)
         .then((templateData) => {
-          console.log("[CreateCV] Found CV with ID:", idFromUrl, templateData);
           if (templateData) {
             loadTemplate(templateData);
             if (templateData.title) {
@@ -207,28 +211,33 @@ const PageCreateCVContent = () => {
           setLoading(false);
         })
         .catch((error) => {
-          console.log("[CreateCV] Not a CV ID, trying as template ID. Error:", error);
-          console.log(t.loadingTemplateForNew);
           setCvId(null);
-          getCVTemplateById(idFromUrl).then((templateData) => {
-            console.log("[CreateCV] Found template with ID:", idFromUrl, templateData);
-            if (templateData) {
-              loadTemplate(templateData);
-              if (
-                (!userData || Object.keys(userData).length === 0) &&
-                templateData.data?.userData
-              ) {
-                updateUserData(templateData.data.userData);
+          getCVTemplateById(idFromUrl)
+            .then((templateData) => {
+              if (templateData) {
+                loadTemplate(templateData);
+                if (
+                  (!userData || Object.keys(userData).length === 0) &&
+                  templateData.data?.userData
+                ) {
+                  updateUserData(templateData.data.userData);
+                }
+                setCvTitle(t.cvTitleDefault(templateData.title));
+              } else {
+                console.error(
+                  "[CreateCV] Template not found with ID:",
+                  idFromUrl
+                );
               }
-              setCvTitle(t.cvTitleDefault(templateData.title));
-            } else {
-              console.error("[CreateCV] Template not found with ID:", idFromUrl);
-            }
-            setLoading(false);
-          }).catch((templateError) => {
-            console.error("[CreateCV] Error loading template:", templateError);
-            setLoading(false);
-          });
+              setLoading(false);
+            })
+            .catch((templateError) => {
+              console.error(
+                "[CreateCV] Error loading template:",
+                templateError
+              );
+              setLoading(false);
+            });
         });
     } else {
       setLoading(false);
@@ -252,7 +261,8 @@ const PageCreateCVContent = () => {
         updateSectionPositions(selectedTemplate._id, correctPositions);
 
         const templateUserData =
-          newTemplateData.data?.userData && Object.keys(newTemplateData.data.userData).length > 0
+          newTemplateData.data?.userData &&
+          Object.keys(newTemplateData.data.userData).length > 0
             ? newTemplateData.data.userData
             : userData || {};
 
@@ -277,7 +287,7 @@ const PageCreateCVContent = () => {
     updateUserData(updatedData);
     setIsDirty(true);
   };
-  
+
   // --- HÀM XỬ LÝ KHI KÉO THẢ TRÊN TEMPLATE ---
   const handleLayoutChange = (newPositions: any) => {
     if (currentTemplate) {
@@ -293,8 +303,7 @@ const PageCreateCVContent = () => {
   ) => {
     const defaultPositions = getDefaultSectionPositions(templateTitle);
     const isMinimalist1 =
-      templateTitle === "The Vanguard" ||
-      templateTitle?.includes("Vanguard");
+      templateTitle === "The Vanguard" || templateTitle?.includes("Vanguard");
     const isModern2 =
       templateTitle === "The Modern" || templateTitle?.includes("Modern");
 
@@ -338,10 +347,7 @@ const PageCreateCVContent = () => {
     return { place: targetPlace, order: 0 };
   };
 
-  const handleSectionClick = (
-    sectionId: string,
-    event?: React.MouseEvent
-  ) => {
+  const handleSectionClick = (sectionId: string, event?: React.MouseEvent) => {
     if (
       event &&
       (event.target as HTMLElement).closest(".section-toggle-icon")
@@ -419,7 +425,8 @@ const PageCreateCVContent = () => {
     setIsSaving(true);
     try {
       // Get sectionPositions from provider
-      const sectionPositions = getSectionPositions(currentTemplate._id) ||
+      const sectionPositions =
+        getSectionPositions(currentTemplate._id) ||
         currentTemplate.data?.sectionPositions ||
         getDefaultSectionPositions(currentTemplate.title);
 
@@ -451,7 +458,7 @@ const PageCreateCVContent = () => {
 
       // Ensure content ONLY contains userData, nothing else
       const contentData = {
-        userData: completeUserData
+        userData: completeUserData,
       };
 
       if (cvId) {
@@ -460,7 +467,7 @@ const PageCreateCVContent = () => {
           title: cvTitle || t.cvForUser(userData.firstName),
           updatedAt: new Date().toISOString(),
         };
-        console.log("[handleSaveToDB] Updating CV with data:", JSON.stringify(dataToUpdate, null, 2));
+
         await updateCV(cvId, dataToUpdate);
       } else {
         const dataToCreate: Omit<CV, "_id"> = {
@@ -476,7 +483,7 @@ const PageCreateCVContent = () => {
           isSaved: true,
           isFinalized: false,
         };
-        console.log("[handleSaveToDB] Creating CV with data:", JSON.stringify(dataToCreate, null, 2));
+
         const newCV = await createCV(dataToCreate);
         if (newCV && newCV.id) {
           setCvId(newCV.id);
@@ -629,7 +636,7 @@ const PageCreateCVContent = () => {
     const containerWidth = 700;
     const templateOriginalWidth = 794;
     const scaleFactor = containerWidth / templateOriginalWidth;
-    
+
     return (
       <div className="max-w-[1050px] origin-top pb-24" ref={previewRef}>
         <div

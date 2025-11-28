@@ -10,9 +10,11 @@ const translations = {
   en: {
     jdAnalysis: {
       ui: {
-        description: "Add job descriptions, requirements, and responsibilities to help AI better understand the position you want to create a CV for.",
+        description:
+          "Add job descriptions, requirements, and responsibilities to help AI better understand the position you want to create a CV for.",
         label: "JOB DESCRIPTION",
-        placeholder: "Paste the job description, requirements, and responsibilities here.",
+        placeholder:
+          "Paste the job description, requirements, and responsibilities here.",
         buttonAnalyzing: "Analyzing...",
         buttonAnalyze: "Analyze Job Description with AI",
         reAnalyze: "Re-analyze", // Thêm nút phân tích lại
@@ -24,10 +26,10 @@ const translations = {
       results: {
         title: "📋 Job Analysis Result",
         levelMap: {
-          'senior': 'Senior',
-          'mid-level': 'Mid-level',
-          'junior': 'Junior',
-          'entry-level': 'Entry-level'
+          senior: "Senior",
+          "mid-level": "Mid-level",
+          junior: "Junior",
+          "entry-level": "Entry-level",
         },
         experienceLevel: "Experience Level",
         requiredSkills: "Required Skills",
@@ -39,20 +41,24 @@ const translations = {
         certifications: "Recommended Certifications",
         suggestionsTitle: "💡 CV Suggestions",
         suggestionFocusSkills: "Focus on the required skills and technologies",
-        suggestionFocusExperience: (level: string) => `Emphasize experience relevant to the ${level} level`,
-        suggestionResponsibilities: "Provide specific examples of responsibilities performed",
+        suggestionFocusExperience: (level: string) =>
+          `Emphasize experience relevant to the ${level} level`,
+        suggestionResponsibilities:
+          "Provide specific examples of responsibilities performed",
         suggestionSoftSkills: "Demonstrate soft skills through team projects",
         defaultLevel: "job's",
-        errorFormatting: 'Error formatting analysis result:',
-      }
-    }
+        errorFormatting: "Error formatting analysis result:",
+      },
+    },
   },
   vi: {
     jdAnalysis: {
       ui: {
-        description: "Thêm mô tả công việc, yêu cầu và trách nhiệm để giúp AI hiểu rõ hơn về vị trí bạn muốn tạo CV.",
+        description:
+          "Thêm mô tả công việc, yêu cầu và trách nhiệm để giúp AI hiểu rõ hơn về vị trí bạn muốn tạo CV.",
         label: "MÔ TẢ CÔNG VIỆC",
-        placeholder: "Dán nội dung mô tả công việc, yêu cầu và trách nhiệm vào đây.",
+        placeholder:
+          "Dán nội dung mô tả công việc, yêu cầu và trách nhiệm vào đây.",
         buttonAnalyzing: "Đang phân tích...",
         buttonAnalyze: "Phân tích Mô tả công việc bằng AI",
         reAnalyze: "Phân tích lại", // Thêm nút phân tích lại
@@ -64,10 +70,10 @@ const translations = {
       results: {
         title: "📋 Kết Quả Phân Tích Công Việc",
         levelMap: {
-          'senior': 'Cấp cao (Senior)',
-          'mid-level': 'Cấp trung (Mid-level)',
-          'junior': 'Cấp cơ sở (Junior)',
-          'entry-level': 'Cấp mới bắt đầu (Entry-level)'
+          senior: "Cấp cao (Senior)",
+          "mid-level": "Cấp trung (Mid-level)",
+          junior: "Cấp cơ sở (Junior)",
+          "entry-level": "Cấp mới bắt đầu (Entry-level)",
         },
         experienceLevel: "Cấp độ kinh nghiệm",
         requiredSkills: "Kỹ năng yêu cầu",
@@ -78,21 +84,28 @@ const translations = {
         education: "Yêu cầu học vấn",
         certifications: "Chứng chỉ khuyến nghị",
         suggestionsTitle: "💡 Gợi Ý Cho CV",
-        suggestionFocusSkills: "Tập trung vào các kỹ năng và công nghệ được yêu cầu",
-        suggestionFocusExperience: (level: string) => `Nhấn mạnh kinh nghiệm phù hợp với cấp độ ${level}`,
-        suggestionResponsibilities: "Đưa ra các ví dụ cụ thể về trách nhiệm đã thực hiện",
+        suggestionFocusSkills:
+          "Tập trung vào các kỹ năng và công nghệ được yêu cầu",
+        suggestionFocusExperience: (level: string) =>
+          `Nhấn mạnh kinh nghiệm phù hợp với cấp độ ${level}`,
+        suggestionResponsibilities:
+          "Đưa ra các ví dụ cụ thể về trách nhiệm đã thực hiện",
         suggestionSoftSkills: "Thể hiện kỹ năng mềm thông qua các dự án nhóm",
         defaultLevel: "công việc",
-        errorFormatting: 'Lỗi khi định dạng kết quả phân tích:',
-      }
-    }
-  }
+        errorFormatting: "Lỗi khi định dạng kết quả phân tích:",
+      },
+    },
+  },
 };
 
 interface UpJdStepProps {}
 
 // --- CÁC COMPONENT CON (GIỮ NGUYÊN) ---
-const AnalysisSection: FC<{ icon: string; title: string; children: ReactNode; }> = ({ icon, title, children }) => (
+const AnalysisSection: FC<{
+  icon: string;
+  title: string;
+  children: ReactNode;
+}> = ({ icon, title, children }) => (
   <div className="mb-5">
     <h4 className="text-md font-semibold text-gray-800 mb-2 flex items-center">
       <span className="text-xl mr-2">{icon}</span>
@@ -104,55 +117,111 @@ const AnalysisSection: FC<{ icon: string; title: string; children: ReactNode; }>
 
 const AnalysisList: FC<{ items: string[] }> = ({ items }) => (
   <ul className="list-disc list-inside space-y-1">
-    {items.map((item, index) => <li key={index}>{item}</li>)}
+    {items.map((item, index) => (
+      <li key={index}>{item}</li>
+    ))}
   </ul>
 );
 
-const formatAnalysisResult = (result: any, t_results: typeof translations.vi.jdAnalysis.results): ReactNode => {
+const formatAnalysisResult = (
+  result: any,
+  t_results: typeof translations.vi.jdAnalysis.results
+): ReactNode => {
   try {
     // Check if result is empty object or null
-    if (!result || (typeof result === 'object' && Object.keys(result).length === 0)) {
-       return null;
+    if (
+      !result ||
+      (typeof result === "object" && Object.keys(result).length === 0)
+    ) {
+      return null;
     }
 
-    if (typeof result === 'string' || result.analysis || result.message) {
-      return <div className="whitespace-pre-wrap">{result.analysis || result.message || result}</div>;
+    if (typeof result === "string" || result.analysis || result.message) {
+      return (
+        <div className="whitespace-pre-wrap">
+          {result.analysis || result.message || result}
+        </div>
+      );
     }
 
-    const level = result.experienceLevel ? t_results.levelMap[result.experienceLevel as keyof typeof t_results.levelMap] || result.experienceLevel : null;
+    const level = result.experienceLevel
+      ? t_results.levelMap[
+          result.experienceLevel as keyof typeof t_results.levelMap
+        ] || result.experienceLevel
+      : null;
     const suggestions = [
       t_results.suggestionFocusSkills,
-      t_results.suggestionFocusExperience(result.experienceLevel || t_results.defaultLevel),
+      t_results.suggestionFocusExperience(
+        result.experienceLevel || t_results.defaultLevel
+      ),
       t_results.suggestionResponsibilities,
       t_results.suggestionSoftSkills,
     ];
 
     return (
       <div className="space-y-4">
-        {level && <AnalysisSection icon="🎯" title={t_results.experienceLevel}>{level}</AnalysisSection>}
-        {result.requiredSkills?.length > 0 && <AnalysisSection icon="💼" title={t_results.requiredSkills}><AnalysisList items={result.requiredSkills} /></AnalysisSection>}
-        {result.technologies?.length > 0 && <AnalysisSection icon="🛠️" title={t_results.technologies}><AnalysisList items={result.technologies} /></AnalysisSection>}
-        {result.keyResponsibilities?.length > 0 && <AnalysisSection icon="📝" title={t_results.keyResponsibilities}><AnalysisList items={result.keyResponsibilities} /></AnalysisSection>}
-        {result.softSkills?.length > 0 && <AnalysisSection icon="🤝" title={t_results.softSkills}><AnalysisList items={result.softSkills} /></AnalysisSection>}
-        {result.industry && <AnalysisSection icon="🏢" title={t_results.industry}>{result.industry}</AnalysisSection>}
-        {result.education && <AnalysisSection icon="🎓" title={t_results.education}>{result.education}</AnalysisSection>}
-        {result.certifications?.length > 0 && <AnalysisSection icon="🏆" title={t_results.certifications}><AnalysisList items={result.certifications} /></AnalysisSection>}
-        <AnalysisSection icon="💡" title={t_results.suggestionsTitle}><AnalysisList items={suggestions} /></AnalysisSection>
+        {level && (
+          <AnalysisSection icon="🎯" title={t_results.experienceLevel}>
+            {level}
+          </AnalysisSection>
+        )}
+        {result.requiredSkills?.length > 0 && (
+          <AnalysisSection icon="💼" title={t_results.requiredSkills}>
+            <AnalysisList items={result.requiredSkills} />
+          </AnalysisSection>
+        )}
+        {result.technologies?.length > 0 && (
+          <AnalysisSection icon="🛠️" title={t_results.technologies}>
+            <AnalysisList items={result.technologies} />
+          </AnalysisSection>
+        )}
+        {result.keyResponsibilities?.length > 0 && (
+          <AnalysisSection icon="📝" title={t_results.keyResponsibilities}>
+            <AnalysisList items={result.keyResponsibilities} />
+          </AnalysisSection>
+        )}
+        {result.softSkills?.length > 0 && (
+          <AnalysisSection icon="🤝" title={t_results.softSkills}>
+            <AnalysisList items={result.softSkills} />
+          </AnalysisSection>
+        )}
+        {result.industry && (
+          <AnalysisSection icon="🏢" title={t_results.industry}>
+            {result.industry}
+          </AnalysisSection>
+        )}
+        {result.education && (
+          <AnalysisSection icon="🎓" title={t_results.education}>
+            {result.education}
+          </AnalysisSection>
+        )}
+        {result.certifications?.length > 0 && (
+          <AnalysisSection icon="🏆" title={t_results.certifications}>
+            <AnalysisList items={result.certifications} />
+          </AnalysisSection>
+        )}
+        <AnalysisSection icon="💡" title={t_results.suggestionsTitle}>
+          <AnalysisList items={suggestions} />
+        </AnalysisSection>
       </div>
     );
   } catch (error) {
     console.error(t_results.errorFormatting, error);
-    return <div className="whitespace-pre-wrap">{JSON.stringify(result, null, 2)}</div>;
+    return (
+      <div className="whitespace-pre-wrap">
+        {JSON.stringify(result, null, 2)}
+      </div>
+    );
   }
 };
-
 
 const UpJdStep: React.FC<UpJdStepProps> = () => {
   const { language } = useLanguage();
   const t = translations[language].jdAnalysis;
 
   // Lấy cả jobAnalysis từ context
-  const { jobDescription, setJobDescription, setJobAnalysis, jobAnalysis } = useCV();
+  const { jobDescription, setJobDescription, setJobAnalysis, jobAnalysis } =
+    useCV();
 
   const [analysisResult, setAnalysisResult] = useState<ReactNode | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -166,13 +235,11 @@ const UpJdStep: React.FC<UpJdStepProps> = () => {
     // Nếu trong context đã có kết quả phân tích (do người dùng đã làm bước này rồi quay lại)
     // thì hiển thị luôn, không bắt người dùng phân tích lại.
     if (jobAnalysis && Object.keys(jobAnalysis).length > 0) {
-      console.log("Found existing JD analysis in context:", jobAnalysis);
       const formattedResult = formatAnalysisResult(jobAnalysis, t.results);
       setAnalysisResult(formattedResult);
     }
-  }, [jobAnalysis, t.results]); 
+  }, [jobAnalysis, t.results]);
   // Dependency là jobAnalysis để nếu context thay đổi bên ngoài thì UI cũng cập nhật theo
-
 
   const handleAnalyzeAI = async () => {
     if (!jobDescription.trim()) {
@@ -185,17 +252,14 @@ const UpJdStep: React.FC<UpJdStepProps> = () => {
     setAnalysisResult(null); // Reset UI tạm thời
 
     try {
-      console.log("Sending JD to API:", jobDescription);
       const result = await analyzeJD(jobDescription);
-      console.log("Received JD analysis result:", result);
-      
+
       // 1. Lưu vào Global Context để các bước sau (SkillsForm) dùng được
       setJobAnalysis(result);
 
       // 2. Hiển thị ra UI tại bước này
       const formattedResult = formatAnalysisResult(result, t.results);
       setAnalysisResult(formattedResult);
-
     } catch (error) {
       console.error("Error analyzing job description:", error);
       setAnalysisError(t.alerts.analysisError);
@@ -212,7 +276,12 @@ const UpJdStep: React.FC<UpJdStepProps> = () => {
             <p className="text-gray-600">{t.ui.description}</p>
           </div>
           <div className="space-y-2">
-            <label htmlFor="jobDescription" className="block text-sm font-medium text-gray-700 uppercase tracking-wide">{t.ui.label}</label>
+            <label
+              htmlFor="jobDescription"
+              className="block text-sm font-medium text-gray-700 uppercase tracking-wide"
+            >
+              {t.ui.label}
+            </label>
             <div className="relative">
               <textarea
                 id="jobDescription"
@@ -240,18 +309,24 @@ const UpJdStep: React.FC<UpJdStepProps> = () => {
                 : "bg-yellow-400 hover:bg-yellow-500 text-white"
             }`}
           >
-            {isAnalyzing ? t.ui.buttonAnalyzing : (analysisResult ? t.ui.reAnalyze : t.ui.buttonAnalyze)}
+            {isAnalyzing
+              ? t.ui.buttonAnalyzing
+              : analysisResult
+              ? t.ui.reAnalyze
+              : t.ui.buttonAnalyze}
           </button>
-          
+
           {analysisError && (
             <div className="w-full p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
               {analysisError}
             </div>
           )}
-          
+
           {analysisResult && (
             <div className="w-full max-w-2xl min-h-[200px] border border-gray-200 rounded-lg bg-gray-50 p-6 animate-in fade-in duration-300">
-              <h3 className="text-xl font-bold text-gray-900 mb-4 border-b pb-2">{t.results.title}</h3>
+              <h3 className="text-xl font-bold text-gray-900 mb-4 border-b pb-2">
+                {t.results.title}
+              </h3>
               {analysisResult}
             </div>
           )}

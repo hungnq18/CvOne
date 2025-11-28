@@ -13,14 +13,16 @@ const translations = {
   en: {
     cardMyCL: {
       timeAgo: {
-        seconds: (s: number) => `${s} second${s > 1 ? 's' : ''} ago`,
-        minutes: (m: number) => `${m} minute${m > 1 ? 's' : ''} ago`,
-        hours: (h: number) => `${h} hour${h > 1 ? 's' : ''} ago`,
+        seconds: (s: number) => `${s} second${s > 1 ? "s" : ""} ago`,
+        minutes: (m: number) => `${m} minute${m > 1 ? "s" : ""} ago`,
+        hours: (h: number) => `${h} hour${h > 1 ? "s" : ""} ago`,
       },
       deleteDialog: {
-        confirm: (title: string) => `Are you sure you want to delete the Cover Letter "${title}"? This action cannot be undone.`,
+        confirm: (title: string) =>
+          `Are you sure you want to delete the Cover Letter "${title}"? This action cannot be undone.`,
         success: "Cover Letter deleted successfully!",
-        error: "An error occurred while deleting the Cover Letter. Please try again.",
+        error:
+          "An error occurred while deleting the Cover Letter. Please try again.",
       },
       errors: {
         fetch: "Error fetching Cover Letters or templates:",
@@ -51,7 +53,8 @@ const translations = {
         hours: (h: number) => `${h} giờ trước`,
       },
       deleteDialog: {
-        confirm: (title: string) => `Bạn có chắc chắn muốn xóa Thư xin việc "${title}"? Hành động này không thể hoàn tác.`,
+        confirm: (title: string) =>
+          `Bạn có chắc chắn muốn xóa Thư xin việc "${title}"? Hành động này không thể hoàn tác.`,
         success: "Xóa Thư xin việc thành công!",
         error: "Có lỗi xảy ra khi xóa Thư xin việc. Vui lòng thử lại.",
       },
@@ -78,17 +81,21 @@ const translations = {
   },
 };
 
-const formatTimeAgo = (isoDate: string, t_timeAgo: typeof translations.vi.cardMyCL.timeAgo, locale: string) => {
+const formatTimeAgo = (
+  isoDate: string,
+  t_timeAgo: typeof translations.vi.cardMyCL.timeAgo,
+  locale: string
+) => {
   const date = new Date(isoDate);
   const diff = Math.floor((Date.now() - date.getTime()) / 1000);
 
   if (diff < 60) return t_timeAgo.seconds(diff);
   if (diff < 3600) return t_timeAgo.minutes(Math.floor(diff / 60));
   if (diff < 86400) return t_timeAgo.hours(Math.floor(diff / 3600));
-  return date.toLocaleDateString(locale === 'vi' ? "vi-VN" : "en-US");
+  return date.toLocaleDateString(locale === "vi" ? "vi-VN" : "en-US");
 };
 
-const CardMyCL: React.FC<{}> = ({ }) => {
+const CardMyCL: React.FC<{}> = ({}) => {
   const { language } = useLanguage();
   const t = translations[language].cardMyCL;
 
@@ -98,7 +105,7 @@ const CardMyCL: React.FC<{}> = ({ }) => {
   const fetchData = async () => {
     try {
       const cls = await getCLs();
-      console.log(cls);
+
       setClList(cls);
     } catch (err) {
       console.error(t.errors.fetch, err);
@@ -123,7 +130,7 @@ const CardMyCL: React.FC<{}> = ({ }) => {
       setDeletingCLId(clId);
       await deleteCL(clId);
 
-      setClList(prevList => prevList.filter(cl => cl._id !== clId));
+      setClList((prevList) => prevList.filter((cl) => cl._id !== clId));
 
       alert(t.deleteDialog.success);
     } catch (error) {
@@ -147,7 +154,12 @@ const CardMyCL: React.FC<{}> = ({ }) => {
       ) : (
         clList.map((cl) => {
           const template = cl.templateId as CLTemplate;
-          const TemplateComponent = template && template.title ? clTemplateComponents[template.title.toLowerCase() as keyof typeof clTemplateComponents] : null;
+          const TemplateComponent =
+            template && template.title
+              ? clTemplateComponents[
+                  template.title.toLowerCase() as keyof typeof clTemplateComponents
+                ]
+              : null;
 
           if (!TemplateComponent || !cl.data) return null;
 
@@ -160,14 +172,17 @@ const CardMyCL: React.FC<{}> = ({ }) => {
               <motion.div className="bg-white rounded-xl overflow-hidden w-[350px] h-[260px] items-start">
                 <div className="bg-white overflow-hidden w-[350px] h-[260px] flex gap-4 items-start">
                   <div className="relative shrink-0 w-[180px] aspect-[210/350] bg-gray-100 border rounded-md overflow-hidden">
-                    <div className="absolute bg-white" style={{
-                      position: "absolute",
-                      width: `${templateOriginalWidth}px`,
-                      height: `${templateOriginalWidth * (350 / 210)}px`,
-                      transformOrigin: "top left",
-                      transform: `scale(${scaleFactor})`,
-                      backgroundColor: "white",
-                    }}>
+                    <div
+                      className="absolute bg-white"
+                      style={{
+                        position: "absolute",
+                        width: `${templateOriginalWidth}px`,
+                        height: `${templateOriginalWidth * (350 / 210)}px`,
+                        transformOrigin: "top left",
+                        transform: `scale(${scaleFactor})`,
+                        backgroundColor: "white",
+                      }}
+                    >
                       <div className="pointer-events-none ">
                         <TemplateComponent {...componentData} />
                       </div>
@@ -182,10 +197,16 @@ const CardMyCL: React.FC<{}> = ({ }) => {
                         </h3>
                       </div>
                       <p className="text-sm text-blue-500 mt-1">
-                        {t.card.edited} {formatTimeAgo(cl.updatedAt, t.timeAgo, language)}
+                        {t.card.edited}{" "}
+                        {formatTimeAgo(cl.updatedAt, t.timeAgo, language)}
                       </p>
                       <div className="mt-2 text-sm text-gray-600 space-y-1">
-                        <p>{t.card.creation} {new Date(cl.createdAt).toLocaleDateString(language === 'vi' ? "vi-VN" : "en-US")}</p>
+                        <p>
+                          {t.card.creation}{" "}
+                          {new Date(cl.createdAt).toLocaleDateString(
+                            language === "vi" ? "vi-VN" : "en-US"
+                          )}
+                        </p>
                       </div>
                     </div>
 
@@ -197,12 +218,18 @@ const CardMyCL: React.FC<{}> = ({ }) => {
                       </Link>
                       <div>
                         <button
-                          onClick={() => handleDeleteCL(cl._id || '', cl.title || t.card.unnamed)}
+                          onClick={() =>
+                            handleDeleteCL(
+                              cl._id || "",
+                              cl.title || t.card.unnamed
+                            )
+                          }
                           disabled={deletingCLId === cl._id}
-                          className={`flex w-[90px] items-center gap-1 text-sm px-3 py-1.5 rounded-md transition-colors ${deletingCLId === cl._id
-                            ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                            : "bg-gray-100 hover:bg-red-100 text-red-600 hover:text-red-700"
-                            }`}
+                          className={`flex w-[90px] items-center gap-1 text-sm px-3 py-1.5 rounded-md transition-colors ${
+                            deletingCLId === cl._id
+                              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                              : "bg-gray-100 hover:bg-red-100 text-red-600 hover:text-red-700"
+                          }`}
                           title={t.buttons.deleteTooltip}
                         >
                           {deletingCLId === cl._id ? (

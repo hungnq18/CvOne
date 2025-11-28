@@ -51,7 +51,7 @@ const translations = {
     project: "Project",
     cvSections: "CV SECTIONS",
     hiddenSections: "Hidden Sections",
-    customLayout: "Custom Layout", 
+    customLayout: "Custom Layout",
 
     editCv: "Edit CV",
     editTitleTooltip: "Click to edit title",
@@ -80,7 +80,7 @@ const translations = {
     translateSuccess: "CV translated successfully!",
     translateError: "Error occurred while translating CV",
     aiSuggestFailed: "AI suggestion failed",
-    
+
     loadingTemplateForNew: "Loading template to create new...",
     cvTitleDefault: (title: string) => `CV - ${title}`,
     cvForUser: (name: string) => `CV for ${name || "Untitled"}`,
@@ -98,7 +98,7 @@ const translations = {
     project: "Dự án",
     cvSections: "CÁC MỤC CỦA CV",
     hiddenSections: "Các mục ẩn",
-    customLayout: "Tùy chỉnh bố cục", 
+    customLayout: "Tùy chỉnh bố cục",
 
     editCv: "Chỉnh Sửa CV",
     editTitleTooltip: "Click để chỉnh sửa tiêu đề",
@@ -127,7 +127,7 @@ const translations = {
     translateSuccess: "Dịch CV thành công!",
     translateError: "Có lỗi xảy ra khi dịch CV",
     aiSuggestFailed: "AI đề xuất mẫu thất bại",
-    
+
     loadingTemplateForNew: "Đang tải template để tạo mới...",
     cvTitleDefault: (title: string) => `CV - ${title}`,
     cvForUser: (name: string) => `CV cho ${name || "Chưa có tên"}`,
@@ -178,7 +178,8 @@ const PageCreateCVAIContent = () => {
     null
   );
   const [hasAutoSuggested, setHasAutoSuggested] = useState(false);
-  const [suppressAutoSuggest, setSuppressAutoSuggest] = useState<boolean>(false);
+  const [suppressAutoSuggest, setSuppressAutoSuggest] =
+    useState<boolean>(false);
   const [cvUiTexts, setCvUiTexts] = useState<any>(null);
   const [showLayoutPopup, setShowLayoutPopup] = useState(false);
 
@@ -191,8 +192,16 @@ const PageCreateCVAIContent = () => {
     { id: "education", title: t.education, isHidden: false },
     { id: "skills", title: t.skills, isHidden: false },
     // Các section ẩn (có thể kéo thả vào CV)
-    { id: "certification", title: t.certification || "Certification", isHidden: true },
-    { id: "achievement", title: t.achievement || "Achievement", isHidden: true },
+    {
+      id: "certification",
+      title: t.certification || "Certification",
+      isHidden: true,
+    },
+    {
+      id: "achievement",
+      title: t.achievement || "Achievement",
+      isHidden: true,
+    },
     { id: "hobby", title: t.hobby || "Hobby", isHidden: true },
     { id: "Project", title: t.project || "Project", isHidden: true },
   ];
@@ -258,7 +267,10 @@ const PageCreateCVAIContent = () => {
   }, [id, loadTemplate, updateUserData, userData, t]);
 
   const handleTemplateSelect = async (selectedTemplate: CVTemplate) => {
-    try { if (typeof window !== "undefined") sessionStorage.setItem("suppressAISuggest", "1"); } catch {}
+    try {
+      if (typeof window !== "undefined")
+        sessionStorage.setItem("suppressAISuggest", "1");
+    } catch {}
     setSuppressAutoSuggest(true);
     setHasAutoSuggested(true);
     setShowTemplatePopup(false);
@@ -271,8 +283,10 @@ const PageCreateCVAIContent = () => {
 
       if (newTemplateData) {
         loadTemplate(newTemplateData);
-        const correctPositions = newTemplateData.data?.sectionPositions || getDefaultSectionPositions(newTemplateData.title);
-        
+        const correctPositions =
+          newTemplateData.data?.sectionPositions ||
+          getDefaultSectionPositions(newTemplateData.title);
+
         const newUserData = { ...userData, sectionPositions: correctPositions };
         updateUserData(newUserData);
         updateSectionPositions(selectedTemplate._id, correctPositions);
@@ -280,10 +294,10 @@ const PageCreateCVAIContent = () => {
         router.push(`/createCV-AIManual?id=${selectedTemplate._id}`);
         setCvTitle(t.cvTitleDefault(selectedTemplate.title));
       }
-    } catch (error) { 
-      console.error(error); 
-    } finally { 
-      setLoading(false); 
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -291,7 +305,7 @@ const PageCreateCVAIContent = () => {
     updateUserData(updatedData);
     setIsDirty(true);
   };
-  
+
   const handleLayoutChange = (newPositions: any) => {
     if (currentTemplate) {
       updateSectionPositions(currentTemplate._id, newPositions);
@@ -330,10 +344,10 @@ const PageCreateCVAIContent = () => {
     setIsSaving(true);
     try {
       // QUAN TRỌNG: Lấy sectionPositions đầy đủ (bao gồm cả place = 0) để lưu vào API
-      const sectionPositions = 
+      const sectionPositions =
         userData.sectionPositions || // Ưu tiên từ userData (có thể đã được update)
-        getSectionPositions(currentTemplate._id) || 
-        currentTemplate.data?.sectionPositions || 
+        getSectionPositions(currentTemplate._id) ||
+        currentTemplate.data?.sectionPositions ||
         getDefaultSectionPositions(currentTemplate.title);
 
       const completeUserData = {
@@ -360,19 +374,13 @@ const PageCreateCVAIContent = () => {
       };
 
       const contentData: any = {
-        userData: completeUserData
+        userData: completeUserData,
       };
-      
+
       // QUAN TRỌNG: Luôn truyền cvUiTexts vào API nếu có
       if (cvUiTexts) {
         contentData.uiTexts = cvUiTexts;
       }
-      
-      console.log("[handleSaveToDB] Saving with full data:", {
-        sectionPositions: Object.keys(sectionPositions),
-        hasCvUiTexts: !!cvUiTexts,
-        cvUiTexts: cvUiTexts
-      });
 
       if (cvId) {
         const dataToUpdate: Partial<CV> = {
@@ -423,23 +431,33 @@ const PageCreateCVAIContent = () => {
   };
 
   // Helper function để tính toán place và order phù hợp khi thêm section mới vào CV
-  const calculatePlaceAndOrder = (sectionId: string, currentPositions: any, templateTitle: string) => {
+  const calculatePlaceAndOrder = (
+    sectionId: string,
+    currentPositions: any,
+    templateTitle: string
+  ) => {
     // Lấy default positions của template
     const defaultPositions = getDefaultSectionPositions(templateTitle);
-    
+
     // Chỉ áp dụng logic đặc biệt cho template minimalist1 (The Vanguard)
-    const isMinimalist1 = templateTitle === "The Vanguard" || templateTitle?.includes("Vanguard");
-    const ismodern2 = templateTitle === "The Modern" || templateTitle?.includes("Modern");
+    const isMinimalist1 =
+      templateTitle === "The Vanguard" || templateTitle?.includes("Vanguard");
+    const ismodern2 =
+      templateTitle === "The Modern" || templateTitle?.includes("Modern");
 
     let targetPlace = 2; // Mặc định là place 2
-    
+
     if (isMinimalist1) {
       // Cho template minimalist1:
       // - certification, achievement, Project → place: 2 (sidebar bên trái)
       // - hobby → place: 3 (main content bên phải)
       if (sectionId === "hobby") {
         targetPlace = 2; // Main content (bên phải)
-      } else if (sectionId === "certification" || sectionId === "achievement" || sectionId === "Project") {
+      } else if (
+        sectionId === "certification" ||
+        sectionId === "achievement" ||
+        sectionId === "Project"
+      ) {
         targetPlace = 3; // Sidebar (bên trái)
       }
     } else if (ismodern2) {
@@ -448,83 +466,96 @@ const PageCreateCVAIContent = () => {
       // Cho các template khác, giữ logic cũ (ưu tiên place 2)
       if (sectionId === "hobby") {
         targetPlace = 1; // Main content (bên phải)
-      } else if (sectionId === "certification" || sectionId === "achievement" || sectionId === "Project") {
+      } else if (
+        sectionId === "certification" ||
+        sectionId === "achievement" ||
+        sectionId === "Project"
+      ) {
         targetPlace = 2; // Sidebar (bên trái)
       }
     }
-    
+
     // Tìm các section trong target place
     const targetPlaceSections = Object.entries(currentPositions)
       .filter(([_, pos]: [string, any]) => pos.place === targetPlace)
       .sort(([, a]: [string, any], [, b]: [string, any]) => a.order - b.order);
-    
+
     // Nếu có section trong target place, thêm vào cuối
     if (targetPlaceSections.length > 0) {
-      const lastOrder = (targetPlaceSections[targetPlaceSections.length - 1][1] as any).order;
+      const lastOrder = (
+        targetPlaceSections[targetPlaceSections.length - 1][1] as any
+      ).order;
       return { place: targetPlace, order: lastOrder + 1 };
     }
-    
+
     // Nếu không có, thêm vào target place với order 0
     return { place: targetPlace, order: 0 };
   };
 
   const handleSectionClick = (sectionId: string, event?: React.MouseEvent) => {
     // Nếu click vào icon +/-, xử lý thêm/xóa section
-    if (event && (event.target as HTMLElement).closest('.section-toggle-icon')) {
+    if (
+      event &&
+      (event.target as HTMLElement).closest(".section-toggle-icon")
+    ) {
       event.stopPropagation();
-      
+
       if (!currentTemplate) return;
-      
-      const currentPositions = 
-        userData.sectionPositions || 
-        getSectionPositions(currentTemplate._id) || 
-        currentTemplate.data?.sectionPositions || 
+
+      const currentPositions =
+        userData.sectionPositions ||
+        getSectionPositions(currentTemplate._id) ||
+        currentTemplate.data?.sectionPositions ||
         getDefaultSectionPositions(currentTemplate.title);
-      
+
       const sectionPosition = currentPositions[sectionId];
       const isInCV = sectionPosition && sectionPosition.place !== 0;
-      
+
       if (isInCV) {
         // Xóa khỏi CV (set place = 0)
         const newPositions = {
           ...currentPositions,
-          [sectionId]: { place: 0, order: 0 }
+          [sectionId]: { place: 0, order: 0 },
         };
-        
+
         const newUserData = {
           ...userData,
-          sectionPositions: newPositions
+          sectionPositions: newPositions,
         };
-        
+
         updateUserData(newUserData);
         updateSectionPositions(currentTemplate._id, newPositions);
         setIsDirty(true);
       } else {
         // Thêm vào CV
-        const { place, order } = calculatePlaceAndOrder(sectionId, currentPositions, currentTemplate.title);
-        
+        const { place, order } = calculatePlaceAndOrder(
+          sectionId,
+          currentPositions,
+          currentTemplate.title
+        );
+
         const newPositions = {
           ...currentPositions,
-          [sectionId]: { place, order }
+          [sectionId]: { place, order },
         };
-        
+
         const newUserData = {
           ...userData,
-          sectionPositions: newPositions
+          sectionPositions: newPositions,
         };
-        
+
         updateUserData(newUserData);
         updateSectionPositions(currentTemplate._id, newPositions);
         setIsDirty(true);
       }
       return;
     }
-    
+
     // Click vào section để mở popup chỉnh sửa
     if (sectionId == "avatar") {
       sectionId = "info";
     }
-    
+
     setActiveSection(sectionId);
     setActivePopup(sectionId);
   };
@@ -546,11 +577,11 @@ const PageCreateCVAIContent = () => {
     const TemplateComponent = templateComponentMap?.[currentTemplate.title];
     if (!TemplateComponent) return null;
 
-    const sectionPositions = 
-      userData.sectionPositions || 
-      getSectionPositions(currentTemplate._id) || 
-      currentTemplate.data?.sectionPositions || 
-      getDefaultSectionPositions(currentTemplate.title); 
+    const sectionPositions =
+      userData.sectionPositions ||
+      getSectionPositions(currentTemplate._id) ||
+      currentTemplate.data?.sectionPositions ||
+      getDefaultSectionPositions(currentTemplate.title);
 
     // Filter ra các section có place = 0 (ẩn) khi render template
     const filteredSectionPositions = filterVisibleSections(sectionPositions);
@@ -598,9 +629,11 @@ const PageCreateCVAIContent = () => {
     }
 
     const head = iframeDoc.head;
-    document.querySelectorAll('style, link[rel="stylesheet"]').forEach((node) => {
+    document
+      .querySelectorAll('style, link[rel="stylesheet"]')
+      .forEach((node) => {
         head.appendChild(node.cloneNode(true));
-    });
+      });
 
     const mountNode = iframeDoc.createElement("div");
     iframeDoc.body.appendChild(mountNode);
@@ -616,15 +649,19 @@ const PageCreateCVAIContent = () => {
 
       await new Promise((resolve) => setTimeout(resolve, 500));
 
-      const html2pdf = (await import("html2pdf.js"))?.default || (await import("html2pdf.js"));
+      const html2pdf =
+        (await import("html2pdf.js"))?.default || (await import("html2pdf.js"));
 
-      await html2pdf().from(iframe.contentWindow.document.body).set({
+      await html2pdf()
+        .from(iframe.contentWindow.document.body)
+        .set({
           margin: 0,
           filename: `${cvTitle || "cv"}.pdf`,
           image: { type: "jpeg", quality: 0.98 },
           html2canvas: { scale: 2, useCORS: true },
           jsPDF: { unit: "px", format: [794, 1123], orientation: "portrait" },
-        }).save();
+        })
+        .save();
     } catch (error) {
       console.error(t.pdfCreateError, error);
       alert(t.pdfCreateError);
@@ -642,16 +679,16 @@ const PageCreateCVAIContent = () => {
     if (!TemplateComponent) {
       return <div>{t.templateComponentNotFound(currentTemplate.title)}</div>;
     }
-    
-    const sectionPositions = 
-      userData.sectionPositions || 
-      getSectionPositions(currentTemplate._id) || 
-      currentTemplate.data?.sectionPositions || 
-      getDefaultSectionPositions(currentTemplate.title); 
-    
+
+    const sectionPositions =
+      userData.sectionPositions ||
+      getSectionPositions(currentTemplate._id) ||
+      currentTemplate.data?.sectionPositions ||
+      getDefaultSectionPositions(currentTemplate.title);
+
     // Filter ra các section có place = 0 (ẩn) khi render template
     const filteredSectionPositions = filterVisibleSections(sectionPositions);
-    
+
     const componentData = {
       ...currentTemplate.data,
       userData: userData,
@@ -663,13 +700,19 @@ const PageCreateCVAIContent = () => {
     const templateOriginalWidth = 794;
     const scaleFactor = containerWidth / templateOriginalWidth;
     return (
-      <div className="max-w-[1050px] origin-top" ref={previewRef} key={JSON.stringify(userData)}>
-        <div style={{
+      <div
+        className="max-w-[1050px] origin-top"
+        ref={previewRef}
+        key={JSON.stringify(userData)}
+      >
+        <div
+          style={{
             width: `${templateOriginalWidth}px`,
             height: `${templateOriginalWidth * (297 / 210)}px`,
             transformOrigin: "top",
             transform: `scale(${scaleFactor})`,
-          }}>
+          }}
+        >
           <TemplateComponent
             data={componentData}
             onSectionClick={handleSectionClick}
@@ -721,20 +764,34 @@ const PageCreateCVAIContent = () => {
         education: t.education,
         skills: t.skills,
       };
-      
-      const translatedData = await translateCV(userData, targetLanguage, currentUiTexts);
-      
+
+      const translatedData = await translateCV(
+        userData,
+        targetLanguage,
+        currentUiTexts
+      );
+
       // Trích xuất userData và uiTexts từ response (cấu trúc có thể lồng nhau tùy API)
-      const nextUserData = translatedData?.data?.data?.content?.userData ?? translatedData?.data?.content?.userData ?? translatedData?.data?.userData ?? translatedData?.content?.userData ?? translatedData?.userData;
-      const nextUiTexts = translatedData?.data?.data?.content?.uiTexts ?? translatedData?.data?.content?.uiTexts ?? translatedData?.data?.uiTexts ?? translatedData?.content?.uiTexts ?? translatedData?.uiTexts;
-      
+      const nextUserData =
+        translatedData?.data?.data?.content?.userData ??
+        translatedData?.data?.content?.userData ??
+        translatedData?.data?.userData ??
+        translatedData?.content?.userData ??
+        translatedData?.userData;
+      const nextUiTexts =
+        translatedData?.data?.data?.content?.uiTexts ??
+        translatedData?.data?.content?.uiTexts ??
+        translatedData?.data?.uiTexts ??
+        translatedData?.content?.uiTexts ??
+        translatedData?.uiTexts;
+
       if (nextUserData) {
         updateUserData(nextUserData);
         setIsDirty(true);
-        
+
         // [MỚI] Cập nhật state cvUiTexts để giao diện template đổi label
         if (nextUiTexts) setCvUiTexts(nextUiTexts);
-        
+
         setShowTranslateModal(false);
         alert(t.translateSuccess);
       } else {
@@ -749,27 +806,47 @@ const PageCreateCVAIContent = () => {
   };
 
   const handleAISuggestTemplate = async () => {
-     if (!userData || !jobDescription) {}
-     setIsSuggesting(true);
-     try {
-       const result = await suggestTemplateByAI(userData || {}, jobDescription || "");
-       const first = Array.isArray(result) ? result[0] : Array.isArray(result?.templates) ? result.templates[0] : Array.isArray(result?.data) ? result.data[0] : result;
-       const templateId = typeof first === "string" ? first : first?.templateId || first?._id;
-       let found: CVTemplate | undefined;
-       if (templateId) found = (allTemplates || []).find((t) => t._id === templateId);
-       const finalTemplate: CVTemplate | null = found || (first && first.imageUrl && first.title ? first : null);
-       setSuggestedTemplate(finalTemplate);
-       setShowSuggestModal(true);
-     } catch (e) {
-       alert(language === "vi" ? "AI đề xuất mẫu thất bại" : "AI suggestion failed");
-     } finally {
-       setIsSuggesting(false);
-     }
+    if (!userData || !jobDescription) {
+    }
+    setIsSuggesting(true);
+    try {
+      const result = await suggestTemplateByAI(
+        userData || {},
+        jobDescription || ""
+      );
+      const first = Array.isArray(result)
+        ? result[0]
+        : Array.isArray(result?.templates)
+        ? result.templates[0]
+        : Array.isArray(result?.data)
+        ? result.data[0]
+        : result;
+      const templateId =
+        typeof first === "string" ? first : first?.templateId || first?._id;
+      let found: CVTemplate | undefined;
+      if (templateId)
+        found = (allTemplates || []).find((t) => t._id === templateId);
+      const finalTemplate: CVTemplate | null =
+        found || (first && first.imageUrl && first.title ? first : null);
+      setSuggestedTemplate(finalTemplate);
+      setShowSuggestModal(true);
+    } catch (e) {
+      alert(
+        language === "vi" ? "AI đề xuất mẫu thất bại" : "AI suggestion failed"
+      );
+    } finally {
+      setIsSuggesting(false);
+    }
   };
 
   useEffect(() => {
     if (hasAutoSuggested) return;
-    const ready = allTemplates && allTemplates.length > 0 && userData && Object.keys(userData).length > 0 && !suppressAutoSuggest;
+    const ready =
+      allTemplates &&
+      allTemplates.length > 0 &&
+      userData &&
+      Object.keys(userData).length > 0 &&
+      !suppressAutoSuggest;
     if (!ready) return;
     setHasAutoSuggested(true);
     handleAISuggestTemplate();
@@ -777,7 +854,10 @@ const PageCreateCVAIContent = () => {
 
   return (
     <div className="h-screen w-full bg-slate-50 flex flex-col overflow-x-hidden mb-4">
-      <header className="bg-slate-900 text-white pt-20 pb-6 px-8 flex justify-between items-center z-20" style={{ backgroundColor: "#0b1b34" }}>
+      <header
+        className="bg-slate-900 text-white pt-20 pb-6 px-8 flex justify-between items-center z-20"
+        style={{ backgroundColor: "#0b1b34" }}
+      >
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-2">
             {isEditingTitle ? (
@@ -898,16 +978,18 @@ const PageCreateCVAIContent = () => {
               // Kiểm tra xem section đã được thêm vào CV chưa
               let isInCV = true;
               if (currentTemplate) {
-                const currentPositions = 
-                  userData.sectionPositions || 
+                const currentPositions =
+                  userData.sectionPositions ||
                   getSectionPositions(currentTemplate._id) ||
                   currentTemplate.data?.sectionPositions ||
                   getDefaultSectionPositions(currentTemplate.title);
-                
+
                 const sectionPosition = currentPositions[section.id];
-                isInCV = sectionPosition ? sectionPosition.place !== 0 : !section.isHidden;
+                isInCV = sectionPosition
+                  ? sectionPosition.place !== 0
+                  : !section.isHidden;
               }
-              
+
               return (
                 <button
                   key={section.id}
@@ -918,13 +1000,17 @@ const PageCreateCVAIContent = () => {
                         ? "bg-blue-100 text-blue-700"
                         : "text-slate-700 hover:bg-slate-100"
                     }`}
-                  title={isInCV ? "Click để chỉnh sửa, click icon để ẩn khỏi CV" : "Click để thêm vào CV"}
+                  title={
+                    isInCV
+                      ? "Click để chỉnh sửa, click icon để ẩn khỏi CV"
+                      : "Click để thêm vào CV"
+                  }
                 >
                   <span className="flex-1">{section.title}</span>
-                  <span 
+                  <span
                     className={`section-toggle-icon flex items-center justify-center w-6 h-6 rounded-full transition-colors cursor-pointer ${
-                      isInCV 
-                        ? "bg-red-100 text-red-600 hover:bg-red-200" 
+                      isInCV
+                        ? "bg-red-100 text-red-600 hover:bg-red-200"
                         : "bg-blue-100 text-blue-600 hover:bg-blue-200"
                     }`}
                     onClick={(e) => {
@@ -1047,11 +1133,12 @@ const PageCreateCVAIContent = () => {
                             </div>
                           );
                         // Lấy sectionPositions cho suggested template (đầy đủ, bao gồm place = 0)
-                        const suggestedSectionPositions = 
+                        const suggestedSectionPositions =
                           getDefaultSectionPositions(suggestedTemplate.title);
                         // Filter ra các section có place = 0 (ẩn) khi render template
-                        const filteredSuggestedPositions = filterVisibleSections(suggestedSectionPositions);
-                        
+                        const filteredSuggestedPositions =
+                          filterVisibleSections(suggestedSectionPositions);
+
                         const componentData = {
                           ...(suggestedTemplate.data || {}),
                           userData,
@@ -1133,14 +1220,16 @@ const PageCreateCVAIContent = () => {
                             <div className="aspect-[210/297] w-full bg-slate-100" />
                           );
                         // Lấy sectionPositions cho current template (đầy đủ, bao gồm place = 0)
-                        const currentSectionPositions = 
-                          userData.sectionPositions || 
-                          getSectionPositions(currentTemplate._id) || 
-                          currentTemplate.data?.sectionPositions || 
+                        const currentSectionPositions =
+                          userData.sectionPositions ||
+                          getSectionPositions(currentTemplate._id) ||
+                          currentTemplate.data?.sectionPositions ||
                           getDefaultSectionPositions(currentTemplate.title);
                         // Filter ra các section có place = 0 (ẩn) khi render template
-                        const filteredCurrentPositions = filterVisibleSections(currentSectionPositions);
-                        
+                        const filteredCurrentPositions = filterVisibleSections(
+                          currentSectionPositions
+                        );
+
                         const componentData = {
                           ...(currentTemplate.data || {}),
                           userData,
@@ -1206,27 +1295,31 @@ const PageCreateCVAIContent = () => {
       )}
 
       {/* --- POPUP LAYOUT EDITOR --- */}
-      {showLayoutPopup && currentTemplate && (() => {
-        const currentPositions = 
-          userData?.sectionPositions || 
-          getSectionPositions(currentTemplate._id) || 
-          currentTemplate.data?.sectionPositions || 
-          getDefaultSectionPositions(currentTemplate.title); 
-        
-        return (
-          <CVTemplateLayoutPopup
-            currentPositions={currentPositions}
-            defaultPositions={getDefaultSectionPositions(currentTemplate.title)}
-            templateTitle={currentTemplate.title}
-            onSave={(newPositions) => {
-              updateSectionPositions(currentTemplate._id, newPositions);
-              updateUserData({ ...userData, sectionPositions: newPositions });
-              setShowLayoutPopup(false);
-            }}
-            onClose={() => setShowLayoutPopup(false)}
-          />
-        );
-      })()}
+      {showLayoutPopup &&
+        currentTemplate &&
+        (() => {
+          const currentPositions =
+            userData?.sectionPositions ||
+            getSectionPositions(currentTemplate._id) ||
+            currentTemplate.data?.sectionPositions ||
+            getDefaultSectionPositions(currentTemplate.title);
+
+          return (
+            <CVTemplateLayoutPopup
+              currentPositions={currentPositions}
+              defaultPositions={getDefaultSectionPositions(
+                currentTemplate.title
+              )}
+              templateTitle={currentTemplate.title}
+              onSave={(newPositions) => {
+                updateSectionPositions(currentTemplate._id, newPositions);
+                updateUserData({ ...userData, sectionPositions: newPositions });
+                setShowLayoutPopup(false);
+              }}
+              onClose={() => setShowLayoutPopup(false)}
+            />
+          );
+        })()}
     </div>
   );
 };

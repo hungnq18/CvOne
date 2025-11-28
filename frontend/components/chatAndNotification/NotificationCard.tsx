@@ -22,8 +22,6 @@ const NotificationCard: React.FC<NotificationCardProps> = ({
   detailInfo,
   onDelete,
 }) => {
-  console.log(notif);
-
   return (
     <div
       className={

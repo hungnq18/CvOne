@@ -7,13 +7,13 @@ import { useOnClickOutside } from "@/hooks/useOnClickOutside";
 import { useCV } from "@/providers/cv-provider";
 import { useLanguage } from "@/providers/global_provider";
 import {
-    CheckCircle2,
-    Edit,
-    Loader2,
-    PlusCircle,
-    Trash2,
-    Wand2,
-    X,
+  CheckCircle2,
+  Edit,
+  Loader2,
+  PlusCircle,
+  Trash2,
+  Wand2,
+  X,
 } from "lucide-react";
 import { ChangeEvent, FC, ReactNode, useEffect, useRef, useState } from "react";
 
@@ -623,9 +623,11 @@ export const TargetPopup: FC<{
             <div className="flex flex-col gap-4 overflow-y-auto pr-1 flex-1">
               {loading ? (
                 <div className="flex flex-col items-center justify-center h-full space-y-4">
-                <Loader2 className="animate-spin h-8 w-8 text-blue-500" />
-                <p className="text-gray-600 text-lg">{t.loadingAISuggestions}</p>
-              </div>
+                  <Loader2 className="animate-spin h-8 w-8 text-blue-500" />
+                  <p className="text-gray-600 text-lg">
+                    {t.loadingAISuggestions}
+                  </p>
+                </div>
               ) : (
                 aiSuggestions.map((item, idx) => {
                   const isSelected = summary.trim() === item.trim();
@@ -714,8 +716,7 @@ export const ExperiencePopup: FC<{
     try {
       const { rewriteWorkDescription } = await import("@/api/cvapi");
       const res = await rewriteWorkDescription(currentItem.description, "vi");
-      console.log(currentItem.description);
-      console.log(res?.rewritten);
+
       const rewritten = res?.rewritten || res;
       setCurrentItem({ ...currentItem, description: rewritten });
     } catch (err) {
@@ -1092,7 +1093,12 @@ export const SkillsPopup: FC<{
   const { language } = useLanguage();
   const t = translations[language].skillsPopup;
 
-  const [skills, setSkills] = useState((initialData.skills || []).map((s: any) => ({ name: s.name, rating: s.rating ?? 0 })));
+  const [skills, setSkills] = useState(
+    (initialData.skills || []).map((s: any) => ({
+      name: s.name,
+      rating: s.rating ?? 0,
+    }))
+  );
   const [newSkill, setNewSkill] = useState("");
   const [aiSkillSuggestions, setAiSkillSuggestions] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
@@ -1187,20 +1193,38 @@ export const SkillsPopup: FC<{
           </div>
           <div className="flex flex-col gap-2 flex-1 overflow-y-auto pr-1">
             {skills.map((skill: any, index: number) => (
-              <div key={index} className="flex items-center w-full bg-blue-50/60 border border-blue-100 px-3 py-2 rounded-lg hover:shadow-sm">
-                <span className="text-blue-900 font-medium truncate pr-3 max-w-[55%]">{skill.name}</span>
+              <div
+                key={index}
+                className="flex items-center w-full bg-blue-50/60 border border-blue-100 px-3 py-2 rounded-lg hover:shadow-sm"
+              >
+                <span className="text-blue-900 font-medium truncate pr-3 max-w-[55%]">
+                  {skill.name}
+                </span>
                 <div className="ml-auto flex items-center gap-1">
-                  {[1,2,3,4,5].map((n) => (
+                  {[1, 2, 3, 4, 5].map((n) => (
                     <button
                       key={n}
                       type="button"
-                      onClick={() => setSkills((prev:any[]) => prev.map((s, i) => i === index ? { ...s, rating: n } : s))}
-                      className={`${(skill.rating||0) >= n ? 'bg-blue-600' : 'bg-blue-200'} w-6 h-2 rounded transition-colors`}
+                      onClick={() =>
+                        setSkills((prev: any[]) =>
+                          prev.map((s, i) =>
+                            i === index ? { ...s, rating: n } : s
+                          )
+                        )
+                      }
+                      className={`${
+                        (skill.rating || 0) >= n ? "bg-blue-600" : "bg-blue-200"
+                      } w-6 h-2 rounded transition-colors`}
                       aria-label={`rating ${n}`}
                     />
                   ))}
                 </div>
-                <button onClick={() => removeSkill(skill.name)} className="pl-3 text-blue-900 hover:text-red-500"><X size={16} /></button>
+                <button
+                  onClick={() => removeSkill(skill.name)}
+                  className="pl-3 text-blue-900 hover:text-red-500"
+                >
+                  <X size={16} />
+                </button>
               </div>
             ))}
           </div>
@@ -1213,9 +1237,7 @@ export const SkillsPopup: FC<{
             {loading ? (
               <div className="flex flex-col items-center justify-center h-full space-y-4">
                 <Loader2 className="animate-spin h-8 w-8 text-blue-500" />
-                <p className="text-gray-600 text-lg">
-                  {t.skillsLoading}
-                </p>
+                <p className="text-gray-600 text-lg">{t.skillsLoading}</p>
               </div>
             ) : (
               aiSkillSuggestions.map((skill) => {
@@ -1248,7 +1270,11 @@ export const SkillsPopup: FC<{
   );
 };
 
-export const CertificationPopup: FC<{ onClose: () => void; initialData: any; onSave: (updatedData: any) => void; }> = ({ onClose, initialData, onSave }) => {
+export const CertificationPopup: FC<{
+  onClose: () => void;
+  initialData: any;
+  onSave: (updatedData: any) => void;
+}> = ({ onClose, initialData, onSave }) => {
   const { language } = useLanguage();
   const t = translations[language].certificationPopup;
 
@@ -1260,17 +1286,28 @@ export const CertificationPopup: FC<{ onClose: () => void; initialData: any; onS
     }))
   );
 
-  const handleFieldChange = (index: number, field: "title" | "startDate" | "endDate", value: string) => {
+  const handleFieldChange = (
+    index: number,
+    field: "title" | "startDate" | "endDate",
+    value: string
+  ) => {
     setCertifications((prev: CertificationItem[]) =>
-      prev.map((item, idx) => (idx === index ? { ...item, [field]: value } : item))
+      prev.map((item, idx) =>
+        idx === index ? { ...item, [field]: value } : item
+      )
     );
   };
 
   const addCertification = () =>
-    setCertifications((prev: CertificationItem[]) => [...prev, { title: "", startDate: "", endDate: "" }]);
+    setCertifications((prev: CertificationItem[]) => [
+      ...prev,
+      { title: "", startDate: "", endDate: "" },
+    ]);
 
   const removeCertification = (index: number) =>
-    setCertifications((prev: CertificationItem[]) => prev.filter((_, idx) => idx !== index));
+    setCertifications((prev: CertificationItem[]) =>
+      prev.filter((_, idx) => idx !== index)
+    );
 
   const handleSaveChanges = () => {
     const sanitized = certifications
@@ -1288,7 +1325,10 @@ export const CertificationPopup: FC<{ onClose: () => void; initialData: any; onS
     <Modal title={t.title} onClose={onClose} onSave={handleSaveChanges}>
       <div className="space-y-4 max-h-[400px] overflow-y-auto pr-1">
         {certifications.map((cert: CertificationItem, index: number) => (
-          <div key={index} className="border border-slate-200 rounded-lg p-4 space-y-3">
+          <div
+            key={index}
+            className="border border-slate-200 rounded-lg p-4 space-y-3"
+          >
             <div className="flex items-center justify-between text-sm font-semibold text-slate-600">
               <span>
                 {t.entryLabel} #{index + 1}
@@ -1308,7 +1348,9 @@ export const CertificationPopup: FC<{ onClose: () => void; initialData: any; onS
               <input
                 type="text"
                 value={cert.title}
-                onChange={(e) => handleFieldChange(index, "title", e.target.value)}
+                onChange={(e) =>
+                  handleFieldChange(index, "title", e.target.value)
+                }
                 className="w-full border rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -1320,7 +1362,9 @@ export const CertificationPopup: FC<{ onClose: () => void; initialData: any; onS
                 <input
                   type="date"
                   value={cert.startDate ? cert.startDate.slice(0, 10) : ""}
-                  onChange={(e) => handleFieldChange(index, "startDate", e.target.value)}
+                  onChange={(e) =>
+                    handleFieldChange(index, "startDate", e.target.value)
+                  }
                   className="w-full border rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -1331,7 +1375,9 @@ export const CertificationPopup: FC<{ onClose: () => void; initialData: any; onS
                 <input
                   type="date"
                   value={cert.endDate ? cert.endDate.slice(0, 10) : ""}
-                  onChange={(e) => handleFieldChange(index, "endDate", e.target.value)}
+                  onChange={(e) =>
+                    handleFieldChange(index, "endDate", e.target.value)
+                  }
                   className="w-full border rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -1351,7 +1397,11 @@ export const CertificationPopup: FC<{ onClose: () => void; initialData: any; onS
   );
 };
 
-export const AchievementPopup: FC<{ onClose: () => void; initialData: any; onSave: (updatedData: any) => void; }> = ({ onClose, initialData, onSave }) => {
+export const AchievementPopup: FC<{
+  onClose: () => void;
+  initialData: any;
+  onSave: (updatedData: any) => void;
+}> = ({ onClose, initialData, onSave }) => {
   const { language } = useLanguage();
   const t = translations[language].achievementPopup;
 
@@ -1360,7 +1410,9 @@ export const AchievementPopup: FC<{ onClose: () => void; initialData: any; onSav
   ]);
 
   const handleChange = (index: number, value: string) => {
-    setAchievements((prev: string[]) => prev.map((item, idx) => (idx === index ? value : item)));
+    setAchievements((prev: string[]) =>
+      prev.map((item, idx) => (idx === index ? value : item))
+    );
   };
 
   const addAchievement = () => setAchievements((prev) => [...prev, ""]);
@@ -1408,14 +1460,22 @@ export const AchievementPopup: FC<{ onClose: () => void; initialData: any; onSav
   );
 };
 
-export const HobbyPopup: FC<{ onClose: () => void; initialData: any; onSave: (updatedData: any) => void; }> = ({ onClose, initialData, onSave }) => {
+export const HobbyPopup: FC<{
+  onClose: () => void;
+  initialData: any;
+  onSave: (updatedData: any) => void;
+}> = ({ onClose, initialData, onSave }) => {
   const { language } = useLanguage();
   const t = translations[language].hobbyPopup;
 
-  const [hobbies, setHobbies] = useState<string[]>([...(initialData.hobby || [])]);
+  const [hobbies, setHobbies] = useState<string[]>([
+    ...(initialData.hobby || []),
+  ]);
 
   const handleChange = (index: number, value: string) => {
-    setHobbies((prev: string[]) => prev.map((item, idx) => (idx === index ? value : item)));
+    setHobbies((prev: string[]) =>
+      prev.map((item, idx) => (idx === index ? value : item))
+    );
   };
 
   const addHobby = () => setHobbies((prev) => [...prev, ""]);
@@ -1463,7 +1523,11 @@ export const HobbyPopup: FC<{ onClose: () => void; initialData: any; onSave: (up
   );
 };
 
-export const ProjectPopup: FC<{ onClose: () => void; initialData: any; onSave: (updatedData: any) => void; }> = ({ onClose, initialData, onSave }) => {
+export const ProjectPopup: FC<{
+  onClose: () => void;
+  initialData: any;
+  onSave: (updatedData: any) => void;
+}> = ({ onClose, initialData, onSave }) => {
   const { language } = useLanguage();
   const t = translations[language].projectPopup;
 
@@ -1482,15 +1546,22 @@ export const ProjectPopup: FC<{ onClose: () => void; initialData: any; onSave: (
     value: string
   ) => {
     setProjects((prev: ProjectItem[]) =>
-      prev.map((item, idx) => (idx === index ? { ...item, [field]: value } : item))
+      prev.map((item, idx) =>
+        idx === index ? { ...item, [field]: value } : item
+      )
     );
   };
 
   const addProject = () =>
-    setProjects((prev: ProjectItem[]) => [...prev, { title: "", summary: "", startDate: "", endDate: "" }]);
+    setProjects((prev: ProjectItem[]) => [
+      ...prev,
+      { title: "", summary: "", startDate: "", endDate: "" },
+    ]);
 
   const removeProject = (index: number) =>
-    setProjects((prev: ProjectItem[]) => prev.filter((_, idx) => idx !== index));
+    setProjects((prev: ProjectItem[]) =>
+      prev.filter((_, idx) => idx !== index)
+    );
 
   const handleSaveChanges = () => {
     const sanitized = projects
@@ -1509,7 +1580,10 @@ export const ProjectPopup: FC<{ onClose: () => void; initialData: any; onSave: (
     <Modal title={t.title} onClose={onClose} onSave={handleSaveChanges}>
       <div className="space-y-4 max-h-[420px] overflow-y-auto pr-1">
         {projects.map((project: ProjectItem, index: number) => (
-          <div key={index} className="border border-slate-200 rounded-lg p-4 space-y-3">
+          <div
+            key={index}
+            className="border border-slate-200 rounded-lg p-4 space-y-3"
+          >
             <div className="flex items-center justify-between text-sm font-semibold text-slate-600">
               <span>
                 {t.entryLabel} #{index + 1}
@@ -1529,7 +1603,9 @@ export const ProjectPopup: FC<{ onClose: () => void; initialData: any; onSave: (
               <input
                 type="text"
                 value={project.title}
-                onChange={(e) => handleFieldChange(index, "title", e.target.value)}
+                onChange={(e) =>
+                  handleFieldChange(index, "title", e.target.value)
+                }
                 className="w-full border rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -1540,7 +1616,9 @@ export const ProjectPopup: FC<{ onClose: () => void; initialData: any; onSave: (
               <textarea
                 rows={3}
                 value={project.summary}
-                onChange={(e) => handleFieldChange(index, "summary", e.target.value)}
+                onChange={(e) =>
+                  handleFieldChange(index, "summary", e.target.value)
+                }
                 className="w-full border rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -1551,8 +1629,12 @@ export const ProjectPopup: FC<{ onClose: () => void; initialData: any; onSave: (
                 </label>
                 <input
                   type="date"
-                  value={project.startDate ? project.startDate.slice(0, 10) : ""}
-                  onChange={(e) => handleFieldChange(index, "startDate", e.target.value)}
+                  value={
+                    project.startDate ? project.startDate.slice(0, 10) : ""
+                  }
+                  onChange={(e) =>
+                    handleFieldChange(index, "startDate", e.target.value)
+                  }
                   className="w-full border rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -1563,7 +1645,9 @@ export const ProjectPopup: FC<{ onClose: () => void; initialData: any; onSave: (
                 <input
                   type="date"
                   value={project.endDate ? project.endDate.slice(0, 10) : ""}
-                  onChange={(e) => handleFieldChange(index, "endDate", e.target.value)}
+                  onChange={(e) =>
+                    handleFieldChange(index, "endDate", e.target.value)
+                  }
                   className="w-full border rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>

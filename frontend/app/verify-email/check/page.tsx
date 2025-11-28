@@ -34,7 +34,6 @@ export default function CheckEmailPage() {
       }
 
       try {
-        console.log("Verifying email with token:", token);
         const response = await fetch(
           `${API_URL}${API_ENDPOINTS.ACCOUNTS.VERIFY_TOKEN(token)}`,
           {
@@ -46,7 +45,6 @@ export default function CheckEmailPage() {
         );
 
         const data = await response.json();
-        console.log("Verification response:", data);
 
         // Chuẩn hóa message về chữ thường để dễ kiểm tra
         const message = data.message ? String(data.message).toLowerCase() : "";

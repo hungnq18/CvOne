@@ -7,7 +7,6 @@ import { CreateConversationDto } from "./dto/create-conversation.dto";
 @Controller("conversations")
 export class ConversationController {
   constructor(private readonly conversationService: ConversationService) {}
-
   @UseGuards(JwtAuthGuard)
   @Post()
   async createConversation(@Body() dto: CreateConversationDto) {

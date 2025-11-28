@@ -1,22 +1,25 @@
 "use client";
 
-import dynamic from 'next/dynamic';
-import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { getSharedCV, getCVTemplateById } from '@/api/cvapi';
-import { templateComponentMap } from '@/components/cvTemplate/index';
-import { Loader2 } from 'lucide-react';
+import dynamic from "next/dynamic";
+import { useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { getSharedCV, getCVTemplateById } from "@/api/cvapi";
+import { templateComponentMap } from "@/components/cvTemplate/index";
+import { Loader2 } from "lucide-react";
 
 // Dynamic import để tránh lỗi hydration
-const CVShareSection = dynamic(() => import('@/components/sections/share-cv-section'), {
-  ssr: false,
-});
+const CVShareSection = dynamic(
+  () => import("@/components/sections/share-cv-section"),
+  {
+    ssr: false,
+  }
+);
 
 export default function ShareCVPage() {
   const params = useParams();
   const router = useRouter();
   const id = params?.id as string;
-  
+
   const [cvData, setCvData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -40,10 +43,9 @@ export default function ShareCVPage() {
           } catch {}
         }
         const normalized = { ...data, cvTemplate };
-        console.log("Loaded shared CV (normalized):", normalized);
+
         setCvData(normalized);
       } catch (err) {
-        console.error("Error loading shared CV:", err);
         setError("Failed to load CV. Please check if the link is valid.");
       } finally {
         setIsLoading(false);
@@ -60,8 +62,9 @@ export default function ShareCVPage() {
     }
 
     try {
-      const component = templateComponentMap?.[cvData.cvTemplate?.title || 'modern1'];
-      
+      const component =
+        templateComponentMap?.[cvData.cvTemplate?.title || "modern1"];
+
       if (!component) {
         alert("Template not found");
         return;
@@ -83,9 +86,11 @@ export default function ShareCVPage() {
       }
 
       const head = iframeDoc.head;
-      document.querySelectorAll('style, link[rel="stylesheet"]').forEach((node) => {
-        head.appendChild(node.cloneNode(true));
-      });
+      document
+        .querySelectorAll('style, link[rel="stylesheet"]')
+        .forEach((node) => {
+          head.appendChild(node.cloneNode(true));
+        });
 
       const mountNode = iframeDoc.createElement("div");
       iframeDoc.body.appendChild(mountNode);
@@ -97,7 +102,7 @@ export default function ShareCVPage() {
 
         const { createRoot } = await import("react-dom/client");
         root = createRoot(mountNode);
-        
+
         const componentData = {
           ...(cvData.cvTemplate?.data || {}),
           userData: cvData.content.userData,
@@ -105,15 +110,14 @@ export default function ShareCVPage() {
 
         const TemplateComponent = component;
         root.render(
-          <TemplateComponent 
-            data={componentData} 
-            isPdfMode={true} 
-          />
+          <TemplateComponent data={componentData} isPdfMode={true} />
         );
 
         await new Promise((resolve) => setTimeout(resolve, 500));
 
-        const html2pdf = (await import("html2pdf.js"))?.default || (await import("html2pdf.js"));
+        const html2pdf =
+          (await import("html2pdf.js"))?.default ||
+          (await import("html2pdf.js"));
 
         await html2pdf()
           .from(iframe.contentWindow.document.body)
@@ -159,7 +163,7 @@ export default function ShareCVPage() {
         <div className="text-center">
           <p className="text-red-500 text-lg mb-4">{error}</p>
           <button
-            onClick={() => router.push('/')}
+            onClick={() => router.push("/")}
             className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
           >
             Go to Home
@@ -189,4 +193,3 @@ export default function ShareCVPage() {
     </main>
   );
 }
-

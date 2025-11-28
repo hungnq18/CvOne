@@ -1,94 +1,58 @@
-import { useState, useEffect, useCallback } from "react";
-import {
-    Conversation,
-    getUserConversations,
-    getMessages,
-    getConversationDetail,
-} from "@/api/apiChat";
+import { useState, useEffect } from "react";
+import { useSocket } from "@/providers/SocketProvider";
 
-export function useChatData(userId: string | null) {
-    const [conversations, setConversations] = useState<Conversation[]>([]);
-    const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
-    const [selectedConversationDetail, setSelectedConversationDetail] = useState<{
-        _id: string;
-        participants: any[];
-        lastMessage: any | null;
-    } | null>(null);
-    const [messages, setMessages] = useState<any[]>([]);
+export function useChatData(selectedConversationIdProp?: string | null) {
+  const {
+    conversations,
+    notifications,
+    unreadCount,
+    joinConversation,
+    messages,
+  } = useSocket();
 
-    // Fetch conversations
-    const fetchConversations = useCallback(async () => {
-        if (!userId) return;
-        try {
-            const data = await getUserConversations(userId);
-            setConversations(data);
-            if (data.length > 0 && !selectedConversationId) {
-                setSelectedConversationId(data[0]._id);
-            }
-        } catch (err) {
-            // Silent error handling
-        }
-    }, [userId, selectedConversationId]);
+  const [selectedConversationId, setSelectedConversationId] = useState<
+    string | null
+  >(null);
 
-    // Fetch conversation detail
-    const fetchConversationDetail = useCallback(async (conversationId: string) => {
-        try {
-            const detail = await getConversationDetail(conversationId);
-            setSelectedConversationDetail(detail);
-        } catch (err) {
-            console.error("Failed to fetch conversation detail:", err);
-        }
-    }, []);
+  const [selectedConversationDetail, setSelectedConversationDetail] = useState<{
+    _id: string;
+    participants: any[];
+    lastMessage: any | null;
+  } | null>(null);
 
-    // Fetch messages
-    const fetchMessages = useCallback(async (conversationId: string) => {
-        try {
-            const data = await getMessages(conversationId);
-            setMessages(data);
-        } catch (err) {
-            // Silent error handling
-        }
-    }, []);
+  // Cập nhật conversation detail
+  useEffect(() => {
+    if (!selectedConversationId) {
+      setSelectedConversationDetail(null);
+      return;
+    }
 
-    // Initialize conversations
-    useEffect(() => {
-        fetchConversations();
-    }, [fetchConversations]);
+    const conv = conversations.find((c) => c._id === selectedConversationId);
+    if (conv) {
+      setSelectedConversationDetail({
+        _id: conv._id,
+        participants: conv.participants,
+        lastMessage: conv.lastMessage ?? null,
+      });
+    }
+  }, [selectedConversationId, conversations]);
 
-    // Fetch conversation detail when selectedConversationId changes
-    useEffect(() => {
-        if (!selectedConversationId) {
-            setSelectedConversationDetail(null);
-            return;
-        }
-        fetchConversationDetail(selectedConversationId);
-    }, [selectedConversationId, fetchConversationDetail]);
+  // Chọn conversation mới
+  const selectConversation = (conversationId: string) => {
+    setSelectedConversationId(conversationId);
 
-    // Fetch messages when selectedConversationId changes - với debounce để tránh fetch nhiều lần
-    useEffect(() => {
-        if (!selectedConversationId) {
-            setMessages([]);
-            return;
-        }
-        
-        // Debounce fetch để tránh fetch nhiều lần khi conversation thay đổi nhanh
-        const timer = setTimeout(() => {
-            fetchMessages(selectedConversationId);
-        }, 50);
-        
-        return () => clearTimeout(timer);
-    }, [selectedConversationId, fetchMessages]);
+    // Gửi request joinRoom lên server
+    joinConversation(conversationId);
+    // ❗ Không setMessages ở đây → Provider sẽ tự update khi nhận event
+  };
 
-    return {
-        conversations,
-        setConversations,
-        selectedConversationId,
-        setSelectedConversationId,
-        selectedConversationDetail,
-        setSelectedConversationDetail,
-        messages,
-        setMessages,
-        refetchConversations: fetchConversations,
-    };
+  return {
+    conversations,
+    selectedConversationId,
+    setSelectedConversationId: selectConversation,
+    selectedConversationDetail,
+    messages,
+    notifications,
+    unreadCount,
+  };
 }
-

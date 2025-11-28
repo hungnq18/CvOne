@@ -10,30 +10,45 @@ const translations = {
       title: "How would you like to create your CV?",
       subtitle: "Choose a method to start your journey to impress employers.",
       buttons: {
-        manual: { label: "Create Manually", description: "Fill in each section yourself." },
-        ai: { label: "Create with AI Assistance", description: "AI suggests content for you." },
-        upload: { label: "Edit Existing CV with AI", description: "Upload and let AI analyze." }
-      }
-    }
+        manual: {
+          label: "Create Manually",
+          description: "Fill in each section yourself.",
+        },
+        ai: {
+          label: "Create with AI Assistance",
+          description: "AI suggests content for you.",
+        },
+        upload: {
+          label: "Edit Existing CV with AI",
+          description: "Upload and let AI analyze.",
+        },
+      },
+    },
   },
   vi: {
     chooseCreate: {
       title: "Bạn muốn tạo CV như thế nào?",
-      subtitle: "Chọn một phương pháp để bắt đầu hành trình chinh phục nhà tuyển dụng của bạn.",
+      subtitle:
+        "Chọn một phương pháp để bắt đầu hành trình chinh phục nhà tuyển dụng của bạn.",
       buttons: {
         manual: { label: "Tạo thủ công", description: "Tự tay điền từng mục." },
-        ai: { label: "Tạo với sự trợ giúp của AI", description: "AI gợi ý nội dung cho bạn." },
-        upload: { label: "Chỉnh sửa CV có sẵn bằng AI", description: "Tải lên và để AI phân tích." }
-      }
-    }
-  }
+        ai: {
+          label: "Tạo với sự trợ giúp của AI",
+          description: "AI gợi ý nội dung cho bạn.",
+        },
+        upload: {
+          label: "Chỉnh sửa CV có sẵn bằng AI",
+          description: "Tải lên và để AI phân tích.",
+        },
+      },
+    },
+  },
 };
 
 export default function CreateMethodSection() {
   const searchParams = useSearchParams();
 
   const templateId = searchParams.get("id") ?? "";
-  console.log("[ChooseCreateCV] Received template ID from URL:", templateId);
   const { language } = useLanguage();
   const t = translations[language].chooseCreate;
 
@@ -85,4 +100,3 @@ export default function CreateMethodSection() {
     </div>
   );
 }
-

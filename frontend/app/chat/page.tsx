@@ -2,11 +2,11 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { getUserIdFromToken } from "@/api/userApi";
-import { Message, Conversation } from "@/api/apiChat";
+import { Message } from "@/api/apiChat";
 import ChatSidebar from "@/components/chatAndNotification/ChatSidebar";
 import VirtualizedMessages from "@/components/chatAndNotification/VirtualizedMessages";
 import ChatInput from "@/components/chatAndNotification/ChatInput";
-import { useChat } from "@/providers/ChatProvider";
+import { useSocket } from "@/providers/SocketProvider";
 import { useChatData } from "@/hooks/useChatData";
 import { useChatSocket } from "@/hooks/useChatSocket";
 import { normalizeId } from "@/utils/normalizeId";
@@ -16,129 +16,48 @@ function ChatPage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [content, setContent] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [shouldScroll, setShouldScroll] = useState(false);
   const previousConversationIdRef = useRef<string | null>(null);
-  const { markConversationAsRead } = useChat();
+
+  const { markConversationAsRead, setConversations, setMessages } = useSocket();
 
   const {
     conversations,
-    setConversations,
     selectedConversationId,
     setSelectedConversationId,
     selectedConversationDetail,
-    setSelectedConversationDetail,
     messages,
-    setMessages,
-  } = useChatData(userId);
+  } = useChatData();
+  const currentMessages = messages[selectedConversationId || ""] || [];
+  const [shouldScroll, setShouldScroll] = useState(false);
 
-  // Handle new message from socket - Optimized với normalizeId
-  const handleNewMessage = useCallback((message: Message) => {
-    setMessages((prev) => {
-      // Normalize incoming message id (server id should be a 24-hex string)
-      const msgId = normalizeId(message._id);
-      if (!msgId) return prev;
+  // ----- SOCKET NEW MESSAGE HANDLER -----
+  const handleNewMessage = useCallback(
+    (message: Message) => {
+      setMessages((prev) => {
+        const convId = message.conversationId as string;
+        const prevMessages = prev[convId] || [];
 
-      // Helper to get raw id as string (works for temp ids like 'temp-123')
-      const getRawIdString = (m: Message) => {
-        if (!m || m._id === undefined || m._id === null) return "";
-        if (typeof m._id === "string") return m._id;
-        try {
-          // If it's an object (e.g. ObjectId or populated object), try toString or _id
-          if ((m._id as any)._id) return String((m._id as any)._id);
-          if (typeof (m._id as any).toString === "function") return String((m._id as any).toString());
-        } catch {
-          return String(m._id);
-        }
-        return String(m._id);
-      };
+        if (prevMessages.some((m) => m._id === message._id)) return prev;
 
-      const exists = prev.some((m: Message) => {
-        const mid = normalizeId(m._id);
-        return mid === msgId;
-      });
-
-      if (exists) {
-        // Replace any existing message with same normalized id.
-        // Also replace optimistic temp messages (raw id starting with 'temp-')
-        return prev.map((m: Message) => {
-          const mid = normalizeId(m._id);
-          const raw = getRawIdString(m);
-          if (mid === msgId || (raw && raw.startsWith("temp-"))) {
-            return message;
-          }
-          return m;
-        });
-      }
-
-      // Remove any optimistic temp messages (their raw id starts with 'temp-')
-      const filtered = prev.filter((m: Message) => {
-        const raw = getRawIdString(m);
-        if (raw && raw.startsWith("temp-")) return false; // drop temp
-        return true;
-      });
-
-      return [...filtered, message];
-    });
-  }, [setMessages]);
-
-  // Handle conversation update from socket - Optimized với normalizeId và debounce
-  const handleConversationUpdate = useCallback((msg: any) => {
-    if (!userId) return;
-
-    setConversations((prev) => {
-      const msgConvId = normalizeId(msg.conversationId);
-      if (!msgConvId) return prev;
-
-      const idx = prev.findIndex((c) => normalizeId(c._id) === msgConvId);
-      const normalizedSenderId = normalizeId(msg.senderId);
-      const normalizedUserId = normalizeId(userId);
-
-      if (idx !== -1) {
-        let newUnreadCount = prev[idx].unreadCount;
-        if (normalizedSenderId && normalizedUserId && normalizedSenderId !== normalizedUserId) {
-          if (typeof prev[idx].unreadCount === "number") {
-            newUnreadCount = (prev[idx].unreadCount || 0) + 1;
-          } else if (Array.isArray(prev[idx].unreadCount)) {
-            const unreadArray = [...prev[idx].unreadCount];
-            const userEntry = unreadArray.find((u: any) => {
-              const uid = normalizeId(u.userId);
-              return uid === normalizedUserId;
-            });
-            if (userEntry) {
-              userEntry.count = (userEntry.count || 0) + 1;
-            } else {
-              unreadArray.push({ userId: normalizedUserId, count: 1 });
-            }
-            newUnreadCount = unreadArray;
-          }
-        }
-
-        const updatedConv = {
-          ...prev[idx],
-          lastMessage: msg,
-          unreadCount: newUnreadCount,
-        };
-        const newList = prev.filter((c) => normalizeId(c._id) !== msgConvId);
-        return [updatedConv, ...newList];
-      } else if (normalizedSenderId && normalizedUserId) {
-        return [
-          {
-            _id: msgConvId,
-            participants: [normalizedSenderId, normalizedUserId],
-            lastMessage: msg,
-            unreadCount: normalizedSenderId === normalizedUserId ? 0 : 1,
-          },
+        return {
           ...prev,
-        ];
-      }
-      return prev;
-    });
-  }, [userId, setConversations]);
+          [convId]: [...prevMessages, message],
+        };
+      });
 
-  // Handle message error
+      setShouldScroll(true);
+    },
+    [setMessages]
+  );
+
+  const handleConversationUpdate = useCallback((msg: any) => {
+    // Khi lastMessage update → scroll
+    setShouldScroll(true);
+  }, []);
+
   const handleMessageError = useCallback((error: any) => {
-    console.error("Message error from server:", error);
-    alert(`Lỗi gửi tin nhắn: ${error.error || "Unknown error"}`);
+    console.error("Message error:", error);
+    alert("Gửi tin nhắn thất bại!");
   }, []);
 
   const { emitMessage } = useChatSocket({
@@ -149,218 +68,63 @@ function ChatPage() {
     onMessageError: handleMessageError,
   });
 
-  // Initialize user ID
+  // Init user
   useEffect(() => {
-    const id = getUserIdFromToken();
-    if (id) {
-      setUserId(id);
-    }
+    setUserId(getUserIdFromToken());
   }, []);
 
-  // Sử dụng normalizeId utility đã được tối ưu với cache
-  const normalizeParticipantId = useCallback((participant: any): string | null => {
-    return normalizeId(participant);
-  }, []);
-
-  // Get receiver ID from conversation
-  const getReceiverIdFromConversation = useCallback((
-    conversationId: string,
-    currentUserId: string
-  ): string => {
-    const normalizedCurrentUserId = normalizeParticipantId(currentUserId);
-    if (!normalizedCurrentUserId) return "";
-
-    if (selectedConversationDetail && selectedConversationDetail._id === conversationId) {
-      const participants = selectedConversationDetail.participants || [];
-      for (const p of participants) {
-        const pid = normalizeParticipantId(p);
-        if (pid && pid !== normalizedCurrentUserId) {
-          return pid;
-        }
-      }
-    }
-
-    const conv = conversations.find((c) => c._id === conversationId);
-    if (conv && Array.isArray(conv.unreadCount)) {
-      for (const entry of conv.unreadCount) {
-        if (!entry || !entry.userId) continue;
-        const uid = normalizeParticipantId(entry.userId);
-        if (uid && uid !== normalizedCurrentUserId) {
-          return uid;
-        }
-      }
-    }
-
-    if (conv && conv.participants) {
-      for (const p of conv.participants) {
-        const pid = normalizeParticipantId(p);
-        if (pid && pid !== normalizedCurrentUserId) {
-          return pid;
-        }
-      }
-    }
-
-    return "";
-  }, [conversations, selectedConversationDetail, normalizeParticipantId]);
-
-  // Handle send message
-  const handleSend = useCallback(async () => {
+  const handleSend = useCallback(() => {
     if (!content.trim() || !userId || !selectedConversationId) return;
 
-    let receiverId = getReceiverIdFromConversation(selectedConversationId, userId);
-
-    if (!receiverId) {
-      if (selectedConversationDetail?.participants) {
-        const normalizedUserId = normalizeParticipantId(userId);
-        for (const p of selectedConversationDetail.participants) {
-          const pid = normalizeParticipantId(p);
-          if (pid && pid !== normalizedUserId) {
-            receiverId = pid;
-            break;
-          }
-        }
-      }
-
-      if (!receiverId) {
-        const { getConversationDetail } = await import("@/api/apiChat");
-        try {
-          const directConv = await getConversationDetail(selectedConversationId);
-          if (directConv?.participants && Array.isArray(directConv.participants)) {
-            const normalizedUserId = normalizeParticipantId(userId);
-            for (const p of directConv.participants) {
-              const pid = normalizeParticipantId(p);
-              if (pid && pid !== normalizedUserId) {
-                receiverId = pid;
-                setSelectedConversationDetail(directConv);
-                break;
-              }
-            }
-          }
-        } catch (err) {
-          console.error("Error in last resort fetch:", err);
-        }
-      }
-
-      if (!receiverId) {
-        alert("Không thể tìm thấy người nhận tin nhắn. Conversation ID: " + selectedConversationId + "\nVui lòng refresh trang và thử lại.");
-        return;
-      }
-    }
-
-    const messageDto = {
-      conversationId: selectedConversationId,
-      senderId: userId,
-      senderName: "Bạn",
-      receiverId,
-      content,
-    };
-
-    emitMessage(messageDto);
-
-    // Optimistic update
-    const tempMessageId = `temp-${Date.now()}`;
-    const optimisticMessage: Message = {
-      _id: tempMessageId,
+    emitMessage({
       conversationId: selectedConversationId,
       senderId: userId,
       content,
-      createdAt: new Date().toISOString(),
-      readBy: [],
-    };
-
-    setMessages((prev) => {
-      const hasTemp = prev.some(m => {
-        const mid = normalizeId(m._id);
-        return mid && mid.startsWith('temp-');
-      });
-      if (hasTemp) {
-        return prev.map(m => {
-          const mid = normalizeId(m._id);
-          return mid && mid.startsWith('temp-') ? optimisticMessage : m;
-        });
-      }
-      return [...prev, optimisticMessage];
-    });
-
-    // Scroll to bottom when user sends message
-    setShouldScroll(true);
-
-    // Update conversation
-    setConversations((prev) => {
-      const idx = prev.findIndex((c) => c._id === selectedConversationId);
-      if (idx !== -1) {
-        const prevLastMessage = prev[idx].lastMessage;
-        const updatedConv = {
-          ...prev[idx],
-          lastMessage: {
-            ...prevLastMessage,
-            content,
-            senderId: userId,
-            _id: prevLastMessage?._id || Date.now().toString(),
-            createdAt: prevLastMessage?.createdAt || new Date().toISOString(),
-            sender: prevLastMessage?.sender,
-          },
-        };
-        const newList = prev.filter((c) => c._id !== selectedConversationId);
-        return [updatedConv, ...newList];
-      }
-      return prev;
     });
 
     setContent("");
-  }, [content, userId, selectedConversationId, getReceiverIdFromConversation, selectedConversationDetail, normalizeParticipantId, emitMessage, setMessages, setConversations]);
+    setShouldScroll(true);
+  }, [content, userId, selectedConversationId, emitMessage]);
 
-  // Handle select conversation
-  const handleSelectConversation = useCallback((conversationId: string) => {
-    setConversations((prev) =>
-      prev.map((conv) =>
-        conv._id === conversationId ? { ...conv, unreadCount: 0 } : conv
-      )
-    );
-    setSelectedConversationId(conversationId);
-    markConversationAsRead(conversationId);
-  }, [markConversationAsRead, setConversations, setSelectedConversationId]);
+  // Handle selecting a conversation
+  const handleSelectConversation = useCallback(
+    (conversationId: string) => {
+      setSelectedConversationId(conversationId);
 
-  // Reset scroll flag after scrolling
-  const handleScrollComplete = useCallback(() => {
-    setShouldScroll(false);
-  }, []);
+      // Reset unread
 
-  // Trigger scroll when conversation changes
+      markConversationAsRead(conversationId);
+    },
+    [setSelectedConversationId, markConversationAsRead, setConversations]
+  );
+
+  // Scroll to bottom when conversation changes
   useEffect(() => {
-    if (selectedConversationId !== previousConversationIdRef.current && messages.length > 0) {
-      // Conversation changed, scroll to bottom after a short delay to ensure DOM is ready
-      const timer = setTimeout(() => {
-        setShouldScroll(true);
-      }, 100);
+    if (
+      selectedConversationId !== previousConversationIdRef.current &&
+      currentMessages.length > 0
+    ) {
+      const t = setTimeout(() => setShouldScroll(true), 120);
       previousConversationIdRef.current = selectedConversationId;
-      return () => clearTimeout(timer);
+      return () => clearTimeout(t);
     }
     previousConversationIdRef.current = selectedConversationId;
-  }, [selectedConversationId, messages.length]);
+  }, [selectedConversationId, currentMessages.length]);
 
-  // Memoize header name để tránh tính toán lại mỗi lần render
   const headerName = useMemo(() => {
-    const normalizedUserId = userId ? String(userId) : null;
-    if (!selectedConversationDetail?.participants) return "Người dùng";
+    if (!selectedConversationDetail?.participants || !userId)
+      return "Người dùng";
 
-    const otherParticipant = selectedConversationDetail.participants.find((p: any) => {
-      if (!p) return false;
-      const pid = normalizeId(p);
-      return normalizedUserId && pid && pid !== normalizedUserId;
-    });
+    const other = selectedConversationDetail.participants.find(
+      (p: any) => normalizeId(p) !== normalizeId(userId)
+    );
 
-    if (otherParticipant && typeof otherParticipant === "object" && otherParticipant.first_name) {
-      return `${otherParticipant.first_name} ${otherParticipant.last_name || ''}`.trim();
-    }
-
-    const conv = conversations.find(c => c._id === selectedConversationId);
-    if (conv?.otherUser && typeof conv.otherUser === "object" && conv.otherUser.first_name) {
-      return `${conv.otherUser.first_name} ${conv.otherUser.last_name || ''}`.trim();
+    if (other?.first_name) {
+      return `${other.first_name} ${other.last_name || ""}`;
     }
 
     return "Người dùng";
-  }, [userId, selectedConversationDetail, selectedConversationId, conversations]);
+  }, [selectedConversationDetail, userId]);
 
   return (
     <div className="flex h-[calc(100vh-64px)] bg-background mt-[64px]">
@@ -368,6 +132,7 @@ function ChatPage() {
         <div className="p-4 border-b">
           <h1 className="text-xl font-semibold mb-3">Tin nhắn</h1>
         </div>
+
         <div className="flex-1 overflow-y-auto">
           <ChatSidebar
             conversations={conversations}
@@ -378,28 +143,25 @@ function ChatPage() {
           />
         </div>
       </div>
+
       <div className="flex-1 flex flex-col">
         {selectedConversationId ? (
           <>
-            <div className="p-4 border-b flex items-center justify-between bg-white">
-              <div className="flex items-center gap-3">
-                <div>
-                  <h2 className="font-semibold">
-                    {headerName}
-                  </h2>
-                </div>
-              </div>
+            <div className="p-4 border-b bg-white">
+              <h2 className="font-semibold">{headerName}</h2>
             </div>
-            <div className="flex-1 overflow-hidden p-4 bg-gray-50">
+
+            <div className="flex-1 p-4 overflow-hidden bg-gray-50">
               <VirtualizedMessages
-                messages={messages}
+                messages={currentMessages}
                 userId={userId}
                 messagesEndRef={messagesEndRef}
                 shouldScroll={shouldScroll}
-                onScrollComplete={handleScrollComplete}
+                onScrollComplete={() => setShouldScroll(false)}
                 conversationId={selectedConversationId}
               />
             </div>
+
             <div className="p-4 border-t bg-white">
               <ChatInput
                 content={content}
@@ -411,26 +173,11 @@ function ChatPage() {
         ) : (
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center">
-              <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg
-                  className="h-10 w-10 text-muted-foreground"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
-              </div>
               <h3 className="text-lg font-semibold mb-2">
                 Chọn một cuộc trò chuyện
               </h3>
               <p className="text-muted-foreground">
-                Chọn một người từ danh sách bên trái để bắt đầu nhắn tin
+                Chọn một người từ danh sách bên trái để bắt đầu
               </p>
             </div>
           </div>
