@@ -4,3 +4,7 @@
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
+
+[functions]
+  external_node_modules = ["sharp"]
+  node_bundler = "esbuild

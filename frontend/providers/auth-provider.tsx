@@ -56,42 +56,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     setIsMounted(true)
+    let isSubscribed = true
+    let lastUserId = getUserIdFromToken()
 
-    // Check if user is logged in on initial load using cookies
-    const checkAuth = async () => {
+    const hydrateUser = async (options: { shouldUpdateLoading?: boolean } = {}) => {
+      const { shouldUpdateLoading = false } = options
       try {
         const userData = await getUserFromToken()
-        setUser(userData)
+        if (isSubscribed) {
+          setUser(userData)
+        }
       } catch (error) {
         console.error("Auth check failed", error)
       } finally {
-        setIsLoading(false)
+        if (shouldUpdateLoading && isSubscribed) {
+          setIsLoading(false)
+        }
       }
     }
 
-    checkAuth()
+    hydrateUser({ shouldUpdateLoading: true })
 
-    // Kiểm tra token định kỳ để đồng bộ với cookies
     const tokenCheckInterval = setInterval(async () => {
-      const userId = getUserIdFromToken()
-      if (userId && !user) {
-        // Có token nhưng chưa có user data
-        try {
-          const userData = await getUserFromToken()
-          setUser(userData)
-        } catch (error) {
-          console.error("Token check failed", error)
-        }
-      } else if (!userId && user) {
-        // Không có token nhưng vẫn có user data
-        setUser(null)
+      const currentUserId = getUserIdFromToken()
+      if (currentUserId === lastUserId) {
+        return
       }
-    }, 3000) // Kiểm tra mỗi 3 giây
+
+      lastUserId = currentUserId
+      await hydrateUser()
+    }, 3000)
 
     return () => {
+      isSubscribed = false
       clearInterval(tokenCheckInterval)
     }
-  }, [user])
+  }, [])
 
   const login = async (email: string, password: string) => {
     try {
