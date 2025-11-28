@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
-import { Model, ObjectId, Types } from "mongoose";
+import { Model, Types } from "mongoose";
 import { Conversation } from "../chat/schemas/conversation.schema";
 import { CreateConversationDto } from "./dto/create-conversation.dto";
 
@@ -9,7 +9,7 @@ export class ConversationService {
   constructor(
     @InjectModel(Conversation.name)
     private readonly convModel: Model<Conversation>,
-  ) {}
+  ) { }
 
   async createConversation(dto: CreateConversationDto) {
     const userIds = dto.participants.map((id) => new Types.ObjectId(id));
@@ -28,15 +28,35 @@ export class ConversationService {
   }
 
   async getUserConversations(userId: string) {
-    return this.convModel
+    const conversations = await this.convModel
       .find({
         participants: new Types.ObjectId(userId),
       })
       .sort({ updatedAt: -1 })
-      .populate({
-        path: "lastMessage",
-        select: "content senderId createdAt",
-      });
+      .populate([
+        {
+          path: "participants",
+          select: "_id first_name last_name", // Thêm _id để frontend có thể lấy được
+        },
+        {
+          path: "lastMessage",
+          select: "content senderId createdAt",
+          populate: {
+            path: "senderId",
+            select: "first_name last_name",
+          },
+        },
+      ])
+      .lean()
+      .exec();
+
+    // Normalize unreadCount format để frontend dễ xử lý
+    // Frontend có thể nhận cả array {userId, count}[] hoặc number
+    return conversations.map((conv) => ({
+      ...conv,
+      // Giữ nguyên array format để frontend xử lý được
+      // Frontend code đã handle cả 2 cases: array và number
+    }));
   }
 
   async getConversationDetail(conversationId: string, userId: string) {
@@ -47,7 +67,7 @@ export class ConversationService {
       .populate([
         {
           path: "participants",
-          select: "first_name last_name",
+          select: "_id first_name last_name",
         },
         {
           path: "lastMessage",

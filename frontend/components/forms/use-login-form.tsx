@@ -1,5 +1,6 @@
 "use client"
 
+import { API_ENDPOINTS, API_URL as BASE_API_URL } from "@/api/apiConfig"
 import { useToast } from "@/components/ui/use-toast"
 import { DecodedToken } from "@/middleware"
 import { useLanguage } from "@/providers/global_provider"
@@ -17,7 +18,8 @@ interface LoginResponse {
   access_token: string;
 }
 
-const API_URL = "http://localhost:8000/api/auth";
+const API_BASE = BASE_API_URL ?? "/api";
+const LOGIN_URL = `${API_BASE}${API_ENDPOINTS.AUTH.LOGIN}`;
 
 const translations = {
   en: {
@@ -113,7 +115,7 @@ export function useLoginForm() {
 
     setIsLoading(true);
     try {
-      const response = await axios.post<LoginResponse>(`${API_URL}/login`, formData, {
+      const response = await axios.post<LoginResponse>(LOGIN_URL, formData, {
         headers: { "Content-Type": "application/json" },
       });
 

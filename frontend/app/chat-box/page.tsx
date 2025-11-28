@@ -85,14 +85,17 @@ export default function ChatTestPage() {
 
     socket.emit("joinRoom", conversation._id);
 
-    socket.on("newMessage", (msg: Message) => {
+    // Use a stable handler reference so we can remove only this listener
+    const handleSocketNewMessage = (msg: Message) => {
       if (msg.conversationId === conversation._id) {
         setMessages((prev) => [...prev, msg]);
       }
-    });
+    };
+
+    socket.on("newMessage", handleSocketNewMessage);
 
     return () => {
-      socket.off("newMessage");
+      socket.off("newMessage", handleSocketNewMessage);
       socket.emit("leaveRoom", conversation._id);
     };
   }, [conversation]);

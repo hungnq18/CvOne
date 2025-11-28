@@ -1,9 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { getUserIdFromToken } from '@/api/userApi';
-import { getUserConversations } from '@/api/apiChat';
-import { Conversation } from '@/api/apiChat';
+import React, { createContext, useContext, useCallback } from 'react';
 
 interface ChatContextType {
     markConversationAsRead: (conversationId: string) => void;
@@ -11,36 +8,18 @@ interface ChatContextType {
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
 
+/**
+ * ChatProvider - Tối ưu: Loại bỏ polling, chỉ cung cấp helper functions
+ * Conversations được quản lý trực tiếp trong ChatPage với socket
+ */
 export function ChatProvider({ children }: { children: React.ReactNode }) {
-    const [conversations, setConversations] = useState<Conversation[]>([]);
+    // Không cần state conversations nữa vì được quản lý trong ChatPage
+    // Không cần polling vì socket đã handle real-time updates
 
-    const fetchConversations = async () => {
-        const userId = getUserIdFromToken();
-        if (userId) {
-            try {
-                const convs = await getUserConversations(userId);
-                setConversations(convs);
-            } catch (err) {
-                // Silent error handling
-            }
-        }
-    };
-
-    useEffect(() => {
-        fetchConversations();
-        const interval = setInterval(fetchConversations, 5000);
-        return () => clearInterval(interval);
+    const markConversationAsRead = useCallback((conversationId: string) => {
+        // Function này sẽ được override trong ChatPage
+        // Giữ lại để tương thích với ChatSidebar
     }, []);
-
-    const markConversationAsRead = (conversationId: string) => {
-        setConversations(prev =>
-            prev.map(conv =>
-                conv._id === conversationId
-                    ? { ...conv, unreadCount: 0 }
-                    : conv
-            )
-        );
-    };
 
     return (
         <ChatContext.Provider value={{
