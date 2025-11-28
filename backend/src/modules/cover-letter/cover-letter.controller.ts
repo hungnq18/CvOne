@@ -16,6 +16,7 @@ import { CoverLetterService } from "./cover-letter.service";
 import { CreateCoverLetterDto } from "./dto/create-cover-letter.dto";
 import { CreateGenerateCoverLetterDto } from "./dto/create-generate-cl-ai.dto";
 import { UpdateCoverLetterDto } from "./dto/update-cover-letter.dto";
+import { User } from "src/common/decorators/user.decorator";
 @Controller("cover-letters")
 export class CoverLetterController {
   constructor(
@@ -57,17 +58,20 @@ export class CoverLetterController {
   @Post("generate/ai")
   async generateByAi(
     @Body() dto: CreateGenerateCoverLetterDto,
-    @Body("jobDescription") jobDescription: string
+    @Body("jobDescription") jobDescription: string,
+    @User("_id") userId: string
   ) {
     return this.coverLetterAiService.generateCoverLetterByAi(
       dto,
-      jobDescription
+      jobDescription,
+      userId
     );
   }
 
   @UseGuards(JwtAuthGuard)
   @Post("extract/ai")
   async extractFromPdfFiles(
+    @User("_id") userId: string,
     @Body()
     body: {
       coverLetter: string;
@@ -78,13 +82,15 @@ export class CoverLetterController {
     return this.coverLetterAiService.extractCoverLetter(
       body.coverLetter,
       body.jobDescription,
-      body.templateId
+      body.templateId,
+      userId
     );
   }
 
   @UseGuards(JwtAuthGuard)
   @Post("generate/cv-and-jd")
   async generateCLByCVAndJD(
+    @User("_id") userId: string,
     @Body()
     body: {
       cv: string;
@@ -95,7 +101,8 @@ export class CoverLetterController {
     return this.coverLetterAiService.extractCoverLetter(
       body.cv,
       body.jobDescription,
-      body.templateId
+      body.templateId,
+      userId
     );
   }
 }

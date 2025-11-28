@@ -4,30 +4,31 @@ import { NextRequest, NextResponse } from "next/server";
 import { City } from "country-state-city";
 
 export async function GET(req: NextRequest) {
-    const { searchParams } = new URL(req.url);
-    const countryIso2 = searchParams.get("country");
+  const { searchParams } = new URL(req.url);
+  const countryIso2 = searchParams.get("country");
 
-    console.log("API /api/cities được gọi với country:", countryIso2);
+  if (!countryIso2) {
+    return NextResponse.json(
+      { message: "Missing country parameter" },
+      { status: 400 }
+    );
+  }
 
-    if (!countryIso2) {
-        return NextResponse.json({ message: "Missing country parameter" }, { status: 400 });
-    }
+  try {
+    const cities = City.getCitiesOfCountry(countryIso2);
 
-    try {
+    const cityList = cities || [];
 
-        const cities = City.getCitiesOfCountry(countryIso2);
+    const sorted = cityList
+      .filter((city: any) => !!city.name)
+      .sort((a: any, b: any) => a.name.localeCompare(b.name));
 
-        console.log(`Tìm thấy ${cities?.length || 0} thành phố cho ${countryIso2}`);
-
-        const cityList = cities || [];
-
-        const sorted = cityList
-            .filter((city: any) => !!city.name)
-            .sort((a: any, b: any) => a.name.localeCompare(b.name));
-
-        return NextResponse.json(sorted);
-    } catch (error) {
-        console.error("Error in /api/cities:", error);
-        return NextResponse.json({ message: "Failed to load cities" }, { status: 500 });
-    }
+    return NextResponse.json(sorted);
+  } catch (error) {
+    console.error("Error in /api/cities:", error);
+    return NextResponse.json(
+      { message: "Failed to load cities" },
+      { status: 500 }
+    );
+  }
 }

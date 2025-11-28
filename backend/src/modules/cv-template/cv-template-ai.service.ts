@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import OpenAI from "openai";
 import { OpenaiApiService } from "../cv/services/openai-api.service";
+import { AiUsageLogService } from "../ai-usage-log/ai-usage-log.service";
 
 /**
  * Service for handling CV template business logic
@@ -8,11 +9,15 @@ import { OpenaiApiService } from "../cv/services/openai-api.service";
  */
 @Injectable()
 export class CvTemplateAiService {
-  constructor(private openaiApiService: OpenaiApiService) {}
+  constructor(
+    private openaiApiService: OpenaiApiService,
+    private readonly logService: AiUsageLogService
+  ) {}
 
   async suggestTagsByAi(
     jobDescription: string,
-    tags: any
+    tags: any,
+    userId: string
   ): Promise<{
     tags: string[];
     tokens: { prompt: number; completion: number; total: number };
@@ -78,6 +83,14 @@ Task:
       completion_tokens: 0,
       total_tokens: 0,
     };
+    console.log(usage);
+    if (userId) {
+      await this.logService.createLog({
+        userId,
+        feature: "suggestionTagsCvAI",
+        tokensUsed: usage.total_tokens,
+      });
+    }
 
     return {
       tags: tagsResult,

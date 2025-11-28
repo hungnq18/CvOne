@@ -7,13 +7,13 @@ import { useOnClickOutside } from "@/hooks/useOnClickOutside";
 import { useCV } from "@/providers/cv-provider";
 import { useLanguage } from "@/providers/global_provider";
 import {
-    CheckCircle2,
-    Edit,
-    Loader2,
-    PlusCircle,
-    Trash2,
-    Wand2,
-    X,
+  CheckCircle2,
+  Edit,
+  Loader2,
+  PlusCircle,
+  Trash2,
+  Wand2,
+  X,
 } from "lucide-react";
 import { ChangeEvent, FC, ReactNode, useEffect, useRef, useState } from "react";
 import { notify } from "@/lib/notify";
@@ -270,17 +270,16 @@ type ProjectItem = {
 };
 
 // --- AI BUTTON COMPONENT (THIẾT KẾ ĐẸP VỚI SHIMMER EFFECT) ---
-const AIButton: FC<{ onClick: () => void; isLoading: boolean; text: string; disabled?: boolean; size?: "sm" | "md" }> = ({
-  onClick,
-  isLoading,
-  text,
-  disabled,
-  size = "md",
-}) => {
-  const sizeClasses = size === "sm" 
-    ? "px-4 py-2 text-xs gap-2" 
-    : "px-5 py-2.5 text-sm gap-2.5";
-  
+const AIButton: FC<{
+  onClick: () => void;
+  isLoading: boolean;
+  text: string;
+  disabled?: boolean;
+  size?: "sm" | "md";
+}> = ({ onClick, isLoading, text, disabled, size = "md" }) => {
+  const sizeClasses =
+    size === "sm" ? "px-4 py-2 text-xs gap-2" : "px-5 py-2.5 text-sm gap-2.5";
+
   return (
     <button
       type="button"
@@ -292,9 +291,10 @@ const AIButton: FC<{ onClick: () => void; isLoading: boolean; text: string; disa
         bg-gradient-to-r from-violet-600 via-indigo-600 to-blue-600
         shadow-lg shadow-indigo-500/25
         overflow-hidden transition-all duration-300
-        ${disabled || isLoading 
-          ? "opacity-60 cursor-not-allowed" 
-          : "hover:shadow-xl hover:shadow-indigo-500/35 hover:scale-[1.02] active:scale-[0.98]"
+        ${
+          disabled || isLoading
+            ? "opacity-60 cursor-not-allowed"
+            : "hover:shadow-xl hover:shadow-indigo-500/35 hover:scale-[1.02] active:scale-[0.98]"
         }
       `}
     >
@@ -337,7 +337,9 @@ export const Modal: FC<{
           <div className="absolute inset-0 bg-gradient-to-r from-slate-800 via-slate-900 to-slate-800" />
           <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAwIDEwIEwgNDAgMTAgTSAxMCAwIEwgMTAgNDAgTSAwIDIwIEwgNDAgMjAgTSAyMCAwIEwgMjAgNDAgTSAwIDMwIEwgNDAgMzAgTSAzMCAwIEwgMzAgNDAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzMzMyIgb3BhY2l0eT0iMC4xIiBzdHJva2Utd2lkdGg9IjEiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JpZCkiLz48L3N2Zz4=')] opacity-30" />
           <div className="relative flex justify-between items-center py-4 px-6">
-            <h2 className="text-lg font-bold text-white tracking-wide">{title}</h2>
+            <h2 className="text-lg font-bold text-white tracking-wide">
+              {title}
+            </h2>
             <button
               onClick={onClose}
               className="text-slate-400 hover:text-white hover:bg-white/10 rounded-lg p-1.5 transition-colors"
@@ -346,12 +348,10 @@ export const Modal: FC<{
             </button>
           </div>
         </div>
-        
+
         {/* Content - Scrollable */}
-        <div className="p-6 overflow-y-auto flex-1">
-          {children}
-        </div>
-        
+        <div className="p-6 overflow-y-auto flex-1">{children}</div>
+
         {/* Footer Buttons - Fixed at bottom */}
         {onSave && (
           <div className="flex justify-end gap-3 px-6 py-4 border-t border-slate-100 bg-slate-50/50 rounded-b-2xl flex-shrink-0">
@@ -424,7 +424,9 @@ export const InfoPopup: FC<{
       }));
     } catch (error) {
       console.error(error);
-      notify.error(error instanceof Error ? error.message : t.uploadErrorGeneral);
+      notify.error(
+        error instanceof Error ? error.message : t.uploadErrorGeneral
+      );
     } finally {
       setIsUploading(false);
     }
@@ -633,7 +635,11 @@ export const TargetPopup: FC<{
       setHasLoadedAI(true);
     } catch (err) {
       setAiSuggestions([]);
-      notify.error(language === "vi" ? "Không thể lấy gợi ý AI" : "Failed to get AI suggestions");
+      notify.error(
+        language === "vi"
+          ? "Không thể lấy gợi ý AI"
+          : "Failed to get AI suggestions"
+      );
     } finally {
       setLoading(false);
     }
@@ -656,7 +662,10 @@ export const TargetPopup: FC<{
       <div className="min-h-[350px] w-full relative">
         {/* LEFT: Text Area */}
         <div className="w-full flex flex-col h-full">
-          <label htmlFor="summary" className="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+          <label
+            htmlFor="summary"
+            className="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2"
+          >
             <span className="w-1 h-5 bg-blue-500 rounded-full"></span>
             {t.label}
           </label>
@@ -678,15 +687,15 @@ export const TargetPopup: FC<{
               {t.aiSuggestions}
             </div>
             {!hasLoadedAI && (
-              <AIButton 
-                onClick={handleFetchAISuggestions} 
-                isLoading={loading} 
+              <AIButton
+                onClick={handleFetchAISuggestions}
+                isLoading={loading}
                 text={language === "vi" ? "Gợi ý AI" : "Get AI"}
                 size="sm"
               />
             )}
           </div>
-          
+
           <div className="flex flex-col gap-3 overflow-y-auto pr-1 flex-1">
             {!hasLoadedAI && !loading ? (
               <div className="flex flex-col items-center justify-center h-full text-center px-4">
@@ -694,8 +703,8 @@ export const TargetPopup: FC<{
                   <Wand2 size={28} className="text-indigo-500" />
                 </div>
                 <p className="text-slate-500 text-sm">
-                  {language === "vi" 
-                    ? "Bấm nút 'Gợi ý AI' để nhận gợi ý mục tiêu sự nghiệp phù hợp" 
+                  {language === "vi"
+                    ? "Bấm nút 'Gợi ý AI' để nhận gợi ý mục tiêu sự nghiệp phù hợp"
                     : "Click 'Get AI' to receive career objective suggestions"}
                 </p>
               </div>
@@ -704,7 +713,9 @@ export const TargetPopup: FC<{
                 <div className="relative">
                   <div className="w-12 h-12 rounded-full border-4 border-indigo-100 border-t-indigo-500 animate-spin"></div>
                 </div>
-                <p className="text-slate-600 text-sm font-medium">{t.loadingAISuggestions}</p>
+                <p className="text-slate-600 text-sm font-medium">
+                  {t.loadingAISuggestions}
+                </p>
               </div>
             ) : (
               aiSuggestions.map((item, idx) => {
@@ -713,8 +724,8 @@ export const TargetPopup: FC<{
                   <div
                     key={idx}
                     className={`flex items-start gap-3 p-4 rounded-xl transition-all cursor-pointer ${
-                      isSelected 
-                        ? "bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-lg" 
+                      isSelected
+                        ? "bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-lg"
                         : "bg-white border border-slate-200 hover:border-indigo-300 hover:shadow-md"
                     }`}
                     onClick={() => handleToggleSuggestion(item)}
@@ -728,9 +739,17 @@ export const TargetPopup: FC<{
                       }`}
                       title={isSelected ? t.tooltipRemove : t.tooltipAdd}
                     >
-                      {isSelected ? <CheckCircle2 size={18} /> : <PlusCircle size={18} />}
+                      {isSelected ? (
+                        <CheckCircle2 size={18} />
+                      ) : (
+                        <PlusCircle size={18} />
+                      )}
                     </button>
-                    <div className={`flex-1 text-sm leading-relaxed ${isSelected ? "text-white" : "text-slate-700"}`}>
+                    <div
+                      className={`flex-1 text-sm leading-relaxed ${
+                        isSelected ? "text-white" : "text-slate-700"
+                      }`}
+                    >
                       {item}
                     </div>
                   </div>
@@ -795,8 +814,7 @@ export const ExperiencePopup: FC<{
     try {
       const { rewriteWorkDescription } = await import("@/api/cvapi");
       const res = await rewriteWorkDescription(currentItem.description, "vi");
-      console.log(currentItem.description);
-      console.log(res?.rewritten);
+
       const rewritten = res?.rewritten || res;
       setCurrentItem({ ...currentItem, description: rewritten });
     } catch (err) {
@@ -827,7 +845,11 @@ export const ExperiencePopup: FC<{
   };
 
   return (
-    <Modal title={t.title} onClose={onClose} onSave={isEditing ? undefined : handleSaveChanges}>
+    <Modal
+      title={t.title}
+      onClose={onClose}
+      onSave={isEditing ? undefined : handleSaveChanges}
+    >
       {isEditing ? (
         <div className="space-y-4">
           <div>
@@ -1043,7 +1065,11 @@ export const EducationPopup: FC<{
   };
 
   return (
-    <Modal title={t.title} onClose={onClose} onSave={isEditing ? undefined : handleSaveChanges}>
+    <Modal
+      title={t.title}
+      onClose={onClose}
+      onSave={isEditing ? undefined : handleSaveChanges}
+    >
       {isEditing ? (
         <div className="space-y-4">
           <div>
@@ -1173,7 +1199,12 @@ export const SkillsPopup: FC<{
   const { language } = useLanguage();
   const t = translations[language].skillsPopup;
 
-  const [skills, setSkills] = useState((initialData.skills || []).map((s: any) => ({ name: s.name, rating: s.rating ?? 0 })));
+  const [skills, setSkills] = useState(
+    (initialData.skills || []).map((s: any) => ({
+      name: s.name,
+      rating: s.rating ?? 0,
+    }))
+  );
   const [newSkill, setNewSkill] = useState("");
   const [aiSkillSuggestions, setAiSkillSuggestions] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
@@ -1189,7 +1220,11 @@ export const SkillsPopup: FC<{
         setJobAnalysis(result);
       }
       const res = await suggestSkills(jobAnalysis || {});
-      if (res && Array.isArray(res.skillsOptions) && res.skillsOptions.length > 0) {
+      if (
+        res &&
+        Array.isArray(res.skillsOptions) &&
+        res.skillsOptions.length > 0
+      ) {
         const firstList = res.skillsOptions[0];
         if (Array.isArray(firstList)) {
           setAiSkillSuggestions(firstList.map((s: any) => s.name));
@@ -1198,7 +1233,11 @@ export const SkillsPopup: FC<{
       setHasLoadedAI(true);
     } catch (err) {
       setAiSkillSuggestions([]);
-      notify.error(language === "vi" ? "Không thể lấy gợi ý AI" : "Failed to get AI suggestions");
+      notify.error(
+        language === "vi"
+          ? "Không thể lấy gợi ý AI"
+          : "Failed to get AI suggestions"
+      );
     } finally {
       setLoading(false);
     }
@@ -1257,20 +1296,40 @@ export const SkillsPopup: FC<{
           </div>
           <div className="flex flex-col gap-2 flex-1 overflow-y-auto pr-1 max-h-[280px]">
             {skills.map((skill: any, index: number) => (
-              <div key={index} className="flex items-center w-full bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 px-3 py-2.5 rounded-xl hover:shadow-md transition-all group">
-                <span className="text-slate-700 font-medium truncate pr-3 max-w-[45%]">{skill.name}</span>
+              <div
+                key={index}
+                className="flex items-center w-full bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 px-3 py-2.5 rounded-xl hover:shadow-md transition-all group"
+              >
+                <span className="text-slate-700 font-medium truncate pr-3 max-w-[45%]">
+                  {skill.name}
+                </span>
                 <div className="ml-auto flex items-center gap-1">
-                  {[1,2,3,4,5].map((n) => (
+                  {[1, 2, 3, 4, 5].map((n) => (
                     <button
                       key={n}
                       type="button"
-                      onClick={() => setSkills((prev:any[]) => prev.map((s, i) => i === index ? { ...s, rating: n } : s))}
-                      className={`${(skill.rating||0) >= n ? 'bg-gradient-to-r from-blue-500 to-indigo-500' : 'bg-slate-200'} w-6 h-2 rounded-full transition-all hover:scale-110`}
+                      onClick={() =>
+                        setSkills((prev: any[]) =>
+                          prev.map((s, i) =>
+                            i === index ? { ...s, rating: n } : s
+                          )
+                        )
+                      }
+                      className={`${
+                        (skill.rating || 0) >= n
+                          ? "bg-gradient-to-r from-blue-500 to-indigo-500"
+                          : "bg-slate-200"
+                      } w-6 h-2 rounded-full transition-all hover:scale-110`}
                       aria-label={`rating ${n}`}
                     />
                   ))}
                 </div>
-                <button onClick={() => removeSkill(skill.name)} className="pl-3 text-slate-400 hover:text-red-500 transition-colors"><X size={16} /></button>
+                <button
+                  onClick={() => removeSkill(skill.name)}
+                  className="pl-3 text-slate-400 hover:text-red-500 transition-colors"
+                >
+                  <X size={16} />
+                </button>
               </div>
             ))}
           </div>
@@ -1284,15 +1343,15 @@ export const SkillsPopup: FC<{
               {t.aiSuggestions}
             </div>
             {!hasLoadedAI && (
-              <AIButton 
-                onClick={handleFetchAISuggestions} 
-                isLoading={loading} 
+              <AIButton
+                onClick={handleFetchAISuggestions}
+                isLoading={loading}
                 text={language === "vi" ? "Gợi ý AI" : "Get AI"}
                 size="sm"
               />
             )}
           </div>
-          
+
           <div className="flex flex-col gap-2 flex-1 overflow-y-auto pr-1">
             {!hasLoadedAI && !loading ? (
               <div className="flex flex-col items-center justify-center h-full text-center px-4">
@@ -1300,8 +1359,8 @@ export const SkillsPopup: FC<{
                   <Wand2 size={28} className="text-indigo-500" />
                 </div>
                 <p className="text-slate-500 text-sm">
-                  {language === "vi" 
-                    ? "Bấm nút 'Gợi ý AI' để nhận gợi ý kỹ năng phù hợp với công việc của bạn" 
+                  {language === "vi"
+                    ? "Bấm nút 'Gợi ý AI' để nhận gợi ý kỹ năng phù hợp với công việc của bạn"
                     : "Click 'Get AI' to receive skill suggestions tailored to your job"}
                 </p>
               </div>
@@ -1310,7 +1369,9 @@ export const SkillsPopup: FC<{
                 <div className="relative">
                   <div className="w-12 h-12 rounded-full border-4 border-indigo-100 border-t-indigo-500 animate-spin"></div>
                 </div>
-                <p className="text-slate-600 text-sm font-medium">{t.skillsLoading}</p>
+                <p className="text-slate-600 text-sm font-medium">
+                  {t.skillsLoading}
+                </p>
               </div>
             ) : (
               aiSkillSuggestions.map((skill) => {
@@ -1343,7 +1404,11 @@ export const SkillsPopup: FC<{
   );
 };
 
-export const CertificationPopup: FC<{ onClose: () => void; initialData: any; onSave: (updatedData: any) => void; }> = ({ onClose, initialData, onSave }) => {
+export const CertificationPopup: FC<{
+  onClose: () => void;
+  initialData: any;
+  onSave: (updatedData: any) => void;
+}> = ({ onClose, initialData, onSave }) => {
   const { language } = useLanguage();
   const t = translations[language].certificationPopup;
 
@@ -1355,17 +1420,28 @@ export const CertificationPopup: FC<{ onClose: () => void; initialData: any; onS
     }))
   );
 
-  const handleFieldChange = (index: number, field: "title" | "startDate" | "endDate", value: string) => {
+  const handleFieldChange = (
+    index: number,
+    field: "title" | "startDate" | "endDate",
+    value: string
+  ) => {
     setCertifications((prev: CertificationItem[]) =>
-      prev.map((item, idx) => (idx === index ? { ...item, [field]: value } : item))
+      prev.map((item, idx) =>
+        idx === index ? { ...item, [field]: value } : item
+      )
     );
   };
 
   const addCertification = () =>
-    setCertifications((prev: CertificationItem[]) => [...prev, { title: "", startDate: "", endDate: "" }]);
+    setCertifications((prev: CertificationItem[]) => [
+      ...prev,
+      { title: "", startDate: "", endDate: "" },
+    ]);
 
   const removeCertification = (index: number) =>
-    setCertifications((prev: CertificationItem[]) => prev.filter((_, idx) => idx !== index));
+    setCertifications((prev: CertificationItem[]) =>
+      prev.filter((_, idx) => idx !== index)
+    );
 
   const handleSaveChanges = () => {
     const sanitized = certifications
@@ -1383,7 +1459,10 @@ export const CertificationPopup: FC<{ onClose: () => void; initialData: any; onS
     <Modal title={t.title} onClose={onClose} onSave={handleSaveChanges}>
       <div className="space-y-4 max-h-[400px] overflow-y-auto pr-1">
         {certifications.map((cert: CertificationItem, index: number) => (
-          <div key={index} className="border border-slate-200 rounded-lg p-4 space-y-3">
+          <div
+            key={index}
+            className="border border-slate-200 rounded-lg p-4 space-y-3"
+          >
             <div className="flex items-center justify-between text-sm font-semibold text-slate-600">
               <span>
                 {t.entryLabel} #{index + 1}
@@ -1403,7 +1482,9 @@ export const CertificationPopup: FC<{ onClose: () => void; initialData: any; onS
               <input
                 type="text"
                 value={cert.title}
-                onChange={(e) => handleFieldChange(index, "title", e.target.value)}
+                onChange={(e) =>
+                  handleFieldChange(index, "title", e.target.value)
+                }
                 className="w-full border rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -1415,7 +1496,9 @@ export const CertificationPopup: FC<{ onClose: () => void; initialData: any; onS
                 <input
                   type="date"
                   value={cert.startDate ? cert.startDate.slice(0, 10) : ""}
-                  onChange={(e) => handleFieldChange(index, "startDate", e.target.value)}
+                  onChange={(e) =>
+                    handleFieldChange(index, "startDate", e.target.value)
+                  }
                   className="w-full border rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -1426,7 +1509,9 @@ export const CertificationPopup: FC<{ onClose: () => void; initialData: any; onS
                 <input
                   type="date"
                   value={cert.endDate ? cert.endDate.slice(0, 10) : ""}
-                  onChange={(e) => handleFieldChange(index, "endDate", e.target.value)}
+                  onChange={(e) =>
+                    handleFieldChange(index, "endDate", e.target.value)
+                  }
                   className="w-full border rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -1446,7 +1531,11 @@ export const CertificationPopup: FC<{ onClose: () => void; initialData: any; onS
   );
 };
 
-export const AchievementPopup: FC<{ onClose: () => void; initialData: any; onSave: (updatedData: any) => void; }> = ({ onClose, initialData, onSave }) => {
+export const AchievementPopup: FC<{
+  onClose: () => void;
+  initialData: any;
+  onSave: (updatedData: any) => void;
+}> = ({ onClose, initialData, onSave }) => {
   const { language } = useLanguage();
   const t = translations[language].achievementPopup;
 
@@ -1455,7 +1544,9 @@ export const AchievementPopup: FC<{ onClose: () => void; initialData: any; onSav
   ]);
 
   const handleChange = (index: number, value: string) => {
-    setAchievements((prev: string[]) => prev.map((item, idx) => (idx === index ? value : item)));
+    setAchievements((prev: string[]) =>
+      prev.map((item, idx) => (idx === index ? value : item))
+    );
   };
 
   const addAchievement = () => setAchievements((prev) => [...prev, ""]);
@@ -1503,14 +1594,22 @@ export const AchievementPopup: FC<{ onClose: () => void; initialData: any; onSav
   );
 };
 
-export const HobbyPopup: FC<{ onClose: () => void; initialData: any; onSave: (updatedData: any) => void; }> = ({ onClose, initialData, onSave }) => {
+export const HobbyPopup: FC<{
+  onClose: () => void;
+  initialData: any;
+  onSave: (updatedData: any) => void;
+}> = ({ onClose, initialData, onSave }) => {
   const { language } = useLanguage();
   const t = translations[language].hobbyPopup;
 
-  const [hobbies, setHobbies] = useState<string[]>([...(initialData.hobby || [])]);
+  const [hobbies, setHobbies] = useState<string[]>([
+    ...(initialData.hobby || []),
+  ]);
 
   const handleChange = (index: number, value: string) => {
-    setHobbies((prev: string[]) => prev.map((item, idx) => (idx === index ? value : item)));
+    setHobbies((prev: string[]) =>
+      prev.map((item, idx) => (idx === index ? value : item))
+    );
   };
 
   const addHobby = () => setHobbies((prev) => [...prev, ""]);
@@ -1558,26 +1657,32 @@ export const HobbyPopup: FC<{ onClose: () => void; initialData: any; onSave: (up
   );
 };
 
-export const ProjectPopup: FC<{ onClose: () => void; initialData: any; onSave: (updatedData: any) => void; }> = ({ onClose, initialData, onSave }) => {
+export const ProjectPopup: FC<{
+  onClose: () => void;
+  initialData: any;
+  onSave: (updatedData: any) => void;
+}> = ({ onClose, initialData, onSave }) => {
   const { language } = useLanguage();
   const t = translations[language].projectPopup;
 
   const [projects, setProjects] = useState<ProjectItem[]>(() => {
     // Nếu không có Project hoặc Project rỗng, tạo một project mẫu
     if (!initialData.Project || initialData.Project.length === 0) {
-      return [{
-        title: "",
-        summary: "",
-        startDate: "",
-        endDate: "",
-      }];
+      return [
+        {
+          title: "",
+          summary: "",
+          startDate: "",
+          endDate: "",
+        },
+      ];
     }
-    
+
     // Chuyển đổi từ ISO date string sang format YYYY-MM-DD cho input date
     return initialData.Project.map((item: any) => {
       let startDate = "";
       let endDate = "";
-      
+
       if (item?.startDate) {
         try {
           const date = new Date(item.startDate);
@@ -1588,7 +1693,7 @@ export const ProjectPopup: FC<{ onClose: () => void; initialData: any; onSave: (
           startDate = item.startDate;
         }
       }
-      
+
       if (item?.endDate) {
         try {
           const date = new Date(item.endDate);
@@ -1599,7 +1704,7 @@ export const ProjectPopup: FC<{ onClose: () => void; initialData: any; onSave: (
           endDate = item.endDate;
         }
       }
-      
+
       return {
         title: item?.title || item?.["title "] || "",
         summary: item?.summary || "",
@@ -1615,27 +1720,34 @@ export const ProjectPopup: FC<{ onClose: () => void; initialData: any; onSave: (
     value: string
   ) => {
     setProjects((prev: ProjectItem[]) =>
-      prev.map((item, idx) => (idx === index ? { ...item, [field]: value } : item))
+      prev.map((item, idx) =>
+        idx === index ? { ...item, [field]: value } : item
+      )
     );
   };
 
   const addProject = () =>
-    setProjects((prev: ProjectItem[]) => [...prev, { title: "", summary: "", startDate: "", endDate: "" }]);
+    setProjects((prev: ProjectItem[]) => [
+      ...prev,
+      { title: "", summary: "", startDate: "", endDate: "" },
+    ]);
 
   const removeProject = (index: number) =>
-    setProjects((prev: ProjectItem[]) => prev.filter((_, idx) => idx !== index));
+    setProjects((prev: ProjectItem[]) =>
+      prev.filter((_, idx) => idx !== index)
+    );
 
   const handleSaveChanges = () => {
     const sanitized = projects
       .map((item) => {
         // Chuyển đổi date string (YYYY-MM-DD) sang ISO format
-        const startDateISO = item.startDate 
+        const startDateISO = item.startDate
           ? new Date(item.startDate + "T00:00:00").toISOString()
           : "";
-        const endDateISO = item.endDate 
+        const endDateISO = item.endDate
           ? new Date(item.endDate + "T00:00:00").toISOString()
           : "";
-        
+
         return {
           title: item.title?.trim() || "",
           summary: item.summary || "",
@@ -1644,13 +1756,13 @@ export const ProjectPopup: FC<{ onClose: () => void; initialData: any; onSave: (
         };
       })
       .filter((item) => item.title);
-    
+
     // Đảm bảo Project luôn là mảng
     const updatedData = {
       ...initialData,
       Project: sanitized.length > 0 ? sanitized : [],
     };
-    
+
     onSave(updatedData);
     onClose();
   };
@@ -1659,7 +1771,10 @@ export const ProjectPopup: FC<{ onClose: () => void; initialData: any; onSave: (
     <Modal title={t.title} onClose={onClose} onSave={handleSaveChanges}>
       <div className="space-y-4 max-h-[420px] overflow-y-auto pr-1">
         {projects.map((project: ProjectItem, index: number) => (
-          <div key={index} className="border border-slate-200 rounded-lg p-4 space-y-3">
+          <div
+            key={index}
+            className="border border-slate-200 rounded-lg p-4 space-y-3"
+          >
             <div className="flex items-center justify-between text-sm font-semibold text-slate-600">
               <span>
                 {t.entryLabel} #{index + 1}
@@ -1679,7 +1794,9 @@ export const ProjectPopup: FC<{ onClose: () => void; initialData: any; onSave: (
               <input
                 type="text"
                 value={project.title}
-                onChange={(e) => handleFieldChange(index, "title", e.target.value)}
+                onChange={(e) =>
+                  handleFieldChange(index, "title", e.target.value)
+                }
                 className="w-full border rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -1690,7 +1807,9 @@ export const ProjectPopup: FC<{ onClose: () => void; initialData: any; onSave: (
               <textarea
                 rows={3}
                 value={project.summary}
-                onChange={(e) => handleFieldChange(index, "summary", e.target.value)}
+                onChange={(e) =>
+                  handleFieldChange(index, "summary", e.target.value)
+                }
                 className="w-full border rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -1701,8 +1820,12 @@ export const ProjectPopup: FC<{ onClose: () => void; initialData: any; onSave: (
                 </label>
                 <input
                   type="date"
-                  value={project.startDate ? project.startDate.slice(0, 10) : ""}
-                  onChange={(e) => handleFieldChange(index, "startDate", e.target.value)}
+                  value={
+                    project.startDate ? project.startDate.slice(0, 10) : ""
+                  }
+                  onChange={(e) =>
+                    handleFieldChange(index, "startDate", e.target.value)
+                  }
                   className="w-full border rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -1713,7 +1836,9 @@ export const ProjectPopup: FC<{ onClose: () => void; initialData: any; onSave: (
                 <input
                   type="date"
                   value={project.endDate ? project.endDate.slice(0, 10) : ""}
-                  onChange={(e) => handleFieldChange(index, "endDate", e.target.value)}
+                  onChange={(e) =>
+                    handleFieldChange(index, "endDate", e.target.value)
+                  }
                   className="w-full border rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>

@@ -114,7 +114,11 @@ const CardCVTemplate: React.FC<CardCVTemplateProps> = ({
           boxShadow: "0 0 5px rgba(0,0,0,0.1)",
         }}
       >
-        <TemplateComponent data={previewData}  language={language} isPdfMode={true}/>
+        <TemplateComponent
+          data={previewData}
+          language={language}
+          isPdfMode={true}
+        />
       </div>
     );
   };
@@ -132,7 +136,6 @@ const CardCVTemplate: React.FC<CardCVTemplateProps> = ({
 
     // Kiểm tra token
     if (token) {
-      console.log("[CardCVTemplate] Navigating with template ID:", _id);
       router.push(`/chooseCreateCV?id=${_id}`);
     } else {
       notify.error("Bạn cần đăng nhập để tạo CV!");

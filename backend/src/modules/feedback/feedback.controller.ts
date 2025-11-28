@@ -19,9 +19,8 @@ export class FormFeedbackController {
 
   // Endpoint từ web hoặc Apps Script
   @Post("google-form")
-  @UseGuards(JwtAuthGuard)
   async createFromGoogleForm(
-    @Body() createDto: CreateFormFeedbackDto,
+    @Body() createDto: CreateFormFeedbackDto
   ): Promise<FormFeedback> {
     return this.feedbackService.create(createDto);
   }
@@ -34,7 +33,7 @@ export class FormFeedbackController {
   @Get("feature/:feature")
   @UseGuards(JwtAuthGuard)
   async findByFeature(
-    @Param("feature") feature: string,
+    @Param("feature") feature: string
   ): Promise<FormFeedback[]> {
     return this.feedbackService.findByFeature(feature);
   }

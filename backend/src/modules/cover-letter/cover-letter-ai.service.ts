@@ -5,14 +5,19 @@ import OpenAI from "openai";
 import * as pdfParse from "pdf-parse";
 import { CreateGenerateCoverLetterDto } from "../cover-letter/dto/create-generate-cl-ai.dto";
 import { OpenaiApiService } from "../cv/services/openai-api.service";
+import { AiUsageLogService } from "../ai-usage-log/ai-usage-log.service";
 
 @Injectable()
 export class CoverLetterAiService {
-  constructor(private openaiApiService: OpenaiApiService) {}
+  constructor(
+    private openaiApiService: OpenaiApiService,
+    private readonly logService: AiUsageLogService
+  ) {}
 
   async generateCoverLetterByAi(
     createClAi: CreateGenerateCoverLetterDto,
-    jobDescription: string
+    jobDescription: string,
+    userId: string
   ) {
     try {
       const {
@@ -108,6 +113,13 @@ Rules:
         total_tokens: 0,
       };
       console.log("Usage:", usage);
+      if (userId) {
+        await this.logService.createLog({
+          userId: userId,
+          feature: "coverLetterAI",
+          tokensUsed: usage.total_tokens,
+        });
+      }
 
       const cleanedResponse = response
         .replace(/```json/g, "")
@@ -154,7 +166,8 @@ Rules:
   async extractCoverLetter(
     coverLetter: string,
     jobDescription: string,
-    templateId: string
+    templateId: string,
+    userId: string
   ) {
     const promptSystem = `You are a precise and reliable AI that extracts structured data from cover letters.
 
@@ -231,7 +244,13 @@ Rules:
       total_tokens: 0,
     };
     console.log("Usage cover letter:", usage);
-
+    if (userId) {
+      await this.logService.createLog({
+        userId: userId,
+        feature: "coverLetterAI",
+        tokensUsed: usage.total_tokens,
+      });
+    }
     return {
       templateId,
       title: "Extracted from PDF",

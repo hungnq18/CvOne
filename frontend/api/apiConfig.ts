@@ -1,8 +1,6 @@
+// export const API_URL = "http://localhost:8000/api";
 
-export const API_URL = "http://localhost:8000/api";
-
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
-// export const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+export const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 // API Endpoints
 export const API_ENDPOINTS = {
@@ -19,7 +17,6 @@ export const API_ENDPOINTS = {
     VERIFY_EMAIL: "/accounts/verify-email",
     CREATE: "/cover-letters",
     FORGOT_PASSWORD: "/auth/forgot-password",
-
   },
   ACCOUNTS: {
     VERIFY_EMAIL: "/accounts/verify-email",
@@ -147,7 +144,7 @@ export const API_ENDPOINTS = {
     CREATE_ORDER: "/orders", //BODY:{voucherId,totalToken,price,paymentMethod}
     UPDATE_ORDER_STATUS: (id: string) => `/orders/${id}/update`, //BODY:{status}
     GET_ORDER_BY_CODE: (orderCode: string) => `/orders/code/${orderCode}`,
-    GET_ORDER_HISTORY: "/orders/history" //lấy ra lịch sử order của user
+    GET_ORDER_HISTORY: "/orders/history", //lấy ra lịch sử order của user
   },
   CREDIT: {
     UPDATE_TOKEN: "/credits/update-token", //BODY:{token} @PATCH
@@ -167,6 +164,6 @@ export const API_ENDPOINTS = {
   },
   AVERAGE_AI: {
     GET_ALL_AVERAGE: "/ai-average/average-stats",
-    RESET_AVERAGE: "/ai-average/reset"
-  }
+    RESET_AVERAGE: "/ai-average/reset",
+  },
 } as const;

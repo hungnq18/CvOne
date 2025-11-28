@@ -1,16 +1,23 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { OpenaiApiService } from "./openai-api.service";
+import { AiUsageLogService } from "src/modules/ai-usage-log/ai-usage-log.service";
 
 @Injectable()
 export class JobAnalysisService {
   private readonly logger = new Logger(JobAnalysisService.name);
 
-  constructor(private openaiApiService: OpenaiApiService) {}
+  constructor(
+    private openaiApiService: OpenaiApiService,
+    private readonly logService: AiUsageLogService
+  ) {}
 
   /**
    * Analyze job description using OpenAI
    */
-  async analyzeJobDescription(jobDescription: string): Promise<{
+  async analyzeJobDescription(
+    jobDescription: string,
+    userId?: string
+  ): Promise<{
     requiredSkills: string[];
     experienceLevel: string;
     keyResponsibilities: string[];
@@ -94,7 +101,13 @@ Return only valid JSON without any additional text.
         total_tokens: 0,
       };
       console.log("Usage analysis:", usage);
-
+      if (userId) {
+        await this.logService.createLog({
+          userId: userId,
+          feature: "analyzeJD",
+          tokensUsed: usage.total_tokens,
+        });
+      }
       this.logger.log("Job description analysis completed successfully");
       return analysis;
     } catch (error) {

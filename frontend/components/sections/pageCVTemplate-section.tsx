@@ -118,7 +118,11 @@ const TemplatePreviewModal: FC<TemplatePreviewModalProps> = ({
             </div>
           ) : (
             <div className="mt-8 w-full max-w-[1050px] shadow-2xl origin-top scale-[0.6] md:scale-[0.7] lg:scale-[0.8]">
-              <TemplateComponent data={defaultPreviewData} language={language} isPdfMode={true}/>
+              <TemplateComponent
+                data={defaultPreviewData}
+                language={language}
+                isPdfMode={true}
+              />
             </div>
           )}
         </div>
@@ -137,7 +141,12 @@ const TemplatePreviewModal: FC<TemplatePreviewModalProps> = ({
               viewBox="0 0 24 24"
               xmlns="http://www.w3.org/2000/svg"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 5l7 7-7 7"
+              />
             </svg>
           </button>
         </div>
@@ -166,7 +175,6 @@ const CvTemplatesPage: FC<Props> = ({ initialTemplates }) => {
   // Debug: Log template IDs
   React.useEffect(() => {
     if (cvTemplates.length > 0) {
-      console.log("[CVTemplatesPage] All templates received:", cvTemplates.map(t => ({ _id: t._id, title: t.title })));
     }
   }, [cvTemplates]);
 
@@ -186,9 +194,10 @@ const CvTemplatesPage: FC<Props> = ({ initialTemplates }) => {
         <button
           onClick={() => setViewMode("recommended")}
           className={`w-40 h-12 rounded-lg border font-medium transition-all duration-200 text-base shadow-sm
-            ${viewMode === "recommended"
-              ? "bg-blue-600 text-white border-blue-600 hover:bg-blue-700"
-              : "bg-blue-50 text-blue-600 border-blue-600 hover:bg-blue-100"
+            ${
+              viewMode === "recommended"
+                ? "bg-blue-600 text-white border-blue-600 hover:bg-blue-700"
+                : "bg-blue-50 text-blue-600 border-blue-600 hover:bg-blue-100"
             }`}
         >
           {language === "vi" ? "Được Đề Xuất" : "Recommended"}
@@ -196,9 +205,10 @@ const CvTemplatesPage: FC<Props> = ({ initialTemplates }) => {
         <button
           onClick={() => setViewMode("all")}
           className={`w-40 h-12 rounded-lg border font-medium transition-all duration-200 text-base shadow-sm
-            ${viewMode === "all"
-              ? "bg-blue-600 text-white border-blue-600 hover:bg-blue-700"
-              : "bg-blue-50 text-blue-600 border-blue-600 hover:bg-blue-100"
+            ${
+              viewMode === "all"
+                ? "bg-blue-600 text-white border-blue-600 hover:bg-blue-700"
+                : "bg-blue-50 text-blue-600 border-blue-600 hover:bg-blue-100"
             }`}
         >
           {language === "vi" ? "Tất Cả" : "All"}

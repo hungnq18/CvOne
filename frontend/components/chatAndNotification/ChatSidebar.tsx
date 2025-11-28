@@ -1,10 +1,9 @@
 import { Conversation, Message } from '@/api/apiChat';
 import { Avatar } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useChat } from '@/providers/ChatProvider';
 import { useLanguage } from '@/providers/global_provider';
 import { formatTime } from '@/utils/formatTime';
-import { useState } from 'react';
+import { useState, useMemo, memo } from 'react';
 
 const sidebarTranslations = {
     en: {
@@ -35,7 +34,164 @@ interface ChatSidebarProps {
     onSelectConversation: (conversationId: string) => void;
 }
 
-export default function ChatSidebar({
+// Memoize ConversationItem để tránh re-render không cần thiết
+const ConversationItem = memo(({
+    conv,
+    isSelected,
+    userId,
+    onSelect,
+    getAvatarColor,
+    selectedConversationDetail
+}: {
+    conv: Conversation;
+    isSelected: boolean;
+    userId: string | null;
+    onSelect: (id: string) => void;
+    getAvatarColor: (name: string) => string;
+    selectedConversationDetail?: {
+        _id: string;
+        participants: any[];
+        lastMessage: Message | null;
+    } | null;
+}) => {
+    // Normalize userId để so sánh
+    const normalizedUserId = userId ? String(userId) : null;
+
+    // Ưu tiên otherUser từ conv, nếu không có thì lấy từ selectedConversationDetail
+    let otherUser = conv.otherUser;
+
+
+    // Nếu không có otherUser và đây là conversation được chọn, lấy từ selectedConversationDetail
+    if ((!otherUser || !otherUser.first_name) && isSelected && selectedConversationDetail) {
+        const otherParticipant = selectedConversationDetail.participants?.find((p: any) => {
+            if (!p) return false;
+            const pid = typeof p === "object" && p._id
+                ? String(p._id)
+                : String(p);
+            return normalizedUserId && pid !== normalizedUserId;
+        });
+        if (otherParticipant && typeof otherParticipant === "object" && (otherParticipant.first_name || otherParticipant._id)) {
+            otherUser = otherParticipant;
+        }
+    }
+
+    // Nếu vẫn không có, thử lấy từ participants của conv
+    if ((!otherUser || !otherUser.first_name) && conv.participants && Array.isArray(conv.participants)) {
+        const otherParticipant = conv.participants.find((p: any) => {
+            if (!p) return false;
+            const pid = typeof p === "object" && p._id
+                ? String(p._id)
+                : String(p);
+            return normalizedUserId && pid !== normalizedUserId;
+        });
+        if (otherParticipant) {
+            // Nếu là object có first_name, dùng trực tiếp
+            if (typeof otherParticipant === "object" && otherParticipant.first_name) {
+                otherUser = otherParticipant;
+            } else if (typeof otherParticipant === "string") {
+                // Nếu là string ID, cần fetch user data (sẽ được xử lý bởi processConversationsData)
+                // Nhưng ở đây chúng ta không có access đến userCache, nên skip
+            }
+        }
+    }
+
+    // Tìm số chưa đọc
+    let unread = 0;
+    if (Array.isArray(conv.unreadCount) && normalizedUserId) {
+        const entry = conv.unreadCount.find((u: any) => {
+            if (!u || !u.userId) return false;
+            const uid = typeof u.userId === "object" && u.userId && u.userId._id
+                ? String(u.userId._id)
+                : String(u.userId);
+            return uid === normalizedUserId;
+        });
+        unread = entry?.count || 0;
+    } else if (typeof conv.unreadCount === 'number') {
+        unread = conv.unreadCount;
+    }
+
+    // Lấy tên user - Kiểm tra kỹ hơn
+    let displayName = 'Unknown User';
+    if (otherUser) {
+        if (typeof otherUser === "object") {
+            if (otherUser.first_name) {
+                displayName = `${otherUser.first_name} ${otherUser.last_name || ''}`.trim();
+            } else if (otherUser._id) {
+                // Có _id nhưng không có first_name - có thể chưa được populate
+                console.warn("⚠️ otherUser has _id but no first_name:", otherUser);
+            }
+        } else if (typeof otherUser === "string") {
+            // otherUser là string ID - không thể hiển thị tên
+            console.warn("⚠️ otherUser is string ID, cannot display name:", otherUser);
+        }
+    }
+
+    // Debug log nếu vẫn là Unknown User
+    if (displayName === 'Unknown User') {
+        console.warn("⚠️ Cannot find display name for conversation:", {
+            convId: conv._id,
+            otherUser,
+            otherUserType: typeof otherUser,
+            hasFirstName: otherUser && typeof otherUser === "object" ? !!otherUser.first_name : false,
+            participants: conv.participants,
+        });
+    }
+
+    // Helper để lấy avatar color
+    const getAvatarColorForUser = (user: any): string => {
+        if (user && typeof user === "object" && user.first_name) {
+            return getAvatarColor((user.first_name || '') + (user.last_name || ''));
+        }
+        return '#888';
+    };
+
+    // Helper để lấy avatar initials
+    const getAvatarInitials = (user: any): string => {
+        if (user && typeof user === "object" && user.first_name) {
+            return `${(user.first_name || 'U')[0]}${(user.last_name || 'U')[0]}`.toUpperCase();
+        }
+        return 'U';
+    };
+
+    return (
+        <div
+            onClick={() => onSelect(conv._id)}
+            className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors hover:bg-muted/50 ${isSelected ? "bg-muted" : ""}`}
+        >
+            <div className="relative">
+                <Avatar className="h-12 w-12" style={{ background: getAvatarColorForUser(otherUser) }}>
+                    <span className="text-2xl text-white font-semibold flex items-center justify-center w-full h-full">
+                        {getAvatarInitials(otherUser)}
+                    </span>
+                </Avatar>
+                {/* Online dot */}
+                {typeof otherUser === 'object' && typeof (otherUser as any).online === 'boolean' && (otherUser as any).online && (
+                    <div className="absolute bottom-0 right-0 h-3 w-3 bg-green-500 border-2 border-background rounded-full"></div>
+                )}
+            </div>
+            <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between">
+                    <h3 className="font-medium truncate">{displayName}</h3>
+                    <span className="text-xs text-muted-foreground">{conv.lastMessage ? formatTime(conv.lastMessage.createdAt) : ''}</span>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm text-muted-foreground line-clamp-1 break-all min-w-0">
+                        {conv.lastMessage?.content || 'Chưa có tin nhắn'}
+                    </p>
+                    {unread > 0 && (
+                        <span className="bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center flex-shrink-0">
+                            {unread > 99 ? '99+' : unread}
+                        </span>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+});
+
+ConversationItem.displayName = 'ConversationItem';
+
+function ChatSidebar({
     conversations,
     selectedConversationId,
     selectedConversationDetail,
@@ -43,37 +199,24 @@ export default function ChatSidebar({
     onSelectConversation
 }: ChatSidebarProps) {
     const [searchQuery, setSearchQuery] = useState('');
-    const { markConversationAsRead } = useChat();
     const [activeTab, setActiveTab] = useState<'all' | 'unread'>('all');
     const { language } = useLanguage();
     const t = sidebarTranslations[language] || sidebarTranslations.vi;
 
-    // Lọc danh sách cuộc trò chuyện dựa trên tên người dùng
-    const filteredConversations = conversations.filter(conv => {
-        if (!searchQuery) return true;
-        const otherUser = conv.otherUser;
-        if (!otherUser) return false;
+    // Memoize filtered conversations để tránh filter lại mỗi lần render
+    const filteredConversations = useMemo(() => {
+        return conversations.filter(conv => {
+            if (!searchQuery) return true;
+            const otherUser = conv.otherUser;
+            if (!otherUser) return false;
 
-        const fullName = `${otherUser.first_name} ${otherUser.last_name}`.toLowerCase();
-        return fullName.includes(searchQuery.toLowerCase());
-    });
+            const fullName = `${otherUser.first_name} ${otherUser.last_name}`.toLowerCase();
+            return fullName.includes(searchQuery.toLowerCase());
+        });
+    }, [conversations, searchQuery]);
 
-    const handleSelectConversation = (conversationId: string) => {
-        markConversationAsRead(conversationId);
-        onSelectConversation(conversationId);
-    };
-
-    // Tách nhóm chưa đọc và đã đọc
-    const unreadConversations = filteredConversations.filter(conv => {
-        if (!Array.isArray(conv.unreadCount) || !userId) return false;
-        const entry = conv.unreadCount.find(u => u.userId === userId);
-        return entry && entry.count > 0;
-    });
-    const readConversations = filteredConversations.filter(conv => {
-        if (!Array.isArray(conv.unreadCount) || !userId) return true;
-        const entry = conv.unreadCount.find(u => u.userId === userId);
-        return !entry || entry.count === 0;
-    });
+    // onSelectConversation đã xử lý markConversationAsRead trong ChatPage
+    // Không cần gọi lại ở đây để tránh duplicate logic
 
     // Thêm hàm tạo màu nền từ tên user
     function getAvatarColor(name: string) {
@@ -111,56 +254,21 @@ export default function ChatSidebar({
                             <p className="text-muted-foreground">Chưa có cuộc trò chuyện nào</p>
                         </div>
                     ) : (
-                        filteredConversations.map((conv) => {
-                            const otherUser = conv.otherUser;
-                            const isSelected = selectedConversationId === conv._id;
-                            // Tìm số chưa đọc
-                            let unread = 0;
-                            if (Array.isArray(conv.unreadCount) && userId) {
-                                const entry = conv.unreadCount.find(u => u.userId === userId);
-                                unread = entry?.count || 0;
-                            } else if (typeof conv.unreadCount === 'number') {
-                                unread = conv.unreadCount;
-                            }
-                            return (
-                                <div
-                                    key={conv._id}
-                                    onClick={() => onSelectConversation(conv._id)}
-                                    className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors hover:bg-muted/50 ${isSelected ? "bg-muted" : ""}`}
-                                >
-                                    <div className="relative">
-                                        <Avatar className="h-12 w-12" style={{ background: otherUser && typeof otherUser.first_name === 'string' && typeof otherUser.last_name === 'string' ? getAvatarColor(otherUser.first_name + otherUser.last_name) : '#888' }}>
-                                            <span className="text-2xl text-white font-semibold flex items-center justify-center w-full h-full">
-                                                {otherUser && typeof otherUser.first_name === 'string' && typeof otherUser.last_name === 'string'
-                                                    ? `${otherUser.first_name[0]}${otherUser.last_name[0]}`
-                                                    : 'U'}
-                                            </span>
-                                        </Avatar>
-                                        {/* Online dot */}
-                                        {typeof otherUser === 'object' && typeof (otherUser as any).online === 'boolean' && (otherUser as any).online && (
-                                            <div className="absolute bottom-0 right-0 h-3 w-3 bg-green-500 border-2 border-background rounded-full"></div>
-                                        )}
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex items-center justify-between">
-                                            <h3 className="font-medium truncate">{otherUser ? `${otherUser.first_name} ${otherUser.last_name}` : 'Unknown User'}</h3>
-                                            <span className="text-xs text-muted-foreground">{conv.lastMessage ? formatTime(conv.lastMessage.createdAt) : ''}</span>
-                                        </div>
-                                        <div className="flex items-center justify-between">
-                                            <p className="text-sm text-muted-foreground truncate">{conv.lastMessage?.content || ''}</p>
-                                            {unread > 0 && (
-                                                <span className="bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                                                    {unread}
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-                            );
-                        })
+                        filteredConversations.map((conv) => (
+                            <ConversationItem
+                                key={conv._id}
+                                conv={conv}
+                                isSelected={selectedConversationId === conv._id}
+                                userId={userId}
+                                onSelect={onSelectConversation}
+                                getAvatarColor={getAvatarColor}
+                                selectedConversationDetail={selectedConversationDetail}
+                            />
+                        ))
                     )}
                 </div>
             </ScrollArea>
         </div>
     );
-} 
+}
+export default memo(ChatSidebar);

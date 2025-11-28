@@ -2,6 +2,7 @@ import { API_ENDPOINTS } from "./apiConfig";
 import { fetchWithAuth } from "./apiClient";
 import socket from "@/utils/socket/client";
 import { User } from "@/types/auth";
+import { userCache } from "@/utils/userCache";
 
 export interface Message {
   _id: string;
@@ -15,101 +16,256 @@ export interface Message {
 
 export interface Conversation {
   _id: string;
-  participants: string[];
+  participants: string[] | any[];
   lastMessage?: {
     _id: string;
     content: string;
-    senderId: string;
+    senderId: string | any;
     createdAt: string;
     sender?: User;
   };
-  unreadCount: number;
+  unreadCount: number | { userId: string | any; count: number }[];
   otherUser?: User;
   currentUser?: User;
 }
 
 /**
- * Process message data to ensure consistent format
+ * Normalize ID từ object hoặc string - Xử lý đúng ObjectId từ MongoDB
  */
-export const processMessageData = async (msg: any): Promise<Message> => {
-  try {
-    const senderId =
-      typeof msg.senderId === "object" ? msg.senderId._id : msg.senderId;
-    
-    // Fetch sender user - skip if fails (user might not exist)
-    let sender: User | undefined;
-    try {
-      sender = await fetchWithAuth(
-        API_ENDPOINTS.USER.GET_BY_ID(senderId)
-      );
-    } catch (err) {
-      // 404 means user doesn't exist - this is OK, just skip
-      if ((err as any)?.status !== 404) {
-        console.warn(`[processMessageData] Failed to fetch sender ${senderId}:`, err);
+const normalizeId = (id: any): string | null => {
+  if (!id) return null;
+
+  // Nếu là string, kiểm tra format hợp lệ
+  if (typeof id === "string") {
+    // Kiểm tra xem có phải ObjectId hợp lệ không (24 ký tự hex)
+    if (/^[0-9a-fA-F]{24}$/.test(id)) return id;
+    return null;
+  }
+
+  // Nếu là object
+  if (typeof id === "object") {
+    // Trường hợp 1: Object có _id property
+    if (id._id) {
+      const idValue = id._id;
+      // Nếu _id là string
+      if (typeof idValue === "string") {
+        if (/^[0-9a-fA-F]{24}$/.test(idValue)) return idValue;
+      }
+      // Nếu _id là object (ObjectId), gọi toString()
+      if (
+        typeof idValue === "object" &&
+        typeof idValue.toString === "function"
+      ) {
+        const str = idValue.toString();
+        if (/^[0-9a-fA-F]{24}$/.test(str)) return str;
       }
     }
 
+    // Trường hợp 2: Object có toString() method (ObjectId trực tiếp)
+    if (typeof id.toString === "function") {
+      const str = id.toString();
+      // Kiểm tra không phải "[object Object]"
+      if (str && str !== "[object Object]" && /^[0-9a-fA-F]{24}$/.test(str)) {
+        return str;
+      }
+    }
+  }
+
+  return null;
+};
+
+/**
+ * Process multiple messages with batch user loading - TỐI ƯU
+ */
+export const processMessagesData = async (
+  messages: any[]
+): Promise<Message[]> => {
+  try {
+    // Collect all unique sender IDs - normalize đúng cách
+    const senderIds = new Set<string>();
+    messages.forEach((msg) => {
+      const normalizedId = normalizeId(msg.senderId);
+      if (normalizedId) senderIds.add(normalizedId);
+    });
+
+    // Batch fetch all users at once
+    const usersMap = await userCache.getUsersByIds(Array.from(senderIds));
+
+    // Process messages with cached users
+    return messages
+      .map((msg) => {
+        if (!msg) return msg; // Skip null/undefined messages
+
+        const senderId = normalizeId(msg.senderId);
+        // Nếu senderId đã là object (populated), giữ lại làm sender
+        const sender =
+          typeof msg.senderId === "object" && msg.senderId && msg.senderId._id
+            ? msg.senderId
+            : senderId
+            ? usersMap.get(senderId)
+            : undefined;
+
+        return {
+          ...msg,
+          senderId:
+            senderId ||
+            (typeof msg.senderId === "object" && msg.senderId?._id
+              ? normalizeId(msg.senderId._id)
+              : msg.senderId?.toString() || msg.senderId),
+          sender,
+        };
+      })
+      .filter(Boolean); // Filter out any null/undefined messages
+  } catch (err) {
+    console.error("Error processing messages:", err);
+    return messages;
+  }
+};
+
+/**
+ * Process single message data - TỐI ƯU với cache
+ */
+export const processMessageData = async (msg: any): Promise<Message> => {
+  try {
+    const normalizedId = normalizeId(msg.senderId);
+    // Nếu senderId đã được populate (là object), giữ lại
+    const sender =
+      typeof msg.senderId === "object" && msg.senderId._id
+        ? msg.senderId
+        : normalizedId
+        ? await userCache.getUserById(normalizedId)
+        : undefined;
+
     return {
       ...msg,
-      senderId,
+      senderId:
+        normalizedId ||
+        (typeof msg.senderId === "object"
+          ? msg.senderId._id?.toString()
+          : msg.senderId),
       sender,
     };
   } catch (err) {
-    console.error("[processMessageData] Error processing message:", err);
+    console.error("Error processing message:", err);
     return msg;
   }
 };
 
 /**
- * Process conversation data to ensure consistent format
+ * Process multiple conversations with batch user loading - TỐI ƯU
+ */
+export const processConversationsData = async (
+  conversations: any[],
+  currentUserId: string
+): Promise<Conversation[]> => {
+  try {
+    // Collect all unique user IDs - normalize đúng cách
+    const normalizedCurrentUserId = normalizeId(currentUserId);
+    const userIds = new Set<string>();
+    if (normalizedCurrentUserId) userIds.add(normalizedCurrentUserId);
+
+    conversations.forEach((conv) => {
+      conv.participants?.forEach((id: any) => {
+        const normalizedId = normalizeId(id);
+        if (normalizedId && normalizedId !== normalizedCurrentUserId) {
+          userIds.add(normalizedId);
+        }
+      });
+    });
+
+    // Batch fetch all users at once
+    const usersMap = await userCache.getUsersByIds(Array.from(userIds));
+    const currentUser = normalizedCurrentUserId
+      ? usersMap.get(normalizedCurrentUserId)
+      : undefined;
+
+    // Process conversations with cached users
+    return conversations.map((conv) => {
+      // Nếu participants đã được populate, giữ lại; nếu không, normalize
+      const participants =
+        conv.participants
+          ?.map((p: any) => {
+            if (typeof p === "string") return p;
+            if (typeof p === "object" && p._id)
+              return normalizeId(p._id) || p._id.toString();
+            return normalizeId(p);
+          })
+          .filter(Boolean) || [];
+
+      const otherParticipantId = participants.find(
+        (id: string) => id !== normalizedCurrentUserId
+      );
+
+      // Nếu participant đã được populate, dùng trực tiếp
+      const populatedOtherUser = conv.participants?.find((p: any) => {
+        const pid = normalizeId(p);
+        return (
+          pid === otherParticipantId && typeof p === "object" && p.first_name
+        );
+      });
+
+      const otherUser =
+        populatedOtherUser ||
+        (otherParticipantId ? usersMap.get(otherParticipantId) : undefined);
+
+      return {
+        ...conv,
+        participants,
+        otherUser,
+        currentUser,
+      };
+    });
+  } catch (err) {
+    console.error("Error processing conversations:", err);
+    return conversations;
+  }
+};
+
+/**
+ * Process conversation data - TỐI ƯU với cache
  */
 export const processConversationData = async (
   conv: any,
   currentUserId: string
 ): Promise<Conversation> => {
   try {
-    const otherParticipantId = conv.participants?.find(
-      (id: string) => id !== currentUserId
+    const normalizedCurrentUserId = normalizeId(currentUserId);
+    const otherParticipantRaw = conv.participants?.find(
+      (id: any) => normalizeId(id) !== normalizedCurrentUserId
     );
-    
-    // Fetch current user - skip if fails (user might not exist)
-    let currentUserResponse: User | undefined;
-    try {
-      currentUserResponse = await fetchWithAuth(
-        API_ENDPOINTS.USER.GET_BY_ID(currentUserId)
-      );
-    } catch (err) {
-      console.warn(`[processConversationData] Failed to fetch current user ${currentUserId}:`, err);
-    }
-    
-    // Fetch other user - skip if fails (user might not exist or be deleted)
-    let otherUserResponse: User | undefined;
-    if (otherParticipantId) {
-      try {
-        otherUserResponse = await fetchWithAuth(
-          API_ENDPOINTS.USER.GET_BY_ID(otherParticipantId)
-        );
-      } catch (err) {
-        // 404 means user doesn't exist - this is OK, just skip
-        if ((err as any)?.status !== 404) {
-          console.warn(`[processConversationData] Failed to fetch other user ${otherParticipantId}:`, err);
-        }
-      }
-    }
+    const otherParticipantId = normalizeId(otherParticipantRaw);
+
+    // Nếu participants đã được populate, dùng trực tiếp
+    const populatedOtherUser =
+      typeof otherParticipantRaw === "object" && otherParticipantRaw.first_name
+        ? otherParticipantRaw
+        : undefined;
+
+    // Fetch users in parallel using cache
+    const [currentUser, otherUser] = await Promise.all([
+      normalizedCurrentUserId
+        ? userCache.getUserById(normalizedCurrentUserId)
+        : undefined,
+      populatedOtherUser
+        ? Promise.resolve(populatedOtherUser)
+        : otherParticipantId
+        ? userCache.getUserById(otherParticipantId)
+        : undefined,
+    ]);
 
     return {
       ...conv,
-      otherUser: otherUserResponse,
-      currentUser: currentUserResponse,
+      otherUser: populatedOtherUser || otherUser,
+      currentUser,
     };
   } catch (err) {
-    console.error("[processConversationData] Error processing conversation:", err);
+    console.error("Error processing conversation:", err);
     return conv;
   }
 };
 
 /**
- * Get messages for a specific conversation
+ * Get messages for a specific conversation - TỐI ƯU với batch processing
  */
 export const getMessages = async (
   conversationId: string
@@ -121,14 +277,15 @@ export const getMessages = async (
     if (!Array.isArray(response)) {
       return [];
     }
-    return await Promise.all(response.map(processMessageData));
+    // Sử dụng batch processing thay vì Promise.all cho từng message
+    return await processMessagesData(response);
   } catch (err) {
     return [];
   }
 };
 
 /**
- * Get conversations for the current user
+ * Get conversations for the current user - TỐI ƯU với batch processing
  */
 export const getUserConversations = async (
   userId: string
@@ -139,9 +296,8 @@ export const getUserConversations = async (
       return [];
     }
 
-    return await Promise.all(
-      response.map((conv) => processConversationData(conv, userId))
-    );
+    // Sử dụng batch processing thay vì Promise.all cho từng conversation
+    return await processConversationsData(response, userId);
   } catch (err) {
     return [];
   }
@@ -161,7 +317,11 @@ export const getConversationDetail = async (
     const response = await fetchWithAuth(
       API_ENDPOINTS.CONVERSATION.GET_BY_ID(conversationId)
     );
-    return response as { _id: string; participants: any[]; lastMessage: Message | null };
+    return response as {
+      _id: string;
+      participants: any[];
+      lastMessage: Message | null;
+    };
   } catch (err) {
     return { _id: conversationId, participants: [], lastMessage: null };
   }
@@ -208,14 +368,11 @@ export const createConversation = async (
   participants: string[]
 ): Promise<Conversation | null> => {
   try {
-    const response = await fetchWithAuth(
-      API_ENDPOINTS.CONVERSATION.CREATE,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ participants }),
-      }
-    );
+    const response = await fetchWithAuth(API_ENDPOINTS.CONVERSATION.CREATE, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ participants }),
+    });
     return response as Conversation;
   } catch (err) {
     return null;

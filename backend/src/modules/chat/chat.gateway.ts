@@ -12,7 +12,13 @@ import { NotificationsGateway } from "../notifications/notifications.gateway";
 import { NotificationsService } from "../notifications/notifications.service";
 import { ConversationService } from "../conversation/conversation.service";
 
-@WebSocketGateway({ cors: true })
+@WebSocketGateway({
+  cors: {
+    origin: process.env.FRONTEND_URL || "http://localhost:3000",
+    credentials: true,
+  },
+  transports: ["websocket", "polling"], // Support both transports
+})
 export class ChatGateway {
   @WebSocketServer() server: Server;
 
@@ -20,34 +26,57 @@ export class ChatGateway {
     private readonly chatService: ChatService,
     private readonly notificationsService: NotificationsService,
     private readonly notificationsGateway: NotificationsGateway,
-    private readonly convModel: ConversationService,
-  ) { }
+    private readonly convModel: ConversationService
+  ) {}
 
   @SubscribeMessage("sendMessage")
   async handleSendMessage(
     @MessageBody() dto: SendMessageDto,
-    @ConnectedSocket() client: Socket,
+    @ConnectedSocket() client: Socket
   ) {
-    const message = await this.chatService.saveMessage(dto);
+    try {
+      const message = await this.chatService.saveMessage(dto);
 
-    this.server.to(dto.conversationId).emit("newMessage", message);
+      // Emit về tất cả clients trong room (bao gồm cả sender)
+      this.server.to(dto.conversationId).emit("newMessage", message);
+
+      // Đảm bảo emit về cả sender nếu chưa join room
+      client.emit("newMessage", message);
+    } catch (error) {
+      console.error("❌ Error in handleSendMessage:", error);
+      // Emit error về client
+      client.emit("messageError", {
+        error: error.message || "Failed to send message",
+      });
+    }
   }
 
   @SubscribeMessage("joinRoom")
-  handleJoinRoom(
-    @MessageBody() roomId: string,
-    @ConnectedSocket() client: Socket,
+  async handleJoinRoom(
+    @MessageBody() conversationId: string,
+    @ConnectedSocket() client: Socket
   ) {
-    client.join(roomId);
+    // 1️⃣ join room
+    client.join(conversationId);
+
+    // 2️⃣ lấy toàn bộ message của conversation
+    const messages =
+      await this.chatService.getMessagesByConversationId(conversationId);
+
+    // 3️⃣ emit trả lại cho client vừa join
+    client.emit("conversation:messages", {
+      conversationId,
+      messages,
+    });
   }
 
   @SubscribeMessage("readConversation")
   async handleReadConversation(
-    @MessageBody() data: { conversationId: string; userId: string },
+    @MessageBody() data: { conversationId: string; userId: string }
   ) {
     const { conversationId, userId } = data;
 
-    await this.convModel.getConversationDetail(conversationId, userId);
+    await this.chatService.readConversation(conversationId, userId);
 
     // Optional: emit update về client để sync UI
     this.server.to(conversationId).emit("unreadReset", {
@@ -67,7 +96,7 @@ export class ChatGateway {
       link?: string;
       jobId: string;
     },
-    @ConnectedSocket() client: Socket,
+    @ConnectedSocket() client: Socket
   ) {
     const notification = await this.notificationsService.createNotification(
       {
@@ -77,7 +106,7 @@ export class ChatGateway {
         link: data.link,
         jobId: data.jobId || "",
       },
-      data.userId,
+      data.userId
     );
 
     // Gửi thông báo realtime tới người dùng cụ thể

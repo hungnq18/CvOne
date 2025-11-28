@@ -11,67 +11,67 @@ export class ChatService {
   constructor(
     @InjectModel(Message.name) private messageModel: Model<Message>,
     @InjectModel(Conversation.name) private convModel: Model<Conversation>,
-    private userService: UsersService,
+    private userService: UsersService
   ) {}
 
   async saveMessage(dto: SendMessageDto) {
-    const conversationId = new Types.ObjectId(dto.conversationId);
-    const senderId = new Types.ObjectId(dto.senderId);
-    const receiverId = new Types.ObjectId(dto.receiverId);
+    try {
+      const conversationId = new Types.ObjectId(dto.conversationId);
+      const senderId = new Types.ObjectId(dto.senderId);
 
-    if (!conversationId || !senderId || !receiverId) {
-      throw new Error("Invalid conversationId or senderId or receiverId");
-    }
-
-    // 1. Tạo tin nhắn mới
-    const message = await this.messageModel.create({
-      ...dto,
-      conversationId,
-      senderId,
-      receiverId,
-    });
-
-    // 2. Tìm conversation
-    const conversation = await this.convModel.findById(conversationId);
-    if (!conversation) {
-      throw new Error("Conversation not found");
-    }
-
-    // 3. Cập nhật lastMessage
-    conversation.lastMessage = message._id as Types.ObjectId;
-
-    // 4. Cập nhật unreadCount cho người nhận
-    const receiverIdStr = receiverId.toString();
-    let found = false;
-
-    conversation.unreadCount = (conversation.unreadCount || []).map((entry) => {
-      if (entry.userId.toString() === receiverIdStr) {
-        found = true;
-        return {
-          userId: entry.userId,
-          count: entry.count + 1,
-        };
+      if (!conversationId || !senderId) {
+        throw new Error("Invalid conversationId or senderId");
       }
-      return entry;
-    });
 
-    if (!found) {
-      conversation.unreadCount.push({
-        userId: receiverId,
-        count: 1,
+      // 1️⃣ Tạo tin nhắn mới
+      const message = await this.messageModel.create({
+        conversationId,
+        senderId,
+        content: dto.content,
       });
+
+      // 2️⃣ Tìm conversation
+      const conversation = await this.convModel.findById(conversationId);
+      if (!conversation) {
+        throw new Error("Conversation not found");
+      }
+
+      // 3️⃣ Cập nhật lastMessage
+      conversation.lastMessage = message._id as Types.ObjectId;
+
+      // 4️⃣ Tăng unreadCount cho participant khác sender
+      conversation.unreadCount = (conversation.unreadCount || []).map(
+        (entry) => {
+          if (entry.userId.toString() !== senderId.toString()) {
+            return { ...entry, count: (entry.count || 0) + 1 };
+          }
+          return entry; // sender giữ nguyên
+        }
+      );
+
+      // Không push thêm entry mới → luôn <=2 participant
+      await conversation.save();
+
+      // 5️⃣ Populate senderId trước khi trả về
+      const populatedMessage = await this.messageModel
+        .findById(message._id)
+        .populate("senderId", "first_name last_name")
+        .lean()
+        .exec();
+
+      return populatedMessage || message;
+    } catch (error) {
+      console.error("Error in saveMessage:", error);
+      throw error;
     }
-
-    await conversation.save();
-
-    return message;
   }
 
   async getMessagesByConversationId(conversationId: string) {
     return this.messageModel
       .find({ conversationId: new Types.ObjectId(conversationId) })
       .sort({ createdAt: 1 }) // tăng dần theo thời gian
-      .populate("senderId", "name") // nếu muốn lấy info người gửi
+      .populate("senderId", "first_name last_name") // Populate đúng fields từ User schema
+      .lean()
       .exec();
   }
 
@@ -80,13 +80,15 @@ export class ChatService {
     if (!conversation) {
       throw new Error("Conversation not found");
     }
-    // Reset unreadCount cho user này
+
+    // Chỉ update participant hiện tại, không push thêm
     conversation.unreadCount = (conversation.unreadCount || []).map((entry) => {
       if (entry.userId.toString() === userId) {
-        return { userId: entry.userId, count: 0 };
+        return { ...entry, count: 0 }; // reset count
       }
-      return entry;
+      return entry; // giữ nguyên participant còn lại
     });
+
     await conversation.save();
     return conversation;
   }

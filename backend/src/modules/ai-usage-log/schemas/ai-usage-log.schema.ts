@@ -4,12 +4,16 @@ import { Document, Types } from "mongoose";
 export type AiUsageLogDocument = AiUsageLog & Document;
 
 export enum AiFeature {
-  TRANS_AI = "transAI",
+  TRANS_CV_AI = "transCvAI",
   INTERVIEW_AI = "interviewAI",
-  CV_AI = "cvAI",
   COVER_LETTER_AI = "coverLetterAI",
   SUGGESTION_AI = "suggestionAI",
   ANALYZE_JD = "analyzeJD",
+  SUGGESTION_SUMMARY_CV_AI = "suggestionSummaryCvAI",
+  SUGGESTION_SKILLS_CV_AI = "suggestionSkillsCvAI",
+  SUGGESTION_WORKS_EXPERIENCE_CV_AI = "suggestionWorksExperienceCvAI",
+  REWRITE_WORK_DESCRIPTION = "rewriteWorkDescription",
+  SUGGESTION_TAGS_CV_AI = "suggestionTagsCvAI",
 }
 
 @Schema({ timestamps: true })

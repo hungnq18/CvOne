@@ -4,7 +4,7 @@ import FooterWrapper from "@/components/ui/footer-wrapper";
 import { Header } from "@/components/ui/header";
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/providers/auth-provider";
-import { ChatProvider } from "@/providers/ChatProvider";
+import { SocketProvider } from "@/providers/SocketProvider";
 import { CVProvider } from "@/providers/cv-provider";
 import { EmailVerificationProvider } from "@/providers/email-verification-provider";
 import { GlobalProvider } from "@/providers/global_provider";
@@ -16,7 +16,7 @@ import { cookies } from "next/headers";
 import React from "react";
 import Script from "next/script";
 import "./globals.css";
-import 'antd/dist/reset.css';
+import "antd/dist/reset.css";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -27,8 +27,8 @@ export const metadata: Metadata = {
 };
 
 function getRoleFromToken() {
-  const cookieStore = cookies()
-  const token = cookieStore.get('token')?.value
+  const cookieStore = cookies();
+  const token = cookieStore.get("token")?.value;
   if (!token) return null;
   try {
     const decoded: any = jwtDecode(token);
@@ -45,25 +45,10 @@ export default function RootLayout({
 }>) {
   const role = getRoleFromToken();
   return (
-    <html lang="en" className="overflow-x-hidden light" suppressHydrationWarning style={{ colorScheme: 'light' }}>
-      <body className={`${inter.className} min-h-screen flex flex-col overflow-x-hidden`}>
-        {/* Google Analytics 4 */}
-        {process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID && (
-          <>
-            <Script
-              src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID}`}
-              strategy="afterInteractive"
-            />
-            <Script id="ga4-init" strategy="afterInteractive">
-              {`
-                window.dataLayer = window.dataLayer || [];
-                function gtag(){dataLayer.push(arguments);}
-                gtag('js', new Date());
-                gtag('config', '${process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID}');
-              `}
-            </Script>
-          </>
-        )}
+    <html lang="en" className="overflow-x-hidden" suppressHydrationWarning>
+      <body
+        className={`${inter.className} min-h-screen flex flex-col overflow-x-hidden`}
+      >
         <StyledComponentsRegistry>
           <GlobalProvider>
             <AuthProvider>
@@ -74,9 +59,9 @@ export default function RootLayout({
                   forcedTheme="light"
                   disableTransitionOnChange
                 >
-                  <ChatProvider>
+                  <SocketProvider>
                     <CVProvider>
-                      {role === 'admin' ? (
+                      {role === "admin" ? (
                         children
                       ) : (
                         <div className="flex flex-col flex-1">
@@ -89,7 +74,8 @@ export default function RootLayout({
                       <IconChatAndNotification /> {/* use */}
                       <Toaster /> {/* For all toast notifications (shadcn) */}
                     </CVProvider>
-                  </ChatProvider> {/* use */}
+                  </SocketProvider>{" "}
+                  {/* use */}
                 </ThemeProvider>
               </EmailVerificationProvider>
             </AuthProvider>

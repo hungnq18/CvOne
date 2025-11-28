@@ -1,13 +1,14 @@
-"use client"
+"use client";
 
-import { API_ENDPOINTS, API_URL as BASE_API_URL } from "@/api/apiConfig"
-import { useToast } from "@/components/ui/use-toast"
-import { DecodedToken } from "@/middleware"
-import { useLanguage } from "@/providers/global_provider"
-import axios from "axios"
-import { jwtDecode } from "jwt-decode"
-import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { API_ENDPOINTS, API_URL as BASE_API_URL } from "@/api/apiConfig";
+import { useToast } from "@/components/ui/use-toast";
+import { DecodedToken } from "@/middleware";
+import { useAuth } from "@/providers/auth-provider";
+import { useLanguage } from "@/providers/global_provider";
+import axios from "axios";
+import { jwtDecode } from "jwt-decode";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 interface LoginFormData {
   email: string;
@@ -40,7 +41,8 @@ const translations = {
     loginSuccess: "Login successful!",
     loginFailed: "Login failed",
     invalidCredentials: "Invalid credentials",
-    emailNotVerified: "Email not verified. Please check your email and verify your account before logging in.",
+    emailNotVerified:
+      "Email not verified. Please check your email and verify your account before logging in.",
     emailRequired: "Email is required",
     passwordRequired: "Password is required",
     loading: "Loading...",
@@ -65,49 +67,51 @@ const translations = {
     loginSuccess: "Đăng nhập thành công!",
     loginFailed: "Đăng nhập thất bại",
     invalidCredentials: "Thông tin đăng nhập không chính xác",
-    emailNotVerified: "Email chưa được xác thực. Vui lòng kiểm tra email và xác thực tài khoản trước khi đăng nhập.",
+    emailNotVerified:
+      "Email chưa được xác thực. Vui lòng kiểm tra email và xác thực tài khoản trước khi đăng nhập.",
     emailRequired: "Email là bắt buộc",
     passwordRequired: "Mật khẩu là bắt buộc",
     loading: "Đang tải...",
     networkError: "Lỗi kết nối. Vui lòng kiểm tra kết nối của bạn.",
     or: "HOẶC",
   },
-}
+};
 
 export function useLoginForm() {
+  const { refreshUser } = useAuth();
   const [formData, setFormData] = useState<LoginFormData>({
     email: "",
     password: "",
-  })
-  const [showPassword, setShowPassword] = useState(false)
-  const [error, setError] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
+  });
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const { toast } = useToast()
-  const router = useRouter()
-  const { language } = useLanguage()
-  const t = translations[language]
+  const { toast } = useToast();
+  const router = useRouter();
+  const { language } = useLanguage();
+  const t = translations[language];
 
   const validateForm = () => {
     if (!formData.email) {
-      setError(t.emailRequired)
-      return false
+      setError(t.emailRequired);
+      return false;
     }
     if (!formData.password) {
-      setError(t.passwordRequired)
-      return false
+      setError(t.passwordRequired);
+      return false;
     }
-    return true
-  }
+    return true;
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { id, value } = e.target
-    setFormData(prev => ({
+    const { id, value } = e.target;
+    setFormData((prev) => ({
       ...prev,
-      [id]: value
-    }))
-    setError("")
-  }
+      [id]: value,
+    }));
+    setError("");
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -126,17 +130,6 @@ export function useLoginForm() {
 
       // Decode token để lấy role
       const decoded: DecodedToken = jwtDecode(access_token);
-
-      // Emit custom events để trigger re-render của icon components
-      window.dispatchEvent(new CustomEvent('loginSuccess'));
-      window.dispatchEvent(new CustomEvent('authChange'));
-
-      toast({
-        title: t.loginSuccess,
-        description: `Welcome back, ${formData.email}!`,
-      });
-
-      // Lấy redirect từ URL nếu có
       const params = new URLSearchParams(window.location.search);
       const redirect = params.get("redirect");
       if (redirect) {
@@ -150,14 +143,28 @@ export function useLoginForm() {
       } else {
         router.replace("/");
       }
+      await refreshUser();
 
+      // Emit custom events để trigger re-render của icon components
+      window.dispatchEvent(new CustomEvent("loginSuccess"));
+      window.dispatchEvent(new CustomEvent("authChange"));
+
+      toast({
+        title: t.loginSuccess,
+        description: `Welcome back, ${formData.email}!`,
+      });
+
+      // Lấy redirect từ URL nếu có
     } catch (err: any) {
       let msg = t.networkError;
 
       if (err?.response?.status === 401) {
         // Check if it's email verification error
-        const errorMessage = err?.response?.data?.message || '';
-        if (errorMessage.includes('Email not verified') || errorMessage.includes('Email chưa được xác thực')) {
+        const errorMessage = err?.response?.data?.message || "";
+        if (
+          errorMessage.includes("Email not verified") ||
+          errorMessage.includes("Email chưa được xác thực")
+        ) {
           msg = t.emailNotVerified;
         } else {
           msg = t.invalidCredentials;
@@ -173,8 +180,8 @@ export function useLoginForm() {
 
   const handleGoogleLogin = () => {
     // Placeholder for Google login logic
-    console.log("Login with Google")
-  }
+    console.log("Login with Google");
+  };
 
   return {
     formData,
@@ -185,6 +192,6 @@ export function useLoginForm() {
     handleInputChange,
     handleSubmit,
     handleGoogleLogin,
-    setShowPassword
-  }
+    setShowPassword,
+  };
 }
