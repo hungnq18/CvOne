@@ -25,7 +25,7 @@ interface PopulatedAccount {
 }
 
 interface PopulatedUser extends Omit<UserType, 'account_id'> {
-  account_id: PopulatedAccount;
+  account_id: PopulatedAccount | null;
 }
 
 const initialFormData = {
@@ -48,6 +48,8 @@ export function ManageUsers() {
   const [selectedUser, setSelectedUser] = useState<PopulatedUser | null>(null)
   const [formData, setFormData] = useState(initialFormData)
   const [isEditMode, setIsEditMode] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
+  const pageSize = 5
 
   useEffect(() => {
     fetchUsers()
@@ -81,9 +83,9 @@ export function ManageUsers() {
       _id: user._id,
       first_name: user.first_name,
       last_name: user.last_name,
-      email: user.account_id.email,
+      email: user.account_id?.email ?? "",
       password: "", // Password is not edited here
-      role: user.account_id.role,
+      role: user.account_id?.role ?? "user",
       phone: user.phone || "",
       city: user.city || "",
       country: user.country || "",
@@ -104,9 +106,9 @@ export function ManageUsers() {
         }
         await updateUserProfile(selectedUser._id, updatedData as any)
 
-        if (formData.role !== selectedUser.account_id.role) {
-          await updateUserRole(selectedUser.account_id._id, formData.role)
-        }
+      if (selectedUser.account_id && formData.role !== selectedUser.account_id.role) {
+        await updateUserRole(selectedUser.account_id._id, formData.role)
+      }
 
         toast.success("User updated successfully.")
       } else {
@@ -152,11 +154,20 @@ export function ManageUsers() {
     setIsDeleteDialogOpen(true)
   }
 
-  const filteredUsers = users.filter(
-    (user) =>
-      `${user.first_name} ${user.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.account_id.email.toLowerCase().includes(searchTerm.toLowerCase()),
-  )
+  const filteredUsers = users.filter((user) => {
+    if (!user.account_id) return false
+
+    const term = searchTerm.toLowerCase()
+    const fullName = `${user.first_name ?? ""} ${user.last_name ?? ""}`.toLowerCase()
+    const email = user.account_id.email?.toLowerCase() ?? ""
+
+    return fullName.includes(term) || email.includes(term)
+  })
+
+  const totalPages = Math.max(1, Math.ceil(filteredUsers.length / pageSize))
+  const safePage = Math.min(currentPage, totalPages)
+  const startIndex = (safePage - 1) * pageSize
+  const paginatedUsers = filteredUsers.slice(startIndex, startIndex + pageSize)
 
   const getRoleColor = (role: string) => {
     switch (role) {
@@ -164,6 +175,8 @@ export function ManageUsers() {
         return "bg-red-100 text-red-800"
       case "hr":
         return "bg-purple-100 text-purple-800"
+      case "mkt":
+        return "bg-blue-100 text-blue-800"
       default:
         return "bg-gray-100 text-gray-800"
     }
@@ -200,69 +213,113 @@ export function ManageUsers() {
             </form>
           </div>
         </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>User</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>City</TableHead>
-                <TableHead>Country</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredUsers.map((user) => (
-                <TableRow key={user._id}>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-10 w-10">
-                        <AvatarImage src={"/placeholder.svg"} />
-                        <AvatarFallback>
-                          {`${user.first_name[0]}${user.last_name[0]}`}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <div className="font-medium">{`${user.first_name} ${user.last_name}`}</div>
-                        <div className="text-sm text-muted-foreground">{user.account_id.email}</div>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge className={getRoleColor(user.account_id.role)}>{user.account_id.role}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    {user.account_id.email}
-                  </TableCell>
-                  <TableCell>{user.city}</TableCell>
-                  <TableCell>{user.country}</TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleOpenEditDialog(user)}>
-                          <Edit className="mr-2 h-4 w-4" />
-                          Edit User
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          className="text-red-600"
-                          onClick={() => openDeleteDialog(user)}
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Delete User
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
+        <CardContent className="flex flex-col min-h-[420px]">
+          <div className="flex-1 overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>User</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>City</TableHead>
+                  <TableHead>Country</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {paginatedUsers.map((user) => {
+                  if (!user.account_id) return null
+
+                  return (
+                  <TableRow key={user._id}>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-10 w-10">
+                          <AvatarImage src={"/placeholder.svg"} />
+                          <AvatarFallback>
+                            {`${user.first_name[0]}${user.last_name[0]}`}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <div className="font-medium">{`${user.first_name} ${user.last_name}`}</div>
+                          <div className="text-sm text-muted-foreground">{user.account_id.email}</div>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={getRoleColor(user.account_id.role)}>{user.account_id.role}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      {user.account_id.email}
+                    </TableCell>
+                    <TableCell>{user.city}</TableCell>
+                    <TableCell>{user.country}</TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleOpenEditDialog(user)}>
+                            <Edit className="mr-2 h-4 w-4" />
+                            Edit User
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            className="text-red-600"
+                            onClick={() => openDeleteDialog(user)}
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete User
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                )})}
+              </TableBody>
+            </Table>
+          </div>
+
+          {/* Pagination */}
+          <div className="mt-4 flex items-center justify-between">
+            <p className="text-sm text-muted-foreground">
+              Showing{" "}
+              {filteredUsers.length === 0
+                ? 0
+                : `${startIndex + 1}–${Math.min(
+                    startIndex + pageSize,
+                    filteredUsers.length
+                  )}`}{" "}
+              of {filteredUsers.length} users
+            </p>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={safePage === 1}
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              >
+                Previous
+              </Button>
+              <span className="text-sm text-muted-foreground">
+                Page {safePage} of {totalPages}
+              </span>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={safePage === totalPages || filteredUsers.length === 0}
+                onClick={() =>
+                  setCurrentPage((p) => Math.min(totalPages, p + 1))
+                }
+              >
+                Next
+              </Button>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
@@ -308,6 +365,7 @@ export function ManageUsers() {
                             <SelectItem value="user">User</SelectItem>
                             <SelectItem value="admin">Admin</SelectItem>
                             <SelectItem value="hr">HR</SelectItem>
+                            <SelectItem value="mkt">Marketing</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>
