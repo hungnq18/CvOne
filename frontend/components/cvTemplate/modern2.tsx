@@ -6,6 +6,7 @@ import { createPortal } from "react-dom";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import { GripVertical } from "lucide-react";
 import { getDefaultSectionPositions } from "./defaultSectionPositions";
+import { notify } from "@/lib/notify";
 
 // --- TRANSLATIONS ---
 const translations = {
@@ -232,10 +233,17 @@ const Modern2: React.FC<Modern2Props> = ({
     ...defaultT,
     ...(cvUiTexts && {
       personalInfoLabel: cvUiTexts.personalInformation || defaultT.personalInfoLabel,
+      contactLabel: cvUiTexts.contact || defaultT.personalInfoLabel,
       careerObjectiveLabel: cvUiTexts.careerObjective || defaultT.careerObjectiveLabel,
       skillsLabel: cvUiTexts.skills || defaultT.skillsLabel,
       experienceLabel: cvUiTexts.workExperience || defaultT.experienceLabel,
       educationLabel: cvUiTexts.education || defaultT.educationLabel,
+      certificationLabel: cvUiTexts.certification || defaultT.certificationLabel,
+      achievementLabel: cvUiTexts.achievement || defaultT.achievementLabel,
+      hobbyLabel: cvUiTexts.hobby || defaultT.hobbyLabel,
+      projectLabel: cvUiTexts.project || defaultT.projectLabel,
+      avatarLabel: cvUiTexts.avatar || defaultT.avatarLabel,
+      fullNameAndTitleLabel: cvUiTexts.fullNameAndTitle || defaultT.fullNameAndTitleLabel,
       phone: cvUiTexts.phone || defaultT.phone,
       email: cvUiTexts.email || defaultT.email,
       address: cvUiTexts.address || defaultT.address,
@@ -266,6 +274,11 @@ const Modern2: React.FC<Modern2Props> = ({
     data?.sectionPositions ||
     getDefaultSectionPositions(data?.templateTitle || "The Modern");
 
+  const dragWarningMessage =
+    lang === "vi"
+      ? "Bạn chỉ có thể thả mục trong khu vực bố cục cho phép."
+      : "Please drop sections inside the allowed layout areas.";
+
   type SectionPosition = { place: number; order: number };
 
   // Vì Template này chỉ có 1 cột (đang render thẳng tuột), nên ta gom hết vào 1 Droppable duy nhất (id="1")
@@ -290,7 +303,11 @@ const Modern2: React.FC<Modern2Props> = ({
     .map(([key]) => key);
 
   const handleDragEnd = (result: DropResult) => {
-    if (!onLayoutChange || !result.destination) return;
+    if (!result.destination) {
+      notify.error(dragWarningMessage);
+      return;
+    }
+    if (!onLayoutChange) return;
 
     const { source, destination } = result;
 
@@ -350,21 +367,25 @@ const Modern2: React.FC<Modern2Props> = ({
               <div className="bg-gradient-to-r from-slate-800 to-slate-700 px-8 py-6">
                 <div className="flex items-center gap-8">
                   <div className="shrink-0">
-                    <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-white shadow-lg">
+                    <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-white shadow-lg relative">
                       {isPdfMode ? (
-                        <img
-                          src={userData.avatar || "/professional-woman-portrait.png"}
-                          alt={`${userData.firstName || ""} ${userData.lastName || ""}`}
-                          crossOrigin="anonymous"
-                          className="w-full h-full object-cover"
+                        <div
+                          style={{ 
+                            width: '100%', 
+                            height: '100%', 
+                            backgroundImage: `url(${userData.avatar || "/professional-woman-portrait.png"})`,
+                            backgroundSize: 'cover',
+                            backgroundPosition: 'center',
+                            backgroundRepeat: 'no-repeat',
+                            borderRadius: '9999px'
+                          }}
                         />
                       ) : (
                         <Image
                           src={userData.avatar || "/professional-woman-portrait.png"}
                           alt={`${userData.firstName || ""} ${userData.lastName || ""}`}
-                          width={128}
-                          height={128}
-                          className="w-full h-full object-cover"
+                          fill
+                          style={{ objectFit: 'cover' }}
                         />
                       )}
                     </div>
@@ -573,7 +594,7 @@ const Modern2: React.FC<Modern2Props> = ({
         return userData.certification?.length > 0 && (
           <Section
             key="certification"
-            title={cvUiTexts?.certification || t.certificationLabel}
+            title={t.certificationLabel}
             sectionId={sectionMap.certification}
             onSectionClick={onSectionClick}
             isPdfMode={isPdfMode}
@@ -604,7 +625,7 @@ const Modern2: React.FC<Modern2Props> = ({
         return userData.achievement?.length > 0 && (
           <Section
             key="achievement"
-            title={cvUiTexts?.achievement || t.achievementLabel}
+            title={t.achievementLabel}
             sectionId={sectionMap.achievement}
             onSectionClick={onSectionClick}
             isPdfMode={isPdfMode}
@@ -626,7 +647,7 @@ const Modern2: React.FC<Modern2Props> = ({
         return userData.hobby?.length > 0 && (
           <Section
             key="hobby"
-            title={cvUiTexts?.hobby || t.hobbyLabel}
+            title={t.hobbyLabel}
             sectionId={sectionMap.hobby}
             onSectionClick={onSectionClick}
             isPdfMode={isPdfMode}
@@ -647,7 +668,7 @@ const Modern2: React.FC<Modern2Props> = ({
         return userData.Project?.length > 0 && (
           <Section
             key="Project"
-            title={cvUiTexts?.project || t.projectLabel}
+            title={t.projectLabel}
             sectionId={sectionMap.Project}
             onSectionClick={onSectionClick}
             isPdfMode={isPdfMode}

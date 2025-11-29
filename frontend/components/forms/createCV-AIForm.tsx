@@ -3,9 +3,10 @@ import { useCV } from "@/providers/cv-provider";
 import { useLanguage } from "@/providers/global_provider";
 import { Check, Edit, PlusCircle, Trash2, Wand2, X } from "lucide-react";
 import { ChangeEvent, FC, useEffect, useState } from "react";
+import { notify } from "@/lib/notify";
 
 // --- COMPONENT NÚT AI DÙNG CHUNG (ĐỂ ĐỒNG BỘ THIẾT KẾ) ---
-// Component này tạo ra nút bấm có viền gradient như yêu cầu
+// Component này tạo ra nút bấm có hiệu ứng shimmer gradient đẹp mắt
 const AIButton: FC<{ onClick: () => void; isLoading: boolean; text: string; disabled?: boolean }> = ({
   onClick,
   isLoading,
@@ -13,30 +14,44 @@ const AIButton: FC<{ onClick: () => void; isLoading: boolean; text: string; disa
   disabled,
 }) => {
   return (
-    <div
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled || isLoading}
       className={`
-        p-[2px] rounded-full inline-block
-        bg-gradient-to-r from-[#4CC9F0] to-[#4361EE]   /* Aqua → Blue */
-        shadow-sm
-        ${disabled || isLoading ? "opacity-60 cursor-not-allowed" : "hover:shadow-md transition-all"}
+        group relative inline-flex items-center gap-2.5
+        px-6 py-3 rounded-xl
+        bg-gradient-to-r from-violet-600 via-indigo-600 to-blue-600
+        text-white text-sm font-semibold
+        shadow-lg shadow-indigo-500/30
+        overflow-hidden
+        transition-all duration-300
+        ${disabled || isLoading 
+          ? "opacity-60 cursor-not-allowed" 
+          : "hover:shadow-xl hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98]"
+        }
       `}
     >
-      <button
-        type="button"
-        onClick={onClick}
-        disabled={disabled || isLoading}
-        className={`
-          flex items-center gap-2 rounded-full
-          bg-[#0A1E4C]               /* Navy Blue */
-          px-5 py-2.5 text-sm font-semibold text-white
-          transition-all
-          ${disabled || isLoading ? "cursor-not-allowed" : "hover:bg-[#102B66]"}  /* hover xanh sáng */
-        `}
-      >
-        <Wand2 className={`h-5 w-5 text-white ${isLoading ? "animate-pulse" : ""}`} />
-        <span>{isLoading ? "Processing..." : text}</span>
-      </button>
-    </div>
+      {/* Shimmer effect */}
+      <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+      
+      {/* Sparkle icon container */}
+      <span className={`relative flex items-center justify-center w-5 h-5 ${isLoading ? "animate-spin" : ""}`}>
+        {isLoading ? (
+          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeDasharray="32" strokeDashoffset="32" className="opacity-30" />
+            <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeDasharray="32" strokeDashoffset="24" />
+          </svg>
+        ) : (
+          <Wand2 className="w-5 h-5 group-hover:rotate-12 transition-transform duration-300" />
+        )}
+      </span>
+      
+      <span className="relative">{isLoading ? "Đang xử lý..." : text}</span>
+      
+      {/* Glow effect on hover */}
+      <span className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-r from-violet-400/10 via-indigo-400/10 to-blue-400/10" />
+    </button>
   );
 };
 
@@ -62,7 +77,7 @@ const translations = {
       title: "Contact Information",
       emailLabel: "Email",
       phoneLabel: "Phone Number",
-      addressLabel: "Address (City, Country)",
+      addressLabel: "Address (City)",
     },
     summaryForm: {
       aiSuggestions: "AI Suggestions",
@@ -199,7 +214,7 @@ export interface FormProps {
   onUpdate: (updatedData: any) => void;
 }
 
-// --- GIỮ NGUYÊN InfoForm ---
+// --- REDESIGNED InfoForm ---
 export const InfoForm: FC<FormProps> = ({ data, onUpdate }) => {
   const { language } = useLanguage();
   const t = translations[language].infoForm;
@@ -233,7 +248,7 @@ export const InfoForm: FC<FormProps> = ({ data, onUpdate }) => {
       onUpdate({ ...data, avatar: responseData.secure_url });
     } catch (error) {
       console.error(error);
-      alert(error instanceof Error ? error.message : t.uploadErrorGeneral);
+      notify.error(error instanceof Error ? error.message : t.uploadErrorGeneral);
     } finally {
       setIsUploading(false);
     }
@@ -241,45 +256,56 @@ export const InfoForm: FC<FormProps> = ({ data, onUpdate }) => {
 
   return (
     <div className="space-y-6">
-      <h3 className="text-lg font-semibold text-gray-800">{t.title}</h3>
-      <div className="mb-4">
-        <label className="block text-gray-700 text-sm font-bold mb-2">
-          {t.avatarLabel}
-        </label>
-        <div className="flex items-center gap-4 mt-1">
-          {data.avatar && (
+      {/* Avatar Section */}
+      <div className="flex items-start gap-6 p-5 bg-gradient-to-r from-slate-50 to-blue-50 rounded-2xl border border-slate-100">
+        <div className="relative group">
+          {data.avatar ? (
             <img
               src={data.avatar}
               alt="Avatar Preview"
-              className="w-20 h-20 rounded-full object-cover border-2 border-gray-200"
+              className="w-24 h-24 rounded-2xl object-cover border-2 border-white shadow-lg"
             />
+          ) : (
+            <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-slate-200 to-slate-300 flex items-center justify-center border-2 border-dashed border-slate-300">
+              <span className="text-4xl text-slate-400">👤</span>
+            </div>
           )}
-          <div className="relative">
-            <input
-              type="file"
-              id="avatar-upload"
-              accept="image/png, image/jpeg, image/jpg"
-              onChange={handleAvatarUpload}
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-              disabled={isUploading}
-            />
-            <button
-              type="button"
-              className="bg-blue-500 text-white font-bold py-2 px-4 rounded-md hover:bg-blue-600 disabled:bg-gray-400 transition-colors"
-              disabled={isUploading}
-              onClick={() => document.getElementById("avatar-upload")?.click()}
-            >
-              {isUploading ? t.uploading : t.chooseImage}
-            </button>
-          </div>
+          <input
+            type="file"
+            id="avatar-upload"
+            accept="image/png, image/jpeg, image/jpg"
+            onChange={handleAvatarUpload}
+            className="hidden"
+            disabled={isUploading}
+          />
+        </div>
+        <div className="flex flex-col justify-center">
+          <label className="block text-slate-700 text-sm font-semibold mb-2">
+            {t.avatarLabel}
+          </label>
+          <button
+            type="button"
+            className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold py-2.5 px-5 rounded-xl hover:from-blue-600 hover:to-indigo-700 disabled:opacity-50 transition-all shadow-lg shadow-blue-500/25"
+            disabled={isUploading}
+            onClick={() => document.getElementById("avatar-upload")?.click()}
+          >
+            {isUploading ? (
+              <>
+                <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" opacity="0.3"/>
+                  <path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                </svg>
+                {t.uploading}
+              </>
+            ) : t.chooseImage}
+          </button>
         </div>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+      {/* Name Fields */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label
-            htmlFor="firstName"
-            className="block text-sm font-medium text-gray-700"
-          >
+          <label htmlFor="firstName" className="block text-sm font-semibold text-slate-700 mb-2">
             {t.firstNameLabel}
           </label>
           <input
@@ -287,14 +313,11 @@ export const InfoForm: FC<FormProps> = ({ data, onUpdate }) => {
             id="firstName"
             value={data?.firstName || ""}
             onChange={handleChange}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+            className="w-full px-4 py-3 border border-slate-200 rounded-xl text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white"
           />
         </div>
         <div>
-          <label
-            htmlFor="lastName"
-            className="block text-sm font-medium text-gray-700"
-          >
+          <label htmlFor="lastName" className="block text-sm font-semibold text-slate-700 mb-2">
             {t.lastNameLabel}
           </label>
           <input
@@ -302,15 +325,14 @@ export const InfoForm: FC<FormProps> = ({ data, onUpdate }) => {
             id="lastName"
             value={data?.lastName || ""}
             onChange={handleChange}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+            className="w-full px-4 py-3 border border-slate-200 rounded-xl text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white"
           />
         </div>
       </div>
+
+      {/* Profession Field */}
       <div>
-        <label
-          htmlFor="professional"
-          className="block text-sm font-medium text-gray-700"
-        >
+        <label htmlFor="professional" className="block text-sm font-semibold text-slate-700 mb-2">
           {t.professionLabel}
         </label>
         <input
@@ -318,14 +340,14 @@ export const InfoForm: FC<FormProps> = ({ data, onUpdate }) => {
           id="professional"
           value={data?.professional || ""}
           onChange={handleChange}
-          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+          className="w-full px-4 py-3 border border-slate-200 rounded-xl text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white"
         />
       </div>
     </div>
   );
 };
 
-// --- GIỮ NGUYÊN ContactForm ---
+// --- REDESIGNED ContactForm ---
 export const ContactForm: FC<FormProps> = ({ data, onUpdate }) => {
   const { language } = useLanguage();
   const t = translations[language].contactForm;
@@ -333,53 +355,58 @@ export const ContactForm: FC<FormProps> = ({ data, onUpdate }) => {
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     onUpdate({ ...data, [e.target.id]: e.target.value });
   };
+  
   return (
-    <div className="space-y-6">
-      <h3 className="text-lg font-semibold text-gray-800">{t.title}</h3>
-      <div>
-        <label
-          htmlFor="email"
-          className="block text-sm font-medium text-gray-700"
-        >
+    <div className="space-y-5">
+      {/* Email */}
+      <div className="relative">
+        <label htmlFor="email" className="block text-sm font-semibold text-slate-700 mb-2">
           {t.emailLabel}
         </label>
-        <input
-          type="email"
-          id="email"
-          placeholder={data?.email || ""}
-          onChange={handleChange}
-          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-        />
+        <div className="relative">
+          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">📧</span>
+          <input
+            type="email"
+            id="email"
+            value={data?.email || ""}
+            onChange={handleChange}
+            className="w-full pl-12 pr-4 py-3 border border-slate-200 rounded-xl text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white"
+          />
+        </div>
       </div>
-      <div>
-        <label
-          htmlFor="phone"
-          className="block text-sm font-medium text-gray-700"
-        >
+      
+      {/* Phone */}
+      <div className="relative">
+        <label htmlFor="phone" className="block text-sm font-semibold text-slate-700 mb-2">
           {t.phoneLabel}
         </label>
-        <input
-          type="tel"
-          id="phone"
-          placeholder={data?.phone || ""}
-          onChange={handleChange}
-          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-        />
+        <div className="relative">
+          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">📱</span>
+          <input
+            type="tel"
+            id="phone"
+            value={data?.phone || ""}
+            onChange={handleChange}
+            className="w-full pl-12 pr-4 py-3 border border-slate-200 rounded-xl text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white"
+          />
+        </div>
       </div>
-      <div>
-        <label
-          htmlFor="city"
-          className="block text-sm font-medium text-gray-700"
-        >
+      
+      {/* Address */}
+      <div className="relative">
+        <label htmlFor="city" className="block text-sm font-semibold text-slate-700 mb-2">
           {t.addressLabel}
         </label>
-        <input
-          type="text"
-          id="city"
-          placeholder={data?.city || ""}
-          onChange={handleChange}
-          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-        />
+        <div className="relative">
+          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">📍</span>
+          <input
+            type="text"
+            id="city"
+            value={data?.city || ""}
+            onChange={handleChange}
+            className="w-full pl-12 pr-4 py-3 border border-slate-200 rounded-xl text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white"
+          />
+        </div>
       </div>
     </div>
   );
@@ -560,7 +587,7 @@ export const ExperienceForm: FC<FormProps> = ({ data, onUpdate }) => {
       const rewritten = res?.rewritten || res;
       setCurrentItem({ ...currentItem, description: rewritten });
     } catch (err) {
-      alert(t.aiRewriteError);
+      notify.error(t.aiRewriteError);
     } finally {
       setLoadingAI(false);
     }
@@ -568,7 +595,7 @@ export const ExperienceForm: FC<FormProps> = ({ data, onUpdate }) => {
 
   const handleFormSubmit = () => {
     if (!currentItem.title || !currentItem.company) {
-      alert(t.validationError);
+      notify.error(t.validationError);
       return;
     }
     let newExperiences = [...experiences];

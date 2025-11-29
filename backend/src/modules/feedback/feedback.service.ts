@@ -9,7 +9,6 @@ import {
 } from "./schemas/feedback.schema";
 import { CreateFormFeedbackDto } from "./dto/create-feedback.dto";
 import { UsersService } from "../users/users.service";
-import { VouchersService } from "../vouchers/vouchers.service";
 import { CreditsService } from "../credits/credits.service";
 
 @Injectable()
@@ -18,7 +17,7 @@ export class FormFeedbackService {
     @InjectModel(FormFeedback.name)
     private feedbackModel: Model<FormFeedbackDocument>,
     private readonly usersService: UsersService,
-    private readonly creditService: CreditsService
+    private readonly creditService: CreditsService,
   ) {}
 
   async create(createDto: CreateFormFeedbackDto): Promise<FormFeedback> {
@@ -27,12 +26,14 @@ export class FormFeedbackService {
       submittedAt: createDto.submittedAt || new Date(),
     });
 
-    const emailAnswer = createDto.answers.find((a) => a.title === "Email");
+    const emailAnswer = createDto.answers.find(
+      (a) => a.title && a.title.toLowerCase() === "email",
+    );
 
-    const email = emailAnswer?.answer || null;
+    const email = (emailAnswer?.answer as string | null) || null;
     console.log("Added voucher for user feedback:", email);
 
-    const user = await this.usersService.getUserByEmail(email);
+    const user = email ? await this.usersService.getUserByEmail(email) : null;
     console.log("Added user:", user);
     if (!user) {
       return await created.save();
@@ -41,6 +42,7 @@ export class FormFeedbackService {
     const FEATURE_VOUCHER_MAP: Record<FeedbackFeature, string | null> = {
       [FeedbackFeature.TRANSLATE_CV]: "6912e8e104e0ffee09f8242b",
       [FeedbackFeature.GENERATE_CV]: "692271ec3aa2ef74f38bdc3e",
+      [FeedbackFeature.GENERATE_CL]: null, // TODO: thêm voucher id nếu muốn tặng riêng cho generate_cl
       [FeedbackFeature.REBUILD_CV_FROM_PDF]: "692276043aa2ef74f38c838b",
       [FeedbackFeature.AI_INTERVIEW]: "79b3ba37b477064174e2f107",
     };
@@ -48,7 +50,7 @@ export class FormFeedbackService {
     if (voucherId) {
       await this.creditService.addVoucherForUserFeedback(
         user._id.toString(),
-        voucherId
+        voucherId,
       );
     }
     return created;

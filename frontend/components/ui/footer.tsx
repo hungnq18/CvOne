@@ -1,8 +1,7 @@
-import Link from "next/link"
-import Image from "next/image"
-import { FaFacebook, FaTwitter, FaLinkedin, FaGamepad, FaRobot } from "react-icons/fa"
-import { BsMessenger } from "react-icons/bs"
-import logoImg from "../../public/logo/logoCVOne.svg"
+import Link from "next/link";
+import Image from "next/image";
+import { FaFacebook, FaTwitter, FaLinkedin } from "react-icons/fa";
+import logoImg from "@/public/logo/logoCVOne.svg";
 
 interface FooterProps {
   show?: boolean;
@@ -12,91 +11,84 @@ export function Footer({ show = true }: FooterProps) {
   if (!show) return null;
 
   return (
-    <footer className="bg-slate-800 text-white py-8 mt-auto">
-      <div className="container mx-auto px-4 max-w-6xl">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-x-4 gap-y-8">
-          {/* Logo and Description */}
-          <div className="lg:col-span-2">
+    <footer className="bg-slate-950 text-slate-50 py-8 mt-auto border-t border-slate-800">
+      <div className="container mx-auto px-4 max-w-7xl">
+        {/* Main Footer Content */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-6">
+          {/* Brand Section */}
+          <div className="lg:col-span-1">
             <div className="flex items-center mb-3">
-              <Image src={logoImg} alt="CVOne Logo" width={60} height={60} />
-              <span className="ml-2 text-xl font-bold">CVOne</span>
+              <Image
+                src={logoImg || "/placeholder.svg"}
+                alt="CVOne Logo"
+                width={40}
+                height={40}
+              />
+              <span className="ml-2 text-base font-bold text-white">CVOne</span>
             </div>
-            <p className="text-xs leading-relaxed text-gray-300 mb-4 max-w-sm">
-              CVOne is a career site fueled by the best career experts and a community of millions
-              of readers yearly. We share knowledge, tips, and tools to help everyone find their dream
-              job.
+            <p className="text-xs leading-relaxed text-slate-400 mb-4">
+              Empowering millions to find their dream career with expert
+              insights, practical tools, and a supportive community.
             </p>
-            <div className="flex space-x-4 mb-4">
-              <Link href="https://twitter.com" className="text-gray-300 hover:text-white">
-                <FaTwitter size={18} />
-              </Link>
-              <Link href="https://www.facebook.com/hungnqisme" className="text-gray-300 hover:text-white">
-                <FaFacebook size={18} />
-              </Link>
-              <Link href="https://www.linkedin.com/in/h%C6%B0ng-nguy%E1%BB%85n-8a92742ba/" className="text-gray-300 hover:text-white">
-                <FaLinkedin size={18} />
-              </Link>
+            {/* Social Links */}
+            <div className="flex gap-3">
+              <a
+                href="https://twitter.com"
+                className="text-slate-400 hover:text-blue-400 transition-colors duration-200"
+              >
+                <FaTwitter size={16} />
+              </a>
+              <a
+                href="https://www.facebook.com/hungnqisme"
+                className="text-slate-400 hover:text-blue-400 transition-colors duration-200"
+              >
+                <FaFacebook size={16} />
+              </a>
+              <a
+                href="https://www.linkedin.com/in/h%C6%B0ng-nguy%E1%BB%85n-8a92742ba/"
+                className="text-slate-400 hover:text-blue-400 transition-colors duration-200"
+              >
+                <FaLinkedin size={16} />
+              </a>
             </div>
-            <div className="text-xs text-gray-300 space-y-1">
-              <p>Call us: 968-753-736</p>
-              <p>Email: duongvdhe173014@fpt.edu.vn</p>
-            </div>
-          </div>
-
-          {/* Resume Section */}
-          <div>
-            <h3 className="text-xs font-semibold mb-3 uppercase tracking-wider">Resume</h3>
-            <ul className="space-y-2">
-              <li>
-                <Link href="/resume-builder" className="text-xs text-gray-300 hover:text-white block">
-                  Resume Builder
-                </Link>
-              </li>
-              <li>
-                <Link href="/resume-templates" className="text-xs text-gray-300 hover:text-white block">
-                  Resume Templates
-                </Link>
-              </li>
-              <li>
-                <Link href="/resume-checker" className="text-xs text-gray-300 hover:text-white block">
-                  Resume Checker
-                </Link>
-              </li>
-              <li>
-                <Link href="/resume-examples" className="text-xs text-gray-300 hover:text-white block">
-                  Resume Examples
-                </Link>
-              </li>
-              <li>
-                <Link href="/resume-format" className="text-xs text-gray-300 hover:text-white block">
-                  Resume Format
-                </Link>
-              </li>
-            </ul>
           </div>
 
           {/* CV Section */}
           <div>
-            <h3 className="text-xs font-semibold mb-3 uppercase tracking-wider">CV</h3>
+            <h3 className="text-xs font-semibold text-white mb-3 uppercase tracking-widest opacity-80">
+              CV Tools
+            </h3>
             <ul className="space-y-2">
               <li>
-                <Link href="/cv-builder" className="text-xs text-gray-300 hover:text-white block">
-                  CV Builder
+                <Link
+                  href="/createCV?id=691b344445b496a8060829bb"
+                  className="text-xs text-slate-400 hover:text-white transition-colors duration-200"
+                >
+                  Create CV
                 </Link>
               </li>
               <li>
-                <Link href="/cv-templates" className="text-xs text-gray-300 hover:text-white block">
+                <Link
+                  href="/createCV-AI?id=691b344445b496a8060829bb"
+                  className="text-xs text-slate-400 hover:text-white transition-colors duration-200"
+                >
+                  AI-Powered CV Builder
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/uploadCV?id=691b344445b496a8060829bb"
+                  className="text-xs text-slate-400 hover:text-white transition-colors duration-200"
+                >
+                  Upload CV
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/cvTemplates"
+                  className="text-xs text-slate-400 hover:text-white transition-colors duration-200"
+                >
                   CV Templates
-                </Link>
-              </li>
-              <li>
-                <Link href="/cv-examples" className="text-xs text-gray-300 hover:text-white block">
-                  CV Examples
-                </Link>
-              </li>
-              <li>
-                <Link href="/cv-format" className="text-xs text-gray-300 hover:text-white block">
-                  CV Format
                 </Link>
               </li>
             </ul>
@@ -104,79 +96,69 @@ export function Footer({ show = true }: FooterProps) {
 
           {/* Cover Letter Section */}
           <div>
-            <h3 className="text-xs font-semibold mb-3 uppercase tracking-wider">Cover Letter</h3>
+            <h3 className="text-xs font-semibold text-white mb-3 uppercase tracking-widest opacity-80">
+              Cover Letters
+            </h3>
             <ul className="space-y-2">
               <li>
-                <Link href="/cover-letter-builder" className="text-xs text-gray-300 hover:text-white block">
-                  Cover Letter Builder
+                <Link
+                  href="/personal-info?templateId=68537ef398cb1d0aae6dae5e"
+                  className="text-xs text-slate-400 hover:text-white transition-colors duration-200"
+                >
+                  AI Cover Letter
                 </Link>
               </li>
               <li>
-                <Link href="/cover-letter-templates" className="text-xs text-gray-300 hover:text-white block">
-                  Cover Letter Templates
+                <Link
+                  href="/clTemplate"
+                  className="text-xs text-slate-400 hover:text-white transition-colors duration-200"
+                >
+                  Templates
                 </Link>
               </li>
               <li>
-                <Link href="/cover-letter-examples" className="text-xs text-gray-300 hover:text-white block">
-                  Cover Letter Examples
+                <Link
+                  href="/createCLTemplate?templateId=68537ef398cb1d0aae6dae5e"
+                  className="text-xs text-slate-400 hover:text-white transition-colors duration-200"
+                >
+                  Create Manually
                 </Link>
               </li>
               <li>
-                <Link href="/cover-letter-format" className="text-xs text-gray-300 hover:text-white block">
-                  Cover Letter Format
+                <Link
+                  href="/uploadCLTemplate?templateId=68537ef398cb1d0aae6dae5e"
+                  className="text-xs text-slate-400 hover:text-white transition-colors duration-200"
+                >
+                  Upload
                 </Link>
               </li>
             </ul>
           </div>
 
-          {/* Support Section */}
+          {/* Contact Section */}
           <div>
-            <h3 className="text-xs font-semibold mb-3 uppercase tracking-wider">Support</h3>
-            <ul className="space-y-2">
-              <li>
-                <Link href="/about" className="text-xs text-gray-300 hover:text-white block">
-                  About
-                </Link>
-              </li>
-              <li>
-                <Link href="/pricing" className="text-xs text-gray-300 hover:text-white block">
-                  Pricing
-                </Link>
-              </li>
-              <li>
-                <Link href="/contact" className="text-xs text-gray-300 hover:text-white block">
-                  Contact
-                </Link>
-              </li>
-              <li>
-                <Link href="/privacy" className="text-xs text-gray-300 hover:text-white block">
-                  Privacy Policy
-                </Link>
-              </li>
-              <li>
-                <Link href="/terms" className="text-xs text-gray-300 hover:text-white block">
-                  Terms of Service
-                </Link>
-              </li>
-            </ul>
+            <h3 className="text-xs font-semibold text-white mb-3 uppercase tracking-widest opacity-80">
+              Get In Touch
+            </h3>
+            <div className="space-y-2">
+              <p className="text-xs text-slate-400">
+                <span className="text-slate-300 font-medium">Call:</span>{" "}
+                961-591-558
+              </p>
+              <p className="text-xs text-slate-400">
+                <span className="text-slate-300 font-medium">Email:</span>{" "}
+                duongvdhe173014@fpt.edu.vn
+              </p>
+              <p className="text-xs text-slate-500 mt-3 leading-relaxed">
+                Helping job seekers build professional profiles that stand out
+                to employers.
+              </p>
+            </div>
           </div>
         </div>
 
         {/* Quick Access Icons */}
-        <div className="fixed right-0 top-1/2 transform -translate-y-1/2 bg-white rounded-l-lg shadow-lg">
-          <div className="flex flex-col space-y-3 p-2">
-            <button className="text-blue-600 hover:text-blue-800">
-              <FaRobot size={18} />
-            </button>
-            <button className="text-blue-600 hover:text-blue-800">
-              <BsMessenger size={18} />
-            </button>
-            <button className="text-blue-600 hover:text-blue-800">
-              <FaGamepad size={18} />
-            </button>
-          </div>
-        </div>
       </div>
     </footer>
-  )
+  );
 }

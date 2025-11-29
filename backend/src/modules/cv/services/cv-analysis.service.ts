@@ -1,11 +1,15 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { OpenaiApiService } from "./openai-api.service";
+import { AiUsageLogService } from "src/modules/ai-usage-log/ai-usage-log.service";
 
 @Injectable()
 export class CvAnalysisService {
   private readonly logger = new Logger(CvAnalysisService.name);
 
-  constructor(private openaiApiService: OpenaiApiService) {}
+  constructor(
+    private openaiApiService: OpenaiApiService,
+    private readonly logService: AiUsageLogService
+  ) {}
 
   /**
    * Analyze CV content using OpenAI
@@ -175,7 +179,8 @@ Return only valid JSON without any additional text.
    */
   async rewriteWorkDescription(
     description: string,
-    language?: string
+    language?: string,
+    userId?: string
   ): Promise<string> {
     try {
       let languageNote = "";
@@ -221,6 +226,13 @@ Return only the rewritten description, no explanation, no markdown.
         total_tokens: 0,
       };
       console.log("Usage summary:", usage);
+      if (userId) {
+        await this.logService.createLog({
+          userId: userId,
+          feature: "rewriteWorkDescription",
+          tokensUsed: usage.total_tokens,
+        });
+      }
       // Remove markdown if present
       let cleanResponse = response.trim();
       if (cleanResponse.startsWith("```")) {

@@ -31,6 +31,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useLanguage } from "@/providers/global_provider";
 import CVTemplateLayoutPopup from "@/components/forms/CVTemplateLayoutPopup";
 import { getDefaultSectionPositions } from "../cvTemplate/defaultSectionPositions";
+import { notify } from "@/lib/notify";
 
 // --- BƯỚC 2: TẠO ĐỐI TƯỢNG TRANSLATIONS ---
 const translations = {
@@ -160,7 +161,14 @@ const PageCreateCVContent = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
   const id = searchParams.get("id");
-  const { currentTemplate, userData, loadTemplate, updateUserData, getSectionPositions, updateSectionPositions } = useCV();
+  const {
+    currentTemplate,
+    userData,
+    loadTemplate,
+    updateUserData,
+    getSectionPositions,
+    updateSectionPositions,
+  } = useCV();
 
   const [loading, setLoading] = useState(true);
   const [activeSection, setActiveSection] = useState("info");
@@ -184,14 +192,11 @@ const PageCreateCVContent = () => {
     getCVTemplates().then((data) => setAllTemplates(data));
     const idFromUrl = id;
 
-    console.log("[CreateCV] ID from URL:", idFromUrl);
-
     if (idFromUrl) {
       setLoading(true);
       // First try to get as CV ID (for update flow)
       getCVById(idFromUrl)
         .then((templateData) => {
-          console.log("[CreateCV] Found CV with ID:", idFromUrl, templateData);
           if (templateData) {
             loadTemplate(templateData);
             if (templateData.title) {
@@ -207,28 +212,33 @@ const PageCreateCVContent = () => {
           setLoading(false);
         })
         .catch((error) => {
-          console.log("[CreateCV] Not a CV ID, trying as template ID. Error:", error);
-          console.log(t.loadingTemplateForNew);
           setCvId(null);
-          getCVTemplateById(idFromUrl).then((templateData) => {
-            console.log("[CreateCV] Found template with ID:", idFromUrl, templateData);
-            if (templateData) {
-              loadTemplate(templateData);
-              if (
-                (!userData || Object.keys(userData).length === 0) &&
-                templateData.data?.userData
-              ) {
-                updateUserData(templateData.data.userData);
+          getCVTemplateById(idFromUrl)
+            .then((templateData) => {
+              if (templateData) {
+                loadTemplate(templateData);
+                if (
+                  (!userData || Object.keys(userData).length === 0) &&
+                  templateData.data?.userData
+                ) {
+                  updateUserData(templateData.data.userData);
+                }
+                setCvTitle(t.cvTitleDefault(templateData.title));
+              } else {
+                console.error(
+                  "[CreateCV] Template not found with ID:",
+                  idFromUrl
+                );
               }
-              setCvTitle(t.cvTitleDefault(templateData.title));
-            } else {
-              console.error("[CreateCV] Template not found with ID:", idFromUrl);
-            }
-            setLoading(false);
-          }).catch((templateError) => {
-            console.error("[CreateCV] Error loading template:", templateError);
-            setLoading(false);
-          });
+              setLoading(false);
+            })
+            .catch((templateError) => {
+              console.error(
+                "[CreateCV] Error loading template:",
+                templateError
+              );
+              setLoading(false);
+            });
         });
     } else {
       setLoading(false);
@@ -252,7 +262,8 @@ const PageCreateCVContent = () => {
         updateSectionPositions(selectedTemplate._id, correctPositions);
 
         const templateUserData =
-          newTemplateData.data?.userData && Object.keys(newTemplateData.data.userData).length > 0
+          newTemplateData.data?.userData &&
+          Object.keys(newTemplateData.data.userData).length > 0
             ? newTemplateData.data.userData
             : userData || {};
 
@@ -277,7 +288,7 @@ const PageCreateCVContent = () => {
     updateUserData(updatedData);
     setIsDirty(true);
   };
-  
+
   // --- HÀM XỬ LÝ KHI KÉO THẢ TRÊN TEMPLATE ---
   const handleLayoutChange = (newPositions: any) => {
     if (currentTemplate) {
@@ -291,57 +302,87 @@ const PageCreateCVContent = () => {
     currentPositions: any,
     templateTitle: string
   ) => {
+    // Lấy default positions của template
     const defaultPositions = getDefaultSectionPositions(templateTitle);
-    const isMinimalist1 =
-      templateTitle === "The Vanguard" ||
-      templateTitle?.includes("Vanguard");
-    const isModern2 =
-      templateTitle === "The Modern" || templateTitle?.includes("Modern");
 
-    let targetPlace = 2;
+    // Lấy vị trí mặc định của section từ defaultPositions
+    const defaultSectionPos = defaultPositions[sectionId];
+    if (!defaultSectionPos || defaultSectionPos.place === 0) {
+      // Nếu không có trong default hoặc bị ẩn, dùng logic fallback
+      const isMinimalist1 =
+        templateTitle === "The Vanguard" || templateTitle?.includes("Vanguard");
+      const isModern2 =
+        templateTitle === "The Modern" || templateTitle?.includes("Modern");
 
-    if (isMinimalist1) {
-      if (sectionId === "hobby") {
-        targetPlace = 2;
-      } else if (
-        sectionId === "certification" ||
-        sectionId === "achievement" ||
-        sectionId === "Project"
-      ) {
+      let targetPlace = 2;
+
+      if (isMinimalist1) {
+        if (sectionId === "hobby") {
+          targetPlace = 2;
+        } else if (
+          sectionId === "certification" ||
+          sectionId === "achievement" ||
+          sectionId === "Project"
+        ) {
+          targetPlace = 3;
+        }
+      } else if (isModern2) {
         targetPlace = 3;
+      } else {
+        if (sectionId === "hobby") {
+          targetPlace = 1;
+        } else if (
+          sectionId === "certification" ||
+          sectionId === "achievement" ||
+          sectionId === "Project"
+        ) {
+          targetPlace = 2;
+        }
       }
-    } else if (isModern2) {
-      targetPlace = 3;
-    } else {
-      if (sectionId === "hobby") {
-        targetPlace = 1;
-      } else if (
-        sectionId === "certification" ||
-        sectionId === "achievement" ||
-        sectionId === "Project"
-      ) {
-        targetPlace = 2;
+
+      const targetPlaceSections = Object.entries(currentPositions)
+        .filter(([_, pos]: [string, any]) => pos.place === targetPlace)
+        .sort(
+          ([, a]: [string, any], [, b]: [string, any]) => a.order - b.order
+        );
+
+      if (targetPlaceSections.length > 0) {
+        const lastOrder = (
+          targetPlaceSections[targetPlaceSections.length - 1][1] as any
+        ).order;
+        return { place: targetPlace, order: lastOrder + 1 };
       }
+
+      return { place: targetPlace, order: 0 };
     }
 
-    const targetPlaceSections = Object.entries(currentPositions)
-      .filter(([_, pos]: [string, any]) => pos.place === targetPlace)
+    // Sử dụng vị trí mặc định từ defaultPositions
+    const targetPlace = defaultSectionPos.place;
+    const targetOrder = defaultSectionPos.order;
+
+    // Tìm tất cả các section trong cùng place và có order >= targetOrder
+    const sectionsToShift = Object.entries(currentPositions)
+      .filter(([key, pos]: [string, any]) => {
+        return (
+          key !== sectionId &&
+          pos.place === targetPlace &&
+          pos.order >= targetOrder
+        );
+      })
       .sort(([, a]: [string, any], [, b]: [string, any]) => a.order - b.order);
 
-    if (targetPlaceSections.length > 0) {
-      const lastOrder = (
-        targetPlaceSections[targetPlaceSections.length - 1][1] as any
-      ).order;
-      return { place: targetPlace, order: lastOrder + 1 };
-    }
+    // Đẩy các section khác xuống (tăng order lên 1)
+    sectionsToShift.forEach(([key]) => {
+      currentPositions[key] = {
+        ...currentPositions[key],
+        order: currentPositions[key].order + 1,
+      };
+    });
 
-    return { place: targetPlace, order: 0 };
+    return { place: targetPlace, order: targetOrder };
   };
 
-  const handleSectionClick = (
-    sectionId: string,
-    event?: React.MouseEvent
-  ) => {
+  const handleSectionClick = (sectionId: string, event?: React.MouseEvent) => {
     if (
       event &&
       (event.target as HTMLElement).closest(".section-toggle-icon")
@@ -367,13 +408,16 @@ const PageCreateCVContent = () => {
         updateUserData({ ...userData, sectionPositions: newPositions });
         setIsDirty(true);
       } else {
+        // Thêm vào CV - tạo bản copy để tránh modify trực tiếp
+        const positionsCopy = { ...currentPositions };
         const { place, order } = calculatePlaceAndOrder(
           sectionId,
-          currentPositions,
+          positionsCopy,
           currentTemplate.title
         );
+        // Sử dụng positionsCopy đã được update bởi calculatePlaceAndOrder
         const newPositions = {
-          ...currentPositions,
+          ...positionsCopy,
           [sectionId]: { place, order },
         };
         updateSectionPositions(currentTemplate._id, newPositions);
@@ -408,18 +452,19 @@ const PageCreateCVContent = () => {
   const handleSaveToDB = async (): Promise<boolean> => {
     const userId = getUserIdFromToken();
     if (!userData || !currentTemplate) {
-      alert(t.noDataToSave);
+      notify.error(t.noDataToSave);
       return false;
     }
     if (Object.keys(userData).length === 0) {
-      alert(t.cvDataEmpty);
+      notify.error(t.cvDataEmpty);
       return false;
     }
 
     setIsSaving(true);
     try {
       // Get sectionPositions from provider
-      const sectionPositions = getSectionPositions(currentTemplate._id) ||
+      const sectionPositions =
+        getSectionPositions(currentTemplate._id) ||
         currentTemplate.data?.sectionPositions ||
         getDefaultSectionPositions(currentTemplate.title);
 
@@ -451,7 +496,7 @@ const PageCreateCVContent = () => {
 
       // Ensure content ONLY contains userData, nothing else
       const contentData = {
-        userData: completeUserData
+        userData: completeUserData,
       };
 
       if (cvId) {
@@ -460,7 +505,7 @@ const PageCreateCVContent = () => {
           title: cvTitle || t.cvForUser(userData.firstName),
           updatedAt: new Date().toISOString(),
         };
-        console.log("[handleSaveToDB] Updating CV with data:", JSON.stringify(dataToUpdate, null, 2));
+
         await updateCV(cvId, dataToUpdate);
       } else {
         const dataToCreate: Omit<CV, "_id"> = {
@@ -476,19 +521,19 @@ const PageCreateCVContent = () => {
           isSaved: true,
           isFinalized: false,
         };
-        console.log("[handleSaveToDB] Creating CV with data:", JSON.stringify(dataToCreate, null, 2));
+
         const newCV = await createCV(dataToCreate);
         if (newCV && newCV.id) {
           setCvId(newCV.id);
           router.replace(`/createCV?id=${newCV.id}`, { scroll: false });
         }
       }
-      alert(t.saveSuccess);
+      notify.success(t.saveSuccess);
       setIsDirty(false);
       return true;
     } catch (error) {
       console.error(t.saveError, error);
-      alert(t.saveError);
+      notify.error(t.saveError);
       return false;
     } finally {
       setIsSaving(false);
@@ -555,7 +600,7 @@ const PageCreateCVContent = () => {
 
     const iframeDoc = iframe.contentWindow?.document;
     if (!iframeDoc) {
-      alert(t.pdfCreateEnvError);
+      notify.error(t.pdfCreateEnvError);
       document.body.removeChild(iframe);
       return;
     }
@@ -596,7 +641,7 @@ const PageCreateCVContent = () => {
         .save();
     } catch (error) {
       console.error(t.pdfCreateError, error);
-      alert(t.pdfCreateError);
+      notify.error(t.pdfCreateError);
     } finally {
       if (root) {
         root.unmount();
@@ -629,7 +674,7 @@ const PageCreateCVContent = () => {
     const containerWidth = 700;
     const templateOriginalWidth = 794;
     const scaleFactor = containerWidth / templateOriginalWidth;
-    
+
     return (
       <div className="max-w-[1050px] origin-top pb-24" ref={previewRef}>
         <div

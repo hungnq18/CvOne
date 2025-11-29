@@ -8,6 +8,7 @@ import { getUserById } from '@/api/userApi';
 import { getCLById, getCLTemplateById } from '@/api/clApi';
 import html2pdf from "html2pdf.js";
 import FilterByDateHr from './filterBydateHr';
+import { notify } from "@/lib/notify";
 
 export default function ManageApplyJobClient() {
     const [applications, setApplications] = useState<any[]>([]);
@@ -83,7 +84,7 @@ export default function ManageApplyJobClient() {
                 setApplications(arr);
             });
         } catch (error) {
-            alert("Cập nhật trạng thái thất bại!");
+            notify.error("Cập nhật trạng thái thất bại!");
         }
     };
 
@@ -99,7 +100,7 @@ export default function ManageApplyJobClient() {
                 setApplications(arr);
             });
         } catch (error) {
-            alert("Xóa ứng viên thất bại!");
+            notify.error("Xóa ứng viên thất bại!");
         }
     };
 
@@ -119,10 +120,10 @@ export default function ManageApplyJobClient() {
                 const templateObj = templateId ? await getCLTemplateById(templateId) : undefined;
                 setPreviewModal({ open: true, type: 'cl', clData, templateObj });
             } else {
-                alert("Không tìm thấy dữ liệu Cover Letter.");
+                notify.error("Không tìm thấy dữ liệu Cover Letter.");
             }
         } catch (error) {
-            alert("Đã có lỗi xảy ra khi lấy dữ liệu Cover Letter.");
+            notify.error("Đã có lỗi xảy ra khi lấy dữ liệu Cover Letter.");
         }
     };
 
@@ -141,13 +142,13 @@ export default function ManageApplyJobClient() {
         try {
             const clData = await getCLById(clId);
             if (!clData) {
-                alert('Không tìm thấy dữ liệu Cover Letter.');
+                notify.error('Không tìm thấy dữ liệu Cover Letter.');
                 return;
             }
             const templateId = typeof clData.templateId === 'string' ? clData.templateId : clData.templateId?._id;
             const templateObj = templateId ? await getCLTemplateById(templateId) : undefined;
             if (!templateObj) {
-                alert('Không tìm thấy template phù hợp để xuất PDF');
+                notify.error('Không tìm thấy template phù hợp để xuất PDF');
                 return;
             }
             const clTemplateModule = await import("@/app/createCLTemplate/templates");
@@ -156,7 +157,7 @@ export default function ManageApplyJobClient() {
             const key = templateObj.title.toLowerCase() as TemplateType;
             const TemplateComponent = clTemplateComponents[key] as React.ComponentType<any>;
             if (!TemplateComponent) {
-                alert('Không tìm thấy component template để xuất PDF');
+                notify.error('Không tìm thấy component template để xuất PDF');
                 return;
             }
             // Tạo iframe ẩn
@@ -168,7 +169,7 @@ export default function ManageApplyJobClient() {
             document.body.appendChild(iframe);
             const iframeDoc = iframe.contentWindow?.document;
             if (!iframeDoc) {
-                alert('Không thể tạo môi trường để xuất PDF.');
+                notify.error('Không thể tạo môi trường để xuất PDF.');
                 document.body.removeChild(iframe);
                 return;
             }
@@ -204,13 +205,13 @@ export default function ManageApplyJobClient() {
                     })
                     .save();
             } catch (error) {
-                alert('Đã có lỗi xảy ra khi xuất file PDF.');
+                notify.error('Đã có lỗi xảy ra khi xuất file PDF.');
             } finally {
                 if (root) root.unmount();
                 if (document.body.contains(iframe)) document.body.removeChild(iframe);
             }
         } catch (error) {
-            alert('Đã có lỗi xảy ra khi xuất file PDF.');
+            notify.error('Đã có lỗi xảy ra khi xuất file PDF.');
         }
     };
 

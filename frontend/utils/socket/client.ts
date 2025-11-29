@@ -1,15 +1,19 @@
-import { io } from "socket.io-client";
+// utils/socket/client.ts
+import { io, Socket } from "socket.io-client";
 
-const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL ?? "http://localhost:8000";
+class SocketClient {
+  private socket: Socket | null = null;
 
-const socket = io(SOCKET_URL, {
-  transports: ["websocket"], // ép buộc websocket
-});
+  getSocket() {
+    if (!this.socket) {
+      this.socket = io(process.env.NEXT_PUBLIC_SOCKET_URL!, {
+        transports: ["websocket"],
+        withCredentials: true,
+      });
+    }
+    return this.socket;
+  }
+}
 
-socket.on("connect", () => {
-});
-
-socket.on("connect_error", (err) => {
-});
-
-export default socket;
+const socketClient = new SocketClient();
+export default socketClient;

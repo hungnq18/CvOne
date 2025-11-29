@@ -32,7 +32,9 @@ export async function fetchWithAuth(url: string, options: RequestInit = {}) {
 
   if (response.status === 204 || response.headers.get("content-length") === "0") {
     if (!response.ok) {
-      throw new Error("Request failed with status " + response.status);
+      const error: any = new Error("Request failed with status " + response.status);
+      error.status = response.status;
+      throw error;
     }
     return;
   }
@@ -40,7 +42,10 @@ export async function fetchWithAuth(url: string, options: RequestInit = {}) {
   const data = await response.json();
 
   if (!response.ok) {
-    throw new Error(data.message || "Something went wrong");
+    const error: any = new Error(data.message || "Something went wrong");
+    error.status = response.status;
+    error.data = data;
+    throw error;
   }
 
   return data;

@@ -17,6 +17,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useLanguage } from "@/providers/global_provider";
+import { notify } from "@/lib/notify";
 
 // --- GIỮ NGUYÊN TRANSLATIONS ---
 const translations = {
@@ -260,7 +261,7 @@ function CreateCVwithAI() {
     if (currentTemplate && currentTemplate._id) {
       router.push(`/createCV-AIManual?id=${currentTemplate._id}`);
     } else {
-      alert(t.templateNotFoundToCreate);
+      notify.error(t.templateNotFoundToCreate);
     }
   };
 
@@ -317,44 +318,83 @@ function CreateCVwithAI() {
         {/* Cột Form Chính - Scrollable */}
         <div className="flex flex-col w-2/3 min-h-screen">
           <div className="flex-grow px-12 py-8 width-full">
-            <h2 className="text-3xl font-bold text-gray-900">
-              {steps[currentStep - 1].name}
-            </h2>
-            {/* START: Header chứa Tiêu đề và Nút điều hướng */}
-            <div className="flex items-center justify-between mb-2 w-full">
-              {/* Bên trái: mô tả bước */}
-              <p className="mt-2 text-md text-gray-600">
-                {steps[currentStep - 1].description}
-              </p>
+            {/* === STEP HEADER REDESIGNED === */}
+            <div className="mb-6">
+              {/* Progress Indicator */}
+              <div className="flex items-center gap-2 mb-4">
+                {steps.map((step, index) => (
+                  <div key={step.id} className="flex items-center">
+                    <div
+                      className={`
+                        w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300
+                        ${index + 1 < currentStep 
+                          ? "bg-gradient-to-r from-emerald-400 to-emerald-500 text-white shadow-md" 
+                          : index + 1 === currentStep 
+                            ? "bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg ring-4 ring-blue-100" 
+                            : "bg-slate-100 text-slate-400 border-2 border-slate-200"
+                        }
+                      `}
+                    >
+                      {index + 1 < currentStep ? "✓" : index + 1}
+                    </div>
+                    {index < steps.length - 1 && (
+                      <div 
+                        className={`w-8 h-1 mx-1 rounded-full transition-all duration-300 ${
+                          index + 1 < currentStep ? "bg-emerald-400" : "bg-slate-200"
+                        }`} 
+                      />
+                    )}
+                  </div>
+                ))}
+                <span className="ml-3 text-sm text-slate-500 font-medium">
+                  {currentStep}/{steps.length}
+                </span>
+              </div>
 
-              {/* Bên phải: cụm nút */}
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={handlePrevStep}
-                  disabled={currentStep === 1}
-                  className="flex items-center gap-2 rounded-md bg-white px-3 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <ChevronLeft className="h-4 w-4" /> {t.prevStep}
-                </button>
+              {/* Title & Description */}
+              <div className="flex items-start justify-between gap-8">
+                <div className="flex-1">
+                  <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-3">
+                    <span className="w-1.5 h-8 bg-gradient-to-b from-blue-500 to-indigo-600 rounded-full"></span>
+                    {steps[currentStep - 1].name}
+                  </h2>
+                  {steps[currentStep - 1].description && (
+                    <p className="mt-2 text-slate-500 pl-5 text-sm leading-relaxed">
+                      {steps[currentStep - 1].description}
+                    </p>
+                  )}
+                </div>
 
-                <button
-                  type="button"
-                  onClick={
-                    currentStep === steps.length
-                      ? handleFinishAndGoToCreateCV
-                      : handleNextStep
-                  }
-                  className="flex items-center gap-2 rounded-md bg-blue-500 px-3 py-1.5 text-sm font-semibold text-white border border-white shadow-sm hover:bg-blue-400"
-                >
-                  {currentStep === steps.length ? t.finish : t.nextStep}
-                  <ChevronRight className="h-4 w-4" />
-                </button>
+                {/* Navigation Buttons */}
+                <div className="flex gap-3 flex-shrink-0">
+                  <button
+                    type="button"
+                    onClick={handlePrevStep}
+                    disabled={currentStep === 1}
+                    className="group flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-slate-600 bg-white border border-slate-200 shadow-sm hover:bg-slate-50 hover:border-slate-300 hover:shadow transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:border-slate-200"
+                  >
+                    <ChevronLeft className="h-4 w-4 group-hover:-translate-x-0.5 transition-transform" />
+                    <span className="hidden sm:inline">{t.prevStep}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={
+                      currentStep === steps.length
+                        ? handleFinishAndGoToCreateCV
+                        : handleNextStep
+                    }
+                    className="group flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold text-white bg-gradient-to-r from-blue-500 to-indigo-600 shadow-md hover:shadow-lg hover:from-blue-600 hover:to-indigo-700 transition-all"
+                  >
+                    <span>{currentStep === steps.length ? t.finish : t.nextStep}</span>
+                    <ChevronRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
+                  </button>
+                </div>
               </div>
             </div>
+            {/* === END STEP HEADER === */}
 
-            {/* END: Header */}
-            <div className="mt-8 p-8 border rounded-lg bg-white shadow-sm">
+            <div className="p-8 border border-slate-200 rounded-xl bg-white shadow-sm">
               {renderCurrentStepForm()}
             </div>
           </div>

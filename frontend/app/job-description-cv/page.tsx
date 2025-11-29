@@ -10,6 +10,7 @@ import { useLanguage } from "@/providers/global_provider";
 import { ArrowLeft, ArrowRight, Wand2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FC, ReactNode, useState } from "react";
+import { notify } from "@/lib/notify";
 
 // --- ĐỐI TƯỢNG TRANSLATIONS (KHÔNG ĐỔI) ---
 const translations = {
@@ -160,7 +161,8 @@ const AnalysisList: FC<{ items: string[] }> = ({ items }) => (
 function analysisToText(analysis: any): string {
   if (!analysis || typeof analysis !== "object") return "";
   let lines: string[] = [];
-  if (analysis.experienceLevel) lines.push(`Kinh nghiệm: ${analysis.experienceLevel}`);
+  if (analysis.experienceLevel)
+    lines.push(`Kinh nghiệm: ${analysis.experienceLevel}`);
   if (analysis.requiredSkills?.length)
     lines.push(`Kỹ năng: ${analysis.requiredSkills.join(", ")}`);
   if (analysis.technologies?.length)
@@ -286,87 +288,88 @@ export default function JobDescriptionPage() {
     fileName = "cv.pdf",
     mimeType = "application/pdf"
   ) => {
-    const blob = new Blob([uint8Array.buffer as ArrayBuffer], { type: mimeType });
+    const blob = new Blob([uint8Array.buffer as ArrayBuffer], {
+      type: mimeType,
+    });
     return new File([blob], fileName, { type: mimeType });
   };
 
   const handleContinue = async () => {
     if (!pdfFile) {
-      alert(t.alerts.pdfMissing);
+      notify.error(t.alerts.pdfMissing);
       return;
     }
-  
-    const maxSize = 10 * 1024 * 1024; 
+
+    const maxSize = 10 * 1024 * 1024;
     if (pdfFile.length > maxSize) {
-      alert(t.alerts.pdfTooLarge);
+      notify.error(t.alerts.pdfTooLarge);
       return;
     }
-  
+
     setIsCreatingCV(true);
-  
+
     try {
-      let finalJobDescription = jobDescription; 
+      let finalJobDescription = jobDescription;
       if (activeTab === "file") {
         if (!jdFile) {
-          alert(t.alerts.jdMissing);
-          setIsCreatingCV(false); 
+          notify.error(t.alerts.jdMissing);
+          setIsCreatingCV(false);
           return;
         }
         const result = await uploadJDPdfAndAnalyze(jdFile);
-        console.log(result);
+
         let extractedText = result?.text?.trim() || "";
         if (!extractedText && result && typeof result === "object") {
           extractedText = analysisToText(result);
         }
-        console.log("Extracted text from PDF:", extractedText);
+
         if (extractedText) {
           setJobDescription(extractedText);
           finalJobDescription = extractedText;
         } else {
-          alert(t.alerts.jdMissing);
-          setIsCreatingCV(false); 
+          notify.error(t.alerts.jdMissing);
+          setIsCreatingCV(false);
           return;
         }
       }
       if (!finalJobDescription || !finalJobDescription.trim()) {
-        alert(t.alerts.jdMissing);
-        setIsCreatingCV(false); 
+        notify.error(t.alerts.jdMissing);
+        setIsCreatingCV(false);
         return;
       }
-  
+
       const file = uint8ArrayToFile(pdfFile);
       const result = await uploadAndAnalyzeCV(file, finalJobDescription);
-  
+
       const userData = result?.analysisResult?.userData;
       if (userData) {
         updateUserData(userData);
         // Đợi một chút để đảm bảo context được update
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise((resolve) => setTimeout(resolve, 100));
       }
 
-      // console.log("trang job description" ,result);
-  
       router.replace(`/createCV-AIManual?id=${templateId}`);
-  
     } catch (error) {
       console.error("Lỗi trong quá trình xử lý CV:", error);
-      
+
       if (error instanceof Error) {
         if (error.message.includes("413")) {
-          alert(t.alerts.pdfTooLarge413);
+          notify.error(t.alerts.pdfTooLarge413);
         } else if (error.message.includes("400")) {
-          alert("Dữ liệu không hợp lệ. Vui lòng kiểm tra lại file CV và mô tả công việc.");
+          notify.error(
+            "Dữ liệu không hợp lệ. Vui lòng kiểm tra lại file CV và mô tả công việc."
+          );
         } else if (error.message.includes("401")) {
-          alert("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
+          notify.error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
         } else if (error.message.includes("500")) {
-          alert("Lỗi máy chủ. Vui lòng thử lại sau.");
+          notify.error("Lỗi máy chủ. Vui lòng thử lại sau.");
         } else if (error.message.includes("Network")) {
-          alert("Lỗi kết nối mạng. Vui lòng kiểm tra kết nối internet.");
+          notify.error("Lỗi kết nối mạng. Vui lòng kiểm tra kết nối internet.");
         } else {
-          alert(t.alerts.cvAnalysisError);
+          notify.error(t.alerts.cvAnalysisError);
         }
       } else {
-        alert(t.alerts.cvAnalysisError);
+        notify.error(t.alerts.cvAnalysisError);
       }
     } finally {
       // Luôn tắt trạng thái loading ở cuối

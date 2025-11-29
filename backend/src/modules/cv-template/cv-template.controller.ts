@@ -36,8 +36,11 @@ export class CvTemplateController {
 
   @UseGuards(JwtAuthGuard)
   @Post("suggest")
-  async getSuggestTemplateCv(@Body("jobDescription") jobDescription: string) {
-    return this.cvTemplateService.getSuggestTemplateCv(jobDescription);
+  async getSuggestTemplateCv(
+    @Body("jobDescription") jobDescription: string,
+    @User("_id") userId: string
+  ) {
+    return this.cvTemplateService.getSuggestTemplateCv(jobDescription, userId);
   }
 
   @Public()

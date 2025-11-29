@@ -43,13 +43,122 @@ export class AiInterviewService {
    * Helper method to parse JSON response from OpenAI
    */
   private parseJsonResponse(response: string): any {
-    let cleanResponse = response.trim();
-    if (cleanResponse.startsWith('```json')) {
-      cleanResponse = cleanResponse.replace(/^```json\s*/, '').replace(/\s*```$/, '');
-    } else if (cleanResponse.startsWith('```')) {
-      cleanResponse = cleanResponse.replace(/^```\s*/, '').replace(/\s*```$/, '');
+    if (!response || !response.trim()) {
+      throw new Error('Empty response from OpenAI');
     }
-    return JSON.parse(cleanResponse);
+
+    let cleanResponse = response.trim();
+    
+    // Remove markdown code blocks
+    if (cleanResponse.startsWith('```json')) {
+      cleanResponse = cleanResponse.replace(/^```json\s*/i, '').replace(/\s*```$/g, '');
+    } else if (cleanResponse.startsWith('```')) {
+      cleanResponse = cleanResponse.replace(/^```\s*/, '').replace(/\s*```$/g, '');
+    }
+    
+    // Try to extract JSON if response contains text before/after JSON
+    const jsonMatch = cleanResponse.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      cleanResponse = jsonMatch[0];
+    }
+    
+    // Try to extract array JSON if object JSON not found
+    if (!jsonMatch) {
+      const arrayMatch = cleanResponse.match(/\[[\s\S]*\]/);
+      if (arrayMatch) {
+        cleanResponse = arrayMatch[0];
+      }
+    }
+    
+    try {
+      return JSON.parse(cleanResponse);
+    } catch (error) {
+      this.logger.error(`Failed to parse JSON response. Raw response: ${response.substring(0, 500)}`);
+      throw new Error(`Invalid JSON response from OpenAI: ${error.message}`);
+    }
+  }
+
+  /**
+   * Detect language from job description
+   * Returns language code: 'vi-VN', 'en-US', 'ja-JP', 'ko-KR', 'zh-CN', 'fr-FR', 'de-DE', 'es-ES'
+   */
+  private detectLanguageFromText(text: string): string {
+    if (!text || text.trim().length < 3) {
+      return 'vi-VN'; // Default to Vietnamese
+    }
+
+    // Simple heuristic detection
+    const vietnamesePattern = /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]/i;
+    const chinesePattern = /[\u4e00-\u9fff]/;
+    const japanesePattern = /[\u3040-\u309f\u30a0-\u30ff]/;
+    const koreanPattern = /[\uac00-\ud7a3]/;
+    
+    const vietnameseCount = (text.match(vietnamesePattern) || []).length;
+    const chineseCount = (text.match(chinesePattern) || []).length;
+    const japaneseCount = (text.match(japanesePattern) || []).length;
+    const koreanCount = (text.match(koreanPattern) || []).length;
+    
+    // Check for English (common words)
+    const englishWords = /\b(the|is|are|and|or|but|in|on|at|to|for|of|with|by|we|you|they|this|that|these|those)\b/i;
+    const englishCount = (text.match(englishWords) || []).length;
+    
+    // Check for French
+    const frenchPattern = /[àâäéèêëïîôùûüÿç]/i;
+    const frenchCount = (text.match(frenchPattern) || []).length;
+    const frenchWords = /\b(le|la|les|de|du|des|et|ou|est|sont|dans|pour|avec|par)\b/i;
+    const frenchWordCount = (text.match(frenchWords) || []).length;
+    
+    // Check for German
+    const germanPattern = /[äöüßÄÖÜ]/i;
+    const germanCount = (text.match(germanPattern) || []).length;
+    const germanWords = /\b(der|die|das|und|oder|ist|sind|in|für|mit|von)\b/i;
+    const germanWordCount = (text.match(germanWords) || []).length;
+    
+    // Check for Spanish
+    const spanishPattern = /[áéíóúñüÁÉÍÓÚÑÜ]/i;
+    const spanishCount = (text.match(spanishPattern) || []).length;
+    const spanishWords = /\b(el|la|los|las|y|o|es|son|en|para|con|de)\b/i;
+    const spanishWordCount = (text.match(spanishWords) || []).length;
+    
+    // Determine language based on patterns
+    if (vietnameseCount > 0 && vietnameseCount > englishCount) {
+      return 'vi-VN';
+    } else if (chineseCount > 0) {
+      return 'zh-CN';
+    } else if (japaneseCount > 0) {
+      return 'ja-JP';
+    } else if (koreanCount > 0) {
+      return 'ko-KR';
+    } else if (frenchCount > 0 || frenchWordCount > 2) {
+      return 'fr-FR';
+    } else if (germanCount > 0 || germanWordCount > 2) {
+      return 'de-DE';
+    } else if (spanishCount > 0 || spanishWordCount > 2) {
+      return 'es-ES';
+    } else if (englishCount > 2) {
+      return 'en-US';
+    }
+    
+    // Default to Vietnamese
+    return 'vi-VN';
+  }
+
+  /**
+   * Get language name for prompts
+   */
+  private getLanguageName(languageCode: string): string {
+    const languageMap: { [key: string]: string } = {
+      'vi-VN': 'Vietnamese (Tiếng Việt)',
+      'en-US': 'English',
+      'en-GB': 'English',
+      'ja-JP': 'Japanese (日本語)',
+      'ko-KR': 'Korean (한국어)',
+      'zh-CN': 'Chinese (中文)',
+      'fr-FR': 'French (Français)',
+      'de-DE': 'German (Deutsch)',
+      'es-ES': 'Spanish (Español)',
+    };
+    return languageMap[languageCode] || 'Vietnamese';
   }
 
   /**
@@ -103,7 +212,8 @@ export class AiInterviewService {
     jobDescription: string,
     numberOfQuestions: number,
     jobTitle?: string,
-    companyName?: string
+    companyName?: string,
+    language: string = 'vi-VN'
   ): Promise<{ questions: InterviewQuestion[]; difficulty: 'easy' | 'medium' | 'hard' }> {
     // Bước 1: Check pool trước (không tốn token)
     const existingPool = await this.findExistingPool(jobDescription, numberOfQuestions);
@@ -162,7 +272,8 @@ export class AiInterviewService {
     const questions = await this.generateInterviewQuestions(
       jobDescription,
       numberOfQuestions,
-      difficulty
+      difficulty,
+      language
     );
 
     // Save to pool với upsert để tránh duplicate key error (race condition)
@@ -170,6 +281,7 @@ export class AiInterviewService {
     
     try {
       // Sử dụng findOneAndUpdate với upsert để tránh duplicate key
+      // Note: $inc will set usageCount to 1 if document is new, or increment if existing
       const pool = await this.interviewQuestionPoolModel.findOneAndUpdate(
         { jobDescriptionHash: hash, difficulty },
         {
@@ -186,9 +298,7 @@ export class AiInterviewService {
               difficulty: q.difficulty,
               tips: q.tips || [],
               expectedAnswer: q.expectedAnswer
-            })),
-            usageCount: 0,
-            lastUsedAt: new Date()
+            }))
           },
           $inc: { usageCount: 1 },
           $set: { lastUsedAt: new Date() }
@@ -237,8 +347,7 @@ export class AiInterviewService {
    */
   async determineDifficulty(jobDescription: string): Promise<'easy' | 'medium' | 'hard'> {
     try {
-      const prompt = `
-Phân tích job description sau và xác định độ khó phỏng vấn phù hợp:
+      const prompt = `Phân tích job description sau và xác định độ khó phỏng vấn phù hợp. BẮT BUỘC phải trả về JSON hợp lệ, không có text thêm trước hoặc sau JSON.
 
 Job Description:
 ${jobDescription}
@@ -259,23 +368,35 @@ Xác định độ khó dựa trên:
    - Phát triển tính năng, làm việc nhóm → medium
    - Thiết kế hệ thống, quản lý team → hard
 
-Trả về JSON với format:
+QUAN TRỌNG: Chỉ trả về JSON, không có text giải thích thêm. Format bắt buộc:
 {
   "difficulty": "easy" | "medium" | "hard",
   "reason": "Lý do ngắn gọn"
-}
-`;
+}`;
 
       const openai = this.openaiApiService.getOpenAI();
       const completion = await openai.chat.completions.create({
         model: "gpt-4o",
         messages: [{ role: "user", content: prompt }],
         max_tokens: 500,
+        response_format: { type: "json_object" }, // Force JSON output
       });
       const response = completion.choices[0]?.message?.content || '';
+      
+      if (!response) {
+        this.logger.warn('Empty response from OpenAI, falling back to medium difficulty');
+        return 'medium';
+      }
+      
       const analysis = this.parseJsonResponse(response);
       
-      this.logger.log(`Determined difficulty: ${analysis.difficulty} - ${analysis.reason}`);
+      // Validate the response structure
+      if (!analysis.difficulty || !['easy', 'medium', 'hard'].includes(analysis.difficulty)) {
+        this.logger.warn(`Invalid difficulty value: ${analysis.difficulty}, falling back to medium`);
+        return 'medium';
+      }
+      
+      this.logger.log(`Determined difficulty: ${analysis.difficulty} - ${analysis.reason || 'N/A'}`);
       return analysis.difficulty;
 
     } catch (error) {
@@ -297,12 +418,17 @@ Trả về JSON với format:
     companyName?: string
   ): Promise<AiInterviewSession> {
     try {
+      // Detect language from job description
+      const detectedLanguage = this.detectLanguageFromText(jobDescription);
+      this.logger.log(`Detected language: ${detectedLanguage} from job description`);
+
       // Lấy câu hỏi từ pool hoặc generate mới (tự động check pool trước)
       const { questions, difficulty } = await this.getOrGenerateQuestions(
         jobDescription,
         numberOfQuestions,
         jobTitle,
-        companyName
+        companyName,
+        detectedLanguage
       );
 
       // Tạo session mới
@@ -314,6 +440,7 @@ Trả về JSON với format:
         questions,
         numberOfQuestions,
         difficulty,
+        language: detectedLanguage,
         status: 'in-progress',
         currentQuestionIndex: 0,
         userAnswers: new Map(),
@@ -321,7 +448,7 @@ Trả về JSON với format:
       });
 
       await session.save();
-      this.logger.log(`Created interview session ${session._id} for user ${userId} with difficulty: ${difficulty} (${questions.length} questions)`);
+      this.logger.log(`Created interview session ${session._id} for user ${userId} with difficulty: ${difficulty}, language: ${detectedLanguage} (${questions.length} questions)`);
       
       return session;
     } catch (error) {
@@ -342,6 +469,10 @@ Trả về JSON với format:
     difficulty?: 'easy' | 'medium' | 'hard'
   ): Promise<InterviewQuestionPool> {
     try {
+      // Detect language from job description
+      const detectedLanguage = this.detectLanguageFromText(jobDescription);
+      this.logger.log(`Pre-generating questions with detected language: ${detectedLanguage}`);
+      
       // Check xem đã có pool chưa
       const existingPool = await this.findExistingPool(jobDescription, numberOfQuestions);
       if (existingPool) {
@@ -352,11 +483,12 @@ Trả về JSON với format:
       // Determine difficulty nếu chưa có
       const finalDifficulty = difficulty || await this.determineDifficulty(jobDescription);
       
-      // Generate questions
+      // Generate questions with detected language
       const questions = await this.generateInterviewQuestions(
         jobDescription,
         numberOfQuestions,
-        finalDifficulty
+        finalDifficulty,
+        detectedLanguage
       );
 
       // Save to pool với upsert để tránh duplicate key error
@@ -404,13 +536,18 @@ Trả về JSON với format:
   async generateInterviewQuestions(
     jobDescription: string,
     numberOfQuestions: number = 10,
-    difficulty: 'easy' | 'medium' | 'hard'
+    difficulty: 'easy' | 'medium' | 'hard',
+    language: string = 'vi-VN'
   ): Promise<InterviewQuestion[]> {
     try {
       // Phân tích job description để hiểu yêu cầu
       const jobAnalysis = await this.jobAnalysisService.analyzeJobDescription(jobDescription);
       
-      const prompt = `
+      const languageName = this.getLanguageName(language);
+      
+      // Create language-specific prompts
+      const languagePrompts: { [key: string]: string } = {
+        'vi-VN': `
 Dựa trên job description sau, tạo ${numberOfQuestions} câu hỏi phỏng vấn phù hợp với mức độ ${difficulty}.
 
 Job Description:
@@ -425,28 +562,246 @@ Yêu cầu:
 3. Câu hỏi phải phù hợp với vị trí và yêu cầu công việc
 4. Bao gồm cả câu hỏi mở và câu hỏi cụ thể
 5. Mỗi câu hỏi cần có category và tips
+6. TẤT CẢ câu hỏi phải được viết bằng tiếng Việt
 
-Trả về JSON array với format:
-[
-  {
-    "question": "Câu hỏi phỏng vấn",
-    "category": "technical|behavioral|situational|company",
-    "difficulty": "${difficulty}",
-    "tips": ["tip1", "tip2"]
-  }
-]
-`;
+QUAN TRỌNG: Chỉ trả về JSON, không có text giải thích thêm. Trả về JSON object với format:
+{
+  "questions": [
+    {
+      "question": "Câu hỏi phỏng vấn bằng tiếng Việt",
+      "category": "technical|behavioral|situational|company",
+      "difficulty": "${difficulty}",
+      "tips": ["tip1", "tip2"]
+    }
+  ]
+}
+`,
+        'en-US': `
+Based on the following job description, create ${numberOfQuestions} interview questions appropriate for ${difficulty} level.
+
+Job Description:
+${jobDescription}
+
+Job Analysis:
+${JSON.stringify(jobAnalysis, null, 2)}
+
+Requirements:
+1. Create diverse questions about: technical skills, behavioral, situational, company knowledge
+2. Difficulty level: ${difficulty}
+3. Questions must be relevant to the position and job requirements
+4. Include both open-ended and specific questions
+5. Each question needs a category and tips
+6. ALL questions must be written in English
+
+IMPORTANT: Return only JSON, no additional explanatory text. Return JSON object with format:
+{
+  "questions": [
+    {
+      "question": "Interview question in English",
+      "category": "technical|behavioral|situational|company",
+      "difficulty": "${difficulty}",
+      "tips": ["tip1", "tip2"]
+    }
+  ]
+}
+`,
+        'ja-JP': `
+以下の求人説明に基づいて、${difficulty}レベルの面接質問を${numberOfQuestions}個作成してください。
+
+求人説明:
+${jobDescription}
+
+求人分析:
+${JSON.stringify(jobAnalysis, null, 2)}
+
+要件:
+1. 技術スキル、行動、状況、会社知識について多様な質問を作成
+2. 難易度レベル: ${difficulty}
+3. 質問は職位と職務要件に関連している必要があります
+4. オープンエンドの質問と具体的な質問の両方を含める
+5. 各質問にはカテゴリとヒントが必要です
+6. すべての質問は日本語で書く必要があります
+
+重要: JSONのみを返し、追加の説明テキストは含めないでください。形式:
+{
+  "questions": [
+    {
+      "question": "日本語での面接質問",
+      "category": "technical|behavioral|situational|company",
+      "difficulty": "${difficulty}",
+      "tips": ["tip1", "tip2"]
+    }
+  ]
+}
+`,
+        'ko-KR': `
+다음 채용 설명을 기반으로 ${difficulty} 수준에 적합한 면접 질문 ${numberOfQuestions}개를 작성하세요.
+
+채용 설명:
+${jobDescription}
+
+채용 분석:
+${JSON.stringify(jobAnalysis, null, 2)}
+
+요구사항:
+1. 기술 스킬, 행동, 상황, 회사 지식에 대한 다양한 질문 작성
+2. 난이도: ${difficulty}
+3. 질문은 직위 및 직무 요구사항과 관련되어야 함
+4. 개방형 질문과 구체적인 질문 모두 포함
+5. 각 질문에는 카테고리와 팁이 필요함
+6. 모든 질문은 한국어로 작성해야 함
+
+중요: JSON만 반환하고 추가 설명 텍스트는 포함하지 마세요. 형식:
+{
+  "questions": [
+    {
+      "question": "한국어로 된 면접 질문",
+      "category": "technical|behavioral|situational|company",
+      "difficulty": "${difficulty}",
+      "tips": ["tip1", "tip2"]
+    }
+  ]
+}
+`,
+        'zh-CN': `
+根据以下职位描述，创建${numberOfQuestions}个适合${difficulty}级别的面试问题。
+
+职位描述:
+${jobDescription}
+
+职位分析:
+${JSON.stringify(jobAnalysis, null, 2)}
+
+要求:
+1. 创建关于技术技能、行为、情境、公司知识的多样化问题
+2. 难度级别: ${difficulty}
+3. 问题必须与职位和工作要求相关
+4. 包括开放式问题和具体问题
+5. 每个问题需要类别和提示
+6. 所有问题必须用中文编写
+
+重要: 仅返回JSON，不包含额外的解释文本。格式:
+{
+  "questions": [
+    {
+      "question": "中文面试问题",
+      "category": "technical|behavioral|situational|company",
+      "difficulty": "${difficulty}",
+      "tips": ["tip1", "tip2"]
+    }
+  ]
+}
+`,
+        'fr-FR': `
+Basé sur la description de poste suivante, créez ${numberOfQuestions} questions d'entretien appropriées pour le niveau ${difficulty}.
+
+Description du poste:
+${jobDescription}
+
+Analyse du poste:
+${JSON.stringify(jobAnalysis, null, 2)}
+
+Exigences:
+1. Créer des questions diverses sur: compétences techniques, comportement, situation, connaissances de l'entreprise
+2. Niveau de difficulté: ${difficulty}
+3. Les questions doivent être pertinentes pour le poste et les exigences du travail
+4. Inclure des questions ouvertes et spécifiques
+5. Chaque question nécessite une catégorie et des conseils
+6. TOUTES les questions doivent être écrites en français
+
+IMPORTANT: Retournez uniquement JSON, sans texte explicatif supplémentaire. Format:
+{
+  "questions": [
+    {
+      "question": "Question d'entretien en français",
+      "category": "technical|behavioral|situational|company",
+      "difficulty": "${difficulty}",
+      "tips": ["tip1", "tip2"]
+    }
+  ]
+}
+`,
+        'de-DE': `
+Basierend auf der folgenden Stellenbeschreibung erstellen Sie ${numberOfQuestions} Interview-Fragen für das Niveau ${difficulty}.
+
+Stellenbeschreibung:
+${jobDescription}
+
+Stellenanalyse:
+${JSON.stringify(jobAnalysis, null, 2)}
+
+Anforderungen:
+1. Erstellen Sie vielfältige Fragen zu: technischen Fähigkeiten, Verhalten, Situation, Unternehmenswissen
+2. Schwierigkeitsgrad: ${difficulty}
+3. Fragen müssen relevant für die Position und Arbeitsanforderungen sein
+4. Sowohl offene als auch spezifische Fragen einschließen
+5. Jede Frage benötigt eine Kategorie und Tipps
+6. ALLE Fragen müssen auf Deutsch geschrieben werden
+
+WICHTIG: Geben Sie nur JSON zurück, ohne zusätzlichen erklärenden Text. Format:
+{
+  "questions": [
+    {
+      "question": "Interview-Frage auf Deutsch",
+      "category": "technical|behavioral|situational|company",
+      "difficulty": "${difficulty}",
+      "tips": ["tip1", "tip2"]
+    }
+  ]
+}
+`,
+        'es-ES': `
+Basado en la siguiente descripción del trabajo, cree ${numberOfQuestions} preguntas de entrevista apropiadas para el nivel ${difficulty}.
+
+Descripción del trabajo:
+${jobDescription}
+
+Análisis del trabajo:
+${JSON.stringify(jobAnalysis, null, 2)}
+
+Requisitos:
+1. Crear preguntas diversas sobre: habilidades técnicas, comportamiento, situacional, conocimiento de la empresa
+2. Nivel de dificultad: ${difficulty}
+3. Las preguntas deben ser relevantes para el puesto y los requisitos del trabajo
+4. Incluir preguntas abiertas y específicas
+5. Cada pregunta necesita una categoría y consejos
+6. TODAS las preguntas deben estar escritas en español
+
+IMPORTANTE: Devuelva solo JSON, sin texto explicativo adicional. Formato:
+{
+  "questions": [
+    {
+      "question": "Pregunta de entrevista en español",
+      "category": "technical|behavioral|situational|company",
+      "difficulty": "${difficulty}",
+      "tips": ["tip1", "tip2"]
+    }
+  ]
+}
+`,
+      };
+      
+      const prompt = languagePrompts[language] || languagePrompts['vi-VN'];
 
       const openai = this.openaiApiService.getOpenAI();
       const completion = await openai.chat.completions.create({
         model: "gpt-4o",
         messages: [{ role: "user", content: prompt }],
         max_tokens: 2000,
+        response_format: { type: "json_object" }, // Force JSON output
       });
       const response = completion.choices[0]?.message?.content || '';
       
+      if (!response) {
+        throw new Error('Empty response from OpenAI');
+      }
+      
       // Parse JSON response
-      const questionsData = this.parseJsonResponse(response);
+      const parsedResponse = this.parseJsonResponse(response);
+      // Handle both direct array and object with questions property
+      const questionsData = Array.isArray(parsedResponse) 
+        ? parsedResponse 
+        : parsedResponse.questions || parsedResponse;
       
       // Tạo InterviewQuestion objects
       const questions: InterviewQuestion[] = questionsData.map((q: any, index: number) => ({
@@ -472,10 +827,13 @@ Trả về JSON array với format:
   async evaluateAnswer(
     question: InterviewQuestion,
     userAnswer: string,
-    jobDescription: string
+    jobDescription: string,
+    language: string = 'vi-VN'
   ): Promise<InterviewFeedback> {
     try {
-      const prompt = `
+      // Create language-specific evaluation prompts
+      const languagePrompts: { [key: string]: string } = {
+        'vi-VN': `
 Đánh giá câu trả lời phỏng vấn của ứng viên:
 
 Câu hỏi: ${question.question}
@@ -484,10 +842,10 @@ Job Description: ${jobDescription}
 Category: ${question.category}
 Difficulty: ${question.difficulty}
 
-Hãy đánh giá và trả về JSON với format:
+QUAN TRỌNG: Chỉ trả về JSON, không có text giải thích thêm. TẤT CẢ nội dung phải bằng tiếng Việt. Trả về JSON với format:
 {
-  "score": 8, // điểm từ 1-10
-  "feedback": "Đánh giá tổng quan về câu trả lời",
+  "score": 8,
+  "feedback": "Đánh giá tổng quan về câu trả lời bằng tiếng Việt",
   "suggestions": ["Gợi ý cải thiện 1", "Gợi ý cải thiện 2"],
   "strengths": ["Điểm mạnh 1", "Điểm mạnh 2"],
   "improvements": ["Cần cải thiện 1", "Cần cải thiện 2"]
@@ -499,15 +857,199 @@ Tiêu chí đánh giá:
 - Thể hiện kinh nghiệm và kỹ năng
 - Cách trình bày logic và rõ ràng
 - Phù hợp với yêu cầu công việc
-`;
+`,
+        'en-US': `
+Evaluate the candidate's interview answer:
+
+Question: ${question.question}
+Candidate's Answer: ${userAnswer}
+Job Description: ${jobDescription}
+Category: ${question.category}
+Difficulty: ${question.difficulty}
+
+IMPORTANT: Return only JSON, no additional explanatory text. ALL content must be in English. Return JSON with format:
+{
+  "score": 8,
+  "feedback": "Overall evaluation of the answer in English",
+  "suggestions": ["Improvement suggestion 1", "Improvement suggestion 2"],
+  "strengths": ["Strength 1", "Strength 2"],
+  "improvements": ["Area to improve 1", "Area to improve 2"]
+}
+
+Evaluation criteria:
+- Accuracy and relevance to the question
+- Level of detail and specificity
+- Demonstration of experience and skills
+- Logical and clear presentation
+- Alignment with job requirements
+`,
+        'ja-JP': `
+候補者の面接回答を評価してください:
+
+質問: ${question.question}
+候補者の回答: ${userAnswer}
+求人説明: ${jobDescription}
+カテゴリ: ${question.category}
+難易度: ${question.difficulty}
+
+重要: JSONのみを返し、追加の説明テキストは含めないでください。すべてのコンテンツは日本語で記述する必要があります。形式:
+{
+  "score": 8,
+  "feedback": "日本語での回答の全体的な評価",
+  "suggestions": ["改善提案1", "改善提案2"],
+  "strengths": ["強み1", "強み2"],
+  "improvements": ["改善が必要な領域1", "改善が必要な領域2"]
+}
+
+評価基準:
+- 質問に対する正確性と関連性
+- 詳細度と具体性
+- 経験とスキルの実証
+- 論理的で明確な提示
+- 職務要件との整合性
+`,
+        'ko-KR': `
+후보자의 면접 답변을 평가하세요:
+
+질문: ${question.question}
+후보자의 답변: ${userAnswer}
+채용 설명: ${jobDescription}
+카테고리: ${question.category}
+난이도: ${question.difficulty}
+
+중요: JSON만 반환하고 추가 설명 텍스트는 포함하지 마세요. 모든 내용은 한국어로 작성해야 합니다. 형식:
+{
+  "score": 8,
+  "feedback": "한국어로 된 답변에 대한 전반적인 평가",
+  "suggestions": ["개선 제안 1", "개선 제안 2"],
+  "strengths": ["강점 1", "강점 2"],
+  "improvements": ["개선이 필요한 영역 1", "개선이 필요한 영역 2"]
+}
+
+평가 기준:
+- 질문에 대한 정확성과 관련성
+- 세부 수준과 구체성
+- 경험과 기술의 입증
+- 논리적이고 명확한 제시
+- 직무 요구사항과의 일치
+`,
+        'zh-CN': `
+评估候选人的面试回答:
+
+问题: ${question.question}
+候选人的回答: ${userAnswer}
+职位描述: ${jobDescription}
+类别: ${question.category}
+难度: ${question.difficulty}
+
+重要: 仅返回JSON，不包含额外的解释文本。所有内容必须用中文编写。格式:
+{
+  "score": 8,
+  "feedback": "用中文对回答的总体评估",
+  "suggestions": ["改进建议1", "改进建议2"],
+  "strengths": ["优势1", "优势2"],
+  "improvements": ["需要改进的领域1", "需要改进的领域2"]
+}
+
+评估标准:
+- 对问题的准确性和相关性
+- 详细程度和具体性
+- 经验和技能的展示
+- 逻辑清晰 presentation
+- 与工作要求的匹配
+`,
+        'fr-FR': `
+Évaluez la réponse d'entretien du candidat:
+
+Question: ${question.question}
+Réponse du candidat: ${userAnswer}
+Description du poste: ${jobDescription}
+Catégorie: ${question.category}
+Difficulté: ${question.difficulty}
+
+IMPORTANT: Retournez uniquement JSON, sans texte explicatif supplémentaire. TOUT le contenu doit être en français. Format:
+{
+  "score": 8,
+  "feedback": "Évaluation globale de la réponse en français",
+  "suggestions": ["Suggestion d'amélioration 1", "Suggestion d'amélioration 2"],
+  "strengths": ["Point fort 1", "Point fort 2"],
+  "improvements": ["Domaine à améliorer 1", "Domaine à améliorer 2"]
+}
+
+Critères d'évaluation:
+- Exactitude et pertinence par rapport à la question
+- Niveau de détail et spécificité
+- Démonstration d'expérience et de compétences
+- Présentation logique et claire
+- Alignement avec les exigences du poste
+`,
+        'de-DE': `
+Bewerten Sie die Interview-Antwort des Kandidaten:
+
+Frage: ${question.question}
+Antwort des Kandidaten: ${userAnswer}
+Stellenbeschreibung: ${jobDescription}
+Kategorie: ${question.category}
+Schwierigkeit: ${question.difficulty}
+
+WICHTIG: Geben Sie nur JSON zurück, ohne zusätzlichen erklärenden Text. ALLE Inhalte müssen auf Deutsch sein. Format:
+{
+  "score": 8,
+  "feedback": "Gesamtbewertung der Antwort auf Deutsch",
+  "suggestions": ["Verbesserungsvorschlag 1", "Verbesserungsvorschlag 2"],
+  "strengths": ["Stärke 1", "Stärke 2"],
+  "improvements": ["Verbesserungsbereich 1", "Verbesserungsbereich 2"]
+}
+
+Bewertungskriterien:
+- Genauigkeit und Relevanz zur Frage
+- Detaillierungsgrad und Spezifität
+- Demonstration von Erfahrung und Fähigkeiten
+- Logische und klare Präsentation
+- Übereinstimmung mit den Arbeitsanforderungen
+`,
+        'es-ES': `
+Evalúe la respuesta de la entrevista del candidato:
+
+Pregunta: ${question.question}
+Respuesta del candidato: ${userAnswer}
+Descripción del trabajo: ${jobDescription}
+Categoría: ${question.category}
+Dificultad: ${question.difficulty}
+
+IMPORTANTE: Devuelva solo JSON, sin texto explicativo adicional. TODO el contenido debe estar en español. Formato:
+{
+  "score": 8,
+  "feedback": "Evaluación general de la respuesta en español",
+  "suggestions": ["Sugerencia de mejora 1", "Sugerencia de mejora 2"],
+  "strengths": ["Fortaleza 1", "Fortaleza 2"],
+  "improvements": ["Área a mejorar 1", "Área a mejorar 2"]
+}
+
+Criterios de evaluación:
+- Precisión y relevancia a la pregunta
+- Nivel de detalle y especificidad
+- Demostración de experiencia y habilidades
+- Presentación lógica y clara
+- Alineación con los requisitos del trabajo
+`,
+      };
+      
+      const prompt = languagePrompts[language] || languagePrompts['vi-VN'];
 
       const openai = this.openaiApiService.getOpenAI();
       const completion = await openai.chat.completions.create({
         model: "gpt-4o",
         messages: [{ role: "user", content: prompt }],
         max_tokens: 2000,
+        response_format: { type: "json_object" }, // Force JSON output
       });
       const response = completion.choices[0]?.message?.content || '';
+      
+      if (!response) {
+        throw new Error('Empty response from OpenAI');
+      }
+      
       const evaluation = this.parseJsonResponse(response);
 
       return {
@@ -566,8 +1108,9 @@ Tiêu chí đánh giá:
       // Có thể cho phép update hoặc throw error, tùy business logic
     }
 
-    // Đánh giá câu trả lời
-    const feedback = await this.evaluateAnswer(question, answer, session.jobDescription);
+    // Đánh giá câu trả lời (sử dụng ngôn ngữ từ session)
+    const language = session.language || 'vi-VN';
+    const feedback = await this.evaluateAnswer(question, answer, session.jobDescription, language);
 
     // Lưu vào session
     session.userAnswers.set(questionId, answer);
@@ -681,19 +1224,22 @@ Tiêu chí đánh giá:
    */
   async generateOverallFeedback(session: AiInterviewSession): Promise<string> {
     try {
+      const language = session.language || 'vi-VN';
       const feedbackDetails = session.feedbacks.map(f => {
         const question = session.questions.find(q => q.id === f.questionId);
         return `
-Câu hỏi: ${question?.question || 'N/A'}
+Question: ${question?.question || 'N/A'}
 Category: ${question?.category || 'N/A'}
-Điểm: ${f.score}/10
+Score: ${f.score}/10
 Feedback: ${f.feedback}
-Điểm mạnh: ${f.strengths.join(', ')}
-Cần cải thiện: ${f.improvements.join(', ')}
+Strengths: ${f.strengths.join(', ')}
+Improvements: ${f.improvements.join(', ')}
 `;
       }).join('\n---\n');
 
-      const prompt = `
+      // Create language-specific prompts
+      const languagePrompts: { [key: string]: string } = {
+        'vi-VN': `
 Tạo feedback tổng quan cho buổi phỏng vấn:
 
 Job Description: ${session.jobDescription}
@@ -707,7 +1253,7 @@ Số câu đã trả lời: ${session.userAnswers.size}
 Chi tiết feedback từng câu hỏi:
 ${feedbackDetails}
 
-Hãy tạo feedback tổng quan chi tiết bao gồm:
+Hãy tạo feedback tổng quan chi tiết bằng tiếng Việt bao gồm:
 1. Đánh giá tổng thể về hiệu suất phỏng vấn
 2. Top 3 điểm mạnh nổi bật
 3. Top 3 điểm cần cải thiện
@@ -716,7 +1262,178 @@ Hãy tạo feedback tổng quan chi tiết bao gồm:
 6. Đánh giá khả năng phù hợp với vị trí
 
 Trả về feedback bằng tiếng Việt, chi tiết và mang tính xây dựng.
-`;
+`,
+        'en-US': `
+Create overall feedback for the interview:
+
+Job Description: ${session.jobDescription}
+${session.jobTitle ? `Position: ${session.jobTitle}` : ''}
+${session.companyName ? `Company: ${session.companyName}` : ''}
+Difficulty Level: ${session.difficulty}
+Number of questions: ${session.questions.length}
+Questions answered: ${session.userAnswers.size}
+Average score: ${session.averageScore || 0}/10
+
+Feedback details for each question:
+${feedbackDetails}
+
+Create detailed overall feedback in English including:
+1. Overall assessment of interview performance
+2. Top 3 outstanding strengths
+3. Top 3 areas for improvement
+4. Specific recommendations for the actual interview
+5. Advice on how to prepare better
+6. Assessment of fit for the position
+
+Return feedback in English, detailed and constructive.
+`,
+        'ja-JP': `
+面接の全体的なフィードバックを作成してください:
+
+求人説明: ${session.jobDescription}
+${session.jobTitle ? `職位: ${session.jobTitle}` : ''}
+${session.companyName ? `会社: ${session.companyName}` : ''}
+難易度レベル: ${session.difficulty}
+質問数: ${session.questions.length}
+回答済み質問数: ${session.userAnswers.size}
+平均スコア: ${session.averageScore || 0}/10
+
+各質問のフィードバック詳細:
+${feedbackDetails}
+
+日本語で詳細な全体的なフィードバックを作成してください:
+1. 面接パフォーマンスの全体的な評価
+2. トップ3の優れた強み
+3. トップ3の改善領域
+4. 実際の面接のための具体的な推奨事項
+5. より良い準備方法に関するアドバイス
+6. 職位への適合性の評価
+
+日本語で詳細で建設的なフィードバックを返してください。
+`,
+        'ko-KR': `
+면접에 대한 전반적인 피드백을 작성하세요:
+
+채용 설명: ${session.jobDescription}
+${session.jobTitle ? `직위: ${session.jobTitle}` : ''}
+${session.companyName ? `회사: ${session.companyName}` : ''}
+난이도: ${session.difficulty}
+질문 수: ${session.questions.length}
+답변한 질문 수: ${session.userAnswers.size}
+평균 점수: ${session.averageScore || 0}/10
+
+각 질문에 대한 피드백 세부사항:
+${feedbackDetails}
+
+한국어로 상세한 전반적인 피드백을 작성하세요:
+1. 면접 성과에 대한 전반적인 평가
+2. 상위 3개의 뛰어난 강점
+3. 상위 3개의 개선 영역
+4. 실제 면접을 위한 구체적인 권장사항
+5. 더 나은 준비 방법에 대한 조언
+6. 직위에 대한 적합성 평가
+
+한국어로 상세하고 건설적인 피드백을 반환하세요.
+`,
+        'zh-CN': `
+创建面试的整体反馈:
+
+职位描述: ${session.jobDescription}
+${session.jobTitle ? `职位: ${session.jobTitle}` : ''}
+${session.companyName ? `公司: ${session.companyName}` : ''}
+难度级别: ${session.difficulty}
+问题数量: ${session.questions.length}
+已回答问题数: ${session.userAnswers.size}
+平均分数: ${session.averageScore || 0}/10
+
+每个问题的反馈详情:
+${feedbackDetails}
+
+用中文创建详细的整体反馈，包括:
+1. 面试表现的整体评估
+2. 前3个突出优势
+3. 前3个需要改进的领域
+4. 实际面试的具体建议
+5. 如何更好地准备的建议
+6. 对职位适合性的评估
+
+用中文返回详细且建设性的反馈。
+`,
+        'fr-FR': `
+Créez un retour global pour l'entretien:
+
+Description du poste: ${session.jobDescription}
+${session.jobTitle ? `Poste: ${session.jobTitle}` : ''}
+${session.companyName ? `Entreprise: ${session.companyName}` : ''}
+Niveau de difficulté: ${session.difficulty}
+Nombre de questions: ${session.questions.length}
+Questions répondues: ${session.userAnswers.size}
+Score moyen: ${session.averageScore || 0}/10
+
+Détails du retour pour chaque question:
+${feedbackDetails}
+
+Créez un retour global détaillé en français incluant:
+1. Évaluation globale de la performance à l'entretien
+2. Top 3 forces exceptionnelles
+3. Top 3 domaines à améliorer
+4. Recommandations spécifiques pour l'entretien réel
+5. Conseils sur la meilleure façon de se préparer
+6. Évaluation de l'adéquation au poste
+
+Retournez un retour en français, détaillé et constructif.
+`,
+        'de-DE': `
+Erstellen Sie ein Gesamt-Feedback für das Interview:
+
+Stellenbeschreibung: ${session.jobDescription}
+${session.jobTitle ? `Position: ${session.jobTitle}` : ''}
+${session.companyName ? `Unternehmen: ${session.companyName}` : ''}
+Schwierigkeitsgrad: ${session.difficulty}
+Anzahl der Fragen: ${session.questions.length}
+Beantwortete Fragen: ${session.userAnswers.size}
+Durchschnittspunktzahl: ${session.averageScore || 0}/10
+
+Feedback-Details für jede Frage:
+${feedbackDetails}
+
+Erstellen Sie ein detailliertes Gesamt-Feedback auf Deutsch, einschließlich:
+1. Gesamtbewertung der Interview-Leistung
+2. Top 3 herausragende Stärken
+3. Top 3 Verbesserungsbereiche
+4. Spezifische Empfehlungen für das tatsächliche Interview
+5. Ratschläge zur besseren Vorbereitung
+6. Bewertung der Eignung für die Position
+
+Geben Sie ein detailliertes und konstruktives Feedback auf Deutsch zurück.
+`,
+        'es-ES': `
+Cree una retroalimentación general para la entrevista:
+
+Descripción del trabajo: ${session.jobDescription}
+${session.jobTitle ? `Posición: ${session.jobTitle}` : ''}
+${session.companyName ? `Empresa: ${session.companyName}` : ''}
+Nivel de dificultad: ${session.difficulty}
+Número de preguntas: ${session.questions.length}
+Preguntas respondidas: ${session.userAnswers.size}
+Puntuación promedio: ${session.averageScore || 0}/10
+
+Detalles de retroalimentación para cada pregunta:
+${feedbackDetails}
+
+Cree una retroalimentación general detallada en español que incluya:
+1. Evaluación general del rendimiento en la entrevista
+2. Top 3 fortalezas destacadas
+3. Top 3 áreas de mejora
+4. Recomendaciones específicas para la entrevista real
+5. Consejos sobre cómo prepararse mejor
+6. Evaluación de la idoneidad para el puesto
+
+Devuelva una retroalimentación en español, detallada y constructiva.
+`,
+      };
+      
+      const prompt = languagePrompts[language] || languagePrompts['vi-VN'];
 
       const openai = this.openaiApiService.getOpenAI();
       const completion = await openai.chat.completions.create({
@@ -739,24 +1456,135 @@ Trả về feedback bằng tiếng Việt, chi tiết và mang tính xây dựng
   async generateFollowUpQuestion(
     originalQuestion: InterviewQuestion,
     userAnswer: string,
-    jobDescription: string
+    jobDescription: string,
+    language: string = 'vi-VN'
   ): Promise<string> {
     try {
-      const prompt = `
+      // Create language-specific prompts
+      const languagePrompts: { [key: string]: string } = {
+        'vi-VN': `
 Dựa trên câu trả lời của ứng viên, tạo câu hỏi follow-up phù hợp:
 
 Câu hỏi gốc: ${originalQuestion.question}
 Câu trả lời: ${userAnswer}
 Job Description: ${jobDescription}
 
-Tạo 1 câu hỏi follow-up để:
+Tạo 1 câu hỏi follow-up bằng tiếng Việt để:
 - Làm sâu sắc thêm câu trả lời
 - Kiểm tra hiểu biết chi tiết
 - Đánh giá kinh nghiệm thực tế
 - Phù hợp với category: ${originalQuestion.category}
 
-Chỉ trả về câu hỏi, không cần giải thích.
-`;
+Chỉ trả về câu hỏi bằng tiếng Việt, không cần giải thích.
+`,
+        'en-US': `
+Based on the candidate's answer, create an appropriate follow-up question:
+
+Original Question: ${originalQuestion.question}
+Answer: ${userAnswer}
+Job Description: ${jobDescription}
+
+Create 1 follow-up question in English to:
+- Deepen the answer
+- Test detailed understanding
+- Assess practical experience
+- Match category: ${originalQuestion.category}
+
+Return only the question in English, no explanation needed.
+`,
+        'ja-JP': `
+候補者の回答に基づいて、適切なフォローアップ質問を作成してください:
+
+元の質問: ${originalQuestion.question}
+回答: ${userAnswer}
+求人説明: ${jobDescription}
+
+日本語で1つのフォローアップ質問を作成して:
+- 回答を深める
+- 詳細な理解をテストする
+- 実践的な経験を評価する
+- カテゴリに一致: ${originalQuestion.category}
+
+日本語で質問のみを返してください。説明は不要です。
+`,
+        'ko-KR': `
+후보자의 답변을 기반으로 적절한 후속 질문을 작성하세요:
+
+원래 질문: ${originalQuestion.question}
+답변: ${userAnswer}
+채용 설명: ${jobDescription}
+
+한국어로 1개의 후속 질문을 작성하여:
+- 답변을 심화
+- 상세한 이해 테스트
+- 실무 경험 평가
+- 카테고리 일치: ${originalQuestion.category}
+
+한국어로 질문만 반환하세요. 설명은 필요 없습니다.
+`,
+        'zh-CN': `
+根据候选人的回答，创建一个合适的后续问题:
+
+原始问题: ${originalQuestion.question}
+回答: ${userAnswer}
+职位描述: ${jobDescription}
+
+用中文创建1个后续问题以:
+- 深化回答
+- 测试详细理解
+- 评估实践经验
+- 匹配类别: ${originalQuestion.category}
+
+仅返回中文问题，无需解释。
+`,
+        'fr-FR': `
+Basé sur la réponse du candidat, créez une question de suivi appropriée:
+
+Question originale: ${originalQuestion.question}
+Réponse: ${userAnswer}
+Description du poste: ${jobDescription}
+
+Créez 1 question de suivi en français pour:
+- Approfondir la réponse
+- Tester la compréhension détaillée
+- Évaluer l'expérience pratique
+- Correspondre à la catégorie: ${originalQuestion.category}
+
+Retournez uniquement la question en français, aucune explication nécessaire.
+`,
+        'de-DE': `
+Basierend auf der Antwort des Kandidaten erstellen Sie eine passende Nachfrage:
+
+Ursprüngliche Frage: ${originalQuestion.question}
+Antwort: ${userAnswer}
+Stellenbeschreibung: ${jobDescription}
+
+Erstellen Sie 1 Nachfrage auf Deutsch, um:
+- Die Antwort zu vertiefen
+- Detailliertes Verständnis zu testen
+- Praktische Erfahrung zu bewerten
+- Zur Kategorie zu passen: ${originalQuestion.category}
+
+Geben Sie nur die Frage auf Deutsch zurück, keine Erklärung erforderlich.
+`,
+        'es-ES': `
+Basado en la respuesta del candidato, cree una pregunta de seguimiento apropiada:
+
+Pregunta original: ${originalQuestion.question}
+Respuesta: ${userAnswer}
+Descripción del trabajo: ${jobDescription}
+
+Cree 1 pregunta de seguimiento en español para:
+- Profundizar la respuesta
+- Probar la comprensión detallada
+- Evaluar la experiencia práctica
+- Coincidir con la categoría: ${originalQuestion.category}
+
+Devuelva solo la pregunta en español, no se necesita explicación.
+`,
+      };
+      
+      const prompt = languagePrompts[language] || languagePrompts['vi-VN'];
 
       const openai = this.openaiApiService.getOpenAI();
       const completion = await openai.chat.completions.create({
@@ -778,25 +1606,143 @@ Chỉ trả về câu hỏi, không cần giải thích.
    */
   async generateSampleAnswer(
     question: InterviewQuestion,
-    jobDescription: string
+    jobDescription: string,
+    language: string = 'vi-VN'
   ): Promise<string> {
     try {
-      const prompt = `
+      // Create language-specific prompts
+      const languagePrompts: { [key: string]: string } = {
+        'vi-VN': `
 Tạo câu trả lời mẫu cho câu hỏi phỏng vấn:
 
 Câu hỏi: ${question.question}
 Category: ${question.category}
 Job Description: ${jobDescription}
 
-Tạo câu trả lời mẫu:
+Tạo câu trả lời mẫu bằng tiếng Việt:
 - Chuyên nghiệp và phù hợp
 - Thể hiện kinh nghiệm và kỹ năng
 - Cấu trúc rõ ràng (STAR method nếu phù hợp)
 - Phù hợp với yêu cầu công việc
 - Độ dài vừa phải (2-3 đoạn văn)
 
-Chỉ trả về câu trả lời mẫu, không cần giải thích.
-`;
+Chỉ trả về câu trả lời mẫu bằng tiếng Việt, không cần giải thích.
+`,
+        'en-US': `
+Create a sample answer for the interview question:
+
+Question: ${question.question}
+Category: ${question.category}
+Job Description: ${jobDescription}
+
+Create a sample answer in English:
+- Professional and appropriate
+- Demonstrates experience and skills
+- Clear structure (STAR method if applicable)
+- Aligned with job requirements
+- Appropriate length (2-3 paragraphs)
+
+Return only the sample answer in English, no explanation needed.
+`,
+        'ja-JP': `
+面接質問のサンプル回答を作成してください:
+
+質問: ${question.question}
+カテゴリ: ${question.category}
+求人説明: ${jobDescription}
+
+日本語でサンプル回答を作成:
+- 専門的で適切
+- 経験とスキルを示す
+- 明確な構造（該当する場合はSTARメソッド）
+- 職務要件に一致
+- 適切な長さ（2-3段落）
+
+日本語でサンプル回答のみを返してください。説明は不要です。
+`,
+        'ko-KR': `
+면접 질문에 대한 샘플 답변을 작성하세요:
+
+질문: ${question.question}
+카테고리: ${question.category}
+채용 설명: ${jobDescription}
+
+한국어로 샘플 답변 작성:
+- 전문적이고 적절함
+- 경험과 기술 입증
+- 명확한 구조 (해당되는 경우 STAR 방법)
+- 직무 요구사항과 일치
+- 적절한 길이 (2-3단락)
+
+한국어로 샘플 답변만 반환하세요. 설명은 필요 없습니다.
+`,
+        'zh-CN': `
+为面试问题创建示例答案:
+
+问题: ${question.question}
+类别: ${question.category}
+职位描述: ${jobDescription}
+
+用中文创建示例答案:
+- 专业且合适
+- 展示经验和技能
+- 清晰的结构（如适用，使用STAR方法）
+- 符合工作要求
+- 适当长度（2-3段）
+
+仅返回中文示例答案，无需解释。
+`,
+        'fr-FR': `
+Créez une réponse d'exemple pour la question d'entretien:
+
+Question: ${question.question}
+Catégorie: ${question.category}
+Description du poste: ${jobDescription}
+
+Créez une réponse d'exemple en français:
+- Professionnelle et appropriée
+- Démontre l'expérience et les compétences
+- Structure claire (méthode STAR si applicable)
+- Alignée avec les exigences du poste
+- Longueur appropriée (2-3 paragraphes)
+
+Retournez uniquement la réponse d'exemple en français, aucune explication nécessaire.
+`,
+        'de-DE': `
+Erstellen Sie eine Beispielantwort für die Interview-Frage:
+
+Frage: ${question.question}
+Kategorie: ${question.category}
+Stellenbeschreibung: ${jobDescription}
+
+Erstellen Sie eine Beispielantwort auf Deutsch:
+- Professionell und angemessen
+- Zeigt Erfahrung und Fähigkeiten
+- Klare Struktur (STAR-Methode falls zutreffend)
+- Ausgerichtet auf die Arbeitsanforderungen
+- Angemessene Länge (2-3 Absätze)
+
+Geben Sie nur die Beispielantwort auf Deutsch zurück, keine Erklärung erforderlich.
+`,
+        'es-ES': `
+Cree una respuesta de ejemplo para la pregunta de la entrevista:
+
+Pregunta: ${question.question}
+Categoría: ${question.category}
+Descripción del trabajo: ${jobDescription}
+
+Cree una respuesta de ejemplo en español:
+- Profesional y apropiada
+- Demuestra experiencia y habilidades
+- Estructura clara (método STAR si es aplicable)
+- Alineada con los requisitos del trabajo
+- Longitud apropiada (2-3 párrafos)
+
+Devuelva solo la respuesta de ejemplo en español, no se necesita explicación.
+`,
+      };
+      
+      const prompt = languagePrompts[language] || languagePrompts['vi-VN'];
 
       const openai = this.openaiApiService.getOpenAI();
       const completion = await openai.chat.completions.create({

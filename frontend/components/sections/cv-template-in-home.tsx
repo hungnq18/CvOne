@@ -9,6 +9,7 @@ import { GetServerSideProps } from "next";
 import { useRouter } from "next/navigation";
 import { FC, useRef, useState } from "react";
 import CardCVTemplate from "../card/card-CVtemplate";
+import { notify } from "@/lib/notify";
 
 interface TemplatePreviewModalProps {
   templateId: string;
@@ -84,7 +85,7 @@ const TemplatePreviewModal: FC<TemplatePreviewModalProps> = ({
     if (token) {
       router.push(`/chooseCreateCV?id=${templateId}`);
     } else {
-      alert("Bạn cần đăng nhập trước khi tạo CV!");
+      notify.error("Bạn cần đăng nhập trước khi tạo CV!");
       router.push("/login");
     }
     onClose();

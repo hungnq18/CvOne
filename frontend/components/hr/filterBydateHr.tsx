@@ -1,6 +1,7 @@
 import React from 'react';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { notify } from "@/lib/notify";
 
 interface FilterByDateHrProps {
     startDate: string;
@@ -18,7 +19,7 @@ const FilterByDateHr: React.FC<FilterByDateHrProps> = ({ startDate, endDate, set
     const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const newStartDate = e.target.value;
         if (endDate && newStartDate > endDate) {
-            alert('Ngày bắt đầu không thể sau ngày kết thúc');
+            notify.error('Ngày bắt đầu không thể sau ngày kết thúc');
             return;
         }
         setStartDate(newStartDate);
@@ -27,7 +28,7 @@ const FilterByDateHr: React.FC<FilterByDateHrProps> = ({ startDate, endDate, set
     const handleEndDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const newEndDate = e.target.value;
         if (startDate && newEndDate < startDate) {
-            alert('Ngày kết thúc không thể trước ngày bắt đầu');
+            notify.error('Ngày kết thúc không thể trước ngày bắt đầu');
             return;
         }
         setEndDate(newEndDate);

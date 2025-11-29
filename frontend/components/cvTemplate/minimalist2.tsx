@@ -6,6 +6,7 @@ import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import { getDefaultSectionPositions } from "./defaultSectionPositions";
+import { notify } from "@/lib/notify";
 
 // --- TRANSLATIONS ---
 const translations = {
@@ -182,12 +183,21 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
   const t = {
     ...defaultT,
     ...(cvUiTexts && {
+      personalInfoLabel: cvUiTexts.personalInformation || defaultT.contactLabel,
       contactLabel: cvUiTexts.contact || defaultT.contactLabel,
-      careerObjectiveLabel:
-        cvUiTexts.careerObjective || defaultT.careerObjectiveLabel,
+      careerObjectiveLabel: cvUiTexts.careerObjective || defaultT.careerObjectiveLabel,
       skillsLabel: cvUiTexts.skills || defaultT.skillsLabel,
       experienceLabel: cvUiTexts.workExperience || defaultT.experienceLabel,
       educationLabel: cvUiTexts.education || defaultT.educationLabel,
+      certificationLabel: cvUiTexts.certification || defaultT.certificationLabel,
+      achievementLabel: cvUiTexts.achievement || defaultT.achievementLabel,
+      hobbyLabel: cvUiTexts.hobby || defaultT.hobbyLabel,
+      projectLabel: cvUiTexts.project || defaultT.projectLabel,
+      avatarLabel: cvUiTexts.avatar || defaultT.avatarLabel,
+      fullNameAndTitleLabel: cvUiTexts.fullNameAndTitle || defaultT.fullNameAndTitleLabel,
+      phone: cvUiTexts.phone || defaultT.phone,
+      email: cvUiTexts.email || defaultT.email,
+      address: cvUiTexts.address || defaultT.address,
     }),
   };
 
@@ -213,6 +223,11 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
     data?.sectionPositions ||
     getDefaultSectionPositions(data?.templateTitle || "The Minimalist");
 
+  const dragWarningMessage =
+    lang === "vi"
+      ? "Bạn chỉ có thể thả mục trong khu vực bố cục cho phép."
+      : "Please drop sections inside the allowed layout areas.";
+
   type SectionPosition = { place: number; order: number };
 
   // QUAN TRỌNG: Chỉ lấy các sections có place > 0 (place = 0 nghĩa là ẩn/không hiển thị)
@@ -236,13 +251,24 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
     .map(([key]) => key);
 
   const handleDragEnd = (result: DropResult) => {
-    if (!onLayoutChange || !result.destination) return;
+    if (!result.destination) {
+      notify.error(dragWarningMessage);
+      return;
+    }
+    if (!onLayoutChange) return;
     const { source, destination } = result;
 
     if (source.droppableId === destination.droppableId && source.index === destination.index) return;
 
     const sourcePlace = parseInt(source.droppableId);
     const destPlace = parseInt(destination.droppableId);
+    
+    // CHẶN: Không cho phép kéo thả sang place khác
+    if (sourcePlace !== destPlace) {
+      notify.error(dragWarningMessage);
+      return;
+    }
+    
     const newPositions = { ...sectionPositions };
 
     // FIX LỖI: Thêm kiểu [string, any] cho tham số trong sort để TS không báo lỗi unknown
@@ -252,15 +278,15 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
       .map(([key]) => key);
 
     const sourceKeys = getKeys(sourcePlace);
-    const destKeys = sourcePlace === destPlace ? sourceKeys : getKeys(destPlace);
+    const destKeys = [...sourceKeys];
 
-    const [moved] = sourceKeys.splice(source.index, 1);
+    // Chỉ cho phép sắp xếp lại thứ tự trong cùng một place
+    const [moved] = destKeys.splice(source.index, 1);
     destKeys.splice(destination.index, 0, moved);
 
-    if (sourcePlace !== destPlace) {
-       sourceKeys.forEach((key, index) => { newPositions[key] = { ...newPositions[key], order: index }; });
-    }
-    destKeys.forEach((key, index) => { newPositions[key] = { place: destPlace, order: index }; });
+    destKeys.forEach((key, index) => { 
+      newPositions[key] = { place: destPlace, order: index }; 
+    });
 
     onLayoutChange(newPositions);
   };
@@ -294,21 +320,25 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
                 dragHandleProps={dragHandleProps}
                 isDragging={isDragging}
               >
-                <div className="w-36 h-36 lg:w-40 lg:h-40 rounded-full overflow-hidden bg-white border-6 border-white shadow-2xl ring-4 ring-green-700/20">
+                <div className="w-36 h-36 lg:w-40 lg:h-40 rounded-full overflow-hidden bg-white border-6 border-white shadow-2xl ring-4 ring-green-700/20 relative">
                   {isPdfMode ? (
-                    <img
-                      src={userData.avatar || "/avatar-female.png"}
-                      alt={`${userData.firstName || ""} ${userData.lastName || ""}`}
-                      crossOrigin="anonymous"
-                      className="w-full h-full object-cover"
+                    <div
+                      style={{ 
+                        width: '100%', 
+                        height: '100%', 
+                        backgroundImage: `url(${userData.avatar || "/avatar-female.png"})`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                        backgroundRepeat: 'no-repeat',
+                        borderRadius: '9999px'
+                      }}
                     />
                   ) : (
                     <Image
                       src={userData.avatar || "/avatar-female.png"}
                       alt={`${userData.firstName || ""} ${userData.lastName || ""}`}
-                      width={200}
-                      height={200}
-                      className="w-full h-full object-cover"
+                      fill
+                      style={{ objectFit: 'cover' }}
                     />
                   )}
                 </div>
@@ -426,7 +456,7 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
                   <div className="flex items-center gap-2">
                     <div className="h-1 w-8 bg-green-700 rounded-full" />
                     <h2 className="text-lg font-bold tracking-wider text-green-900">
-                      SKILLS
+                      {t.skillsLabel}
                     </h2>
                   </div>
                 </div>
@@ -583,7 +613,7 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
         return userData.certification?.length > 0 && (
           <HoverableWrapper
             key="certification"
-            label={cvUiTexts?.certification || t.certificationLabel}
+            label={t.certificationLabel}
             sectionId={sectionMap.certification}
             onClick={onSectionClick}
             isPdfMode={isPdfMode}
@@ -596,7 +626,7 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
                   <Award className="w-5 h-5 text-white" />
                 </div>
                 <h2 className="text-xl lg:text-2xl font-bold tracking-tight text-gray-900 uppercase break-words">
-                  {cvUiTexts?.certification || t.certificationLabel}
+                  {t.certificationLabel}
                 </h2>
               </div>
               <div className="space-y-4">
@@ -624,7 +654,7 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
         return userData.achievement?.length > 0 && (
           <HoverableWrapper
             key="achievement"
-            label={cvUiTexts?.achievement || t.achievementLabel}
+            label={t.achievementLabel}
             sectionId={sectionMap.achievement}
             onClick={onSectionClick}
             isPdfMode={isPdfMode}
@@ -637,7 +667,7 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
                   <Award className="w-5 h-5 text-white" />
                 </div>
                 <h2 className="text-xl lg:text-2xl font-bold tracking-tight text-gray-900 uppercase break-words">
-                  {cvUiTexts?.achievement || t.achievementLabel}
+                  {t.achievementLabel}
                 </h2>
               </div>
               <ul className="list-disc pl-4 space-y-2 text-sm leading-relaxed text-gray-700 break-words">
@@ -653,7 +683,7 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
         return userData.hobby?.length > 0 && (
           <HoverableWrapper
             key="hobby"
-            label={cvUiTexts?.hobby || t.hobbyLabel}
+            label={t.hobbyLabel}
             sectionId={sectionMap.hobby}
             onClick={onSectionClick}
             isPdfMode={isPdfMode}
@@ -664,7 +694,7 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
               <div className="flex items-center gap-2 mb-3">
                 <div className="h-1 w-8 bg-green-700 rounded-full"></div>
                 <h2 className="text-lg font-bold tracking-wider text-green-900">
-                  {cvUiTexts?.hobby || t.hobbyLabel}
+                  {t.hobbyLabel}
                 </h2>
               </div>
               <div className="bg-white/60 backdrop-blur-sm p-4 rounded-xl shadow-md">
@@ -687,7 +717,7 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
         return userData.Project?.length > 0 && (
           <HoverableWrapper
             key="Project"
-            label={cvUiTexts?.project || t.projectLabel}
+            label={t.projectLabel}
             sectionId={sectionMap.Project}
             onClick={onSectionClick}
             isPdfMode={isPdfMode}
@@ -700,7 +730,7 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
                   <Briefcase className="w-5 h-5 text-white" />
                 </div>
                 <h2 className="text-xl lg:text-2xl font-bold tracking-tight text-gray-900 uppercase break-words">
-                  {cvUiTexts?.project || t.projectLabel}
+                  {t.projectLabel}
                 </h2>
               </div>
               <div className="space-y-4">

@@ -11,9 +11,9 @@
  * - Sharing CV
  */
 
-import Cookies from 'js-cookie';
-import { fetchWithAuth, fetchWithoutAuth } from './apiClient';
-import { API_ENDPOINTS, API_URL } from './apiConfig';
+import Cookies from "js-cookie";
+import { fetchWithAuth, fetchWithoutAuth } from "./apiClient";
+import { API_ENDPOINTS, API_URL } from "./apiConfig";
 
 export type CVTemplate = {
   _id: string;
@@ -24,9 +24,8 @@ export type CVTemplate = {
   tags?: string[];
 };
 
-
 export interface CV {
-  _id: string; 
+  _id: string;
   userId: string;
   title?: string;
   content: {
@@ -49,10 +48,9 @@ export const getCVTemplates = async (): Promise<CVTemplate[]> => {
   // Add cache-busting timestamp to ensure fresh data
   const cacheBuster = `?t=${Date.now()}`;
   const url = `${API_ENDPOINTS.CV.TEMPLATES}${cacheBuster}`;
-  
-  console.log("[getCVTemplates] Fetching from URL:", url);
+
   const response = await fetchWithoutAuth(url);
-  
+
   return response;
 };
 
@@ -61,7 +59,9 @@ export const getCVTemplates = async (): Promise<CVTemplate[]> => {
  * @param id - The template ID to fetch
  * @returns Promise with CV template data
  */
-export const getCVTemplateById = async (id: string): Promise<CVTemplate | undefined> => {
+export const getCVTemplateById = async (
+  id: string
+): Promise<CVTemplate | undefined> => {
   // Đổi fetchWithoutAuth thành fetchWithAuth để luôn truyền token
   return fetchWithAuth(`${API_ENDPOINTS.CV.TEMPLATES}/${id}`);
 };
@@ -91,7 +91,7 @@ export async function getCVById(id: string) {
 export async function createCV(data: Omit<CV, "_id">) {
   return fetchWithAuth(API_ENDPOINTS.CV.CREATE, {
     method: "POST",
-    body: JSON.stringify(data)  
+    body: JSON.stringify(data),
   });
 }
 
@@ -104,7 +104,7 @@ export async function createCV(data: Omit<CV, "_id">) {
 export async function updateCV(id: string, data: Partial<CV>) {
   return fetchWithAuth(API_ENDPOINTS.CV.UPDATE(id), {
     method: "PATCH",
-    body: JSON.stringify(data)
+    body: JSON.stringify(data),
   });
 }
 
@@ -115,7 +115,7 @@ export async function updateCV(id: string, data: Partial<CV>) {
  */
 export async function deleteCV(id: string) {
   return fetchWithAuth(API_ENDPOINTS.CV.DELETE(id), {
-    method: "DELETE"
+    method: "DELETE",
   });
 }
 
@@ -126,7 +126,7 @@ export async function deleteCV(id: string) {
  */
 export async function shareCV(id: string) {
   return fetchWithAuth(API_ENDPOINTS.CV.SHARE(id), {
-    method: "POST"
+    method: "POST",
   });
 }
 
@@ -137,7 +137,7 @@ export async function shareCV(id: string) {
  */
 export async function unshareCV(id: string) {
   return fetchWithAuth(API_ENDPOINTS.CV.UNSHARE(id), {
-    method: "POST"
+    method: "POST",
   });
 }
 
@@ -158,7 +158,7 @@ export async function getSharedCV(id: string) {
  */
 export async function saveCV(id: string) {
   return fetchWithAuth(API_ENDPOINTS.CV.SAVE(id), {
-    method: "POST"
+    method: "POST",
   });
 }
 
@@ -169,7 +169,7 @@ export async function saveCV(id: string) {
  */
 export async function unsaveCV(id: string) {
   return fetchWithAuth(API_ENDPOINTS.CV.UNSAVE(id), {
-    method: "POST"
+    method: "POST",
   });
 }
 
@@ -190,7 +190,7 @@ export async function analyzeJD(jobDescription: string) {
   return fetchWithAuth(API_ENDPOINTS.CV.ANALYZE_JD, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ jobDescription })
+    body: JSON.stringify({ jobDescription }),
   });
 }
 
@@ -200,11 +200,14 @@ export async function analyzeJD(jobDescription: string) {
  * @param additionalRequirements - Optional additional requirements
  * @returns Promise with generated CV
  */
-export async function generateCVWithAI(jobAnalysis: any, additionalRequirements?: string) {
+export async function generateCVWithAI(
+  jobAnalysis: any,
+  additionalRequirements?: string
+) {
   return fetchWithAuth(API_ENDPOINTS.CV.GENERATE_WITH_AI, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ jobAnalysis, additionalRequirements })
+    body: JSON.stringify({ jobAnalysis, additionalRequirements }),
   });
 }
 
@@ -217,7 +220,7 @@ export async function generateAndSaveCV(data: any) {
   return fetchWithAuth(API_ENDPOINTS.CV.GENERATE_AND_SAVE, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data)
+    body: JSON.stringify(data),
   });
 }
 
@@ -228,11 +231,15 @@ export async function generateAndSaveCV(data: any) {
  * @param additionalRequirements - Optional additional requirements
  * @returns Promise with summary suggestion
  */
-export async function suggestSummary(user: any, jobAnalysis: any, additionalRequirements?: string) {
+export async function suggestSummary(
+  user: any,
+  jobAnalysis: any,
+  additionalRequirements?: string
+) {
   return fetchWithAuth(API_ENDPOINTS.CV.SUGGEST_SUMMARY, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ user, jobAnalysis, additionalRequirements })
+    body: JSON.stringify({ user, jobAnalysis, additionalRequirements }),
   });
 }
 
@@ -242,11 +249,14 @@ export async function suggestSummary(user: any, jobAnalysis: any, additionalRequ
  * @param userSkills - Optional user skills
  * @returns Promise with skills suggestion
  */
-export async function suggestSkills(jobAnalysis: any, userSkills?: Array<{ name: string; rating: number }>) {
+export async function suggestSkills(
+  jobAnalysis: any,
+  userSkills?: Array<{ name: string; rating: number }>
+) {
   return fetchWithAuth(API_ENDPOINTS.CV.SUGGEST_SKILLS, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ jobAnalysis, userSkills })
+    body: JSON.stringify({ jobAnalysis, userSkills }),
   });
 }
 
@@ -256,11 +266,14 @@ export async function suggestSkills(jobAnalysis: any, userSkills?: Array<{ name:
  * @param experienceLevel - Experience level string
  * @returns Promise with work experience suggestion
  */
-export async function suggestWorkExperience(jobAnalysis: any, experienceLevel: string) {
+export async function suggestWorkExperience(
+  jobAnalysis: any,
+  experienceLevel: string
+) {
   return fetchWithAuth(API_ENDPOINTS.CV.SUGGEST_WORK_EXPERIENCE, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ jobAnalysis, experienceLevel })
+    body: JSON.stringify({ jobAnalysis, experienceLevel }),
   });
 }
 
@@ -276,7 +289,7 @@ export async function uploadAndAnalyzeCV(file: File, jobDescription: string) {
   formData.append("jobDescription", jobDescription);
   return fetchWithAuth(API_ENDPOINTS.CV.UPLOAD_AND_ANALYZE, {
     method: "POST",
-    body: formData
+    body: formData,
     // KHÔNG thêm headers Content-Type ở đây!
   });
 }
@@ -288,14 +301,18 @@ export async function uploadAndAnalyzeCV(file: File, jobDescription: string) {
  * @param additionalNotes - Optional notes
  * @returns Promise with result (includes pdfPath)
  */
-export async function uploadAnalyzeGeneratePDF(file: File, jobDescription: string, additionalNotes?: string) {
+export async function uploadAnalyzeGeneratePDF(
+  file: File,
+  jobDescription: string,
+  additionalNotes?: string
+) {
   const formData = new FormData();
   formData.append("cvFile", file);
   formData.append("jobDescription", jobDescription);
   if (additionalNotes) formData.append("additionalNotes", additionalNotes);
   return fetchWithAuth(API_ENDPOINTS.CV.UPLOAD_ANALYZE_GENERATE_PDF, {
     method: "POST",
-    body: formData
+    body: formData,
   });
 }
 
@@ -321,27 +338,27 @@ export async function uploadAnalyzeAndOverlayPdf(
   mapping?: any // thêm tham số mapping
 ): Promise<Blob> {
   const formData = new FormData();
-  formData.append('cvFile', file);
-  formData.append('jobDescription', jobDescription);
+  formData.append("cvFile", file);
+  formData.append("jobDescription", jobDescription);
   if (additionalRequirements) {
-    formData.append('additionalRequirements', additionalRequirements);
+    formData.append("additionalRequirements", additionalRequirements);
   }
   if (mapping) {
-    formData.append('mapping', JSON.stringify(mapping));
+    formData.append("mapping", JSON.stringify(mapping));
   }
 
   // Get token from cookies
   const token = Cookies.get("token");
   const headers: Record<string, string> = {};
   if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
+    headers["Authorization"] = `Bearer ${token}`;
   }
 
   // Sử dụng endpoint mới
   const fullUrl = `${API_URL}/cv/overlay-optimize-cv`;
 
   const response = await fetch(fullUrl, {
-    method: 'POST',
+    method: "POST",
     headers,
     body: formData,
   });
@@ -360,11 +377,14 @@ export async function uploadAnalyzeAndOverlayPdf(
  * @param language - Optional language code ('vi' for Vietnamese)
  * @returns Promise with rewritten description
  */
-export async function rewriteWorkDescription(description: string, language?: string) {
+export async function rewriteWorkDescription(
+  description: string,
+  language?: string
+) {
   return fetchWithAuth(API_ENDPOINTS.CV.REWRITE_WORK_DESCRIPTION, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ description, language })
+    body: JSON.stringify({ description, language }),
   });
 }
 
@@ -375,10 +395,10 @@ export async function rewriteWorkDescription(description: string, language?: str
  */
 export async function uploadJDPdfAndAnalyze(file: File) {
   const formData = new FormData();
-  formData.append('file', file);
+  formData.append("file", file);
   return fetchWithAuth(API_ENDPOINTS.JOB.ANALYZE_JD_PDF, {
-    method: 'POST',
-    body: formData
+    method: "POST",
+    body: formData,
     // KHÔNG thêm headers Content-Type ở đây!
   });
 }
@@ -390,16 +410,26 @@ export async function uploadJDPdfAndAnalyze(file: File) {
  * @param uiTexts - Optional UI texts to translate (e.g., section labels)
  * @returns Promise with translated CV data including userData and uiTexts
  */
-export async function translateCV(userData: any, targetLanguage: string, uiTexts?: any) {
+export async function translateCV(
+  userData: any,
+  targetLanguage: string,
+  uiTexts?: any
+) {
   const content: any = { userData };
+  const requestBody: any = {
+    targetLanguage,
+    content,
+  };
+
+  // Gửi uiTexts riêng biệt như backend expect (không nằm trong content)
   if (uiTexts) {
-    content.uiTexts = uiTexts;
+    requestBody.uiTexts = uiTexts;
   }
-  
+
   return fetchWithAuth(API_ENDPOINTS.CV.TRANSLATE_CV, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ targetLanguage, content })
+    body: JSON.stringify({ targetLanguage, content }),
   });
 }
 
@@ -410,10 +440,14 @@ export async function translateCV(userData: any, targetLanguage: string, uiTexts
  * @param tags optional list of tags to narrow down
  * @returns Promise with suggestion result, expected shape: { templateId: string } or full template
  */
-export async function suggestTemplateByAI(infoUser: any, jobDescription: string, tags?: string[]) {
+export async function suggestTemplateByAI(
+  infoUser: any,
+  jobDescription: string,
+  tags?: string[]
+) {
   return fetchWithAuth(API_ENDPOINTS.CV.SUGGEST_TEMPLATE, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ infoUser, jobDescription, tags })
+    body: JSON.stringify({ infoUser, jobDescription, tags }),
   });
 }

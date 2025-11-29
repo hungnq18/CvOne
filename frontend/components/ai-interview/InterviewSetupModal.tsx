@@ -112,7 +112,6 @@ export default function InterviewSetupModal({ isOpen, onClose, onStartInterview 
               </div>
             </CardContent>
           </Card>
-
           {/* Job Description */}
           <Card>
             <CardHeader>

@@ -1,5 +1,5 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
+import { Document } from "mongoose";
 
 /**
  * Schema for individual interview questions in pool
@@ -15,12 +15,12 @@ export class PoolQuestionSchema {
   @Prop({ required: true })
   category: string; // technical, behavioral, situational, company
 
-  @Prop({ 
-    required: true, 
-    enum: ['easy', 'medium', 'hard'],
-    default: 'medium' 
+  @Prop({
+    required: true,
+    enum: ["easy", "medium", "hard"],
+    default: "medium",
   })
-  difficulty: 'easy' | 'medium' | 'hard';
+  difficulty: "easy" | "medium" | "hard";
 
   @Prop({ type: [String], default: [] })
   tips: string[];
@@ -29,7 +29,8 @@ export class PoolQuestionSchema {
   expectedAnswer?: string;
 }
 
-const PoolQuestionSchemaFactory = SchemaFactory.createForClass(PoolQuestionSchema);
+const PoolQuestionSchemaFactory =
+  SchemaFactory.createForClass(PoolQuestionSchema);
 
 /**
  * Schema for storing pre-generated interview questions
@@ -49,12 +50,12 @@ export class InterviewQuestionPool extends Document {
   @Prop()
   companyName?: string;
 
-  @Prop({ 
-    required: true, 
-    enum: ['easy', 'medium', 'hard'],
-    default: 'medium' 
+  @Prop({
+    required: true,
+    enum: ["easy", "medium", "hard"],
+    default: "medium",
   })
-  difficulty: 'easy' | 'medium' | 'hard';
+  difficulty: "easy" | "medium" | "hard";
 
   @Prop({ type: [PoolQuestionSchemaFactory], required: true })
   questions: PoolQuestionSchema[];
@@ -72,10 +73,10 @@ export class InterviewQuestionPool extends Document {
   updatedAt: Date;
 }
 
-export const InterviewQuestionPoolSchema = SchemaFactory.createForClass(InterviewQuestionPool);
+export const InterviewQuestionPoolSchema = SchemaFactory.createForClass(
+  InterviewQuestionPool
+);
 
 // Indexes for better query performance
-InterviewQuestionPoolSchema.index({ jobDescriptionHash: 1 });
 InterviewQuestionPoolSchema.index({ difficulty: 1 });
 InterviewQuestionPoolSchema.index({ lastUsedAt: -1 });
-
