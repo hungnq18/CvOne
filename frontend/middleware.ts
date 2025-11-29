@@ -20,10 +20,12 @@ const mktRoutes = [
   "/marketing",
   "/marketing/ads",
   "/marketing/voucher",
+  "/marketing/feedback",
 ];
 
 const userRoutes = [
   "/userDashboard",
+  "/ai-interview",
   "/myDocuments",
   "/myJobs",
   "/myDocuments",
@@ -46,13 +48,19 @@ const userRoutes = [
   "/createCV",
   "/chooseOption",
   "/chooseCreateCV",
+  "/user/Wallet",
+  "/user/Wallet/deposit",
+  "/user/Wallet/history",
 ];
 
 // Nếu có route dùng chung cho nhiều role
 const commonRoutes = [
   "/user/profile",
+  "/payment/cancel",
+  "/payment/success",
   "/chat",
   "/notifications"
+
 ];
 
 
