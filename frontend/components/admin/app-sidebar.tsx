@@ -1,7 +1,7 @@
 "use client"
 
 import type * as React from "react"
-import { LayoutDashboard, Users, FileText, Mail } from "lucide-react"
+import { LayoutDashboard, Users, FileText, Mail, BriefcaseBusiness, CreditCard } from "lucide-react"
 import { DashboardSidebarShared } from "@/components/ui/dashboard-sidebar-shared"
 
 // Menu items với đường dẫn thực tế (config)
@@ -25,6 +25,16 @@ const menuItems = [
     title: "Manage CL Template",
     url: "/admin/cl-template",
     icon: Mail,
+  },
+  {
+    title: "Approve Jobs",
+    url: "/admin/job-approval",
+    icon: BriefcaseBusiness,
+  },
+  {
+    title: "Orders",
+    url: "/admin/orders",
+    icon: CreditCard,
   },
 ]
 

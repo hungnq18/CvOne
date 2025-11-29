@@ -96,6 +96,8 @@ export const API_ENDPOINTS = {
       `/jobs/count-by-posting-date/${month}/${year}`,
     GET_JOB_BY_HR: "/jobs/by-hr",
     ANALYZE_JD_PDF: "/jobs/analyze-jd-pdf",
+    GET_PENDING_FOR_ADMIN: "/jobs/pending/admin",
+    APPROVE_BY_ADMIN: (id: string) => `/jobs/${id}/approve`,
   },
   NOTIFICATION: {
     GET_NOTIFICATIONS: "/notifications",
@@ -145,6 +147,7 @@ export const API_ENDPOINTS = {
     UPDATE_ORDER_STATUS: (id: string) => `/orders/${id}/update`, //BODY:{status}
     GET_ORDER_BY_CODE: (orderCode: string) => `/orders/code/${orderCode}`,
     GET_ORDER_HISTORY: "/orders/history", //lấy ra lịch sử order của user
+    GET_ORDER_HISTORY_ADMIN: "/orders/admin/history", //lấy ra toàn bộ order cho admin
   },
   CREDIT: {
     UPDATE_TOKEN: "/credits/update-token", //BODY:{token} @PATCH

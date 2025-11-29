@@ -120,6 +120,33 @@ export const getJobsByHR = async (): Promise<Job[]> => {
 };
 
 /**
+ * Get pending jobs for admin approval
+ */
+export const getPendingJobsForAdmin = async (
+  page: number = 1,
+  limit: number = 10
+): Promise<{ data: Job[]; total: number; page: number; limit: number }> => {
+  try {
+    return await fetchWithAuth(
+      `${API_ENDPOINTS.JOB.GET_PENDING_FOR_ADMIN}?page=${page}&limit=${limit}`
+    );
+  } catch (error) {
+    console.error("Error fetching pending jobs for admin:", error);
+    return { data: [], total: 0, page, limit };
+  }
+};
+
+/**
+ * Approve a job by admin
+ */
+export const approveJobByAdmin = async (id: string): Promise<Job> => {
+  return fetchWithAuth(API_ENDPOINTS.JOB.APPROVE_BY_ADMIN(id), {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+  });
+};
+
+/**
  * Get all jobs (synchronous version for backward compatibility)
  * @returns Array of jobs
  */
