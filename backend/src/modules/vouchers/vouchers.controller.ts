@@ -57,7 +57,7 @@ export class VouchersController {
     return await this.vouchersService.getVoucherById(id);
   }
 
-  @Put(":id")
+  @Put(":id/direct")
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles("mkt")
   async updateVoucherDirect(
@@ -67,7 +67,7 @@ export class VouchersController {
     return await this.vouchersService.updateVoucherDirect(id, updateVoucherDto);
   }
 
-  @Put(":id")
+  @Put(":id/saveable")
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles("mkt")
   async updateVoucherSaveable(
