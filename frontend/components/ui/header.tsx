@@ -403,6 +403,12 @@ export function Header() {
   };
 
   const role = getRoleFromToken();
+
+  // Ẩn hoàn toàn Header cho các role trang quản trị
+  if (role === "admin" || role === "mkt") {
+    return null;
+  }
+
   let navItems: NavItem[] =
     role === "admin"
       ? navigationItems[language].admin
@@ -533,11 +539,6 @@ export function Header() {
                 <StyledButton onClick={handleLogout}>
                   {language === "en" ? "Logout" : "Đăng xuất"}
                 </StyledButton>
-                {role === "admin" && (
-                  <StyledButton as={Link} href="/admin">
-                    {language === "en" ? "Admin Panel" : "Quản trị"}
-                  </StyledButton>
-                )}
               </>
             ) : (
               <StyledButton as={Link} href="/login">
@@ -582,11 +583,6 @@ export function Header() {
                     <StyledButton onClick={handleLogout}>
                       {language === "en" ? "Logout" : "Đăng xuất"}
                     </StyledButton>
-                    {role === "admin" && (
-                      <StyledButton as={Link} href="/admin">
-                        {language === "en" ? "Admin Panel" : "Quản trị"}
-                      </StyledButton>
-                    )}
                   </>
                 ) : (
                   <StyledButton as={Link} href="/login">

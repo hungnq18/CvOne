@@ -361,7 +361,7 @@ export class AccountsService {
       throw new NotFoundException("Account not found");
     }
 
-    const allowedRoles = ["admin", "user", "hr"];
+    const allowedRoles = ["admin", "user", "hr", "mkt"];
     if (!allowedRoles.includes(role)) {
       throw new BadRequestException("Invalid role specified");
     }
