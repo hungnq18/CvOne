@@ -24,6 +24,27 @@ export async function register(
   });
 }
 
+// Đăng ký tài khoản HR theo DTO CreateAccountHRDto (backend)
+export async function registerHR(data: {
+  email: string;
+  password: string;
+  first_name: string;
+  last_name: string;
+  phone?: string;
+  country?: string;
+  city?: string;
+  company_name: string;
+  company_country: string;
+  company_city: string;
+  company_district: string;
+  vatRegistrationNumber: string;
+}): Promise<AuthResponse> {
+  return fetchWithAuth(API_ENDPOINTS.AUTH.REGISTER_HR, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
 export async function getProfile() {
   return fetchWithAuth(API_ENDPOINTS.AUTH.PROFILE);
 }
@@ -82,7 +103,7 @@ export const updateUserRole = async (accountId: string, role: string) => {
 };
 
 export async function resetPassword(token: string, newPassword: string) {
-  return fetchWithAuth(API_ENDPOINTS.AUTH.RESET_PASSWORD, {
+  return fetchWithAuth(API_ENDPOINTS.ACCOUNTS.Reset_Pass_With_Code, {
     method: "POST",
     body: JSON.stringify({ token, newPassword }),
   });

@@ -371,6 +371,18 @@ export default function RegisterPage() {
                     style={{ backgroundColor: "#f5f5f5" }}
                   />
                 </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  <Label>Mã số thuế công ty</Label>
+                  <Input
+                    id="vatRegistrationNumber"
+                    type="text"
+                    placeholder="Nhập mã số thuế công ty"
+                    value={formData.vatRegistrationNumber}
+                    onChange={handleInputChange}
+                    required
+                    style={{ backgroundColor: "#f5f5f5" }}
+                  />
+                </div>
                 <LocationWrapper>
                   <LocationField>
                     <Label>{t.workLocationLabel}</Label>
