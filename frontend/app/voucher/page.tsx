@@ -1,10 +1,11 @@
-"use client";
+'use client';
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AlertCircle, Calendar, CheckCircle2, Loader, TicketPercent, Copy, ArrowRight } from "lucide-react";
 import { getVouchersForUser, type Voucher } from "@/api/apiVoucher";
 import { getCredit, saveVoucher } from "@/api/apiCredit";
+import { useLanguage } from '@/providers/global_provider';
 
 interface VoucherWithStatus extends Voucher {
   _id: string;
@@ -13,6 +14,7 @@ interface VoucherWithStatus extends Voucher {
 
 export default function VoucherPage() {
   const router = useRouter();
+  const { language } = useLanguage();
   const [vouchers, setVouchers] = useState<VoucherWithStatus[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -60,7 +62,7 @@ export default function VoucherPage() {
       setVouchers(normalized);
     } catch (err: any) {
       console.error("Error loading vouchers:", err);
-      setError(err.message || "Không thể tải danh sách voucher");
+      setError(err.message || (language === 'vi' ? "Không thể tải danh sách voucher" : "Failed to load vouchers"));
     } finally {
       setLoading(false);
     }
@@ -75,7 +77,7 @@ export default function VoucherPage() {
       );
     } catch (err: any) {
       console.error("Error saving voucher:", err);
-      setError(err.message || "Không thể lưu voucher. Vui lòng thử lại.");
+      setError(err.message || (language === 'vi' ? "Không thể lưu voucher. Vui lòng thử lại." : "Failed to save voucher. Please try again."));
     } finally {
       setSavingId(null);
     }
@@ -84,24 +86,25 @@ export default function VoucherPage() {
   const handleCopyCode = (voucher: VoucherWithStatus) => {
     navigator.clipboard.writeText(voucher.name);
     setCopiedId(voucher._id);
-    // Không tự tắt copiedId để giữ nút Nạp tiền
   };
 
   const getDiscountText = (voucher: VoucherWithStatus) => {
     if (voucher.discountType === "percent") {
-      return `Giảm ${voucher.discountValue}%`;
+      return language === 'vi'
+        ? `Giảm ${voucher.discountValue}%`
+        : `Discount ${voucher.discountValue}%`;
     }
-    return `Giảm ${voucher.discountValue.toLocaleString("vi-VN")}đ`;
+    return language === 'vi'
+      ? `Giảm ${voucher.discountValue.toLocaleString("vi-VN")}đ`
+      : `Discount ${voucher.discountValue}`;
   };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     if (Number.isNaN(date.getTime())) return "";
-    return date.toLocaleDateString("vi-VN", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    });
+    return language === 'vi'
+      ? date.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" })
+      : date.toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" });
   };
 
   const isExpired = (voucher: VoucherWithStatus) => {
@@ -114,7 +117,9 @@ export default function VoucherPage() {
         <div className="max-w-5xl mx-auto flex items-center justify-center min-h-[60vh]">
           <div className="text-center">
             <Loader className="w-8 h-8 animate-spin text-blue-500 mx-auto mb-4" />
-            <p className="text-slate-600 dark:text-slate-400">Đang tải voucher ưu đãi...</p>
+            <p className="text-slate-600 dark:text-slate-400">
+              {language === 'vi' ? "Đang tải voucher ưu đãi..." : "Loading vouchers..."}
+            </p>
           </div>
         </div>
       </main>
@@ -131,10 +136,12 @@ export default function VoucherPage() {
             </div>
             <div>
               <h1 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white">
-                Ưu đãi cho bạn
+                {language === 'vi' ? "Ưu đãi cho bạn" : "Vouchers for you"}
               </h1>
               <p className="text-slate-600 dark:text-slate-400 text-sm md:text-base">
-                Lưu voucher vào ví để sử dụng khi nạp tiền hoặc thanh toán dịch vụ.
+                {language === 'vi'
+                  ? "Lưu voucher vào ví để sử dụng khi nạp tiền hoặc thanh toán dịch vụ."
+                  : "Save vouchers to your wallet to use for deposits or service payments."}
               </p>
             </div>
           </div>
@@ -147,9 +154,9 @@ export default function VoucherPage() {
               <p className="text-sm font-medium text-red-800 dark:text-red-200">{error}</p>
               <button
                 onClick={loadData}
-                className="mt-2 text-sm font-semibold text-red-700 underline hover:text-red-800 dark:text-red-300"
+                className="mt-2 text-sm font-semibold underline text-red-700 hover:text-red-800 dark:text-red-300"
               >
-                Thử tải lại
+                {language === 'vi' ? "Thử tải lại" : "Retry"}
               </button>
             </div>
           </div>
@@ -158,10 +165,14 @@ export default function VoucherPage() {
         {vouchers.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center shadow-sm dark:border-slate-700 dark:bg-slate-800">
             <p className="text-lg font-semibold text-slate-800 dark:text-white mb-2">
-              Hiện chưa có voucher nào dành cho bạn
+              {language === 'vi'
+                ? "Hiện chưa có voucher nào dành cho bạn"
+                : "No vouchers available for you"}
             </p>
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              Theo dõi các chương trình khuyến mãi để nhận thêm nhiều ưu đãi hấp dẫn.
+              {language === 'vi'
+                ? "Theo dõi các chương trình khuyến mãi để nhận thêm nhiều ưu đãi hấp dẫn."
+                : "Follow promotions to get more great deals."}
             </p>
           </div>
         ) : (
@@ -210,12 +221,12 @@ export default function VoucherPage() {
                         </h3>
                         {expired ? (
                           <span className="rounded-full bg-red-50 px-2 py-0.5 text-[11px] font-semibold text-red-600 dark:bg-red-900/30 dark:text-red-300">
-                            Hết hạn
+                            {language === 'vi' ? "Hết hạn" : "Expired"}
                           </span>
                         ) : voucher.isSaved ? (
                           <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-300">
                             <CheckCircle2 className="h-3 w-3" />
-                            Đã lưu
+                            {language === 'vi' ? "Đã lưu" : "Saved"}
                           </span>
                         ) : null}
                       </div>
@@ -233,9 +244,9 @@ export default function VoucherPage() {
                       </div>
                       {remaining !== null && (
                         <span>
-                          Còn lại:{" "}
+                          {language === 'vi' ? "Còn lại" : "Remaining"}:{" "}
                           <span className="font-semibold text-slate-900 dark:text-white">
-                            {remaining.toLocaleString("vi-VN")}
+                            {remaining.toLocaleString(language === 'vi' ? "vi-VN" : "en-US")}
                           </span>
                         </span>
                       )}
@@ -250,26 +261,36 @@ export default function VoucherPage() {
                           />
                         </div>
                         <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
-                          Đã dùng {usedPercent}% tổng số lượt
+                          {language === 'vi'
+                            ? `Đã dùng ${usedPercent}% tổng số lượt`
+                            : `${usedPercent}% used`}
                         </p>
                       </div>
                     )}
 
                     <div className="mt-1 flex items-center justify-between text-[11px] text-slate-600 dark:text-slate-400">
                       <div>
-                        <p className="font-medium">Đơn tối thiểu</p>
+                        <p className="font-medium">{language === 'vi' ? "Đơn tối thiểu" : "Min order"}</p>
                         <p className="font-semibold text-slate-900 dark:text-white">
                           {voucher.minOrderValue
-                            ? `${voucher.minOrderValue.toLocaleString("vi-VN")}đ`
-                            : "Không giới hạn"}
+                            ? language === 'vi'
+                              ? `${voucher.minOrderValue.toLocaleString("vi-VN")}đ`
+                              : `${voucher.minOrderValue}`
+                            : language === 'vi'
+                              ? "Không giới hạn"
+                              : "No limit"}
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="font-medium">Giảm tối đa</p>
+                        <p className="font-medium">{language === 'vi' ? "Giảm tối đa" : "Max discount"}</p>
                         <p className="font-semibold text-slate-900 dark:text-white">
                           {voucher.maxDiscountValue
-                            ? `${voucher.maxDiscountValue.toLocaleString("vi-VN")}đ`
-                            : "Không giới hạn"}
+                            ? language === 'vi'
+                              ? `${voucher.maxDiscountValue.toLocaleString("vi-VN")}đ`
+                              : `${voucher.maxDiscountValue}`
+                            : language === 'vi'
+                              ? "Không giới hạn"
+                              : "No limit"}
                         </p>
                       </div>
                     </div>
@@ -281,14 +302,14 @@ export default function VoucherPage() {
                           className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-500 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-70"
                         >
                           <Loader className="h-4 w-4 animate-spin" />
-                          Đang lưu...
+                          {language === 'vi' ? "Đang lưu..." : "Saving..."}
                         </button>
                       ) : expired ? (
                         <button
                           disabled
                           className="flex w-full items-center justify-center gap-2 rounded-lg bg-slate-300 py-2 text-sm font-semibold text-slate-600 cursor-not-allowed"
                         >
-                          Voucher đã hết hạn
+                          {language === 'vi' ? "Voucher đã hết hạn" : "Voucher expired"}
                         </button>
                       ) : !isSaveable ? (
                         copiedId === voucher._id ? (
@@ -297,7 +318,7 @@ export default function VoucherPage() {
                             className="flex w-full items-center justify-center gap-2 rounded-lg bg-green-600 py-2 text-sm font-semibold text-white hover:bg-green-700 transition-colors animate-in fade-in zoom-in duration-300"
                           >
                             <CheckCircle2 className="h-4 w-4" />
-                            Đã copy - Nạp tiền ngay
+                            {language === 'vi' ? "Đã copy - Nạp tiền ngay" : "Copied - Deposit now"}
                             <ArrowRight className="h-4 w-4" />
                           </button>
                         ) : (
@@ -306,7 +327,7 @@ export default function VoucherPage() {
                             className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-500 py-2 text-sm font-semibold text-white hover:bg-blue-600 transition-colors"
                           >
                             <Copy className="h-4 w-4" />
-                            Sao chép mã
+                            {language === 'vi' ? "Sao chép mã" : "Copy code"}
                           </button>
                         )
                       ) : voucher.isSaved ? (
@@ -315,7 +336,7 @@ export default function VoucherPage() {
                           className="flex w-full items-center justify-center gap-2 rounded-lg bg-slate-200 py-2 text-sm font-semibold text-slate-600 cursor-not-allowed dark:bg-slate-700 dark:text-slate-400"
                         >
                           <CheckCircle2 className="h-4 w-4" />
-                          Đã lưu vào ví
+                          {language === 'vi' ? "Đã lưu vào ví" : "Saved to wallet"}
                         </button>
                       ) : (
                         <button
@@ -323,7 +344,7 @@ export default function VoucherPage() {
                           onClick={() => handleSaveVoucher(voucher._id)}
                           className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-500 py-2 text-sm font-semibold text-white hover:bg-blue-600 transition-colors disabled:bg-slate-300 disabled:text-slate-600 disabled:cursor-not-allowed"
                         >
-                          Lưu
+                          {language === 'vi' ? "Lưu" : "Save"}
                         </button>
                       )}
                     </div>
