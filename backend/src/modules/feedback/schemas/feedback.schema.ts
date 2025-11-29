@@ -4,11 +4,11 @@ import { Document } from "mongoose";
 export type FormFeedbackDocument = FormFeedback & Document;
 
 export enum FeedbackFeature {
-  TRANSLATE_CV = "translate_cv", // Dịch CV với AI
-  GENERATE_CV = "generate_cv", // Tạo CV với AI
-  GENERATE_CL = "generate_cl", // Tạo Cover Letter với AI
-  REBUILD_CV_FROM_PDF = "rebuild_cv_pdf", // AI tạo lại CV từ PDF theo JD
-  AI_INTERVIEW = "ai_interview", // Phỏng vấn với AI dựa trên JD
+  TRANSLATE_CV = "translate_cv",
+  GENERATE_CL = "generate_cl",
+  GENERATE_CV = "generate_cv",
+  SUGGEST_JOB = "suggest_job",
+  AI_INTERVIEW = "ai_interview",
 }
 
 @Schema({ timestamps: true })
