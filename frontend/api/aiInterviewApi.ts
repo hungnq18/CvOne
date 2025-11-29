@@ -27,6 +27,7 @@ export interface InterviewSession {
   completedQuestions: number;
   status: string;
   difficulty: 'easy' | 'medium' | 'hard'; // Auto-determined từ JD
+  language?: string; // Language detected from JD (vi-VN, en-US, ja-JP, etc.)
   createdAt: Date;
   averageScore?: number;
 }

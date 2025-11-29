@@ -128,6 +128,12 @@ export class AiInterviewSession extends Document {
   @Prop({ default: 0 })
   totalTimeSpent?: number; // in seconds
 
+  @Prop({ 
+    default: 'vi-VN',
+    enum: ['vi-VN', 'en-US', 'en-GB', 'ja-JP', 'ko-KR', 'zh-CN', 'fr-FR', 'de-DE', 'es-ES']
+  })
+  language?: string; // Language detected from job description
+
   // Metadata
   @Prop({ type: Object })
   metadata?: {

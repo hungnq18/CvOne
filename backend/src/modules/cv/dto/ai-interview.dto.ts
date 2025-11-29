@@ -53,6 +53,7 @@ export class InterviewSessionResponse {
   completedQuestions: number;
   status: string;
   difficulty: string;
+  language?: string;
   createdAt: Date;
 }
 

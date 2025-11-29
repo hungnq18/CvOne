@@ -47,6 +47,7 @@ export class AiInterviewController {
         completedQuestions: session.feedbacks.length,
         status: session.status,
         difficulty: session.difficulty,
+        language: session.language || 'vi-VN',
         createdAt: session.createdAt
       };
 
@@ -90,6 +91,7 @@ export class AiInterviewController {
           completedQuestions: session.feedbacks.length,
           status: session.status,
           difficulty: session.difficulty,
+          language: session.language || 'vi-VN',
           averageScore: session.averageScore,
           createdAt: session.createdAt
         }
@@ -197,10 +199,12 @@ export class AiInterviewController {
         };
       }
 
+      const language = session.language || 'vi-VN';
       const followUpQuestion = await this.aiInterviewService.generateFollowUpQuestion(
         question as any,
         body.userAnswer,
-        session.jobDescription
+        session.jobDescription,
+        language
       );
 
       return {
@@ -241,9 +245,11 @@ export class AiInterviewController {
         };
       }
 
+      const language = session.language || 'vi-VN';
       const sampleAnswer = await this.aiInterviewService.generateSampleAnswer(
         question as any,
-        session.jobDescription
+        session.jobDescription,
+        language
       );
 
       return {
@@ -384,4 +390,5 @@ export class AiInterviewController {
       };
     }
   }
+
 }
