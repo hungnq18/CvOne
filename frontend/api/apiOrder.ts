@@ -6,10 +6,18 @@ import { API_ENDPOINTS } from "./apiConfig"
 /**
  * Order Interface
  */
+export interface OrderUser {
+    _id: string
+    first_name?: string
+    last_name?: string
+    account_id?: { email?: string }
+}
+
 export interface Order {
     _id?: string
     orderCode: number
-    userId: string
+    // Backend trả về string (id) hoặc object User đã populate cho admin
+    userId: string | OrderUser
     voucherId?: string
     totalToken: number
     price: number
@@ -58,11 +66,21 @@ export async function getOrderByOrderCode(orderCode: string) {
 }
 
 /**
- * Get order history 
- * @returns Promise with list of orders
+ * Get order history for current user
+ * @returns Promise with list of user's orders
  */
 export async function getOrderHistory() {
     return fetchWithAuth(API_ENDPOINTS.ORDER.GET_ORDER_HISTORY, {
+        method: "GET",
+    });
+}
+
+/**
+ * Get all order history for admin
+ * @returns Promise with list of all orders
+ */
+export async function getOrderHistoryAdmin() {
+    return fetchWithAuth(API_ENDPOINTS.ORDER.GET_ORDER_HISTORY_ADMIN, {
         method: "GET",
     });
 }

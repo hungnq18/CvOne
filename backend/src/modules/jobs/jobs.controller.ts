@@ -96,6 +96,23 @@ export class JobsController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("admin")
+  @Get("pending/admin")
+  async getPendingJobsForAdmin(
+    @Query("page") page = 1,
+    @Query("limit") limit = 10,
+  ) {
+    return this.jobsService.getPendingJobs(Number(page), Number(limit));
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("admin")
+  @Put(":id/approve")
+  async approveJobByAdmin(@Param("id") id: string) {
+    return this.jobsService.approveJob(id);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles("hr")
   @Delete(":id")
   delete(@Param("id") id: string) {

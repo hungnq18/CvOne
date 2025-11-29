@@ -168,4 +168,13 @@ export class OrdersService {
       .sort({ createdAt: -1 })
       .exec();
   }
+
+  // Admin: lấy toàn bộ orders (mọi user, mọi trạng thái)
+  async getAllOrdersForAdmin() {
+    return this.orderModel
+      .find()
+      .populate("userId voucherId")
+      .sort({ createdAt: -1 })
+      .exec();
+  }
 }

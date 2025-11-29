@@ -9,6 +9,8 @@ import {
   UseGuards,
 } from "@nestjs/common";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
+import { RolesGuard } from "../auth/guards/roles.guard";
+import { Roles } from "src/common/decorators/roles.decorator";
 import { OrdersService } from "./orders.service";
 import { CreateOrderDto } from "./dto/create-order.dto";
 
@@ -47,5 +49,13 @@ export class OrdersController {
   async getOrderHistory(@Request() req) {
     const userId = req.user.user._id;
     return this.ordersService.getOrderHistory(userId);
+  }
+
+  // Admin: xem toàn bộ order lịch sử
+  @Get("admin/history")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("admin")
+  async getAllOrdersHistoryForAdmin() {
+    return this.ordersService.getAllOrdersForAdmin();
   }
 }
