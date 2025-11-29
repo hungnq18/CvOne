@@ -1,4 +1,4 @@
-"use client"
+'use client'
 
 import { useState, useEffect } from "react"
 import { CreditCard, Gift, Loader } from "lucide-react"
@@ -7,6 +7,7 @@ import VoucherList from "@/components/wallet/voucher-list"
 import ActionButtons from "@/components/wallet/action-buttons"
 import { getCredit, type Credit, type CreditVoucher } from "@/api/apiCredit"
 import { type Voucher } from "@/api/apiVoucher"
+import { useLanguage } from "@/providers/global_provider"
 
 interface VoucherWithDetails extends Voucher {
     startDate: string
@@ -14,7 +15,28 @@ interface VoucherWithDetails extends Voucher {
     _id: string
 }
 
+// Thêm phần dịch
+const walletTranslations = {
+    en: {
+        title: "Wallet Management",
+        subtitle: "Manage account balance, vouchers and transactions",
+        vouchers: "Saved Vouchers",
+        retry: "Retry",
+        loading: "Loading data...",
+    },
+    vi: {
+        title: "Quản lý Ví Tiền",
+        subtitle: "Quản lý số dư tài khoản, voucher và thực hiện các giao dịch",
+        vouchers: "Voucher Đã Lưu",
+        retry: "Thử lại",
+        loading: "Đang tải dữ liệu...",
+    }
+}
+
 export default function WalletPage() {
+    const { language } = useLanguage()
+    const t = walletTranslations[language]
+
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [credit, setCredit] = useState<Credit | null>(null)
@@ -31,7 +53,6 @@ export default function WalletPage() {
             const creditData = await getCredit()
             setCredit(creditData)
 
-            // Transform vouchers from credit to display format
             if (creditData.vouchers && creditData.vouchers.length > 0) {
                 const vouchersWithDetails = creditData.vouchers
                     .filter((v: any) => v.voucherId && typeof v.voucherId === 'object')
@@ -50,7 +71,7 @@ export default function WalletPage() {
             }
         } catch (err: any) {
             console.error("Error loading credit data:", err)
-            setError(err.message || "Không thể tải dữ liệu ví")
+            setError(err.message || t.loading)
         } finally {
             setLoading(false)
         }
@@ -62,7 +83,7 @@ export default function WalletPage() {
                 <div className="max-w-6xl mx-auto flex items-center justify-center min-h-[60vh]">
                     <div className="text-center">
                         <Loader className="w-8 h-8 animate-spin text-blue-600 mx-auto mb-4" />
-                        <p className="text-slate-600 dark:text-slate-400">Đang tải dữ liệu...</p>
+                        <p className="text-slate-600 dark:text-slate-400">{t.loading}</p>
                     </div>
                 </div>
             </main>
@@ -79,7 +100,7 @@ export default function WalletPage() {
                             onClick={loadCreditData}
                             className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
                         >
-                            Thử lại
+                            {t.retry}
                         </button>
                     </div>
                 </div>
@@ -94,20 +115,15 @@ export default function WalletPage() {
                 <div className="mb-8">
                     <h1 className="text-4xl font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-3">
                         <CreditCard className="w-10 h-10 text-blue-600" />
-                        Quản lý Ví Tiền
+                        {t.title}
                     </h1>
-                    <p className="text-slate-600 dark:text-slate-400">
-                        Quản lý số dư tài khoản, voucher và thực hiện các giao dịch
-                    </p>
+                    <p className="text-slate-600 dark:text-slate-400">{t.subtitle}</p>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-                    {/* Wallet Balance Card */}
                     <div className="lg:col-span-1">
                         <WalletCard tokenBalance={credit?.token || 0} />
                     </div>
-
-                    {/* Quick Actions */}
                     <div className="lg:col-span-2">
                         <ActionButtons />
                     </div>
@@ -118,7 +134,7 @@ export default function WalletPage() {
                     <div>
                         <div className="flex items-center gap-3 mb-4">
                             <Gift className="w-6 h-6 text-amber-600" />
-                            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Voucher Đã Lưu</h2>
+                            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{t.vouchers}</h2>
                         </div>
                         <VoucherList vouchers={vouchers} />
                     </div>

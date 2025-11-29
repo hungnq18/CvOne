@@ -135,7 +135,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ initialUser, initialJobs, ini
                         {/* Left Column */}
                         <div className="md:col-span-4">
                             <ProfileCard user={user} />
-                            <SocialIcons />
+                            {/* <SocialIcons /> */}
                         </div>
 
                         {/* Right Column */}

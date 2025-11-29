@@ -1,11 +1,17 @@
 import React from 'react';
 import { User } from '@/types/auth';
+import { useLanguage } from '@/providers/global_provider';
 
 interface ProfileCardProps {
     user: User;
 }
 
 const ProfileCardComponent: React.FC<ProfileCardProps> = ({ user }) => {
+    const { language } = useLanguage(); // lấy ngôn ngữ hiện tại ("vi" | "en")
+
+    // Text tùy theo ngôn ngữ
+    const locationText = `${user.city}, ${user.country}`; // có thể giữ nguyên hoặc chuyển ngôn ngữ city nếu cần
+
     return (
         <div className="card bg-white/80 backdrop-blur-sm border border-blue-100 shadow-lg mt-5">
             <div className="card-body">
@@ -17,8 +23,7 @@ const ProfileCardComponent: React.FC<ProfileCardProps> = ({ user }) => {
                     </div>
                     <div className="mt-3">
                         <h4 className="text-xl font-semibold text-gray-900">{`${user.first_name} ${user.last_name}`}</h4>
-                        <p className="text-gray-700 mb-1">Full Stack Developer</p>
-                        <p className="text-gray-600 text-sm">{user.city}, {user.country}</p>
+                        <p className="text-gray-600 text-sm">{locationText}</p>
                     </div>
                 </div>
             </div>
@@ -26,7 +31,6 @@ const ProfileCardComponent: React.FC<ProfileCardProps> = ({ user }) => {
     );
 };
 
-// Memo để tránh re-render khi parent re-render mà props không đổi
 const ProfileCard = React.memo(ProfileCardComponent);
 
-export default ProfileCard; 
+export default ProfileCard;
