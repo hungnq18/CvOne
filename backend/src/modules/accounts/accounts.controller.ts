@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Param,
+  Patch,
   Post,
   Put,
   UseGuards,
@@ -17,10 +18,11 @@ import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { RolesGuard } from "../auth/guards/roles.guard";
 import { Roles } from "../../common/decorators/roles.decorator";
 import { CreateAccountHRDto } from "./dto/create-account-hr.dto";
+import { UpdateHrActiveDto } from "./dto/update-hr-active.dto";
 
 @Controller("accounts")
 export class AccountsController {
-  constructor(private readonly accountsService: AccountsService) { }
+  constructor(private readonly accountsService: AccountsService) {}
 
   @Post("register")
   async register(@Body() createAccountDto: CreateAccountDto) {
@@ -69,5 +71,15 @@ export class AccountsController {
   @Post("reset-password-code")
   async resetPasswordCode(@Body() dto: VerifyResetCodeDto) {
     return this.accountsService.resetPasswordWithCode(dto);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("admin")
+  @Patch(":accountId/hr-active")
+  async updateHrActive(
+    @Param("accountId") id: string,
+    @Body() data: UpdateHrActiveDto
+  ) {
+    return this.accountsService.updateHrActive(id, data);
   }
 }

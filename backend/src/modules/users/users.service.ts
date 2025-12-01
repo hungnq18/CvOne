@@ -1,10 +1,16 @@
-import { Injectable, Logger, NotFoundException } from "@nestjs/common";
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model, ObjectId, Types } from "mongoose";
 import { AccountsService } from "../accounts/accounts.service";
 import { CreateUserDto } from "./dto/create-user.dto";
 import { UpdateUserDto } from "./dto/update-user.dto";
 import { User, UserDocument } from "./schemas/user.schema";
+import { UpdateHrActiveDto } from "../accounts/dto/update-hr-active.dto";
 
 @Injectable()
 export class UsersService {
@@ -12,7 +18,7 @@ export class UsersService {
 
   constructor(
     @InjectModel(User.name) private userModel: Model<User>,
-    private accountsService: AccountsService,
+    private accountsService: AccountsService
   ) {}
 
   async createUser(createUserDto: CreateUserDto): Promise<User> {
@@ -52,7 +58,7 @@ export class UsersService {
   }
 
   async getUserByAccountId(
-    accountId: string | Types.ObjectId,
+    accountId: string | Types.ObjectId
   ): Promise<UserDocument> {
     const user = await this.userModel
       .findOne({ account_id: accountId })
@@ -71,7 +77,7 @@ export class UsersService {
 
   async updateProfile(
     userId: string,
-    updateUserDto: UpdateUserDto,
+    updateUserDto: UpdateUserDto
   ): Promise<User> {
     const updatedUser = await this.userModel
       .findByIdAndUpdate(
@@ -89,7 +95,7 @@ export class UsersService {
             ...(updateUserDto.country && { country: updateUserDto.country }),
           },
         },
-        { new: true },
+        { new: true }
       )
       .populate({
         path: "account_id",
@@ -113,7 +119,7 @@ export class UsersService {
       company_city: string;
       company_district: string;
       vatRegistrationNumber: string;
-    },
+    }
   ): Promise<User> {
     const updated = await this.userModel
       .findByIdAndUpdate(
@@ -127,7 +133,7 @@ export class UsersService {
             vatRegistrationNumber: fields.vatRegistrationNumber,
           },
         },
-        { new: true },
+        { new: true }
       )
       .exec();
 
@@ -171,5 +177,35 @@ export class UsersService {
       return null;
     }
     return user;
+  }
+
+  async getHrUnActive() {
+    return await this.accountsService.getHrUnActive();
+  }
+
+  async updateHrActive(userId: string, data: UpdateHrActiveDto) {
+    // 1. Tìm user theo userId
+    const user = await this.userModel.findById(userId);
+    if (!user) {
+      throw new NotFoundException("User not found");
+    }
+
+    const accountId = user.account_id;
+    if (!accountId) {
+      throw new BadRequestException("User does not have an account");
+    }
+
+    // 2. Gọi update trạng thái active HR trên tài khoản
+    const updatedAccount = await this.accountsService.updateHrActive(
+      accountId.toString(),
+      data
+    );
+
+    return {
+      message: "HR active status updated successfully",
+      userId,
+      accountId,
+      updated: updatedAccount,
+    };
   }
 }

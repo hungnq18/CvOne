@@ -22,6 +22,7 @@ import { Account, AccountDocument } from "./schemas/account.schema";
 import { PasswordResetCodeService } from "./password-reset-code.service";
 import { CreateAccountHRDto } from "./dto/create-account-hr.dto";
 import { CreditsService } from "../credits/credits.service";
+import { UpdateHrActiveDto } from "./dto/update-hr-active.dto";
 // ...existing code...
 @Injectable()
 export class AccountsService {
@@ -209,6 +210,7 @@ export class AccountsService {
         password: hashedPassword,
         isEmailVerified: false,
         role: "hr",
+        isActive: false,
       });
 
       const savedAccount = await newAccount.save();
@@ -420,5 +422,20 @@ export class AccountsService {
     account.password = hashed;
     await account.save();
     return { message: "Password has been reset successfully" };
+  }
+
+  async updateHrActive(accountId: string, data: UpdateHrActiveDto) {
+    const { isActive } = data;
+    const account = await this.accountModel.findById(accountId);
+    if (!account) {
+      throw new NotFoundException("Account not found");
+    }
+    account.isActive = isActive;
+    await this.mailService.sendEmailActiveHr(account.email);
+    return account.save();
+  }
+
+  async getHrUnActive() {
+    return this.accountModel.find({ role: "hr", isActive: false }).exec();
   }
 }
