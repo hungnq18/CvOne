@@ -25,6 +25,7 @@ export const API_ENDPOINTS = {
     CHECK_TOKEN: (token: string) => `/accounts/check-token/${token}`,
     Reset_Pass_With_Code: "/accounts/reset-password-code", //hàm nhận vào gmail, code, mật khẩu mới để cài lại mật khẩu
     Sent_Fogot_Password_Code: "/accounts/forgot-password-code", // hàm nhận vào gmail để gửi code
+    UPDATE_ACTIVE_HR: (id: string) => `/accounts/${id}/hr-active`,
   },
   USER: {
     GET_ALL: "/users",
@@ -33,6 +34,7 @@ export const API_ENDPOINTS = {
     DELETE: (id: string) => `/users/${id}`,
     GET_PROFILE: "/user/profile",
     UPDATE_PROFILE: "/user/profile",
+    GET_HR_UNACTIVE: "/users/hr/unactive",
   },
   PROFILE: {
     GET: "/profile",
