@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  Patch,
   Post,
   Put,
   UseGuards,
@@ -14,10 +15,18 @@ import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { RolesGuard } from "../auth/guards/roles.guard";
 import { Roles } from "../../common/decorators/roles.decorator";
 import { UpdateUserDto } from "./dto/update-user.dto";
+import { UpdateHrActiveDto } from "../accounts/dto/update-hr-active.dto";
 
 @Controller("users")
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("admin")
+  @Get("hr/unactive")
+  async getHrUnActive() {
+    return this.usersService.getHrUnActive();
+  }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles("admin")
@@ -41,8 +50,6 @@ export class UsersController {
   @UseGuards(JwtAuthGuard)
   @Get(":id")
   async getUserById(@Param("id") id: string) {
-    console.log("call api 7");
-
     return this.usersService.getUserById(id);
   }
 

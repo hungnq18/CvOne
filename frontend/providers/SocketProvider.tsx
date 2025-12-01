@@ -7,6 +7,7 @@ import React, {
   useState,
   useEffect,
   useMemo,
+  useRef,
 } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import io from "socket.io-client";
@@ -15,168 +16,183 @@ import { Message, getUserConversations } from "@/api/apiChat";
 interface SocketContextType {
   unreadCount: number;
   conversations: any[];
-  notifications: any[];
-  unreadNotifications: number;
-  messages: Record<string, Message[]>; // lưu messages theo conversationId
+  messages: Record<string, Message[]>;
   markConversationAsRead: (conversationId: string) => void;
   joinConversation: (conversationId: string) => void;
   setConversations: React.Dispatch<React.SetStateAction<any[]>>;
   setUnreadCount: React.Dispatch<React.SetStateAction<number>>;
   setMessages: React.Dispatch<React.SetStateAction<Record<string, Message[]>>>;
+  socket: any;
 }
 
 const SocketContext = createContext<SocketContextType | undefined>(undefined);
 
-let socket: any = null;
-
 export function SocketProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
+  const socketRef = useRef<any>(null);
 
   const [conversations, setConversations] = useState<any[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [notifications, setNotifications] = useState<any[]>([]);
-  const [messages, setMessages] = useState<Record<string, Message[]>>({}); // conversationId => messages
+  const [messages, setMessages] = useState<Record<string, Message[]>>({});
 
-  // ⭐ Connect socket 1 lần duy nhất
+  // ⭐ Connect socket
   useEffect(() => {
     if (!user) return;
 
-    if (!socket) {
-      socket = io(process.env.NEXT_PUBLIC_SOCKET_URL!, {
+    if (!socketRef.current) {
+      socketRef.current = io(process.env.NEXT_PUBLIC_SOCKET_URL!, {
         withCredentials: true,
         transports: ["websocket"],
       });
     }
 
+    const socket = socketRef.current;
+
     socket.emit("join", user._id);
     socket.emit("joinNotificationRoom", user._id);
 
     return () => {
-      socket?.off("message:new");
-      socket?.off("newNotification");
-      socket?.off("conversation:messages");
+      socket.off();
     };
   }, [user]);
 
-  // ⭐ Load conversations lần đầu
+  // Load conversation list
   useEffect(() => {
     if (!user) return;
 
-    const loadConversations = async () => {
+    const load = async () => {
       const conv = await getUserConversations(user._id);
       setConversations(conv);
       setUnreadCount(calcUnread(conv, user._id));
     };
 
-    loadConversations();
+    load();
   }, [user]);
 
-  // ⭐ Listen events từ server
+  // ⭐ Listen to all socket events
   useEffect(() => {
-    if (!socket || !user) return;
+    if (!socketRef.current || !user) return;
 
-    // tin nhắn mới
-    socket.on("message:new", (msg: any) => {
+    const socket = socketRef.current;
+
+    // New message
+    socket.on("newMessage", (msg: Message) => {
       if (msg.receiverId !== user._id) return;
 
       setConversations((prev) => {
-        const updated = prev.map((c) => {
-          if (c._id === msg.conversationId) {
-            return {
-              ...c,
-              unreadCount: c.unreadCount.map((u: any) =>
-                u.userId === user._id ? { ...u, count: u.count + 1 } : u
-              ),
-              lastMessage: msg,
-            };
-          }
-          return c;
-        });
+        const updated = prev.map((c) =>
+          c._id === msg.conversationId
+            ? {
+                ...c,
+                unreadCount: c.unreadCount.map((u: any) =>
+                  u.userId === user._id ? { ...u, count: u.count + 1 } : u
+                ),
+                lastMessage: msg,
+              }
+            : c
+        );
         setUnreadCount(calcUnread(updated, user._id));
         return updated;
       });
 
-      // đồng thời update messages nếu đang join conversation đó
       setMessages((prev) => {
         const convMsgs = prev[msg.conversationId] || [];
         return { ...prev, [msg.conversationId]: [...convMsgs, msg] };
       });
     });
 
-    // thông báo mới
-    socket.on("newNotification", (notification: any) => {
-      setNotifications((prev) => [notification, ...prev]);
-    });
-
-    // khi join room, server trả về toàn bộ message
+    // Conversation messages
     socket.on(
       "conversation:messages",
-      (data: { conversationId: string; messages: any[] }) => {
-        const { conversationId, messages: convMessages } = data;
-        setMessages((prev) => ({ ...prev, [conversationId]: convMessages }));
+      (data: { conversationId: string; messages: Message[] }) => {
+        setMessages((prev) => ({
+          ...prev,
+          [data.conversationId]: data.messages,
+        }));
+      }
+    );
+
+    // Unread reset
+    socket.on(
+      "unreadReset",
+      ({
+        conversationId,
+        userId,
+      }: {
+        conversationId: string;
+        userId: string;
+      }) => {
+        if (userId !== user._id) return;
+        setConversations((prev) =>
+          prev.map((c) =>
+            c._id === conversationId
+              ? {
+                  ...c,
+                  unreadCount: c.unreadCount.map((u: any) =>
+                    u.userId === user._id ? { ...u, count: 0 } : u
+                  ),
+                }
+              : c
+          )
+        );
+        setUnreadCount(0);
       }
     );
 
     return () => {
-      socket.off("message:new");
-      socket.off("newNotification");
+      socket.off("newMessage");
       socket.off("conversation:messages");
+      socket.off("unreadReset");
     };
-  }, [socket, user]);
+  }, [user]);
 
-  // ⭐ Mark conversation as read
+  // ⭐ Mark conversation read
   const markConversationAsRead = useCallback(
     (conversationId: string) => {
-      if (!user) return;
+      if (!user || !socketRef.current) return;
+
+      const socket = socketRef.current;
 
       setConversations((prev) => {
-        const updated = prev.map((conv) => {
-          if (conv._id === conversationId) {
-            return {
-              ...conv,
-              unreadCount: conv.unreadCount.map((u: any) =>
-                u.userId === user._id ? { ...u, count: 0 } : u
-              ),
-            };
-          }
-          return conv;
-        });
+        const updated = prev.map((conv) =>
+          conv._id === conversationId
+            ? {
+                ...conv,
+                unreadCount: conv.unreadCount.map((u: any) =>
+                  u.userId === user._id ? { ...u, count: 0 } : u
+                ),
+              }
+            : conv
+        );
         setUnreadCount(calcUnread(updated, user._id));
         return updated;
       });
 
-      socket?.emit("readConversation", {
-        userId: user._id,
+      socket.emit("readConversation", {
         conversationId,
+        userId: user._id,
       });
     },
     [user]
   );
 
-  // ⭐ Join conversation - client emit để server trả messages
+  // ⭐ Join conversation room
   const joinConversation = useCallback((conversationId: string) => {
-    if (!socket || !conversationId) return;
-    socket.emit("joinRoom", conversationId);
+    socketRef.current?.emit("joinRoom", conversationId);
   }, []);
-
-  // ⭐ Tính số notification chưa đọc
-  const unreadNotifications = useMemo(() => {
-    return notifications.filter((n) => !n.isRead).length;
-  }, [notifications]);
 
   return (
     <SocketContext.Provider
       value={{
         unreadCount,
         conversations,
-        notifications,
-        unreadNotifications,
         messages,
         markConversationAsRead,
         joinConversation,
         setConversations,
         setUnreadCount,
         setMessages,
+        socket: socketRef.current,
       }}
     >
       {children}
@@ -191,7 +207,7 @@ export function useSocket() {
   return context;
 }
 
-// ⭐ Helper tính tổng unread
+// helper
 function calcUnread(conversations: any[], userId: string) {
   return conversations.reduce((sum, conv) => {
     const item = conv.unreadCount?.find((u: any) => u.userId === userId);
