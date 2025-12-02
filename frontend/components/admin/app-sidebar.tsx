@@ -1,7 +1,7 @@
 "use client"
 
 import type * as React from "react"
-import { LayoutDashboard, Users, FileText, Mail, BriefcaseBusiness, CreditCard, Briefcase } from "lucide-react"
+import { LayoutDashboard, Users, FileText, Mail, BriefcaseBusiness, CreditCard, Briefcase, LineChart } from "lucide-react"
 import { DashboardSidebarShared } from "@/components/ui/dashboard-sidebar-shared"
 
 // Menu items với đường dẫn thực tế (config)
@@ -40,6 +40,11 @@ const menuItems = [
     title: "Orders",
     url: "/admin/orders",
     icon: CreditCard,
+  },
+  {
+    title: "Finance",
+    url: "/admin/finance",
+    icon: LineChart,
   },
 ]
 
