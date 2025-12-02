@@ -1,7 +1,7 @@
 import {
-    BadRequestException,
-    Injectable,
-    UnauthorizedException,
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
 } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { InjectModel } from "@nestjs/mongoose";
@@ -45,7 +45,16 @@ export class AuthService {
 
     // Check if email is verified
     if (!account.isEmailVerified) {
-      throw new UnauthorizedException("Email not verified. Please check your email and verify your account before logging in.");
+      throw new UnauthorizedException(
+        "Email not verified. Please check your email and verify your account before logging in."
+      );
+    }
+
+    // Check if account is active
+    if (!account.isActive) {
+      throw new UnauthorizedException(
+        "Account is inactive. Please contact support."
+      );
     }
 
     const user = await this.userModel.findOne({ account_id: account._id });
