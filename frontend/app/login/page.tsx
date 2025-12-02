@@ -8,7 +8,8 @@ import { FcGoogle } from "react-icons/fc"
 import styled from "styled-components"
 import logoImg from "../../public/logo/logoCVOne.svg"
 import { useLoginForm } from "@/components/forms/use-login-form"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
+
 
 const LoginWrapper = styled.div`
   min-height: 100vh;
@@ -232,6 +233,8 @@ export default function LoginPage() {
     setShowPassword
   } = useLoginForm()
   const router = useRouter()
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl") || "/";
 
   const handleLogin = async (role: string) => {
     try {
@@ -240,8 +243,9 @@ export default function LoginPage() {
       } else if (role === "hr") {
         window.location.href = "/hr/dashboard"
       } else {
-        router.push("/")
+        router.push(callbackUrl);
       }
+
     } catch (error) {
       console.error("Login failed", error)
     }
