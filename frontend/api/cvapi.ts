@@ -429,7 +429,7 @@ export async function translateCV(
   return fetchWithAuth(API_ENDPOINTS.CV.TRANSLATE_CV, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ targetLanguage, content }),
+    body: JSON.stringify(requestBody), // Sửa: dùng requestBody thay vì chỉ { targetLanguage, content }
   });
 }
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import {
   createCV,
   CV,
@@ -36,6 +36,8 @@ import { useLanguage } from "@/providers/global_provider";
 import CVTemplateLayoutPopup from "@/components/forms/CVTemplateLayoutPopup";
 import { getDefaultSectionPositions } from "../cvTemplate/defaultSectionPositions";
 import { notify } from "@/lib/notify";
+import { FeedbackPopup } from "@/components/modals/feedbackPopup";
+import { FeedbackSuccessPopup } from "@/components/modals/voucherPopup";
 
 // --- TRANSLATIONS ---
 const translations = {
@@ -183,6 +185,9 @@ const PageCreateCVAIContent = () => {
     useState<boolean>(false);
   const [cvUiTexts, setCvUiTexts] = useState<any>(null);
   const [showLayoutPopup, setShowLayoutPopup] = useState(false);
+  const [showFeedbackPopup, setShowFeedbackPopup] = useState(false);
+  const [showVoucherPopup, setShowVoucherPopup] = useState(false);
+  const translateFeedbackTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // --- ĐÃ SỬA: SIDEBAR DÙNG NGÔN NGỮ HỆ THỐNG (t.xxx) THAY VÌ cvUiTexts ---
   const sidebarSections = [
@@ -427,7 +432,7 @@ const PageCreateCVAIContent = () => {
   const handleFinish = async () => {
     const isSuccess = await handleSaveToDB();
     if (isSuccess) {
-      router.push("/myDocuments");
+      router.push("/myDocuments?showFeedback=cv");
     }
   };
 
@@ -846,27 +851,30 @@ const PageCreateCVAIContent = () => {
       // => userData nằm ở: response.data.content.userData
       // => uiTexts nằm ở: response.data.uiTexts
 
-      console.log("[handleTranslateCV] API Response structure:", {
-        topLevel: Object.keys(translatedData || {}),
-        dataLevel: Object.keys(translatedData?.data || {}),
-        hasContent: !!translatedData?.data?.content,
-        hasUiTexts: !!translatedData?.data?.uiTexts,
-        uiTextsKeys: translatedData?.data?.uiTexts
-          ? Object.keys(translatedData.data.uiTexts)
-          : [],
-        fullPath: {
-          "data.content.userData": !!translatedData?.data?.content?.userData,
-          "data.uiTexts": !!translatedData?.data?.uiTexts,
-        },
-      });
+      // Debug: Log toàn bộ response để xem cấu trúc
+      console.log("[handleTranslateCV] Full API Response:", translatedData);
+      console.log("[handleTranslateCV] translatedData.data:", translatedData?.data);
+      console.log("[handleTranslateCV] translatedData.data.data:", translatedData?.data?.data);
+      
+      const nestedUiTexts = translatedData?.data?.data?.uiTexts;
+      const simpleUiTexts = translatedData?.data?.uiTexts;
 
-      // Trích xuất userData và uiTexts từ response (theo cấu trúc mới sau khi sửa API)
-      // Fallback cho cả cấu trúc cũ (nếu API chưa được deploy) và cấu trúc mới
+      // Trích xuất userData và uiTexts từ response
+      // Ưu tiên cấu trúc lồng nhau (data.data.content.userData) trước, sau đó fallback về cấu trúc đơn giản
       const nextUserData =
-        translatedData?.data?.content?.userData ??
-        translatedData?.data?.data?.content?.userData;
+        translatedData?.data?.data?.content?.userData ??
+        translatedData?.data?.content?.userData;
       const nextUiTexts =
-        translatedData?.data?.uiTexts ?? translatedData?.data?.data?.uiTexts;
+        translatedData?.data?.data?.uiTexts ??
+        translatedData?.data?.uiTexts;
+
+      console.log("[handleTranslateCV] Extracted data:", {
+        hasNextUserData: !!nextUserData,
+        hasNextUiTexts: !!nextUiTexts,
+        nextUiTextsKeys: nextUiTexts ? Object.keys(nextUiTexts) : [],
+        nextUiTexts: nextUiTexts,
+        currentUiTexts: currentUiTexts,
+      });
 
       if (nextUserData) {
         updateUserData(nextUserData);
@@ -876,9 +884,10 @@ const PageCreateCVAIContent = () => {
         // Merge với currentUiTexts để đảm bảo không mất field nào
         if (nextUiTexts) {
           const mergedUiTexts = {
-            ...currentUiTexts, // Giữ lại các field cũ
+            ...(currentUiTexts || {}), // Giữ lại các field cũ (nếu có)
             ...nextUiTexts, // Cập nhật các field mới từ API
           };
+          console.log("[handleTranslateCV] Merged uiTexts:", mergedUiTexts);
           setCvUiTexts(mergedUiTexts);
         } else if (currentUiTexts) {
           // Nếu API không trả về uiTexts, giữ nguyên currentUiTexts
@@ -887,6 +896,17 @@ const PageCreateCVAIContent = () => {
 
         setShowTranslateModal(false);
         notify.success(t.translateSuccess);
+        
+        // Set timer để hiển thị feedback popup sau 3 phút
+        // Clear timer cũ nếu có
+        if (translateFeedbackTimerRef.current) {
+          clearTimeout(translateFeedbackTimerRef.current);
+        }
+        
+        // Set timer mới: 3 phút = 180000ms
+        translateFeedbackTimerRef.current = setTimeout(() => {
+          setShowFeedbackPopup(true);
+        }, 120000); // 2 phút
       } else {
         notify.error(t.translateError);
       }
@@ -944,6 +964,15 @@ const PageCreateCVAIContent = () => {
     setHasAutoSuggested(true);
     handleAISuggestTemplate();
   }, [allTemplates, userData, hasAutoSuggested, suppressAutoSuggest]);
+
+  // Cleanup timer khi component unmount
+  useEffect(() => {
+    return () => {
+      if (translateFeedbackTimerRef.current) {
+        clearTimeout(translateFeedbackTimerRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div className="h-screen w-full bg-slate-50 flex flex-col overflow-x-hidden mb-4">
@@ -1007,13 +1036,26 @@ const PageCreateCVAIContent = () => {
                                    hover:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
                                    group"
                       >
-                        <div className="aspect-[210/297]">
+                        <div className="aspect-[210/297] relative bg-gray-100">
                           <Image
                             src={item.imageUrl}
                             alt={item.title}
                             layout="fill"
                             objectFit="cover"
                             className="transition-transform duration-300 group-hover:scale-105"
+                            unoptimized
+                            onError={(e) => {
+                              // Fallback khi image lỗi (đặc biệt cho Cốc Cốc)
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                              const parent = target.parentElement;
+                              if (parent) {
+                                const fallback = document.createElement('div');
+                                fallback.className = 'w-full h-full flex items-center justify-center bg-gray-200';
+                                fallback.innerHTML = `<span class="text-gray-400 text-xs text-center px-2">${item.title}</span>`;
+                                parent.appendChild(fallback);
+                              }
+                            }}
                           />
                         </div>
                         <p className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs text-center py-1">
@@ -1413,6 +1455,29 @@ const PageCreateCVAIContent = () => {
             />
           );
         })()}
+
+      {/* Feedback Popup sau khi dịch CV 3 phút */}
+      {showFeedbackPopup && (
+        <FeedbackPopup
+          feature="translate"
+          onClose={() => {
+            setShowFeedbackPopup(false);
+          }}
+          onFeedbackSent={() => {
+            setShowFeedbackPopup(false);
+            setShowVoucherPopup(true);
+          }}
+        />
+      )}
+
+      {/* Voucher Popup sau khi gửi feedback */}
+      {showVoucherPopup && (
+        <FeedbackSuccessPopup
+          onClose={() => {
+            setShowVoucherPopup(false);
+          }}
+        />
+      )}
     </div>
   );
 };

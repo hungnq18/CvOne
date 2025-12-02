@@ -14,6 +14,7 @@ const translations = {
     avatarLabel: "Avatar",
     fullNameAndTitleLabel: "Full Name & Title",
     personalInfoLabel: "PERSONAL INFORMATION",
+    contactLabel: "CONTACT",
     careerObjectiveLabel: "CAREER OBJECTIVE",
     skillsLabel: "SKILLS",
     experienceLabel: "WORK EXPERIENCE",
@@ -36,6 +37,7 @@ const translations = {
     avatarLabel: "Ảnh đại diện",
     fullNameAndTitleLabel: "Họ tên & Chức danh",
     personalInfoLabel: "THÔNG TIN CÁ NHÂN",
+    contactLabel: "LIÊN HỆ",
     careerObjectiveLabel: "MỤC TIÊU NGHỀ NGHIỆP",
     skillsLabel: "KỸ NĂNG",
     experienceLabel: "KINH NGHIỆM LÀM VIỆC",
@@ -233,7 +235,6 @@ const Modern2: React.FC<Modern2Props> = ({
     ...defaultT,
     ...(cvUiTexts && {
       personalInfoLabel: cvUiTexts.personalInformation || defaultT.personalInfoLabel,
-      contactLabel: cvUiTexts.contact || defaultT.personalInfoLabel,
       careerObjectiveLabel: cvUiTexts.careerObjective || defaultT.careerObjectiveLabel,
       skillsLabel: cvUiTexts.skills || defaultT.skillsLabel,
       experienceLabel: cvUiTexts.workExperience || defaultT.experienceLabel,

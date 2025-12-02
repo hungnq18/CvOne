@@ -14,6 +14,7 @@ const translations = {
     avatarLabel: "Avatar",
     fullNameAndTitleLabel: "Full Name & Title",
     personalInfoLabel: "PERSONAL INFORMATION",
+    contactLabel: "CONTACT",
     careerObjectiveLabel: "CAREER OBJECTIVE",
     skillsLabel: "SKILLS",
     experienceLabel: "WORK EXPERIENCE",
@@ -34,6 +35,7 @@ const translations = {
     avatarLabel: "Ảnh đại diện",
     fullNameAndTitleLabel: "Họ tên & Chức danh",
     personalInfoLabel: "THÔNG TIN CÁ NHÂN",
+    contactLabel: "LIÊN HỆ",
     careerObjectiveLabel: "MỤC TIÊU SỰ NGHIỆP",
     skillsLabel: "KỸ NĂNG",
     experienceLabel: "KINH NGHIỆM LÀM VIỆC",
@@ -236,7 +238,6 @@ const ModernCV1: React.FC<ModernCV1Props> = ({
     ...defaultT,
     ...(cvUiTexts && {
       personalInfoLabel: cvUiTexts.personalInformation || defaultT.personalInfoLabel,
-      contactLabel: cvUiTexts.contact || defaultT.personalInfoLabel,
       careerObjectiveLabel: cvUiTexts.careerObjective || defaultT.careerObjectiveLabel,
       skillsLabel: cvUiTexts.skills || defaultT.skillsLabel,
       experienceLabel: cvUiTexts.workExperience || defaultT.experienceLabel,
@@ -371,7 +372,7 @@ const ModernCV1: React.FC<ModernCV1Props> = ({
         return (
           <HoverableWrapper
             key="contact"
-            label={t.contactLabel}
+            label={t.personalInfoLabel}
             sectionId="contact"
             onClick={onSectionClick}
             isPdfMode={isPdfMode}
@@ -380,7 +381,7 @@ const ModernCV1: React.FC<ModernCV1Props> = ({
           >
             <div className="px-8 lg:px-12">
               <h2 className="text-xl lg:text-2xl font-bold mb-6 pb-3 border-b border-white/50 pt-3">
-                {t.contactLabel}
+                {t.personalInfoLabel}
               </h2>
               <div className="space-y-4 text-lg lg:text-xl">
                 <div>

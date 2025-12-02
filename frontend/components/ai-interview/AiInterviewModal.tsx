@@ -635,9 +635,9 @@ export default function AiInterviewModal({
             <Button variant="ghost" size="sm" onClick={toggleFullscreen} title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}>
               {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
             </Button>
-            <Button variant="ghost" size="sm" onClick={onClose}>
-              <X className="h-4 w-4" />
-            </Button>
+          <Button variant="ghost" size="sm" onClick={onClose}>
+            <X className="h-4 w-4" />
+          </Button>
           </div>
         </div>
 
@@ -713,10 +713,10 @@ export default function AiInterviewModal({
                       <span className="text-xs text-white/70 mt-1 mr-2 drop-shadow-sm">
                         {formatMessageTime(message.timestamp)}
                       </span>
-                    </div>
+                  </div>
                     <div className="w-10 h-10 rounded-full bg-gray-500/90 backdrop-blur-sm flex items-center justify-center flex-shrink-0 shadow-lg border border-white/30">
                       <User className="h-5 w-5 text-white" />
-                    </div>
+                </div>
                   </div>
                 );
               }
@@ -726,18 +726,18 @@ export default function AiInterviewModal({
                   <div key={index} className="flex items-start gap-3">
                     <div className="w-10 h-10 rounded-full bg-green-600 flex items-center justify-center flex-shrink-0 shadow-lg">
                       <Bot className="h-5 w-5 text-white" />
-                    </div>
-                    <div className="flex-1">
+                  </div>
+                  <div className="flex-1">
                       <div className="bg-green-50/90 backdrop-blur-sm border-2 border-green-200/50 rounded-2xl rounded-tl-sm px-4 py-3 shadow-lg">
                         <div className="flex items-center gap-2 mb-2">
                           <span className="text-2xl font-bold text-green-600">{message.feedback?.score}/10</span>
                           <span className="text-sm text-gray-700">Điểm số</span>
-                        </div>
+                  </div>
                         <p className="text-gray-700 leading-relaxed whitespace-pre-wrap mb-3">{message.content.split('\n\n')[1]}</p>
                         {message.feedback && (
                           <div className="space-y-2 mt-3 pt-3 border-t border-green-200/50">
                             {message.feedback.strengths.length > 0 && (
-                              <div>
+                  <div>
                                 <h4 className="font-semibold text-green-700 text-sm mb-1">Điểm mạnh:</h4>
                                 <ul className="text-xs text-green-600 space-y-1">
                                   {message.feedback.strengths.map((s, i) => (
@@ -745,12 +745,12 @@ export default function AiInterviewModal({
                                       <span>✓</span>
                                       <span>{s}</span>
                                     </li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
+                      ))}
+                    </ul>
+                  </div>
+                )}
                             {message.feedback.improvements.length > 0 && (
-                              <div>
+                  <div>
                                 <h4 className="font-semibold text-orange-700 text-sm mb-1">Cần cải thiện:</h4>
                                 <ul className="text-xs text-orange-600 space-y-1">
                                   {message.feedback.improvements.map((imp, i) => (
@@ -758,10 +758,10 @@ export default function AiInterviewModal({
                                       <span>•</span>
                                       <span>{imp}</span>
                                     </li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
+                      ))}
+                    </ul>
+                  </div>
+                )}
                           </div>
                         )}
                       </div>
@@ -827,8 +827,8 @@ export default function AiInterviewModal({
                           ⏳ Đang hiển thị câu hỏi, vui lòng đợi...
                         </p>
                       </div>
-                    </div>
-                  )}
+                  </div>
+                )}
                   <Textarea
                     placeholder={isQuestionReady ? "Nhập câu trả lời của bạn..." : "Vui lòng đợi câu hỏi hiển thị xong..."}
                     value={userAnswer}
@@ -879,8 +879,8 @@ export default function AiInterviewModal({
                 <div className="flex flex-col gap-2">
                   {isSupported && (
                     <>
-                      <Button
-                        variant="outline"
+                <Button 
+                  variant="outline" 
                         size="icon"
                         onClick={toggleRecording}
                         disabled={!isQuestionReady}
@@ -918,7 +918,7 @@ export default function AiInterviewModal({
                     ) : (
                       <Send className="h-4 w-4" />
                     )}
-                  </Button>
+                </Button>
                 </div>
               </div>
               <p className="text-xs text-white/80 mt-2 ml-1 drop-shadow-sm">

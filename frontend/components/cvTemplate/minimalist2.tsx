@@ -13,6 +13,7 @@ const translations = {
   en: {
     avatarLabel: "Avatar",
     fullNameAndTitleLabel: "Full Name & Title",
+    personalInfoLabel: "PERSONAL INFORMATION",
     contactLabel: "CONTACT",
     careerObjectiveLabel: "CAREER OBJECTIVE",
     skillsLabel: "SKILLS",
@@ -36,6 +37,7 @@ const translations = {
   vi: {
     avatarLabel: "Ảnh đại diện",
     fullNameAndTitleLabel: "Họ tên & Chức danh",
+    personalInfoLabel: "THÔNG TIN CÁ NHÂN",
     contactLabel: "LIÊN LẠC",
     careerObjectiveLabel: "MỤC TIÊU NGHỀ NGHIỆP",
     skillsLabel: "KỸ NĂNG",
@@ -183,8 +185,7 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
   const t = {
     ...defaultT,
     ...(cvUiTexts && {
-      personalInfoLabel: cvUiTexts.personalInformation || defaultT.contactLabel,
-      contactLabel: cvUiTexts.contact || defaultT.contactLabel,
+      personalInfoLabel: cvUiTexts.personalInformation || defaultT.personalInfoLabel,
       careerObjectiveLabel: cvUiTexts.careerObjective || defaultT.careerObjectiveLabel,
       skillsLabel: cvUiTexts.skills || defaultT.skillsLabel,
       experienceLabel: cvUiTexts.workExperience || defaultT.experienceLabel,
@@ -351,7 +352,7 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
         return (
           <HoverableWrapper
             key="contact"
-            label={t.contactLabel}
+            label={t.personalInfoLabel}
             sectionId={sectionMap.contact}
             onClick={onSectionClick}
             isPdfMode={isPdfMode}
@@ -362,7 +363,7 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
               <div className="flex items-center gap-2 mb-3">
                 <div className="h-1 w-8 bg-green-700 rounded-full"></div>
                 <h2 className="text-lg font-bold tracking-wider text-green-900">
-                  {t.contactLabel}
+                  {t.personalInfoLabel}
                 </h2>
               </div>
               <div className="space-y-3 bg-white/60 backdrop-blur-sm p-4 rounded-xl shadow-md">
