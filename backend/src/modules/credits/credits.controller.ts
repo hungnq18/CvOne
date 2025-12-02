@@ -23,10 +23,11 @@ import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { RolesGuard } from "../auth/guards/roles.guard";
 import { JobAnalysisService } from "../cv/services/job-analysis.service";
 import { CreditsService } from "./credits.service";
+import { User } from "src/common/decorators/user.decorator";
 
 @Controller("credits")
 export class CreditsController {
-  constructor(private readonly creditsService: CreditsService) { }
+  constructor(private readonly creditsService: CreditsService) {}
 
   @Patch("update-token")
   @UseGuards(JwtAuthGuard)
@@ -47,6 +48,12 @@ export class CreditsController {
   async getCredit(@Request() req) {
     const userId = req.user.user._id;
     return await this.creditsService.getCredit(userId);
+  }
+
+  @Get("vouchers/for-user")
+  @UseGuards(JwtAuthGuard)
+  async getVouchersForUser(@User("_id") userId: string) {
+    return await this.creditsService.getVouchersDisplayForUser(userId);
   }
 
   @Post()

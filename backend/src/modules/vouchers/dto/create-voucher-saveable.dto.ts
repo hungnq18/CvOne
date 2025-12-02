@@ -56,4 +56,8 @@ export class CreateVoucherSaveableDto {
   @IsDateString()
   @IsNotEmpty()
   endDate: string;
+
+  @IsBoolean()
+  @IsOptional()
+  isShow: boolean;
 }

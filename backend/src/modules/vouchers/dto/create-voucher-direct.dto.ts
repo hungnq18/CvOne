@@ -52,4 +52,8 @@ export class CreateVoucherDirectDto {
   @IsDateString()
   @IsNotEmpty()
   endDate: string;
+
+  @IsBoolean()
+  @IsOptional()
+  isShow: boolean;
 }

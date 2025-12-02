@@ -14,6 +14,7 @@ import { CreateVoucherDirectDto } from "./dto/create-voucher-direct.dto";
 import { CreateVoucherSaveableDto } from "./dto/create-voucher-saveable.dto";
 import { UpdateVoucherDirectDto } from "./dto/update-voucher-direct.dto";
 import { UpdateVoucherSaveableDto } from "./dto/update-voucher-saveable.dto";
+import { CreditsService } from "../credits/credits.service";
 @Injectable()
 export class VouchersService {
   constructor(
@@ -52,10 +53,11 @@ export class VouchersService {
     return deletedVoucher;
   }
 
-  async getVoucherDisplayUsers() {
+  async getVoucherDisplayUsers(): Promise<Voucher[]> {
     const dateNow = new Date();
     const vouchers = await this.voucherModel.find({
       isActive: true,
+      isShow: true,
       startDate: { $lte: dateNow },
       endDate: { $gte: dateNow },
     });

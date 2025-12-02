@@ -3,6 +3,7 @@ import {
   IsDateString,
   IsOptional,
   IsNumber,
+  IsBoolean,
 } from "class-validator";
 
 export class UpdateVoucherDirectDto {
@@ -49,4 +50,7 @@ export class UpdateVoucherDirectDto {
   @IsDateString()
   @IsOptional()
   endDate?: string;
+  @IsBoolean()
+  @IsOptional()
+  isShow: boolean;
 }
