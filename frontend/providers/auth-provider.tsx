@@ -7,7 +7,7 @@ import { login as apiLogin, register as apiRegister } from "@/api/authApi";
 import { getUserIdFromToken } from "@/api/userApi";
 import type { User } from "@/types/auth";
 import { useRouter } from "next/navigation";
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, useCallback, useMemo } from "react";
 
 interface AuthContextType {
   user: User | null;
@@ -46,7 +46,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isMounted, setIsMounted] = useState(false);
   const router = useRouter();
 
-  const getUserFromToken = async () => {
+  const getUserFromToken = useCallback(async () => {
     const userId = getUserIdFromToken();
     if (!userId) return null;
 
@@ -59,11 +59,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error("Failed to fetch user data", error);
       return null;
     }
-  };
-  const refreshUser = async () => {
+  }, []);
+
+  const refreshUser = useCallback(async () => {
     const userData = await getUserFromToken();
     setUser(userData);
-  };
+  }, [getUserFromToken]);
 
   // chỉ chạy 1 lần khi component mount
   useEffect(() => {
@@ -76,15 +77,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     checkAuth();
-  }, []); // dependency rỗng => chỉ call 1 lần
+  }, [getUserFromToken]); // dependency getUserFromToken (đã được memoize)
 
-  const login = async (email: string, password: string) => {
+  const login = useCallback(async (email: string, password: string) => {
     await apiLogin(email, password);
     const userData = await getUserFromToken();
     setUser(userData);
-  };
+  }, [getUserFromToken]);
 
-  const register = async (
+  const register = useCallback(async (
     first_name: string,
     email: string,
     password: string,
@@ -94,21 +95,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const userData = await getUserFromToken();
     setUser(userData);
     router.push("/verify-email");
-  };
+  }, [getUserFromToken, router]);
 
-  const logout = () => {
+  const logout = useCallback(() => {
     document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT;";
     setUser(null);
     window.dispatchEvent(new CustomEvent("logout"));
     window.dispatchEvent(new CustomEvent("authChange"));
-  };
+  }, []);
+
+  const contextValue = useMemo(
+    () => ({ user, isLoading, login, register, logout, refreshUser }),
+    [user, isLoading, login, register, logout, refreshUser]
+  );
 
   if (!isMounted) return null;
 
   return (
-    <AuthContext.Provider
-      value={{ user, isLoading, login, register, logout, refreshUser }}
-    >
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );

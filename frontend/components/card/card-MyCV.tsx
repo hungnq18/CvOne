@@ -157,7 +157,7 @@ const CardMyCV: React.FC<CardMyCVProps> = ({ cvListOverride }) => {
             } as CV;
           }
         } catch (err) {
-          console.warn(`[card-MyCV] Failed to fetch full CV ${cv._id}:`, err);
+          // console.warn(`[card-MyCV] Failed to fetch full CV ${cv._id}:`, err);
         }
         return cv;
       })
@@ -266,12 +266,12 @@ const CardMyCV: React.FC<CardMyCVProps> = ({ cvListOverride }) => {
             );
             
             if (!template) {
-              console.warn("[card-MyCV] Template not found:", {
-                cvId: cv._id,
-                cvTitle: cv.title,
-                cvTemplateId: cv.cvTemplateId,
-                availableTemplateIds: templates.map(t => ({ id: t._id, title: t.title }))
-              });
+              // console.warn("[card-MyCV] Template not found:", {
+              //   cvId: cv._id,
+              //   cvTitle: cv.title,
+              //   cvTemplateId: cv.cvTemplateId,
+              //   availableTemplateIds: templates.map(t => ({ id: t._id, title: t.title }))
+              // });
               return null;
             }
             
@@ -279,12 +279,12 @@ const CardMyCV: React.FC<CardMyCVProps> = ({ cvListOverride }) => {
               templateComponentMap?.[template.title || ""];
             
             if (!TemplateComponent) {
-              console.warn("[card-MyCV] Template component not found:", {
-                cvId: cv._id,
-                templateTitle: template.title,
-                templateId: template._id,
-                availableTemplates: Object.keys(templateComponentMap)
-              });
+              // console.warn("[card-MyCV] Template component not found:", {
+              //   cvId: cv._id,
+              //   templateTitle: template.title,
+              //   templateId: template._id,
+              //   availableTemplates: Object.keys(templateComponentMap)
+              // });
               return null;
             }
 
@@ -296,23 +296,40 @@ const CardMyCV: React.FC<CardMyCVProps> = ({ cvListOverride }) => {
               getDefaultSectionPositions(template.title);
             
             // VALIDATION: Đảm bảo sectionPositions khớp với template hiện tại
-            // Nếu không khớp (thiếu/thừa section), reset về default
-            const defaultPositions = getDefaultSectionPositions(template.title);
-            const defaultSectionKeys = Object.keys(defaultPositions);
-            const currentSectionKeys = Object.keys(sectionPositions);
-            
-            // Nếu sectionPositions thiếu hoặc thừa section so với default, reset về default
-            if (defaultSectionKeys.length !== currentSectionKeys.length || 
-                !defaultSectionKeys.every(key => currentSectionKeys.includes(key))) {
-              console.warn("[card-MyCV] sectionPositions không khớp với template, reset về default:", {
-                cvId: cv._id,
-                templateTitle: template.title,
-                templateId: template._id,
-                cvTemplateId: cv.cvTemplateId,
-                defaultKeys: defaultSectionKeys,
-                currentKeys: currentSectionKeys
-              });
-              sectionPositions = defaultPositions;
+            // Chỉ validate nếu có sectionPositions từ userData (không validate default)
+            if (userData.sectionPositions) {
+              const defaultPositions = getDefaultSectionPositions(template.title);
+              const defaultSectionKeys = Object.keys(defaultPositions).sort();
+              const currentSectionKeys = Object.keys(sectionPositions).sort();
+              
+              // Chỉ reset nếu thiếu các section bắt buộc (có trong default)
+              // Cho phép có thêm section (ví dụ: Project với chữ P hoa)
+              const missingRequiredSections = defaultSectionKeys.filter(
+                key => !currentSectionKeys.includes(key)
+              );
+              
+              if (missingRequiredSections.length > 0) {
+                // Merge: giữ lại các section hiện có, thêm các section thiếu từ default
+                const mergedPositions = { ...sectionPositions };
+                missingRequiredSections.forEach(key => {
+                  mergedPositions[key] = defaultPositions[key];
+                });
+                sectionPositions = mergedPositions;
+                
+                // Chỉ log warning một lần cho mỗi CV (sử dụng một flag đơn giản)
+                if (!(window as any).__cvValidationWarned) {
+                  (window as any).__cvValidationWarned = new Set();
+                }
+                const warnedSet = (window as any).__cvValidationWarned as Set<string>;
+                if (!warnedSet.has(cv._id)) {
+                  console.warn("[card-MyCV] sectionPositions thiếu section, đã merge với default:", {
+                    cvId: cv._id,
+                    templateTitle: template.title,
+                    missingSections: missingRequiredSections,
+                  });
+                  warnedSet.add(cv._id);
+                }
+              }
             }
 
             const componentData = {

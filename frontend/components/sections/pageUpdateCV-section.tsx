@@ -423,27 +423,43 @@ const PageUpdateCVContent = () => {
         getDefaultSectionPositions(safeTemplate.title);
 
       // VALIDATION: Đảm bảo sectionPositions khớp với template HIỆN TẠI trước khi lưu
-      // Nếu không khớp, reset về default để tránh lỗi layout khi load lại
-      const defaultPositions = getDefaultSectionPositions(safeTemplate.title);
-      const defaultSectionKeys = Object.keys(defaultPositions);
-      const currentSectionKeys = Object.keys(sectionPositions);
-
-      // Nếu sectionPositions thiếu hoặc thừa section so với default, reset về default
-      if (
-        defaultSectionKeys.length !== currentSectionKeys.length ||
-        !defaultSectionKeys.every((key) => currentSectionKeys.includes(key))
-      ) {
-        console.warn(
-          "[handleSaveToDB] sectionPositions không khớp với template, reset về default trước khi lưu:",
-          {
-            cvId: cvId,
-            templateTitle: safeTemplate.title,
-            templateId: safeTemplate._id,
-            defaultKeys: defaultSectionKeys,
-            currentKeys: currentSectionKeys,
-          }
+      // Chỉ validate nếu có sectionPositions từ userData (không validate default)
+      if (safeUserData.sectionPositions) {
+        const defaultPositions = getDefaultSectionPositions(safeTemplate.title);
+        const defaultSectionKeys = Object.keys(defaultPositions).sort();
+        const currentSectionKeys = Object.keys(sectionPositions).sort();
+        
+        // Chỉ merge nếu thiếu các section bắt buộc (có trong default)
+        // Cho phép có thêm section (ví dụ: Project với chữ P hoa)
+        const missingRequiredSections = defaultSectionKeys.filter(
+          key => !currentSectionKeys.includes(key)
         );
-        sectionPositions = defaultPositions;
+        
+        if (missingRequiredSections.length > 0) {
+          // Merge: giữ lại các section hiện có, thêm các section thiếu từ default
+          const mergedPositions = { ...sectionPositions };
+          missingRequiredSections.forEach(key => {
+            mergedPositions[key] = defaultPositions[key];
+          });
+          sectionPositions = mergedPositions;
+          
+          // Chỉ log warning một lần cho mỗi CV
+          if (!(window as any).__cvValidationWarned) {
+            (window as any).__cvValidationWarned = new Set();
+          }
+          const warnedSet = (window as any).__cvValidationWarned as Set<string>;
+          if (!warnedSet.has(cvId)) {
+            // console.warn(
+            //   "[handleSaveToDB] sectionPositions thiếu section, đã merge với default:",
+            //   {
+            //     cvId: cvId,
+            //     templateTitle: safeTemplate.title,
+            //     missingSections: missingRequiredSections,
+            //   }
+            // );
+            warnedSet.add(cvId);
+          }
+        }
       }
 
       // Xây dựng completeUserData - đảm bảo TẤT CẢ fields nằm trong userData
@@ -686,29 +702,48 @@ const PageUpdateCVContent = () => {
       getDefaultSectionPositions(currentTemplate.title);
 
     // VALIDATION: Đảm bảo sectionPositions có đầy đủ các section của template hiện tại
-    // Nếu thiếu, reset về default
-    const defaultPositions = getDefaultSectionPositions(currentTemplate.title);
-    const defaultSectionKeys = Object.keys(defaultPositions);
-    const currentSectionKeys = Object.keys(sectionPositions);
-
-    // Nếu sectionPositions thiếu hoặc thừa section so với default, reset về default
-    if (
-      defaultSectionKeys.length !== currentSectionKeys.length ||
-      !defaultSectionKeys.every((key) => currentSectionKeys.includes(key))
-    ) {
-      console.warn(
-        "[renderCVPreview] sectionPositions không khớp với template, reset về default:",
-        {
-          templateTitle: currentTemplate.title,
-          templateId: currentTemplate._id,
-          defaultKeys: defaultSectionKeys,
-          currentKeys: currentSectionKeys,
-        }
+    // Chỉ validate nếu có sectionPositions từ userData (không validate default)
+    if (userData.sectionPositions) {
+      const defaultPositions = getDefaultSectionPositions(currentTemplate.title);
+      const defaultSectionKeys = Object.keys(defaultPositions).sort();
+      const currentSectionKeys = Object.keys(sectionPositions).sort();
+      
+      // Chỉ merge nếu thiếu các section bắt buộc (có trong default)
+      // Cho phép có thêm section (ví dụ: Project với chữ P hoa)
+      const missingRequiredSections = defaultSectionKeys.filter(
+        key => !currentSectionKeys.includes(key)
       );
-      sectionPositions = defaultPositions;
-      // Update lại vào userData và provider
-      updateUserData({ ...userData, sectionPositions: defaultPositions });
-      updateSectionPositions(currentTemplate._id, defaultPositions);
+      
+      if (missingRequiredSections.length > 0) {
+        // Merge: giữ lại các section hiện có, thêm các section thiếu từ default
+        const mergedPositions = { ...sectionPositions };
+        missingRequiredSections.forEach(key => {
+          mergedPositions[key] = defaultPositions[key];
+        });
+        sectionPositions = mergedPositions;
+        
+        // Update lại vào userData và provider
+        updateUserData({ ...userData, sectionPositions: mergedPositions });
+        updateSectionPositions(currentTemplate._id, mergedPositions);
+        
+        // Chỉ log warning một lần cho mỗi template
+        if (!(window as any).__cvValidationWarned) {
+          (window as any).__cvValidationWarned = new Set();
+        }
+        const warnedSet = (window as any).__cvValidationWarned as Set<string>;
+        const warningKey = `${currentTemplate._id}-render`;
+        if (!warnedSet.has(warningKey)) {
+          // console.warn(
+          //   "[renderCVPreview] sectionPositions thiếu section, đã merge với default:",
+          //   {
+          //     templateTitle: currentTemplate.title,
+          //     templateId: currentTemplate._id,
+          //     missingSections: missingRequiredSections,
+          //   }
+          // );
+          warnedSet.add(warningKey);
+        }
+      }
     }
 
     const componentData = {

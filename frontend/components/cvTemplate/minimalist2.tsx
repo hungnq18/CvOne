@@ -136,7 +136,7 @@ const HoverableWrapper: React.FC<HoverableWrapperProps> = ({
   return (
     <div className={finalClassName} onClick={() => onClick?.(sectionId)}>
       {/* --- DRAG HANDLE --- */}
-      {!isPdfMode && (
+      {!isPdfMode && dragHandleProps && (
         <div
           {...dragHandleProps}
           className="absolute -left-3 top-1/2 -translate-y-1/2 -translate-x-full 
@@ -158,14 +158,18 @@ const HoverableWrapper: React.FC<HoverableWrapperProps> = ({
       )}
 
       {children}
-      <div
-        className={`absolute inset-0 ${borderRadiusClass} border-2 border-green-500/50 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none`}
-      ></div>
-      <div
-        className={`absolute ${labelPositionClass} bg-green-600 text-white text-xs font-bold tracking-wider px-3 py-1.5 ${labelRoundedClass} opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none shadow-lg z-10 text-center whitespace-nowrap`}
-      >
-        {label}
-      </div>
+      {!isPdfMode && (
+        <>
+          <div
+            className={`absolute inset-0 ${borderRadiusClass} border-2 border-green-500/50 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none`}
+          ></div>
+          <div
+            className={`absolute ${labelPositionClass} bg-green-600 text-white text-xs font-bold tracking-wider px-3 py-1.5 ${labelRoundedClass} opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none shadow-lg z-10 text-center whitespace-nowrap`}
+          >
+            {label}
+          </div>
+        </>
+      )}
     </div>
   );
 };
@@ -792,10 +796,14 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
     return (
       <div className="bg-white font-sans text-gray-800 flex flex-col lg:flex-row shadow-2xl mx-auto">
         <div className="w-full lg:w-[38%] bg-gradient-to-br from-green-50 to-green-100/50 flex flex-col gap-8 py-10 relative border-r-4 border-green-700">
-          {leftSections.map(id => renderSection(id))}
+          {leftSections.map(id => (
+            <div key={id}>{renderSection(id)}</div>
+          ))}
         </div>
         <div className="w-full lg:w-[62%] bg-white">
-          {rightSections.map(id => renderSection(id))}
+          {rightSections.map(id => (
+            <div key={id}>{renderSection(id)}</div>
+          ))}
         </div>
       </div>
     );

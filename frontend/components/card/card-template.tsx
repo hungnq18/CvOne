@@ -28,7 +28,7 @@ const CVCard: React.FC<CVCardProps> = ({ id, imageUrl, title, onPreviewClick }) 
     visible: {
       opacity: 1,
       y: 0,
-      transition: { duration: 0.6, ease: "easeOut" },
+      transition: { duration: 0.6 },
     },
   };
 
@@ -38,7 +38,7 @@ const CVCard: React.FC<CVCardProps> = ({ id, imageUrl, title, onPreviewClick }) 
     visible: {
       opacity: 1,
       scale: 1,
-      transition: { duration: 0.3, ease: "easeOut" },
+      transition: { duration: 0.3 },
     },
     hover: {
       scale: 1.05,
@@ -70,12 +70,25 @@ const CVCard: React.FC<CVCardProps> = ({ id, imageUrl, title, onPreviewClick }) 
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="relative w-full aspect-[210/297] max-h-[420px]">
+      <div className="relative w-full aspect-[210/297] max-h-[420px] bg-gray-100">
         <Image
           src={imageUrl}
           alt={title}
           layout="fill"
           objectFit="contain"
+          unoptimized
+          onError={(e) => {
+            // Fallback khi image lỗi (đặc biệt cho Cốc Cốc)
+            const target = e.target as HTMLImageElement;
+            target.style.display = 'none';
+            const parent = target.parentElement;
+            if (parent) {
+              const fallback = document.createElement('div');
+              fallback.className = 'w-full h-full flex items-center justify-center bg-gray-200';
+              fallback.innerHTML = `<span class="text-gray-400 text-sm text-center px-2">${title}</span>`;
+              parent.appendChild(fallback);
+            }
+          }}
         />
         {isHovered && (
           <motion.div
