@@ -131,9 +131,9 @@ export function useLoginForm() {
       // Decode token để lấy role
       const decoded: DecodedToken = jwtDecode(access_token);
       const params = new URLSearchParams(window.location.search);
-      const redirect = params.get("redirect");
-      if (redirect) {
-        router.replace(redirect);
+      const callbackUrl = params.get("callbackUrl");
+      if (callbackUrl) {
+        router.replace(callbackUrl);
       } else if (decoded.role === "admin") {
         router.replace("/admin");
       } else if (decoded.role === "mkt") {
