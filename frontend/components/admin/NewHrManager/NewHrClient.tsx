@@ -126,8 +126,10 @@ export default function HRManagementDashboard() {
                         setIsModalOpen(false);
                         setSelectedApp(null);
                     }}
-                    onApprove={() => handleApprove(selectedApp._id)}
+                    onApprove={() => handleApprove(selectedApp.account_id._id)}
+
                     onReject={() => handleReject(selectedApp._id)}
+
                 />
             )}
         </div>

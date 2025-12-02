@@ -1,13 +1,26 @@
 import { fetchWithAuth } from "./apiClient";
 import { API_ENDPOINTS } from "./apiConfig";
 
+export interface AccountId {
+    _id: string;
+    email: string;
+    role: string;
+    isEmailVerified: boolean;
+    createdAt: string;
+    updatedAt: string;
+    isActive: boolean;
+}
+
 export interface HrUser {
     _id: string;
-    account_id: string;
+    account_id: AccountId;   // ❗ sửa từ string → object
 
     first_name: string;
     last_name: string;
     phone?: string;
+
+    city?: string;
+    country?: string;
 
     company_name?: string;
     company_country?: string;
@@ -18,6 +31,7 @@ export interface HrUser {
     createdAt?: string;
     updatedAt?: string;
 }
+
 
 /**
  * Lấy danh sách HR chưa active

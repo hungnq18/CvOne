@@ -1,17 +1,19 @@
-"use client"
+"use client";
 
-import { format } from "date-fns"
-import { vi } from "date-fns/locale"
-import { Eye } from "lucide-react"
-import type { HrUser } from "@/api/apiHr"
+import { format } from "date-fns";
+import { vi } from "date-fns/locale";
+import { Eye } from "lucide-react";
+import type { HrUser } from "@/api/apiHr";
 
 interface HRTableProps {
-    applications: HrUser[]
-    onViewDetails: (app: HrUser) => void
-    showStatus?: boolean
+    applications: HrUser[];
+    onViewDetails: (app: HrUser) => void;
+    showStatus?: boolean;
 }
 
+
 export function HRTable({ applications, onViewDetails, showStatus = true }: HRTableProps) {
+
     return (
         <div className="overflow-x-auto">
             <table className="w-full">
@@ -31,12 +33,13 @@ export function HRTable({ applications, onViewDetails, showStatus = true }: HRTa
                             <td className="px-4 py-3 text-sm font-medium text-foreground">{app.company_name}</td>
                             <td className="px-4 py-3 text-sm text-muted-foreground font-mono">{app.vatRegistrationNumber}</td>
                             <td className="px-4 py-3 text-sm text-foreground">{`${app.first_name} ${app.last_name}`}</td>
-                            <td className="px-4 py-3 text-sm text-muted-foreground">{app.account_id}</td>
+                            <td className="px-4 py-3 text-sm text-muted-foreground">{app.account_id?.email ?? "—"}</td>
                             <td className="px-4 py-3 text-sm text-muted-foreground">
                                 {app.createdAt
-                                    ? format(new Date(app.createdAt), "dd MMM yyyy HH:mm", { locale: vi })
+                                    ? format(new Date(app.createdAt), "dd/MM/yyyy", { locale: vi })
                                     : "—"}
                             </td>
+
                             <td className="px-4 py-3 text-center">
                                 <button
                                     onClick={() => onViewDetails(app)}
@@ -51,5 +54,5 @@ export function HRTable({ applications, onViewDetails, showStatus = true }: HRTa
                 </tbody>
             </table>
         </div>
-    )
+    );
 }

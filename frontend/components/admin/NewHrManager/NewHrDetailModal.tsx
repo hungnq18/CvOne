@@ -98,7 +98,7 @@ export function HRDetailModal({ application, isOpen, onClose, onApprove, onRejec
                                 <label className="text-xs font-semibold">Ngày Đăng Ký</label>
                                 <p className="mt-1 text-lg">
                                     {application.createdAt
-                                        ? format(new Date(application.createdAt), "dd MMMM yyyy HH:mm", {
+                                        ? format(new Date(application.createdAt), "dd/MM/yyyy", {
                                             locale: vi,
                                         })
                                         : "—"}
