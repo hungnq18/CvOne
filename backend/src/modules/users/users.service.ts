@@ -180,7 +180,17 @@ export class UsersService {
   }
 
   async getHrUnActive() {
-    return await this.accountsService.getHrUnActive();
+    const accounts = await this.accountsService.getHrUnActive();
+    const users = await this.userModel
+      .find({ account_id: { $in: accounts.map((account) => account._id) } })
+      .populate({
+        path: "account_id",
+        select:
+          "-password -refreshToken -emailVerificationToken -emailVerificationTokenExpires",
+      })
+      .exec();
+
+    return users;
   }
 
   async updateHrActive(userId: string, data: UpdateHrActiveDto) {
