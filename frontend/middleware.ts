@@ -7,6 +7,7 @@ const adminRoutes = [
   "/dashboard",
   "/cv-template",
   "/cl-template",
+  "/admin/newHrRegister",
 ];
 
 const hrRoutes = [
