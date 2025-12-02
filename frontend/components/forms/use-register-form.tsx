@@ -282,7 +282,7 @@ export function useRegisterForm(formType: "user" | "hr" = "user") {
         try {
           await verifyEmail(email);
         } catch (err) {
-          console.warn("Failed to auto-send verify email:", err);
+          // console.warn("Failed to auto-send verify email:", err);
         }
 
         // 3. Navigate CHỈ KHI đăng ký thành công

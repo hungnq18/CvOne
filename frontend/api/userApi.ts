@@ -33,7 +33,7 @@ const decodeToken = (): any | null => {
         decodedCache = { token, payload };
         return payload;
     } catch (e) {
-        console.warn("Failed to decode token", e);
+        // console.warn("Failed to decode token", e);
         return null;
     }
 };

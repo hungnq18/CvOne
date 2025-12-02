@@ -118,23 +118,23 @@ const ConversationItem = memo(({
                 displayName = `${otherUser.first_name} ${otherUser.last_name || ''}`.trim();
             } else if (otherUser._id) {
                 // Có _id nhưng không có first_name - có thể chưa được populate
-                console.warn("⚠️ otherUser has _id but no first_name:", otherUser);
+                // console.warn("⚠️ otherUser has _id but no first_name:", otherUser);
             }
         } else if (typeof otherUser === "string") {
             // otherUser là string ID - không thể hiển thị tên
-            console.warn("⚠️ otherUser is string ID, cannot display name:", otherUser);
+            // console.warn("⚠️ otherUser is string ID, cannot display name:", otherUser);
         }
     }
 
     // Debug log nếu vẫn là Unknown User
     if (displayName === 'Unknown User') {
-        console.warn("⚠️ Cannot find display name for conversation:", {
-            convId: conv._id,
-            otherUser,
-            otherUserType: typeof otherUser,
-            hasFirstName: otherUser && typeof otherUser === "object" ? !!otherUser.first_name : false,
-            participants: conv.participants,
-        });
+        // console.warn("⚠️ Cannot find display name for conversation:", {
+        //     convId: conv._id,
+        //     otherUser,
+        //     otherUserType: typeof otherUser,
+        //     hasFirstName: otherUser && typeof otherUser === "object" ? !!otherUser.first_name : false,
+        //     participants: conv.participants,
+        // });
     }
 
     // Helper để lấy avatar color

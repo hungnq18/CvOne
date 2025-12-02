@@ -322,11 +322,11 @@ const CardMyCV: React.FC<CardMyCVProps> = ({ cvListOverride }) => {
                 }
                 const warnedSet = (window as any).__cvValidationWarned as Set<string>;
                 if (!warnedSet.has(cv._id)) {
-                  console.warn("[card-MyCV] sectionPositions thiếu section, đã merge với default:", {
-                    cvId: cv._id,
-                    templateTitle: template.title,
-                    missingSections: missingRequiredSections,
-                  });
+                  // console.warn("[card-MyCV] sectionPositions thiếu section, đã merge với default:", {
+                  //   cvId: cv._id,
+                  //   templateTitle: template.title,
+                  //   missingSections: missingRequiredSections,
+                  // });
                   warnedSet.add(cv._id);
                 }
               }

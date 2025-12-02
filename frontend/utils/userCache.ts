@@ -39,7 +39,7 @@ class UserCacheService {
         // Normalize ID trước khi sử dụng
         const normalizedId = this.normalizeId(userId);
         if (!normalizedId) {
-            console.warn("Invalid userId provided:", userId);
+            // console.warn("Invalid userId provided:", userId);
             return undefined;
         }
 
