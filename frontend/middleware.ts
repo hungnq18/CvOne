@@ -1,130 +1,104 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { jwtDecode } from "jwt-decode";
 
+const roleBasedPaths: { [key: string]: string[] } = {
+  "/admin": ["admin"],
+  "/dashboard": ["admin"],
+  "/cv-template": ["admin"],
+  "/cl-template": ["admin"],
+  "/admin/newHrRegister": ["admin"],
 
-const adminRoutes = [
-  "/admin",
-  "/dashboard",
-  "/cv-template",
-  "/cl-template",
-  "/admin/newHrRegister",
-];
+  "/hr/dashboard": ["hr"],
+  "/hr/manageJob": ["hr"],
+  "/hr/manageApplyJob": ["hr"],
+  "/hr/manageCandidate": ["hr"],
 
-const hrRoutes = [
-  "/hr/dashboard",
-  "/hr/manageJob",
-  "/hr/manageApplyJob",
-  "/hr/manageCandidate",
-];
+  "/marketing": ["mkt"],
+  "/marketing/ads": ["mkt"],
+  "/marketing/voucher": ["mkt"],
+  "/marketing/feedback": ["mkt"],
 
-const mktRoutes = [
-  "/marketing",
-  "/marketing/ads",
-  "/marketing/voucher",
-  "/marketing/feedback",
-];
+  "/userDashboard": ["user"],
+  "/ai-interview": ["user"],
+  "/myDocuments": ["user"],
+  "/myJobs": ["user"],
+  "/uploadCV-overlay": ["user"],
+  "/uploadJD": ["user"],
+  "/user/apply": ["user"],
+  "/user/applyOption": ["user"],
+  "/user/profile": ["user", "admin", "hr"],
+  "/work-history": ["user"],
+  "/work-style": ["user"],
+  "/strengths": ["user"],
+  "/recipent-info": ["user"],
+  "/personal-info": ["user"],
+  "/job-description": ["user"],
+  "/job-description-cv": ["user"],
+  "/customize": ["user"],
+  "/createCV-AIManual": ["user"],
+  "/createCV-AI": ["user"],
+  "/createCLTemplate": ["user"],
+  "/createCV": ["user"],
+  "/chooseOption": ["user"],
+  "/chooseCreateCV": ["user"],
+  "/user/Wallet": ["user"],
+  "/user/Wallet/deposit": ["user"],
+  "/user/Wallet/history": ["user"],
 
-const userRoutes = [
-  "/userDashboard",
-  "/ai-interview",
-  "/myDocuments",
-  "/myJobs",
-  "/myDocuments",
-  "/uploadCV-overlay",
-  "/uploadJD",
-  "/user/apply",
-  "/user/applyOption",
-  "/user/profile",
-  "/work-history",
-  "/work-style",
-  "/strengths",
-  "/recipent-info",
-  "/personal-info",
-  "/job-description",
-  "/job-description-cv",
-  "/customize",
-  "/createCV-AIManual",
-  "/createCV-AI",
-  "/createCLTemplate",
-  "/createCV",
-  "/chooseOption",
-  "/chooseCreateCV",
-  "/user/Wallet",
-  "/user/Wallet/deposit",
-  "/user/Wallet/history",
-];
+  "/payment/cancel": ["admin", "hr", "user"],
+  "/payment/success": ["admin", "hr", "user"],
+  "/chat": ["admin", "hr", "user"],
+  "/notifications": ["admin", "hr", "user"],
+};
 
-// Nếu có route dùng chung cho nhiều role
-const commonRoutes = [
-  "/user/profile",
-  "/payment/cancel",
-  "/payment/success",
-  "/chat",
-  "/notifications"
-
-];
-
-
-
-const roleBasedPaths: { [key: string]: string[] } = {};
-adminRoutes.forEach((route) => {
-  roleBasedPaths[route] = ["admin"];
-});
-hrRoutes.forEach((route) => {
-  roleBasedPaths[route] = ["hr"];
-});
-mktRoutes.forEach((route) => {
-  roleBasedPaths[route] = ["mkt"];
-});
-userRoutes.forEach((route) => {
-  roleBasedPaths[route] = ["user"];
-});
-
-// Nếu có route dùng chung cho nhiều role
-commonRoutes.forEach((route) => {
-  roleBasedPaths[route] = ["admin", "hr", "user"];
-});
 export interface DecodedToken {
   exp: number;
   role: string;
   user: string;
+  isActive?: boolean; // chỉ HR có
 }
 
 export function middleware(request: NextRequest) {
   const token = request.cookies.get("token")?.value;
   const path = request.nextUrl.pathname;
 
-  // Tìm role yêu cầu cho path này
   const requiredRoles = Object.entries(roleBasedPaths).find(([route]) =>
     path === route || path.startsWith(`${route}/`)
   )?.[1];
 
-  // Nếu route yêu cầu role mà không có token thì redirect
+  // Route yêu cầu role nhưng chưa login
   if (requiredRoles && !token) {
     const url = new URL("/login", request.url);
-    url.searchParams.set("callbackUrl", encodeURI(request.url));
+    url.searchParams.set("callbackUrl", request.url);
     return NextResponse.redirect(url);
   }
 
-  // Nếu có token, kiểm tra role và hạn token
   if (token) {
     try {
       const decoded: DecodedToken = jwtDecode(token);
       const currentTime = Math.floor(Date.now() / 1000);
+
+      // Token hết hạn
       if (decoded.exp < currentTime) {
-        // Token hết hạn, xóa cookie và redirect
         const response = NextResponse.redirect(new URL("/login", request.url));
         response.cookies.delete("token");
         return response;
       }
-      // Nếu route yêu cầu role mà user không có role phù hợp thì redirect
+
+      // Kiểm tra role
       if (requiredRoles && !requiredRoles.includes(decoded.role)) {
         const response = NextResponse.redirect(new URL("/login", request.url));
         response.cookies.delete("token");
         return response;
       }
+
+      // Chặn HR chưa active
+      if (decoded.role === "hr" && decoded.isActive === false) {
+        const response = NextResponse.redirect(new URL("/not-active", request.url));
+        return response;
+      }
+
     } catch (err) {
-      // Token không hợp lệ
       const response = NextResponse.redirect(new URL("/login", request.url));
       response.cookies.delete("token");
       return response;
