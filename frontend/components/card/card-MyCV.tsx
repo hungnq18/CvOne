@@ -12,11 +12,19 @@ import { templateComponentMap } from "@/components/cvTemplate/index";
 import { useLanguage } from "@/providers/global_provider";
 import { Card } from "antd";
 import { motion } from "framer-motion";
-import { Edit, Trash2, Share2, ExternalLinkIcon, CopyIcon } from "lucide-react";
+import { Edit, Trash2, Share2, ExternalLinkIcon, CopyIcon, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { getDefaultSectionPositions } from "@/components/cvTemplate/defaultSectionPositions";
 import { notify } from "@/lib/notify";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const translations = {
   en: {
@@ -127,6 +135,8 @@ const CardMyCV: React.FC<CardMyCVProps> = ({ cvListOverride }) => {
   const [shareCVId, setShareCVId] = useState<string | null>(null);
   const [shareUrl, setShareUrl] = useState<string>("");
   const [copied, setCopied] = useState<boolean>(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [cvToDelete, setCvToDelete] = useState<{ id: string; title: string } | null>(null);
 
   const enrichCVsWithUserData = async (list: CV[]): Promise<CV[]> => {
     // QUAN TRỌNG: Luôn fetch lại full CV data để đảm bảo có cvTemplateId và userData mới nhất
@@ -192,14 +202,21 @@ const CardMyCV: React.FC<CardMyCVProps> = ({ cvListOverride }) => {
   const templateOriginalWidth = 794;
   const scaleFactor = containerWidth / templateOriginalWidth;
 
-  const handleDeleteCV = async (cvId: string, cvTitle: string) => {
-    const isConfirmed = window.confirm(t.deleteDialog.confirm(cvTitle));
-    if (!isConfirmed) return;
+  const handleDeleteClick = (cvId: string, cvTitle: string) => {
+    setCvToDelete({ id: cvId, title: cvTitle });
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!cvToDelete) return;
+    
     try {
-      setDeletingCVId(cvId);
-      await deleteCV(cvId);
-      setCvList((prevList) => prevList.filter((cv) => cv._id !== cvId));
+      setDeletingCVId(cvToDelete.id);
+      await deleteCV(cvToDelete.id);
+      setCvList((prevList) => prevList.filter((cv) => cv._id !== cvToDelete.id));
       notify.success(t.deleteDialog.success);
+      setDeleteDialogOpen(false);
+      setCvToDelete(null);
     } catch (error) {
       console.error(t.errors.delete, error);
       notify.error(t.deleteDialog.error);
@@ -404,7 +421,7 @@ const CardMyCV: React.FC<CardMyCVProps> = ({ cvListOverride }) => {
                         <div>
                           <button
                             onClick={() =>
-                              handleDeleteCV(cv._id, cv.title || t.card.unnamed)
+                              handleDeleteClick(cv._id, cv.title || t.card.unnamed)
                             }
                             disabled={deletingCVId === cv._id}
                             className={`flex ${
@@ -493,6 +510,53 @@ const CardMyCV: React.FC<CardMyCVProps> = ({ cvListOverride }) => {
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="flex-shrink-0 w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+                <AlertTriangle className="w-6 h-6 text-red-600" />
+              </div>
+              <DialogTitle className="text-xl font-bold text-gray-900">
+                {language === "vi" ? "Xác nhận xóa CV" : "Confirm Delete CV"}
+              </DialogTitle>
+            </div>
+            <DialogDescription className="text-base text-gray-600 pt-2">
+              {cvToDelete && t.deleteDialog.confirm(cvToDelete.title)}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-row justify-end gap-3 sm:gap-3">
+            <button
+              onClick={() => {
+                setDeleteDialogOpen(false);
+                setCvToDelete(null);
+              }}
+              className="px-5 py-2.5 text-sm font-semibold text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              {language === "vi" ? "Hủy" : "Cancel"}
+            </button>
+            <button
+              onClick={handleDeleteConfirm}
+              disabled={deletingCVId !== null}
+              className="px-5 py-2.5 text-sm font-semibold text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              {deletingCVId ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  {language === "vi" ? "Đang xóa..." : "Deleting..."}
+                </>
+              ) : (
+                <>
+                  <Trash2 size={16} />
+                  {language === "vi" ? "Xóa CV" : "Delete CV"}
+                </>
+              )}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };

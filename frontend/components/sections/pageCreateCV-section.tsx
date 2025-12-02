@@ -781,13 +781,26 @@ const PageCreateCVContent = () => {
                                    hover:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
                                    group"
                       >
-                        <div className="aspect-[210/297]">
+                        <div className="aspect-[210/297] relative bg-gray-100">
                           <Image
                             src={item.imageUrl}
                             alt={item.title}
                             layout="fill"
                             objectFit="cover"
                             className="transition-transform duration-300 group-hover:scale-105"
+                            unoptimized
+                            onError={(e) => {
+                              // Fallback khi image lỗi (đặc biệt cho Cốc Cốc)
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                              const parent = target.parentElement;
+                              if (parent) {
+                                const fallback = document.createElement('div');
+                                fallback.className = 'w-full h-full flex items-center justify-center bg-gray-200';
+                                fallback.innerHTML = `<span class="text-gray-400 text-xs text-center px-2">${item.title}</span>`;
+                                parent.appendChild(fallback);
+                              }
+                            }}
                           />
                         </div>
                         <p className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs text-center py-1">

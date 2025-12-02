@@ -3,6 +3,7 @@
 import { Copy, Check, Calendar } from "lucide-react"
 import { useState } from "react"
 import { type Voucher } from "@/api/apiVoucher"
+import { useLanguage } from "@/providers/global_provider"
 
 interface VoucherWithDates extends Voucher {
     startDate: string
@@ -14,7 +15,39 @@ interface VoucherListProps {
     vouchers: VoucherWithDates[]
 }
 
+const translations = {
+    vi: {
+        noVoucher: "Bạn chưa lưu voucher nào",
+        minOrder: "Đơn tối thiểu",
+        maxDiscount: "Giảm tối đa",
+        perUserLimit: "Giới hạn/người",
+        remaining: "Còn lại",
+        copied: "Đã sao chép",
+        copyCode: "Sao chép mã",
+        unlimited: "Không giới hạn",
+        expired: "Voucher đã hết hạn",
+        discountPercent: "Giảm {value}%",
+        discountAmount: "Giảm {value}đ"
+    },
+    en: {
+        noVoucher: "You have no saved vouchers",
+        minOrder: "Minimum Order",
+        maxDiscount: "Maximum Discount",
+        perUserLimit: "Limit per User",
+        remaining: "Remaining",
+        copied: "Copied",
+        copyCode: "Copy Code",
+        unlimited: "Unlimited",
+        expired: "Voucher expired",
+        discountPercent: "Discount {value}%",
+        discountAmount: "Discount {value} VND"
+    }
+}
+
 export default function VoucherList({ vouchers }: VoucherListProps) {
+    const { language } = useLanguage()
+    const t = translations[language]
+
     const [copiedName, setCopiedName] = useState<string | null>(null)
 
     const handleCopyCode = (name: string) => {
@@ -25,14 +58,14 @@ export default function VoucherList({ vouchers }: VoucherListProps) {
 
     const getDiscountText = (voucher: VoucherWithDates) => {
         if (voucher.discountType === "percent") {
-            return `Giảm ${voucher.discountValue}%`
+            return t.discountPercent.replace("{value}", voucher.discountValue.toString())
         }
-        return `Giảm ${voucher.discountValue.toLocaleString("vi-VN")}đ`
+        return t.discountAmount.replace("{value}", voucher.discountValue.toLocaleString("vi-VN"))
     }
 
     const formatDate = (dateString: string) => {
         const date = new Date(dateString)
-        return date.toLocaleDateString("vi-VN", {
+        return date.toLocaleDateString(language === "vi" ? "vi-VN" : "en-US", {
             day: "2-digit",
             month: "2-digit",
             year: "numeric",
@@ -47,7 +80,7 @@ export default function VoucherList({ vouchers }: VoucherListProps) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {vouchers.length === 0 ? (
                 <div className="bg-white dark:bg-slate-800 rounded-xl p-8 text-center border border-slate-200 dark:border-slate-700">
-                    <p className="text-slate-600 dark:text-slate-400">Bạn chưa lưu voucher nào</p>
+                    <p className="text-slate-600 dark:text-slate-400">{t.noVoucher}</p>
                 </div>
             ) : (
                 vouchers.map((voucher) => {
@@ -62,7 +95,7 @@ export default function VoucherList({ vouchers }: VoucherListProps) {
                         >
                             {expired && (
                                 <div className="mb-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-1 text-center">
-                                    <p className="text-xs font-semibold text-red-600 dark:text-red-400">Voucher đã hết hạn</p>
+                                    <p className="text-xs font-semibold text-red-600 dark:text-red-400">{t.expired}</p>
                                 </div>
                             )}
                             <div className="flex items-start justify-between mb-2">
@@ -88,29 +121,29 @@ export default function VoucherList({ vouchers }: VoucherListProps) {
 
                             <div className="grid grid-cols-2 gap-2 mb-2 text-xs">
                                 <div>
-                                    <p className="font-medium text-slate-600 dark:text-slate-400">Đơn tối thiểu</p>
+                                    <p className="font-medium text-slate-600 dark:text-slate-400">{t.minOrder}</p>
                                     <p className="font-semibold text-slate-900 dark:text-white mt-1">
-                                        {voucher.minOrderValue ? `${voucher.minOrderValue.toLocaleString("vi-VN")}đ` : "Không giới hạn"}
+                                        {voucher.minOrderValue ? `${voucher.minOrderValue.toLocaleString("vi-VN")}đ` : t.unlimited}
                                     </p>
                                 </div>
                                 <div>
-                                    <p className="font-medium text-slate-600 dark:text-slate-400">Giảm tối đa</p>
+                                    <p className="font-medium text-slate-600 dark:text-slate-400">{t.maxDiscount}</p>
                                     <p className="font-semibold text-slate-900 dark:text-white mt-1">
-                                        {voucher.maxDiscountValue ? `${voucher.maxDiscountValue.toLocaleString("vi-VN")}đ` : "Không giới hạn"}
+                                        {voucher.maxDiscountValue ? `${voucher.maxDiscountValue.toLocaleString("vi-VN")}đ` : t.unlimited}
                                     </p>
                                 </div>
                                 <div>
-                                    <p className="font-medium text-slate-600 dark:text-slate-400">Giới hạn/người</p>
+                                    <p className="font-medium text-slate-600 dark:text-slate-400">{t.perUserLimit}</p>
                                     <p className="font-semibold text-slate-900 dark:text-white mt-1">
-                                        {voucher.perUserLimit ? `${voucher.perUserLimit}x` : "Không giới hạn"}
+                                        {voucher.perUserLimit ? `${voucher.perUserLimit}x` : t.unlimited}
                                     </p>
                                 </div>
                                 <div>
-                                    <p className="font-medium text-slate-600 dark:text-slate-400">Còn lại</p>
+                                    <p className="font-medium text-slate-600 dark:text-slate-400">{t.remaining}</p>
                                     <p className="font-semibold text-slate-900 dark:text-white mt-1">
                                         {voucher.usageLimit
                                             ? (voucher.usageLimit - (voucher.usedCount || 0)).toLocaleString("vi-VN")
-                                            : "Không giới hạn"}
+                                            : t.unlimited}
                                     </p>
                                 </div>
                             </div>
@@ -123,12 +156,12 @@ export default function VoucherList({ vouchers }: VoucherListProps) {
                                 {copiedName === voucher.name ? (
                                     <>
                                         <Check className="w-3 h-3" />
-                                        Đã sao chép
+                                        {t.copied}
                                     </>
                                 ) : (
                                     <>
                                         <Copy className="w-3 h-3" />
-                                        Sao chép mã
+                                        {t.copyCode}
                                     </>
                                 )}
                             </button>

@@ -30,6 +30,8 @@ export class Account {
 
   @Prop({ default: Date.now })
   createdAt: Date;
+  @Prop({ default: true })
+  isActive: boolean;
 }
 
 export const AccountSchema = SchemaFactory.createForClass(Account);

@@ -115,6 +115,41 @@ export class JobsService {
     return this.jobModel.countDocuments({ user_id: userId });
   }
 
+  async getPendingJobs(
+    page: number = 1,
+    limit: number = 10
+  ): Promise<{
+    data: JobDocument[];
+    total: number;
+    page: number;
+    limit: number;
+  }> {
+    const skip = (page - 1) * limit;
+
+    const [data, total] = await Promise.all([
+      this.jobModel
+        .find({ isActive: false })
+        .populate("user_id")
+        .skip(skip)
+        .limit(limit)
+        .sort({ createdAt: -1 })
+        .exec(),
+      this.jobModel.countDocuments({ isActive: false }),
+    ]);
+
+    return { data, total, page, limit };
+  }
+
+  async approveJob(id: string): Promise<JobDocument> {
+    const job = await this.jobModel
+      .findByIdAndUpdate(id, { isActive: true }, { new: true })
+      .exec();
+    if (!job) {
+      throw new NotFoundException(`Job with ID ${id} not found`);
+    }
+    return job;
+  }
+
   @Cron(CronExpression.EVERY_DAY_AT_6AM)
   // @Cron("* * * * *")
   async notifyHRBeforeDeadline() {

@@ -12,6 +12,7 @@ export interface Message {
   createdAt: string;
   readBy: string[];
   sender?: User;
+  receiverId: string;
 }
 
 export interface Conversation {

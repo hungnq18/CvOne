@@ -1,6 +1,6 @@
-// export const API_URL = "http://localhost:8000/api";
+export const API_URL = "http://localhost:8000/api";
 
-export const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+// export const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 // API Endpoints
 export const API_ENDPOINTS = {
@@ -25,6 +25,7 @@ export const API_ENDPOINTS = {
     CHECK_TOKEN: (token: string) => `/accounts/check-token/${token}`,
     Reset_Pass_With_Code: "/accounts/reset-password-code", //hàm nhận vào gmail, code, mật khẩu mới để cài lại mật khẩu
     Sent_Fogot_Password_Code: "/accounts/forgot-password-code", // hàm nhận vào gmail để gửi code
+    UPDATE_ACTIVE_HR: (id: string) => `/accounts/${id}/hr-active`,
   },
   USER: {
     GET_ALL: "/users",
@@ -33,6 +34,7 @@ export const API_ENDPOINTS = {
     DELETE: (id: string) => `/users/${id}`,
     GET_PROFILE: "/user/profile",
     UPDATE_PROFILE: "/user/profile",
+    GET_HR_UNACTIVE: "/users/hr/unactive",
   },
   PROFILE: {
     GET: "/profile",
@@ -96,6 +98,8 @@ export const API_ENDPOINTS = {
       `/jobs/count-by-posting-date/${month}/${year}`,
     GET_JOB_BY_HR: "/jobs/by-hr",
     ANALYZE_JD_PDF: "/jobs/analyze-jd-pdf",
+    GET_PENDING_FOR_ADMIN: "/jobs/pending/admin",
+    APPROVE_BY_ADMIN: (id: string) => `/jobs/${id}/approve`,
   },
   NOTIFICATION: {
     GET_NOTIFICATIONS: "/notifications",
@@ -145,6 +149,7 @@ export const API_ENDPOINTS = {
     UPDATE_ORDER_STATUS: (id: string) => `/orders/${id}/update`, //BODY:{status}
     GET_ORDER_BY_CODE: (orderCode: string) => `/orders/code/${orderCode}`,
     GET_ORDER_HISTORY: "/orders/history", //lấy ra lịch sử order của user
+    GET_ORDER_HISTORY_ADMIN: "/orders/admin/history", //lấy ra toàn bộ order cho admin
   },
   CREDIT: {
     UPDATE_TOKEN: "/credits/update-token", //BODY:{token} @PATCH

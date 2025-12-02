@@ -24,7 +24,7 @@ export class MailService {
     // Check if mail configuration is available
     if (!mailHost || !mailPort || !mailUser || !mailPass) {
       console.warn(
-        "Mail configuration is incomplete. Email sending will be disabled.",
+        "Mail configuration is incomplete. Email sending will be disabled."
       );
       console.warn("Required: MAIL_HOST, MAIL_PORT, MAIL_USER, MAIL_PASS");
       return;
@@ -53,10 +53,10 @@ export class MailService {
   async sendVerificationEmail(email: string, token: string) {
     if (!this.transporter) {
       console.error(
-        "Mail transporter is not configured. Cannot send verification email.",
+        "Mail transporter is not configured. Cannot send verification email."
       );
       throw new Error(
-        "Email service is not configured. Please contact administrator.",
+        "Email service is not configured. Please contact administrator."
       );
     }
 
@@ -77,7 +77,7 @@ export class MailService {
     } catch (error) {
       console.error("Failed to send verification email:", error);
       throw new Error(
-        "Failed to send verification email. Please try again later.",
+        "Failed to send verification email. Please try again later."
       );
     }
   }
@@ -85,10 +85,10 @@ export class MailService {
   async sendPasswordResetEmail(email: string, token: string) {
     if (!this.transporter) {
       console.error(
-        "Mail transporter is not configured. Cannot send password reset email.",
+        "Mail transporter is not configured. Cannot send password reset email."
       );
       throw new Error(
-        "Email service is not configured. Please contact administrator.",
+        "Email service is not configured. Please contact administrator."
       );
     }
 
@@ -111,7 +111,7 @@ export class MailService {
     } catch (error) {
       console.error("Failed to send password reset email:", error);
       throw new Error(
-        "Failed to send password reset email. Please try again later.",
+        "Failed to send password reset email. Please try again later."
       );
     }
   }
@@ -119,10 +119,10 @@ export class MailService {
   async sendPasswordResetCodeEmail(email: string, code: string) {
     if (!this.transporter) {
       console.error(
-        "Mail transporter is not configured. Cannot send password reset code email.",
+        "Mail transporter is not configured. Cannot send password reset code email."
       );
       throw new Error(
-        "Email service is not configured. Please contact administrator.",
+        "Email service is not configured. Please contact administrator."
       );
     }
 
@@ -141,7 +141,7 @@ export class MailService {
     } catch (error) {
       console.error("Failed to send password reset code email:", error);
       throw new Error(
-        "Failed to send password reset code email. Please try again later.",
+        "Failed to send password reset code email. Please try again later."
       );
     }
   }
@@ -151,21 +151,21 @@ export class MailService {
 
     return Buffer.from(
       base64Pdf.replace(/^data:application\/pdf;base64,/, ""),
-      "base64",
+      "base64"
     );
   }
 
   async sendCvPdfEmail(
     recipientEmail: string,
     pdfBuffer: Buffer,
-    cvTitle: string,
+    cvTitle: string
   ) {
     if (!this.transporter) {
       console.error(
-        "Mail transporter is not configured. Cannot send CV PDF email.",
+        "Mail transporter is not configured. Cannot send CV PDF email."
       );
       throw new Error(
-        "Email service is not configured. Please contact administrator.",
+        "Email service is not configured. Please contact administrator."
       );
     }
 
@@ -196,6 +196,48 @@ export class MailService {
     } catch (error) {
       console.error("Failed to send CV PDF email:", error);
       throw new Error("Failed to send CV PDF email. Please try again later.");
+    }
+  }
+  async sendEmailActiveHr(email: string) {
+    if (!this.transporter) {
+      console.error("Mail transporter is not configured.");
+      throw new Error(
+        "Email service is not configured. Please contact administrator."
+      );
+    }
+
+    const frontendUrl = this.configService.get("FRONTEND_URL");
+
+    try {
+      await this.transporter.sendMail({
+        from: this.configService.get("MAIL_FROM"),
+        to: email,
+        subject: "Your HR Account Has Been Activated",
+        html: `
+          <h1>Your HR Account is Now Active 🎉</h1>
+          <p>Dear HR,</p>
+  
+          <p>Your account has been successfully <b>activated by Admin</b>.</p>
+          <p>You can now log in and start using the HR features on our platform.</p>
+  
+          <p>
+            👉 <a href="${frontendUrl}login" 
+            style="color: #0066ff; font-weight: bold;">Click here to login</a>
+          </p>
+  
+          <p>If you did not expect this email, please contact our support team.</p>
+  
+          <br/>
+          <p>Best regards,<br/>The Support Team</p>
+        `,
+      });
+
+      console.log(`Email active HR sent to ${email}`);
+    } catch (error) {
+      console.error("Failed to send activation email:", error);
+      throw new Error(
+        "Failed to send HR activation email. Please try again later."
+      );
     }
   }
 }

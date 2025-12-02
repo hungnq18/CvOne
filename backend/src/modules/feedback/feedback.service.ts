@@ -18,7 +18,7 @@ export class FormFeedbackService {
     private feedbackModel: Model<FormFeedbackDocument>,
     private readonly usersService: UsersService,
     private readonly creditService: CreditsService,
-  ) {}
+  ) { }
 
   async create(createDto: CreateFormFeedbackDto): Promise<FormFeedback> {
     const created = new this.feedbackModel({
@@ -43,7 +43,7 @@ export class FormFeedbackService {
       [FeedbackFeature.TRANSLATE_CV]: "6912e8e104e0ffee09f8242b",
       [FeedbackFeature.GENERATE_CV]: "692271ec3aa2ef74f38bdc3e",
       [FeedbackFeature.GENERATE_CL]: null, // TODO: thêm voucher id nếu muốn tặng riêng cho generate_cl
-      [FeedbackFeature.REBUILD_CV_FROM_PDF]: "692276043aa2ef74f38c838b",
+      [FeedbackFeature.SUGGEST_JOB]: "692276043aa2ef74f38c838b",
       [FeedbackFeature.AI_INTERVIEW]: "79b3ba37b477064174e2f107",
     };
     const voucherId = FEATURE_VOUCHER_MAP[createDto.feature];

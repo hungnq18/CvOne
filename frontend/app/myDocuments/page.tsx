@@ -6,8 +6,11 @@ import CVList from "@/components/sections/listMyCV";
 import { useLanguage } from "@/providers/global_provider";
 import "@/styles/myDocuments.css";
 import { Tabs } from "antd";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { notify } from "@/lib/notify";
+import { useSearchParams, useRouter } from "next/navigation";
+import { FeedbackPopup } from "@/components/modals/feedbackPopup";
+import { FeedbackSuccessPopup } from "@/components/modals/voucherPopup";
 
 const translations = {
   en: {
@@ -38,18 +41,35 @@ const translations = {
   },
 };
 
-export default function Page() {
+function MyDocumentsContent() {
   const [activeTab, setActiveTab] = useState("1");
   const [searchValue, setSearchValue] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const { language } = useLanguage();
   const t = translations[language];
+  const searchParams = useSearchParams();
+  const router = useRouter();
 
   const [coverLetterList, setCoverLetterList] = useState<CL[]>([]);
   const [loadingCL, setLoadingCL] = useState(true);
 
   const [cvList, setcvList] = useState<CV[]>([]);
   const [loadingCV, setLoadingCV] = useState(true);
+
+  const [showFeedbackPopup, setShowFeedbackPopup] = useState(false);
+  const [showVoucherPopup, setShowVoucherPopup] = useState(false);
+  const [feedbackFeature, setFeedbackFeature] = useState<"cv" | "cover-letter" | null>(null);
+
+  // Check for feedback popup query param
+  useEffect(() => {
+    const showFeedback = searchParams.get("showFeedback");
+    if (showFeedback === "cv" || showFeedback === "cover-letter") {
+      setFeedbackFeature(showFeedback as "cv" | "cover-letter");
+      setShowFeedbackPopup(true);
+      // Remove query param from URL without reload
+      router.replace("/myDocuments", { scroll: false });
+    }
+  }, [searchParams, router]);
 
   useEffect(() => {
     const processPendingCL = async () => {
@@ -226,6 +246,38 @@ export default function Page() {
             ))}
         </div>
       </div>
+
+      {/* Feedback Popup */}
+      {showFeedbackPopup && feedbackFeature && (
+        <FeedbackPopup
+          feature={feedbackFeature}
+          onClose={() => {
+            setShowFeedbackPopup(false);
+            setFeedbackFeature(null);
+          }}
+          onFeedbackSent={() => {
+            setShowFeedbackPopup(false);
+            setShowVoucherPopup(true);
+          }}
+        />
+      )}
+
+      {/* Voucher Popup */}
+      {showVoucherPopup && (
+        <FeedbackSuccessPopup
+          onClose={() => {
+            setShowVoucherPopup(false);
+          }}
+        />
+      )}
     </div>
+  );
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={<div className="min-h-screen py-6 px-4 sm:px-6 lg:px-8 mt-16 flex items-center justify-center">Loading...</div>}>
+      <MyDocumentsContent />
+    </Suspense>
   );
 }

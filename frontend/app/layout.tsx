@@ -61,7 +61,7 @@ export default function RootLayout({
                 >
                   <SocketProvider>
                     <CVProvider>
-                      {role === "admin" ? (
+                      {role === "admin" || role === "mkt" ? (
                         children
                       ) : (
                         <div className="flex flex-col flex-1">

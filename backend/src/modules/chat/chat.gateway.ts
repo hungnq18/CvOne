@@ -22,6 +22,16 @@ import { ConversationService } from "../conversation/conversation.service";
 export class ChatGateway {
   @WebSocketServer() server: Server;
 
+  /*************  ✨ Windsurf Command ⭐  *************/
+  /**
+   * Constructor for the ChatGateway class.
+   *
+   * @param {ChatService} chatService - the service for handling chat business logic
+   * @param {NotificationsService} notificationsService - the service for handling notifications business logic
+   * @param {NotificationsGateway} notificationsGateway - the gateway for handling notifications business logic
+   * @param {ConversationService} convModel - the service for handling conversation business logic
+   */
+  /*******  7ec7eab5-ae12-4963-9e86-8267d45a50f4  *******/
   constructor(
     private readonly chatService: ChatService,
     private readonly notificationsService: NotificationsService,

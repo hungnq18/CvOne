@@ -1,23 +1,21 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Search, Plus, Edit, Trash2, Eye, MoreHorizontal, Download, FileText } from "lucide-react"
+import { Search, Trash2, Eye, MoreHorizontal, Download, FileText } from "lucide-react"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { getCLTemplates, CLTemplate } from "@/api/clApi"
 
 export function ManageCLTemplates() {
   const [templates, setTemplates] = useState<CLTemplate[]>([])
   const [searchTerm, setSearchTerm] = useState("")
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
+  const [previewTemplate, setPreviewTemplate] = useState<CLTemplate | null>(null)
 
   useEffect(() => {
     const fetchTemplates = async () => {
@@ -58,76 +56,11 @@ export function ManageCLTemplates() {
 
   return (
     <div className="flex-1 space-y-6 p-6 pt-0 bg-gray-50">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Manage Cover Letter Templates</h1>
-          <p className="text-muted-foreground">Create and manage cover letter templates for different industries</p>
-        </div>
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-blue-600 hover:bg-blue-700">
-              <Plus className="mr-2 h-4 w-4" />
-              Add Template
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[500px]">
-            <DialogHeader>
-              <DialogTitle>Add New Cover Letter Template</DialogTitle>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label htmlFor="templateName">Template Name</Label>
-                <Input id="templateName" placeholder="Enter template name" />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="industry">Industry</Label>
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select industry" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="business">Business</SelectItem>
-                    <SelectItem value="technology">Technology</SelectItem>
-                    <SelectItem value="creative">Creative</SelectItem>
-                    <SelectItem value="healthcare">Healthcare</SelectItem>
-                    <SelectItem value="education">Education</SelectItem>
-                    <SelectItem value="finance">Finance</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea id="description" placeholder="Enter template description" />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="content">Template Content</Label>
-                <Textarea
-                  id="content"
-                  placeholder="Enter the cover letter template content..."
-                  className="min-h-[120px]"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="status">Status</Label>
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="draft">Draft</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button onClick={() => setIsCreateDialogOpen(false)}>Create Template</Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Manage Cover Letter Templates</h1>
+        <p className="text-muted-foreground">
+          View and manage cover letter templates for different industries
+        </p>
       </div>
 
       <Card>
@@ -152,7 +85,6 @@ export function ManageCLTemplates() {
                 <TableHead>Template</TableHead>
                 <TableHead>Industry</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Downloads</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -176,12 +108,6 @@ export function ManageCLTemplates() {
                   <TableCell>
                     <Badge className={getStatusColor("Active")}>Active</Badge>
                   </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1">
-                      <Download className="h-4 w-4 text-muted-foreground" />
-                      N/A
-                    </div>
-                  </TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -190,13 +116,9 @@ export function ManageCLTemplates() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setPreviewTemplate(template)}>
                           <Eye className="mr-2 h-4 w-4" />
                           Preview
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <Edit className="mr-2 h-4 w-4" />
-                          Edit Template
                         </DropdownMenuItem>
                         <DropdownMenuItem>
                           <Download className="mr-2 h-4 w-4" />
@@ -215,6 +137,30 @@ export function ManageCLTemplates() {
           </Table>
         </CardContent>
       </Card>
+
+      {/* Preview Template Modal */}
+      <Dialog open={!!previewTemplate} onOpenChange={(open) => !open && setPreviewTemplate(null)}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {previewTemplate ? previewTemplate.title : "Template preview"}
+            </DialogTitle>
+          </DialogHeader>
+          {previewTemplate && (
+            <div className="mt-4 flex flex-col gap-4">
+              <div className="relative w-full max-h-[60vh] overflow-hidden rounded-lg border bg-white">
+                <Image
+                  src={previewTemplate.imageUrl}
+                  alt={previewTemplate.title}
+                  width={900}
+                  height={600}
+                  className="w-full h-full object-contain bg-slate-50"
+                />
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

@@ -279,24 +279,24 @@ export const Modal: FC<{
               onClick={onClose}
               className="text-slate-400 hover:text-white hover:bg-white/10 rounded-lg p-1.5 transition-colors"
             >
-              <X size={20} />
-            </button>
-          </div>
+            <X size={20} />
+          </button>
+        </div>
         </div>
 
         {/* Content - Scrollable */}
         <div className="p-6 overflow-y-auto flex-1">{children}</div>
 
         {/* Footer Buttons - Fixed at bottom */}
-        {onSave && (
+          {onSave && (
           <div className="flex justify-end gap-3 px-6 py-4 border-t border-slate-100 bg-slate-50/50 rounded-b-2xl flex-shrink-0">
             <button
               onClick={onClose}
               disabled={isSaving}
               className="px-5 py-2.5 rounded-xl text-sm font-semibold text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 transition-colors disabled:opacity-50"
             >
-              {t.cancel}
-            </button>
+                {t.cancel}
+              </button>
             <button
               onClick={() => {
                 onSave();
@@ -306,10 +306,10 @@ export const Modal: FC<{
               className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 shadow-lg shadow-blue-500/25 transition-all disabled:opacity-50 flex items-center gap-2"
             >
               {isSaving && <Loader2 className="animate-spin" size={16} />}
-              {t.saveChanges}
-            </button>
-          </div>
-        )}
+                {t.saveChanges}
+              </button>
+            </div>
+          )}
       </div>
     </div>
   );
@@ -478,7 +478,7 @@ export const ContactPopup: FC<{
 }> = ({ onClose, initialData, onSave }) => {
   const { language } = useLanguage();
   const t = translations[language].contactPopup;
-
+  
   const [formData, setFormData] = useState(initialData);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -508,7 +508,7 @@ export const ContactPopup: FC<{
             onChange={handleChange}
             className="w-full py-2.5 px-4 border border-slate-200 rounded-xl text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
           />
-        </div>
+      </div>
         <div>
           <label
             htmlFor="phone"
@@ -523,9 +523,9 @@ export const ContactPopup: FC<{
             onChange={handleChange}
             className="w-full py-2.5 px-4 border border-slate-200 rounded-xl text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
           />
-        </div>
+      </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
+        <div>
             <label
               htmlFor="city"
               className="block text-slate-700 text-sm font-semibold mb-2"
@@ -539,8 +539,8 @@ export const ContactPopup: FC<{
               onChange={handleChange}
               className="w-full py-2.5 px-4 border border-slate-200 rounded-xl text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
             />
-          </div>
-          <div>
+        </div>
+        <div>
             <label
               htmlFor="country"
               className="block text-slate-700 text-sm font-semibold mb-2"
@@ -721,8 +721,8 @@ export const ExperiencePopup: FC<{
                 placeholder={t.startDatePlaceholder}
                 className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm"
               />
-            </div>
-            <div>
+          </div>
+          <div>
               <label className="block text-sm font-medium text-gray-700">
                 {t.endDateLabel}
               </label>
@@ -1058,7 +1058,7 @@ export const SkillsPopup: FC<{
             className="flex items-center w-full bg-blue-50/60 border border-blue-100 px-3 py-2 rounded-lg hover:shadow-sm"
           >
             <span className="text-blue-900 font-medium truncate pr-3 max-w-[55%]">
-              {skill.name}
+            {skill.name}
             </span>
             <div className="ml-auto flex items-center gap-1">
               {[1, 2, 3, 4, 5].map((n) => (

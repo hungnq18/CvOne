@@ -49,7 +49,8 @@ export class Job {
   @Prop({ type: Types.ObjectId, ref: "User", required: true })
   user_id: Types.ObjectId;
 
-  @Prop({ default: true })
+  // Chỉ job đã được admin duyệt mới set true
+  @Prop({ default: false })
   isActive: boolean;
 }
 

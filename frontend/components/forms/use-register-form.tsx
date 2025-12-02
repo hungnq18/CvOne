@@ -1,6 +1,6 @@
-"use client";
+ "use client";
 
-import { verifyEmail } from "@/api/authApi";
+import { registerHR, verifyEmail } from "@/api/authApi";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/providers/auth-provider";
 import { useLanguage } from "@/providers/global_provider";
@@ -17,6 +17,7 @@ interface RegisterFormData {
   company_name: string;
   city: string;
   district: string;
+  vatRegistrationNumber: string;
   terms: boolean;
 }
 
@@ -191,6 +192,7 @@ export function useRegisterForm(formType: "user" | "hr" = "user") {
     company_name: "",
     city: "",
     district: "",
+    vatRegistrationNumber: "",
     terms: false,
   });
   const [showPassword, setShowPassword] = useState<boolean>(false);
@@ -238,6 +240,9 @@ export function useRegisterForm(formType: "user" | "hr" = "user") {
       confirmPassword,
       phone_number,
       company_name,
+      city,
+      district,
+      vatRegistrationNumber,
       terms,
     } = formData;
 
@@ -299,7 +304,10 @@ export function useRegisterForm(formType: "user" | "hr" = "user") {
         !first_name ||
         !last_name ||
         !phone_number ||
-        !company_name
+        !company_name ||
+        !city ||
+        !district ||
+        !vatRegistrationNumber
       ) {
         setMessage(t.requiredFields);
         setIsLoading(false);
@@ -313,12 +321,33 @@ export function useRegisterForm(formType: "user" | "hr" = "user") {
       }
 
       try {
-        // Logic đăng ký cho HR (hiện tại đang là placeholder)
-        console.log("Registering HR with data:", formData);
+        // Gọi API đăng ký HR
+        await registerHR({
+          email,
+          password,
+          first_name,
+          last_name,
+          phone: phone_number,
+          // Thông tin cá nhân có thể mở rộng sau, hiện tại cố định country
+          country: "Vietnam",
+          city: "",
+          company_name,
+          company_country: "Vietnam",
+          company_city: city,
+          company_district: district,
+          vatRegistrationNumber,
+        });
 
-        // Giả lập thành công
-        setMessage(t.registerSuccess);
+        // Toast + chuyển sang trang đăng nhập
+        toast({
+          title: t.registerSuccess,
+          description: t.checkEmail,
+        });
+
+        setMessage(t.checkEmail);
         setIsSuccess(true);
+
+        router.push("/login");
       } catch (error) {
         console.error("Registration error:", error);
         setMessage(error instanceof Error ? error.message : t.registerFailed);
