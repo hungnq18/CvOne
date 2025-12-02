@@ -17,6 +17,7 @@ import { CreateVoucherDirectDto } from "./dto/create-voucher-direct.dto";
 import { CreateVoucherSaveableDto } from "./dto/create-voucher-saveable.dto";
 import { UpdateVoucherDirectDto } from "./dto/update-voucher-direct.dto";
 import { UpdateVoucherSaveableDto } from "./dto/update-voucher-saveable.dto";
+import { User } from "src/common/decorators/user.decorator";
 
 @Controller("vouchers")
 export class VouchersController {

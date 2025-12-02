@@ -52,4 +52,8 @@ export class UpdateVoucherSaveableDto {
   @IsDateString()
   @IsNotEmpty()
   endDate: Date;
+
+  @IsBoolean()
+  @IsOptional()
+  isShow: boolean;
 }

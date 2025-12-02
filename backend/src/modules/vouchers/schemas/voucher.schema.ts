@@ -34,6 +34,9 @@ export class Voucher {
   endDate: Date;
   @Prop({ default: true })
   isActive: boolean;
+
+  @Prop({ default: false })
+  isShow: boolean;
 }
 
 export const VoucherSchema = SchemaFactory.createForClass(Voucher);

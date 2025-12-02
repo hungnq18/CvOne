@@ -254,4 +254,33 @@ export class CreditsService {
     const credit = await this.saveVoucher(userId, voucherId);
     return credit;
   }
+  async getVouchersDisplayForUser(userId: string) {
+    // Lấy credit của user
+    const credit = await this.creditModel.findOne({
+      userId: new Types.ObjectId(userId),
+    });
+
+    if (!credit) {
+      throw new NotFoundException("Credit not found");
+    }
+
+    // Lấy danh sách voucher hiển thị cho user
+    const vouchers = await this.voucherService.getVoucherDisplayUsers();
+
+    // Lấy danh sách voucherId user đang sở hữu
+    const ownedVoucherIds = credit.vouchers.map((v) => v.voucherId.toString());
+
+    // Lấy danh sách voucherId user đã dùng
+    const usedVoucherIds = credit.usedVouchers.map((v) =>
+      v.voucherId.toString()
+    );
+
+    // LOẠI BỎ voucher đã có hoặc đã dùng
+    const availableVouchers = vouchers.filter((voucher: any) => {
+      const vid = voucher._id.toString();
+      return !ownedVoucherIds.includes(vid) && !usedVoucherIds.includes(vid);
+    });
+
+    return availableVouchers;
+  }
 }
