@@ -19,7 +19,6 @@ const roleBasedPaths: { [key: string]: string[] } = {
   "/marketing/feedback": ["mkt"],
 
   "/userDashboard": ["user"],
-  "/ai-interview": ["user"],
   "/myDocuments": ["user"],
   "/myJobs": ["user"],
   "/uploadCV-overlay": ["user"],

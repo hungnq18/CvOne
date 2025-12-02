@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Brain, Clock, History, Play, Sparkles, Star, TrendingUp, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useRequireLogin } from '@/hooks/requireLogin';
 
 export default function AiInterviewPage() {
   const [showSetupModal, setShowSetupModal] = useState(false);
@@ -22,6 +23,7 @@ export default function AiInterviewPage() {
     inProgressSessions: 0
   });
   const [isLoadingStats, setIsLoadingStats] = useState(true);
+  const requireLogin = useRequireLogin();
 
   useEffect(() => {
     loadStats();
@@ -49,7 +51,7 @@ export default function AiInterviewPage() {
   const handleCloseInterview = () => {
     setShowInterviewModal(false);
     setInterviewConfig(null);
-    loadStats(); // Refresh stats after interview
+    loadStats();
   };
 
   const features = [
@@ -91,7 +93,7 @@ export default function AiInterviewPage() {
             AI Interview Practice
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Practice your interview skills with AI-powered questions tailored to your job description. 
+            Practice your interview skills with AI-powered questions tailored to your job description.
             Get instant feedback and improve your performance.
           </p>
         </div>
@@ -121,7 +123,7 @@ export default function AiInterviewPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-gray-600">
-                Begin a new AI-powered interview practice session. Upload your job description 
+                Begin a new AI-powered interview practice session. Upload your job description
                 and get personalized questions.
               </p>
               <div className="space-y-2">
@@ -129,9 +131,12 @@ export default function AiInterviewPage() {
                 <Badge variant="outline">Real-time Feedback</Badge>
                 <Badge variant="outline">Follow-up Questions</Badge>
               </div>
-              <Button 
+              <Button
                 className="w-full bg-blue-600 hover:bg-blue-700"
-                onClick={() => setShowSetupModal(true)}
+                onClick={() => {
+                  if (!requireLogin()) return; // chưa login → redirect login
+                  setShowSetupModal(true);      // đã login → mở modal setup
+                }}
               >
                 Start Interview Practice
               </Button>
@@ -155,10 +160,13 @@ export default function AiInterviewPage() {
                 <Badge variant="outline">Performance Analytics</Badge>
                 <Badge variant="outline">Session History</Badge>
               </div>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 className="w-full"
-                onClick={() => setShowHistory(true)}
+                onClick={() => {
+                  if (!requireLogin()) return;
+                  setShowHistory(true);
+                }}
               >
                 View History
               </Button>
@@ -200,7 +208,7 @@ export default function AiInterviewPage() {
                   Paste the job description you're applying for to get relevant questions.
                 </p>
               </div>
-              
+
               <div className="text-center">
                 <div className="bg-green-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
                   <span className="text-2xl font-bold text-green-600">2</span>
@@ -210,7 +218,7 @@ export default function AiInterviewPage() {
                   Practice answering interview questions and get real-time AI feedback.
                 </p>
               </div>
-              
+
               <div className="text-center">
                 <div className="bg-purple-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
                   <span className="text-2xl font-bold text-purple-600">3</span>
