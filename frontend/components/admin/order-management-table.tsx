@@ -15,8 +15,10 @@ import {
 import { getOrderHistoryAdmin, Order } from "@/api/apiOrder"
 import { format } from "date-fns"
 import { toast } from "react-hot-toast"
+import { useLanguage } from "@/providers/global_provider"
 
 export function OrderManagementTable() {
+  const { t } = useLanguage()
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
@@ -30,7 +32,7 @@ export function OrderManagementTable() {
       setCurrentPage(1)
     } catch (error) {
       console.error("Failed to fetch orders:", error)
-      toast.error("Failed to load orders")
+      toast.error(t.admin.orders.messages.loadError)
     } finally {
       setLoading(false)
     }
@@ -43,11 +45,11 @@ export function OrderManagementTable() {
   const renderStatus = (status?: Order["status"]) => {
     switch (status) {
       case "completed":
-        return <Badge className="bg-green-100 text-green-800">Completed</Badge>
+        return <Badge className="bg-green-100 text-green-800">{t.admin.orders.status.completed}</Badge>
       case "cancelled":
-        return <Badge className="bg-red-100 text-red-800">Cancelled</Badge>
+        return <Badge className="bg-red-100 text-red-800">{t.admin.orders.status.cancelled}</Badge>
       default:
-        return <Badge className="bg-yellow-100 text-yellow-800">Pending</Badge>
+        return <Badge className="bg-yellow-100 text-yellow-800">{t.admin.orders.status.pending}</Badge>
     }
   }
 
@@ -60,38 +62,38 @@ export function OrderManagementTable() {
     <div className="flex-1 space-y-6 p-6 pt-0 bg-gray-50">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Order Management</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{t.admin.orders.title}</h1>
           <p className="text-muted-foreground">
-            View all token purchase orders created in the system.
+            {t.admin.orders.desc}
           </p>
         </div>
         <Button variant="outline" size="sm" onClick={fetchOrders} disabled={loading}>
-          Refresh
+          {t.admin.orders.refresh}
         </Button>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Orders ({orders.length})</CardTitle>
+          <CardTitle>{t.admin.orders.orders} ({orders.length})</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Order Code</TableHead>
-                <TableHead>User</TableHead>
-                <TableHead>Tokens</TableHead>
-                <TableHead>Price</TableHead>
-                <TableHead>Payment Method</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Created At</TableHead>
+                <TableHead>{t.admin.orders.table.orderCode}</TableHead>
+                <TableHead>{t.admin.orders.table.user}</TableHead>
+                <TableHead>{t.admin.orders.table.tokens}</TableHead>
+                <TableHead>{t.admin.orders.table.price}</TableHead>
+                <TableHead>{t.admin.orders.table.paymentMethod}</TableHead>
+                <TableHead>{t.admin.orders.table.status}</TableHead>
+                <TableHead>{t.admin.orders.table.createdAt}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {orders.length === 0 && !loading && (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center text-muted-foreground">
-                    No orders found.
+                    {t.admin.orders.table.empty}
                   </TableCell>
                 </TableRow>
               )}
@@ -122,14 +124,14 @@ export function OrderManagementTable() {
           {/* Pagination */}
           <div className="mt-4 flex items-center justify-between">
             <p className="text-sm text-muted-foreground">
-              Showing{" "}
+              {t.admin.manageUser.table.showing}{" "}
               {orders.length === 0
                 ? 0
                 : `${startIndex + 1}–${Math.min(
                     startIndex + pageSize,
                     orders.length
                   )}`}{" "}
-              of {orders.length} orders
+              {t.admin.manageUser.table.of} {orders.length} {t.admin.orders.orders.toLowerCase()}
             </p>
             <div className="flex items-center gap-2">
               <Button
@@ -141,10 +143,10 @@ export function OrderManagementTable() {
                   setCurrentPage((p) => Math.max(1, p - 1))
                 }
               >
-                Previous
+                {t.common.previous}
               </Button>
               <span className="text-sm text-muted-foreground">
-                Page {safePage} of {totalPages}
+                {t.common.page} {safePage} {t.admin.manageUser.table.of} {totalPages}
               </span>
               <Button
                 type="button"
@@ -155,7 +157,7 @@ export function OrderManagementTable() {
                   setCurrentPage((p) => Math.min(totalPages, p + 1))
                 }
               >
-                Next
+                {t.common.next}
               </Button>
             </div>
           </div>
@@ -164,5 +166,3 @@ export function OrderManagementTable() {
     </div>
   )
 }
-
-

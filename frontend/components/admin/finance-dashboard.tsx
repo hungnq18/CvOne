@@ -16,6 +16,7 @@ import { format } from "date-fns"
 import { ArrowUpRight, ArrowDownRight, CreditCard, Wallet, TrendingUp, Receipt } from "lucide-react"
 import { ProfitChart } from "@/components/admin/profit-chart"
 import { RevenueChart } from "@/components/hr/revenue-chart"
+import { useLanguage } from "@/providers/global_provider"
 
 function formatCurrencyVND(amount: number) {
   return new Intl.NumberFormat("vi-VN", {
@@ -25,18 +26,8 @@ function formatCurrencyVND(amount: number) {
   }).format(amount)
 }
 
-function getStatusBadge(status?: Order["status"]) {
-  switch (status) {
-    case "completed":
-      return <Badge className="bg-emerald-50 text-emerald-700 border border-emerald-200">Completed</Badge>
-    case "cancelled":
-      return <Badge className="bg-red-50 text-red-700 border border-red-200">Cancelled</Badge>
-    default:
-      return <Badge className="bg-amber-50 text-amber-700 border border-amber-200">Pending</Badge>
-  }
-}
-
 export function AdminFinanceDashboard() {
+  const { t } = useLanguage()
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(false)
 
@@ -55,6 +46,17 @@ export function AdminFinanceDashboard() {
 
     fetchOrders()
   }, [])
+
+  const getStatusBadge = (status?: Order["status"]) => {
+    switch (status) {
+      case "completed":
+        return <Badge className="bg-emerald-50 text-emerald-700 border border-emerald-200">{t.admin.finance.status.completed}</Badge>
+      case "cancelled":
+        return <Badge className="bg-red-50 text-red-700 border border-red-200">{t.admin.finance.status.cancelled}</Badge>
+      default:
+        return <Badge className="bg-amber-50 text-amber-700 border border-amber-200">{t.admin.finance.status.pending}</Badge>
+    }
+  }
 
   const {
     totalRevenue,
@@ -104,9 +106,9 @@ export function AdminFinanceDashboard() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Finance Overview</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{t.admin.finance.title}</h1>
           <p className="text-muted-foreground">
-            Tổng quan doanh thu, giao dịch và lợi nhuận của hệ thống.
+            {t.admin.finance.desc}
           </p>
         </div>
       </div>
@@ -116,11 +118,11 @@ export function AdminFinanceDashboard() {
         <Card className="bg-white">
           <CardContent className="p-6 flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Total Revenue</p>
+              <p className="text-sm font-medium text-muted-foreground">{t.admin.finance.totalRevenue}</p>
               <p className="text-2xl font-bold mt-1">{formatCurrencyVND(totalRevenue)}</p>
               <div className="flex items-center gap-1 mt-2 text-sm text-emerald-600">
                 <TrendingUp className="h-4 w-4" />
-                <span>Revenue Report</span>
+                <span>{t.admin.finance.revenueReport}</span>
               </div>
             </div>
             <div className="h-12 w-12 rounded-lg bg-emerald-50 flex items-center justify-center">
@@ -132,11 +134,11 @@ export function AdminFinanceDashboard() {
         <Card className="bg-white">
           <CardContent className="p-6 flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Total Transactions</p>
+              <p className="text-sm font-medium text-muted-foreground">{t.admin.finance.totalTransactions}</p>
               <p className="text-2xl font-bold mt-1">{totalOrders}</p>
               <div className="flex items-center gap-1 mt-2 text-sm text-blue-600">
                 <ArrowUpRight className="h-4 w-4" />
-                <span>Transaction List</span>
+                <span>{t.admin.finance.transactionList}</span>
               </div>
             </div>
             <div className="h-12 w-12 rounded-lg bg-blue-50 flex items-center justify-center">
@@ -148,7 +150,7 @@ export function AdminFinanceDashboard() {
         <Card className="bg-white">
           <CardContent className="p-6 flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Average Order Value</p>
+              <p className="text-sm font-medium text-muted-foreground">{t.admin.finance.avgOrderValue}</p>
               <p className="text-2xl font-bold mt-1">{formatCurrencyVND(averageOrderValue || 0)}</p>
             </div>
             <div className="h-12 w-12 rounded-lg bg-indigo-50 flex items-center justify-center">
@@ -160,10 +162,10 @@ export function AdminFinanceDashboard() {
         <Card className="bg-white">
           <CardContent className="p-6 flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Completion Rate</p>
+              <p className="text-sm font-medium text-muted-foreground">{t.admin.finance.completionRate}</p>
               <p className="text-2xl font-bold mt-1">{completionRate.toFixed(1)}%</p>
               <p className="text-xs text-muted-foreground mt-1">
-                {completedOrders} / {totalOrders} orders completed
+                {completedOrders} / {totalOrders} {t.admin.finance.ordersCompleted}
               </p>
             </div>
             <div className="h-12 w-12 rounded-lg bg-amber-50 flex items-center justify-center">
@@ -181,7 +183,7 @@ export function AdminFinanceDashboard() {
       <div className="grid gap-6 lg:grid-cols-2">
         <Card className="bg-white">
           <CardHeader>
-            <CardTitle>Revenue Report</CardTitle>
+            <CardTitle>{t.admin.finance.revenueReport}</CardTitle>
           </CardHeader>
           <CardContent>
             <RevenueChart />
@@ -190,7 +192,7 @@ export function AdminFinanceDashboard() {
 
         <Card className="bg-white">
           <CardHeader>
-            <CardTitle>Profit Report</CardTitle>
+            <CardTitle>{t.admin.finance.profitReport}</CardTitle>
           </CardHeader>
           <CardContent>
             <ProfitChart />
@@ -201,27 +203,27 @@ export function AdminFinanceDashboard() {
       {/* Transaction List */}
       <Card className="bg-white">
         <CardHeader>
-          <CardTitle>Transaction List (Latest)</CardTitle>
+          <CardTitle>{t.admin.finance.latestTransactions}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Order Code</TableHead>
-                  <TableHead>User</TableHead>
-                  <TableHead>Tokens</TableHead>
-                  <TableHead>Amount</TableHead>
-                  <TableHead>Payment Method</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Created At</TableHead>
+                  <TableHead>{t.admin.finance.table.orderCode}</TableHead>
+                  <TableHead>{t.admin.finance.table.user}</TableHead>
+                  <TableHead>{t.admin.finance.table.tokens}</TableHead>
+                  <TableHead>{t.admin.finance.table.amount}</TableHead>
+                  <TableHead>{t.admin.finance.table.paymentMethod}</TableHead>
+                  <TableHead>{t.admin.finance.table.status}</TableHead>
+                  <TableHead>{t.admin.finance.table.createdAt}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {latestOrders.length === 0 && !loading && (
                   <TableRow>
                     <TableCell colSpan={7} className="text-center text-muted-foreground">
-                      Chưa có giao dịch nào.
+                      {t.admin.finance.table.empty}
                     </TableCell>
                   </TableRow>
                 )}
@@ -256,5 +258,3 @@ export function AdminFinanceDashboard() {
     </div>
   )
 }
-
-
