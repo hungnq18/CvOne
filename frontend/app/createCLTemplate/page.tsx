@@ -238,6 +238,43 @@ const CoverLetterBuilderContent = () => {
         }
     }, [clId, templateId, clFilename, jdFilename, type, router]);
 
+    useEffect(() => {
+        const loadFromLocalStorage = async () => {
+             // Check for data passed from uploadJD page via localStorage
+            const coverLetterDataString = localStorage.getItem('coverLetterData');
+
+            // Chỉ load từ localStorage nếu KHÔNG PHẢI là các trường hợp khác (edit CL cũ, extract file, hay AI generate flow cũ)
+            if (coverLetterDataString && !clId && !clFilename && !jdFilename && type !== 'generate-by-ai') {
+                try {
+                    const coverLetterData = JSON.parse(coverLetterDataString);
+
+                    // Nếu có templateId trong data, fetch và set template
+                    if (coverLetterData.templateId) {
+                         const templateData = await getCLTemplateById(coverLetterData.templateId);
+                         if (templateData) {
+                            setSelectedTemplateData(templateData);
+                            setTemplateName(templateData.title.toLowerCase() as TemplateType);
+                         }
+                    }
+
+                    // Fill data vào form
+                    if (coverLetterData.data) {
+                         setLetterData(prev => ({
+                            ...prev,
+                            ...coverLetterData.data,
+                            // Đảm bảo date không bị undefined
+                            date: coverLetterData.data.date || new Date().toISOString().split('T')[0]
+                        }));
+                        // toast.success("Đã tải dữ liệu từ phân tích AI!");
+                    }
+                } catch (e) {
+                    console.error("Error parsing cover letter data from local storage", e);
+                }
+            }
+        }
+        loadFromLocalStorage();
+    }, [clId, clFilename, jdFilename, type]);
+
     const getInitialData = () => {
         const currentDate = new Date().toISOString().split('T')[0];
         if (!selectedTemplateData || !selectedTemplateData.data) {
@@ -260,7 +297,12 @@ const CoverLetterBuilderContent = () => {
     };
 
     useEffect(() => {
+        const hasLocalStorageData = !!localStorage.getItem('coverLetterData');
+
         if (!clId && !clFilename && !jdFilename) {
+            if (hasLocalStorageData && type !== 'generate-by-ai') {
+                return;
+            }
             setLetterData(getInitialData());
         }
     }, [selectedTemplateData, initialFirstName, initialLastName, clId, clFilename, jdFilename]);
@@ -724,15 +766,23 @@ const CoverLetterBuilderContent = () => {
                     useCORS: true,
                     logging: true,
                     allowTaint: true,
+                    // Fix lỗi text bị lệch/nhảy chữ khi có letter-spacing
+                    onclone: (clonedDoc) => {
+                        const elements = clonedDoc.querySelectorAll('.tracking-wider');
+                        elements.forEach((el) => {
+                            (el as HTMLElement).style.letterSpacing = 'normal';
+                        });
+                    }
                 });
 
-                const pdf = new jsPDF({
-                    orientation: 'portrait',
-                    unit: 'px',
-                    format: [canvas.width, canvas.height]
-                });
+                // Tạo PDF chuẩn A4 (đơn vị mm)
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                const pdfWidth = pdf.internal.pageSize.getWidth();
 
-                pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, canvas.width, canvas.height);
+                // Tính toán chiều cao ảnh để vừa khít chiều rộng trang A4
+                const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+
+                pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, pdfWidth, imgHeight);
                 pdf.save(clTitle ? `${clTitle}.pdf` : 'cover-letter.pdf');
             } catch (error) {
                 console.error("Error generating PDF:", error);
@@ -804,14 +854,14 @@ const CoverLetterBuilderContent = () => {
                             className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-medium transition-colors"
                             onClick={handleDownloadPdf}
                         >
-                            Download as PDF
+                            Download
                         </button>
                         <button
                             className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-medium transition-colors"
                             onClick={handleFinishLetter}
                             disabled={isSaving}
                         >
-                            {isSaving ? "Saving..." : "Finish Letter"}
+                            {isSaving ? "Saving..." : "Complete"}
                         </button>
                     </div>
                 </div>

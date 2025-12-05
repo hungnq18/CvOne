@@ -36,7 +36,7 @@ export default function Page() {
               <VerticalAdvertisementSection position="left" />
             </div>
             {/* Nội dung chính ở giữa */}
-            <div className="flex-1">
+            <div className="flex-1 max-w-7xl mx-auto w-full">
               <Header />
               <TemplateSection clTemplates={clTemplates} />
             </div>
