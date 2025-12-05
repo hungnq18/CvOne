@@ -1,8 +1,6 @@
 import { fetchWithAuth } from "./apiClient";
 import { API_ENDPOINTS } from './apiConfig';
 
-// This interface is a placeholder based on frontend components.
-// It should be verified against the actual backend DTO/schema.
 export interface Voucher {
     _id: string;
     name: string;
@@ -14,6 +12,7 @@ export interface Voucher {
     minOrderValue?: number;
     usageLimit: number;
     perUserLimit: number;
+    durationDays?: number;
     startDate: string;
     endDate: string;
     status?: "active" | "expired" | "used"; // Assuming status is handled by frontend based on dates
@@ -53,7 +52,13 @@ export const createVoucher = async (voucherData: Omit<Voucher, '_id' | 'status'>
  * @returns Promise with the updated voucher data
  */
 export const updateVoucher = async (id: string, voucherData: Partial<Omit<Voucher, '_id'>>): Promise<Voucher> => {
-    const response = await fetchWithAuth(API_ENDPOINTS.VOUCHER.UPDATE(id), {
+    // Chọn đúng endpoint theo loại voucher (direct / saveable)
+    const endpoint =
+        voucherData.type === "saveable"
+            ? API_ENDPOINTS.VOUCHER.UPDATE_SAVEABLE(id)
+            : API_ENDPOINTS.VOUCHER.UPDATE_DIRECT(id)
+
+    const response = await fetchWithAuth(endpoint, {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json',

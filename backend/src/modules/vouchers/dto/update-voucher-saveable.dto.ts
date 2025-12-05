@@ -47,11 +47,11 @@ export class UpdateVoucherSaveableDto {
 
   @IsDateString()
   @IsNotEmpty()
-  startDate: Date;
+  startDate: string;
 
   @IsDateString()
   @IsNotEmpty()
-  endDate: Date;
+  endDate: string;
 
   @IsBoolean()
   @IsOptional()

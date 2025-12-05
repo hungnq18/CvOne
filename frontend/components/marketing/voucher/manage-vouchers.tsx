@@ -15,7 +15,7 @@ import {
 import { getAllVouchers, deleteVoucher, Voucher } from "@/api/voucherApi"
 import { AddVoucherModal } from "./add-voucher-modal"
 import { EditVoucherModal } from "./edit-voucher-modal"
-import { toast } from "@/components/ui/use-toast"
+import { showSuccessToast, showErrorToast } from "@/utils/popUpUtils"
 import {
     AlertDialog,
     AlertDialogAction,
@@ -64,7 +64,7 @@ export function ManageVouchers() {
             setVouchers(data);
         } catch (error) {
             console.error("Failed to fetch vouchers", error);
-            toast({ title: "Error", description: "Could not fetch vouchers.", variant: "destructive" });
+            showErrorToast("Error", "Could not fetch vouchers.");
         } finally {
             setIsLoading(false);
         }
@@ -88,10 +88,13 @@ export function ManageVouchers() {
         if (selectedVoucher) {
             try {
                 await deleteVoucher(selectedVoucher._id);
-                toast({ title: "Success", description: "Voucher deleted successfully." });
+                showSuccessToast("Success", `Voucher "${selectedVoucher.name}" deleted successfully.`);
                 fetchVouchers(); // Refresh the list
-            } catch (error) {
-                 toast({ title: "Error", description: "Failed to delete voucher.", variant: "destructive" });
+            } catch (error: any) {
+                showErrorToast(
+                    "Error",
+                    error.message || "Failed to delete voucher."
+                );
             } finally {
                 setIsDeleteDialogOpen(false);
                 setSelectedVoucher(null);
