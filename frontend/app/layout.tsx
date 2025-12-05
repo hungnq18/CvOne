@@ -1,7 +1,5 @@
 import StyledComponentsRegistry from "@/api/registry";
 import IconChatAndNotification from "@/components/chatAndNotification/iconChatAndNotification";
-import FooterWrapper from "@/components/ui/footer-wrapper";
-import { Header } from "@/components/ui/header";
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/providers/auth-provider";
 import { SocketProvider } from "@/providers/SocketProvider";
@@ -14,9 +12,9 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { cookies } from "next/headers";
 import React from "react";
-import Script from "next/script";
 import "./globals.css";
 import "antd/dist/reset.css";
+import ConditionalLayout from "@/components/layouts/conditional-layout";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -61,16 +59,9 @@ export default function RootLayout({
                 >
                   <SocketProvider>
                     <CVProvider>
-                      {role === "admin" || role === "mkt" ? (
-                        children
-                      ) : (
-                        <div className="flex flex-col flex-1">
-                          <Header />
-                          <main className="flex-1 min-h-0">{children}</main>
-
-                          <FooterWrapper />
-                        </div>
-                      )}
+                      <ConditionalLayout role={role}>
+                        {children}
+                      </ConditionalLayout>
                       <IconChatAndNotification /> {/* use */}
                       <Toaster /> {/* For all toast notifications (shadcn) */}
                     </CVProvider>

@@ -61,13 +61,29 @@ export function middleware(request: NextRequest) {
   const token = request.cookies.get("token")?.value;
   const path = request.nextUrl.pathname;
 
+  // Allow access to admin and marketing login pages explicitly
+  if (path === "/admin/login" || path === "/marketing/login") {
+    return NextResponse.next();
+  }
+
   const requiredRoles = Object.entries(roleBasedPaths).find(([route]) =>
     path === route || path.startsWith(`${route}/`)
   )?.[1];
 
+  // Helper to determine login URL based on path
+  const getLoginUrl = () => {
+    if (path.startsWith("/admin")) {
+      return "/admin/login";
+    }
+    if (path.startsWith("/marketing")) {
+      return "/marketing/login";
+    }
+    return "/login";
+  };
+
   // Route yêu cầu role nhưng chưa login
   if (requiredRoles && !token) {
-    const url = new URL("/login", request.url);
+    const url = new URL(getLoginUrl(), request.url);
     url.searchParams.set("callbackUrl", request.url);
     return NextResponse.redirect(url);
   }
@@ -79,14 +95,16 @@ export function middleware(request: NextRequest) {
 
       // Token hết hạn
       if (decoded.exp < currentTime) {
-        const response = NextResponse.redirect(new URL("/login", request.url));
+        const response = NextResponse.redirect(new URL(getLoginUrl(), request.url));
         response.cookies.delete("token");
         return response;
       }
 
       // Kiểm tra role
       if (requiredRoles && !requiredRoles.includes(decoded.role)) {
-        const response = NextResponse.redirect(new URL("/login", request.url));
+        // Nếu không đúng role, redirect về trang login phù hợp
+        const response = NextResponse.redirect(new URL(getLoginUrl(), request.url));
+        // response.cookies.delete("token"); // Có thể giữ token nếu muốn switch account? Thường là xóa
         response.cookies.delete("token");
         return response;
       }
@@ -98,7 +116,7 @@ export function middleware(request: NextRequest) {
       }
 
     } catch (err) {
-      const response = NextResponse.redirect(new URL("/login", request.url));
+      const response = NextResponse.redirect(new URL(getLoginUrl(), request.url));
       response.cookies.delete("token");
       return response;
     }
