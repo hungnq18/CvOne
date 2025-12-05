@@ -15,8 +15,10 @@ import {
 import { getPendingJobsForAdmin, approveJobByAdmin, Job } from "@/api/jobApi"
 import { format } from "date-fns"
 import { toast } from "react-hot-toast"
+import { useLanguage } from "@/providers/global_provider"
 
 export function JobApprovalTable() {
+  const { t } = useLanguage()
   const [jobs, setJobs] = useState<Job[]>([])
   const [page, setPage] = useState(1)
   const [limit] = useState(10)
@@ -32,7 +34,7 @@ export function JobApprovalTable() {
       setPage(res.page || pageNumber)
     } catch (error) {
       console.error("Failed to fetch pending jobs:", error)
-      toast.error("Failed to load pending jobs")
+      toast.error(t.admin.jobApproval.messages.loadError)
     } finally {
       setLoading(false)
     }
@@ -45,11 +47,11 @@ export function JobApprovalTable() {
   const handleApprove = async (jobId: string) => {
     try {
       await approveJobByAdmin(jobId)
-      toast.success("Job approved successfully")
+      toast.success(t.admin.jobApproval.messages.approveSuccess)
       fetchJobs(page)
     } catch (error) {
       console.error("Failed to approve job:", error)
-      toast.error("Failed to approve job")
+      toast.error(t.admin.jobApproval.messages.approveError)
     }
   }
 
@@ -58,33 +60,33 @@ export function JobApprovalTable() {
   return (
     <div className="flex-1 space-y-6 p-6 pt-0 bg-gray-50">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Approve Jobs</h1>
+        <h1 className="text-3xl font-bold tracking-tight">{t.admin.jobApproval.title}</h1>
         <p className="text-muted-foreground">
-          Review and approve jobs posted by HR before they appear to candidates.
+          {t.admin.jobApproval.desc}
         </p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Pending Jobs ({total})</CardTitle>
+          <CardTitle>{t.admin.jobApproval.pendingJobs} ({total})</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Title</TableHead>
-                <TableHead>HR</TableHead>
-                <TableHead>Location</TableHead>
-                <TableHead>Posting Date</TableHead>
-                <TableHead>Deadline</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead>{t.admin.jobApproval.table.title}</TableHead>
+                <TableHead>{t.admin.jobApproval.table.hr}</TableHead>
+                <TableHead>{t.admin.jobApproval.table.location}</TableHead>
+                <TableHead>{t.admin.jobApproval.table.postingDate}</TableHead>
+                <TableHead>{t.admin.jobApproval.table.deadline}</TableHead>
+                <TableHead className="text-right">{t.admin.jobApproval.table.actions}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {jobs.length === 0 && !loading && (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center text-muted-foreground">
-                    No pending jobs to approve.
+                    {t.admin.jobApproval.table.empty}
                   </TableCell>
                 </TableRow>
               )}
@@ -118,7 +120,7 @@ export function JobApprovalTable() {
                       onClick={() => handleApprove(job._id)}
                       disabled={loading}
                     >
-                      Approve
+                      {t.admin.jobApproval.approve}
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -128,7 +130,7 @@ export function JobApprovalTable() {
 
           <div className="mt-4 flex items-center justify-between">
             <p className="text-sm text-muted-foreground">
-              Showing page {page} of {totalPages}
+              {t.admin.manageUser.table.showing} {t.common.page} {page} {t.admin.manageUser.table.of} {totalPages}
             </p>
             <div className="flex items-center gap-2">
               <Button
@@ -138,7 +140,7 @@ export function JobApprovalTable() {
                 disabled={page === 1 || loading}
                 onClick={() => fetchJobs(page - 1)}
               >
-                Previous
+                {t.common.previous}
               </Button>
               <Button
                 type="button"
@@ -147,7 +149,7 @@ export function JobApprovalTable() {
                 disabled={page === totalPages || loading || total === 0}
                 onClick={() => fetchJobs(page + 1)}
               >
-                Next
+                {t.common.next}
               </Button>
             </div>
           </div>
@@ -156,4 +158,3 @@ export function JobApprovalTable() {
     </div>
   )
 }
-

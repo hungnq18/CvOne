@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import styled from "styled-components";
-import { Ad, getAdsForUser } from "@/api/adsApi";
+import { Banner, getBannersForUser } from "@/api/bannerApi";
 
 type BannerPosition = "top" | "bottom" | "center" | "left" | "right";
 
@@ -108,7 +108,7 @@ const VerticalAdImage = styled(AdImage)`
 `;
 
 const useBannerByPosition = (position: BannerPosition) => {
-  const [banner, setBanner] = useState<Ad | null>(null);
+  const [banner, setBanner] = useState<Banner | null>(null);
   const [hidden, setHidden] = useState(false);
 
   useEffect(() => {
@@ -116,15 +116,15 @@ const useBannerByPosition = (position: BannerPosition) => {
 
     const fetchBanner = async () => {
       try {
-        const ads = await getAdsForUser();
+        const banners = await getBannersForUser();
         if (!isMounted) return;
 
-        const found = ads.find((ad) => ad.position === position);
+        const found = banners.find((banner) => banner.position === position);
         if (found) {
           setBanner(found);
         }
       } catch (error) {
-        console.error("Failed to fetch ads for position:", position, error);
+        console.error("Failed to fetch banners for position:", position, error);
       }
     };
 

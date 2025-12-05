@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import Image from "next/image";
-import { Ad, getAdsForUser } from "@/api/adsApi";
+import { Banner, getBannersForUser } from "@/api/bannerApi";
 
 const Overlay = styled.div`
   position: fixed;
@@ -51,7 +51,7 @@ const AdImage = styled(Image)`
 `;
 
 const PopupAd: React.FC = () => {
-  const [banner, setBanner] = useState<Ad | null>(null);
+  const [banner, setBanner] = useState<Banner | null>(null);
   const [hidden, setHidden] = useState(false);
 
   useEffect(() => {
@@ -67,22 +67,22 @@ const PopupAd: React.FC = () => {
 
     const fetchPopupBanner = async () => {
       try {
-        const ads = await getAdsForUser();
+        const banners = await getBannersForUser();
         if (!isMounted) return;
 
-        const found = ads.find(
-          (ad) =>
-            ad.position === "center" &&
-            ad.imageUrl &&
-            ad.redirectUrl &&
-            ad.isActive !== false,
+        const found = banners.find(
+          (banner) =>
+            banner.position === "center" &&
+            banner.imageUrl &&
+            banner.redirectUrl &&
+            banner.isActive !== false,
         );
 
         if (found) {
           setBanner(found);
         }
       } catch (error) {
-        console.error("Failed to fetch popup ad:", error);
+        console.error("Failed to fetch popup banner:", error);
       }
     };
 
