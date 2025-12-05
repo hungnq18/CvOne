@@ -140,7 +140,7 @@ const HoverableWrapper: React.FC<HoverableWrapperProps> = ({
   return (
     <div className={finalClassName} onClick={() => onClick?.(sectionId)}>
        {/* --- DRAG HANDLE --- */}
-       {!isPdfMode && (
+       {!isPdfMode && dragHandleProps && (
         <div
           {...dragHandleProps}
           className="absolute -left-3 top-1/2 -translate-y-1/2 -translate-x-full 
@@ -161,7 +161,7 @@ const HoverableWrapper: React.FC<HoverableWrapperProps> = ({
       )}
 
       {children}
-      {showBorder && (
+      {showBorder && !isPdfMode && (
         <>
           <div
             className={`absolute inset-0 border-4 border-[#8BAAFC] opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none ${
@@ -766,11 +766,19 @@ const CVTemplateInspired: React.FC<CVTemplateProps> = ({
     return (
       <div className="bg-white font-sans text-gray-800 flex flex-row min-h-screen">
         <div className="w-[65%]">
-          <div className="flex items-center gap-6 mb-12">{headerSections.map(id => renderSection(id, undefined, false, 1))}</div>
-          {mainSections.map(id => renderSection(id, undefined, false, 3))}
+          <div className="flex items-center gap-6 mb-12">
+            {headerSections.map(id => (
+              <div key={id}>{renderSection(id, undefined, false, 1)}</div>
+            ))}
+          </div>
+          {mainSections.map(id => (
+            <div key={id}>{renderSection(id, undefined, false, 3)}</div>
+          ))}
         </div>
         <div className="w-[35%] bg-gray-50 p-4">
-          {sidebarSections.map(id => renderSection(id, undefined, false, 2))}
+          {sidebarSections.map(id => (
+            <div key={id}>{renderSection(id, undefined, false, 2)}</div>
+          ))}
         </div>
       </div>
     );

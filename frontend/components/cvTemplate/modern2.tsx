@@ -137,7 +137,7 @@ const HoverableWrapper: React.FC<HoverableWrapperProps> = ({
       onClick={() => onClick?.(sectionId)}
     >
        {/* --- DRAG HANDLE --- */}
-       {!isPdfMode && (
+       {!isPdfMode && dragHandleProps && (
         <div
           {...dragHandleProps}
           className="absolute -left-4 top-1/2 -translate-y-1/2 -translate-x-full 
@@ -154,10 +154,14 @@ const HoverableWrapper: React.FC<HoverableWrapperProps> = ({
       )}
 
       {children}
-      <div className="absolute inset-0 border-2 border-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
-      <div className="absolute top-0 left-6 -translate-y-1/2 bg-blue-600 text-white text-xs font-semibold tracking-wider px-4 py-1.5 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none rounded-full shadow-md z-10">
-        {label}
-      </div>
+      {!isPdfMode && (
+        <>
+          <div className="absolute inset-0 border-2 border-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+          <div className="absolute top-0 left-6 -translate-y-1/2 bg-blue-600 text-white text-xs font-semibold tracking-wider px-4 py-1.5 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none rounded-full shadow-md z-10">
+            {label}
+          </div>
+        </>
+      )}
     </div>
   );
 };
@@ -736,7 +740,9 @@ const Modern2: React.FC<Modern2Props> = ({
         <style dangerouslySetInnerHTML={{ __html: styles }} />
         <div className="bg-slate-50 min-h-screen font-sans">
           <div className="max-w-4xl mx-auto bg-white shadow-sm min-h-screen pb-8">
-            {sections.map((id) => renderSectionContent(id))}
+            {sections.map((id) => (
+              <div key={id}>{renderSectionContent(id)}</div>
+            ))}
           </div>
         </div>
       </>

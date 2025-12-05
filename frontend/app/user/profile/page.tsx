@@ -28,7 +28,7 @@ function getUserIdFromServerToken(): string | null {
       null
     );
   } catch (e) {
-    console.warn("Failed to decode token on server", e);
+    // console.warn("Failed to decode token on server", e);
     return null;
   }
 }

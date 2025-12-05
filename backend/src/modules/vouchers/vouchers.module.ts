@@ -5,8 +5,6 @@ import { UsersModule } from "../users/users.module";
 import { VouchersController } from "./vouchers.controller";
 import { VouchersService } from "./vouchers.service";
 import { Voucher, VoucherSchema } from "./schemas/voucher.schema";
-import { NotificationsModule } from "../notifications/notifications.module";
-import { CreditsModule } from "../credits/credits.module";
 
 @Module({
   imports: [

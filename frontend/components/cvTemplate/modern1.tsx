@@ -136,7 +136,7 @@ const HoverableWrapper: React.FC<HoverableWrapperProps> = ({
       onClick={() => onClick?.(sectionId)}
     >
       {/* --- NÚT KÉO THẢ --- */}
-      {!isPdfMode && (
+      {!isPdfMode && dragHandleProps && (
         <div
           {...dragHandleProps}
           className="absolute -left-3 lg:-left-5 top-1/2 -translate-y-1/2 -translate-x-full 
@@ -155,22 +155,26 @@ const HoverableWrapper: React.FC<HoverableWrapperProps> = ({
       {children}
       
       {/* --- VIỀN HOVER --- */}
-      <div
-        className={`absolute inset-0 ${borderRadiusClass} border-4 border-[#8BAAFC] opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none`}
-      ></div>
-      
-      {/* --- LABEL --- */}
-      <div
-        className={`absolute top-0 left-4 -translate-y-1/2 bg-[#8BAAFC] text-white text-sm font-bold tracking-wide px-3 py-1 opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none`}
-        style={{
-          borderRadius:
-            sectionId === "avatar" ? "4px 10px 4px 10px" : "4px 10px 0 0",
-          marginTop: "-2%",
-          left: sectionId === "avatar" ? "-4%" : "1%",
-        }}
-      >
-        {label}
-      </div>
+      {!isPdfMode && (
+        <>
+          <div
+            className={`absolute inset-0 ${borderRadiusClass} border-4 border-[#8BAAFC] opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none`}
+          ></div>
+          
+          {/* --- LABEL --- */}
+          <div
+            className={`absolute top-0 left-4 -translate-y-1/2 bg-[#8BAAFC] text-white text-sm font-bold tracking-wide px-3 py-1 opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none`}
+            style={{
+              borderRadius:
+                sectionId === "avatar" ? "4px 10px 4px 10px" : "4px 10px 0 0",
+              marginTop: "-2%",
+              left: sectionId === "avatar" ? "-4%" : "1%",
+            }}
+          >
+            {label}
+          </div>
+        </>
+      )}
     </div>
   );
 };
@@ -673,10 +677,14 @@ const ModernCV1: React.FC<ModernCV1Props> = ({
     return (
       <div className="bg-white font-sans text-gray-800 flex flex-col lg:flex-row min-h-screen">
         <div className="w-full lg:w-[38%] bg-[#004d40] text-white flex flex-col gap-8 py-8 lg:py-12">
-          {leftSections.map((id) => renderSectionContent(id))}
+          {leftSections.map((id) => (
+            <div key={id}>{renderSectionContent(id)}</div>
+          ))}
         </div>
         <div className="w-full lg:w-[62%]">
-          {rightSections.map((id) => renderSectionContent(id))}
+          {rightSections.map((id) => (
+            <div key={id}>{renderSectionContent(id)}</div>
+          ))}
         </div>
       </div>
     );

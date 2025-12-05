@@ -1,6 +1,6 @@
-export const API_URL = "http://localhost:8000/api";
+// export const API_URL = "http://localhost:8000/api";
 
-// export const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+export const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 // API Endpoints
 export const API_ENDPOINTS = {
@@ -136,12 +136,14 @@ export const API_ENDPOINTS = {
     SHARE_CV: "/mail/send-cv-pdf", // api nhận vào email, base64 pdf, cvTitle để gửi pdf có sẵn qua mail
   },
   VOUCHER: {
-    GET_FOR_USER: "/vouchers/for-user",
+    GET_FOR_USER: "/credits/vouchers/for-user",
     GET_FOR_MKT: "/vouchers/all",
     GET_BY_ID: (id: string) => `/vouchers/${id}`,
     POST_VOUCHER_DIRECT: "/vouchers/direct", // BODY:{name,description,type,discountValue,discountType,maxDiscountValue,minOrderValue,usageLimit,perUserLimit,startDate,endDate}
     POST_VOUCHER_SAVEABLE: "/vouchers/saveable", // BODY:{name,description,type,discountValue,discountType,maxDiscountValue,minOrderValue,usageLimit,perUserLimit,startDate,endDate}
-    UPDATE: (id: string) => `/vouchers/${id}`,
+    UPDATE_DIRECT: (id: string) => `/vouchers/${id}/direct`, //PUT
+    UPDATE_SAVEABLE: (id: string) => `/vouchers/${id}/saveable`, //PUT
+
     DELETE: (id: string) => `/vouchers/${id}`,
   },
   ORDER: {
