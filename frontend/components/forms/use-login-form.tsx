@@ -5,6 +5,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { DecodedToken } from "@/middleware";
 import { useAuth } from "@/providers/auth-provider";
 import { useLanguage } from "@/providers/global_provider";
+import { showErrorToast } from "@/utils/popUpUtils";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
 import { useRouter } from "next/navigation";
@@ -48,6 +49,7 @@ const translations = {
     loading: "Loading...",
     networkError: "Network error. Please check your connection.",
     or: "OR",
+    unauthorizedRole: "Your account is not authorized to access this page.",
   },
   vi: {
     title: "Đăng nhập",
@@ -74,10 +76,11 @@ const translations = {
     loading: "Đang tải...",
     networkError: "Lỗi kết nối. Vui lòng kiểm tra kết nối của bạn.",
     or: "HOẶC",
+    unauthorizedRole: "Tài khoản của bạn không có quyền truy cập trang này.",
   },
 };
 
-export function useLoginForm() {
+export function useLoginForm(allowedRoles?: string[]) {
   const { refreshUser } = useAuth();
   const [formData, setFormData] = useState<LoginFormData>({
     email: "",
@@ -125,11 +128,17 @@ export function useLoginForm() {
 
       const { access_token } = response.data;
 
+      // Decode token để lấy role
+      const decoded: DecodedToken = jwtDecode(access_token);
+
+      // Check allowed roles
+      if (allowedRoles && allowedRoles.length > 0 && !allowedRoles.includes(decoded.role)) {
+        throw new Error("UNAUTHORIZED_ROLE");
+      }
+
       // Lưu token vào cookie
       document.cookie = `token=${access_token}; path=/; max-age=3600; SameSite=Lax; Secure`;
 
-      // Decode token để lấy role
-      const decoded: DecodedToken = jwtDecode(access_token);
       const params = new URLSearchParams(window.location.search);
       const callbackUrl = params.get("callbackUrl");
       if (callbackUrl) {
@@ -158,7 +167,12 @@ export function useLoginForm() {
     } catch (err: any) {
       let msg = t.networkError;
 
-      if (err?.response?.status === 401) {
+      if (err.message === "UNAUTHORIZED_ROLE") {
+        // Use showErrorToast for unauthorized role
+        showErrorToast(t.loginFailed, t.unauthorizedRole);
+        setIsLoading(false);
+        return; // Don't set error state to avoid red text in form
+      } else if (err?.response?.status === 401) {
         // Check if it's email verification error
         const errorMessage = err?.response?.data?.message || "";
         if (
