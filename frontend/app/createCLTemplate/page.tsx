@@ -238,6 +238,43 @@ const CoverLetterBuilderContent = () => {
         }
     }, [clId, templateId, clFilename, jdFilename, type, router]);
 
+    useEffect(() => {
+        const loadFromLocalStorage = async () => {
+             // Check for data passed from uploadJD page via localStorage
+            const coverLetterDataString = localStorage.getItem('coverLetterData');
+
+            // Chỉ load từ localStorage nếu KHÔNG PHẢI là các trường hợp khác (edit CL cũ, extract file, hay AI generate flow cũ)
+            if (coverLetterDataString && !clId && !clFilename && !jdFilename && type !== 'generate-by-ai') {
+                try {
+                    const coverLetterData = JSON.parse(coverLetterDataString);
+
+                    // Nếu có templateId trong data, fetch và set template
+                    if (coverLetterData.templateId) {
+                         const templateData = await getCLTemplateById(coverLetterData.templateId);
+                         if (templateData) {
+                            setSelectedTemplateData(templateData);
+                            setTemplateName(templateData.title.toLowerCase() as TemplateType);
+                         }
+                    }
+
+                    // Fill data vào form
+                    if (coverLetterData.data) {
+                         setLetterData(prev => ({
+                            ...prev,
+                            ...coverLetterData.data,
+                            // Đảm bảo date không bị undefined
+                            date: coverLetterData.data.date || new Date().toISOString().split('T')[0]
+                        }));
+                        // toast.success("Đã tải dữ liệu từ phân tích AI!");
+                    }
+                } catch (e) {
+                    console.error("Error parsing cover letter data from local storage", e);
+                }
+            }
+        }
+        loadFromLocalStorage();
+    }, [clId, clFilename, jdFilename, type]);
+
     const getInitialData = () => {
         const currentDate = new Date().toISOString().split('T')[0];
         if (!selectedTemplateData || !selectedTemplateData.data) {
@@ -260,7 +297,12 @@ const CoverLetterBuilderContent = () => {
     };
 
     useEffect(() => {
+        const hasLocalStorageData = !!localStorage.getItem('coverLetterData');
+
         if (!clId && !clFilename && !jdFilename) {
+            if (hasLocalStorageData && type !== 'generate-by-ai') {
+                return;
+            }
             setLetterData(getInitialData());
         }
     }, [selectedTemplateData, initialFirstName, initialLastName, clId, clFilename, jdFilename]);

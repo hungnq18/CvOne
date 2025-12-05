@@ -8,48 +8,48 @@ import { useLanguage } from "@/providers/global_provider"
 export function AppSidebar() {
   const { t } = useLanguage()
 
-  const menuItems = [
-    {
+const menuItems = [
+  {
       title: t.admin.sidebar.dashboard,
-      url: "/admin",
-      icon: LayoutDashboard,
-    },
-    {
+    url: "/admin",
+    icon: LayoutDashboard,
+  },
+  {
       title: t.admin.sidebar.manageUser,
-      url: "/admin/user",
-      icon: Users,
-    },
-    {
+    url: "/admin/user",
+    icon: Users,
+  },
+  {
       title: t.admin.sidebar.manageCvTemplate,
-      url: "/admin/cv-template",
-      icon: FileText,
-    },
-    {
+    url: "/admin/cv-template",
+    icon: FileText,
+  },
+  {
       title: t.admin.sidebar.manageClTemplate,
-      url: "/admin/cl-template",
-      icon: Mail,
-    },
-    {
+    url: "/admin/cl-template",
+    icon: Mail,
+  },
+  {
       title: t.admin.sidebar.approveJobs,
-      url: "/admin/job-approval",
-      icon: BriefcaseBusiness,
-    },
-    {
+    url: "/admin/job-approval",
+    icon: BriefcaseBusiness,
+  },
+  {
       title: t.admin.sidebar.manageRegisterHr,
-      url: "/admin/newHrRegister",
-      icon: Briefcase,
-    },
-    {
+    url: "/admin/newHrRegister",
+    icon: Briefcase,
+  },
+  {
       title: t.admin.sidebar.orders,
-      url: "/admin/orders",
-      icon: CreditCard,
-    },
-    {
+    url: "/admin/orders",
+    icon: CreditCard,
+  },
+  {
       title: t.admin.sidebar.finance,
-      url: "/admin/finance",
-      icon: LineChart,
-    },
-  ]
+    url: "/admin/finance",
+    icon: LineChart,
+  },
+]
 
   return <DashboardSidebarShared menuItems={menuItems} />
 }

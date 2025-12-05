@@ -1,4 +1,4 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { Injectable, Logger, HttpException, HttpStatus } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import * as fs from "fs";
 import OpenAI from "openai";
@@ -169,7 +169,8 @@ Rules:
     templateId: string,
     userId: string
   ) {
-    const promptSystem = `You are a precise and reliable AI that extracts structured data from cover letters.
+    try {
+      const promptSystem = `You are a precise and reliable AI that extracts structured data from cover letters.
 
     Your job:
     - Read the provided Cover Letter and Job Description.
@@ -177,7 +178,7 @@ Rules:
     - Output a complete JSON object in the same language as the Job Description.
     - Always fill all fields, inferring when missing.
     - Maintain a formal, professional tone.
-    
+
     Output strictly this JSON structure:
     {
       "firstName": "",
@@ -192,70 +193,77 @@ Rules:
       "closing": "",
       "signature": ""
     }
-    
+
     Rules:
     - Output **only** a valid JSON object (no markdown, no backticks, no comments).
     - Do **not** include explanations or formatting.`;
-    const prompt = `
+      const prompt = `
     Cover Letter:
     ${coverLetter}
-    
+
     Job Description:
     ${jobDescription}
 `;
 
-    // 3. Call OpenAI
-    const completion = await this.openaiApiService
-      .getOpenAI()
-      .chat.completions.create({
-        model: "gpt-4o",
-        messages: [
-          {
-            role: "system",
-            content: promptSystem,
-          },
-          {
-            role: "user",
-            content: prompt,
-          },
-        ],
-      });
+      // 3. Call OpenAI
+      const completion = await this.openaiApiService
+        .getOpenAI()
+        .chat.completions.create({
+          model: "gpt-4o",
+          messages: [
+            {
+              role: "system",
+              content: promptSystem,
+            },
+            {
+              role: "user",
+              content: prompt,
+            },
+          ],
+        });
 
-    let response = completion.choices[0]?.message?.content?.trim();
+      let response = completion.choices[0]?.message?.content?.trim();
 
-    if (!response) throw new Error("No response from OpenAI");
+      if (!response) throw new Error("No response from OpenAI");
 
-    response = response
-      .replace(/```json/i, "")
-      .replace(/```/g, "")
-      .trim();
+      response = response
+        .replace(/```json/i, "")
+        .replace(/```/g, "")
+        .trim();
 
-    let parsed;
-    try {
-      parsed = JSON.parse(response);
-    } catch (err) {
-      console.error("Raw response from OpenAI:", response);
-      throw new Error("Invalid JSON returned from OpenAI: " + err.message);
+      let parsed;
+      try {
+        parsed = JSON.parse(response);
+      } catch (err) {
+        console.error("Raw response from OpenAI:", response);
+        throw new Error("Invalid JSON returned from OpenAI: " + err.message);
+      }
+
+      const usage = completion.usage || {
+        prompt_tokens: 0,
+        completion_tokens: 0,
+        total_tokens: 0,
+      };
+      console.log("Usage cover letter:", usage);
+      if (userId) {
+        await this.logService.createLog({
+          userId: userId,
+          feature: "coverLetterAI",
+          tokensUsed: usage.total_tokens,
+        });
+      }
+      return {
+        templateId,
+        title: "Extracted from PDF",
+        data: parsed,
+      };
+    } catch (error) {
+      Logger.error("Error extracting cover letter", error);
+      throw new HttpException(
+        `AI Processing Failed: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
     }
-
-    const usage = completion.usage || {
-      prompt_tokens: 0,
-      completion_tokens: 0,
-      total_tokens: 0,
-    };
-    console.log("Usage cover letter:", usage);
-    if (userId) {
-      await this.logService.createLog({
-        userId: userId,
-        feature: "coverLetterAI",
-        tokensUsed: usage.total_tokens,
-      });
-    }
-    return {
-      templateId,
-      title: "Extracted from PDF",
-      data: parsed,
-    };
   }
 
   async generateCLByCVAndJD(

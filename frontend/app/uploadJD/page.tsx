@@ -1,6 +1,8 @@
 "use client";
 
 import { API_ENDPOINTS, API_URL } from "@/api/apiConfig";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { useLanguage } from "@/providers/global_provider";
 import Cookies from "js-cookie";
 import { ArrowLeft, ArrowRight, FileText, UploadCloud } from "lucide-react";
@@ -25,6 +27,8 @@ const uploadJDTranslations = {
     back: "Back",
     error: "Please upload the job description first.",
     success: "JD uploaded successfully!",
+    enterText: "Enter Job Description",
+    placeholder: "Paste the job description here...",
   },
   vi: {
     title: "Tải lên mô tả công việc",
@@ -38,6 +42,8 @@ const uploadJDTranslations = {
     back: "Quay lại",
     error: "Vui lòng tải lên mô tả công việc trước.",
     success: "Tải JD thành công!",
+    enterText: "Nhập mô tả công việc",
+    placeholder: "Dán nội dung mô tả công việc vào đây...",
   },
 };
 
@@ -50,6 +56,7 @@ function UploadJDContent() {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [extractedText, setExtractedText] = useState<string | null>(null);
+  const [manualJdText, setManualJdText] = useState("");
 
 
   const { language } = useLanguage();
@@ -80,12 +87,12 @@ function UploadJDContent() {
   };
 
   const handleContinue = async () => {
-    if (!uploadedFile) {
+    if (!uploadedFile && !manualJdText) {
       toast.error(t.error);
       return;
     }
 
-    if (uploadedFile.type === "application/pdf" && !extractedText) {
+    if (uploadedFile && uploadedFile.type === "application/pdf" && !extractedText) {
       toast.error("Đang xử lý file PDF, vui lòng đợi hoặc thử upload lại.");
       return;
     }
@@ -119,7 +126,7 @@ function UploadJDContent() {
 
       const payload = {
         coverLetter: clText,
-        jobDescription: extractedText,
+        jobDescription: extractedText || manualJdText,
         templateId: finalTemplateId,
       };
 
@@ -171,56 +178,76 @@ function UploadJDContent() {
 
   return (
     <div className="bg-white flex flex-col items-center justify-center py-12 min-h-screen">
-      <div className="w-full max-w-4xl flex flex-col items-center">
+      <div className="w-full max-w-6xl flex flex-col items-center">
         <h1 className="text-3xl font-bold text-gray-800 mb-4">{t.title}</h1>
         <p className="text-gray-600 mb-12">{t.subtitle}</p>
 
-        <div className="w-full max-w-lg mb-16">
-          <label
-            htmlFor="jd-upload"
-            className="flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100"
-          >
-            {uploadedFile ? (
-              <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                <FileText className="w-10 h-10 mb-3 text-blue-500" />
-                <p className="mb-2 text-sm text-gray-700 font-semibold">
-                  {uploadedFile.name}
-                </p>
-                <p className="text-xs text-gray-500">
-                  {(uploadedFile.size / 1024).toFixed(2)} KB
-                </p>
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                <UploadCloud className="w-10 h-10 mb-3 text-gray-400" />
-                <p className="mb-2 text-sm text-gray-500 text-center">
-                  <span className="font-semibold">{t.clickToUpload}</span>{" "}
-                  {t.orDrag}
-                </p>
-                <p className="text-xs text-gray-500">{t.note}</p>
+        <div className="flex flex-col md:flex-row w-full gap-8 mb-16 px-4">
+          {/* Left side: Manual Text Input */}
+          <div className="flex-1">
+            <Label htmlFor="manual-jd" className="mb-2 block text-lg font-semibold text-gray-700">
+              {(t as any).enterText}
+            </Label>
+            <Textarea
+              id="manual-jd"
+              placeholder={(t as any).placeholder}
+              className="h-64 resize-none bg-gray-50"
+              value={manualJdText}
+              onChange={(e) => setManualJdText(e.target.value)}
+            />
+          </div>
+
+          {/* Right side: File Upload */}
+          <div className="flex-1">
+            <Label className="mb-2 block text-lg font-semibold text-gray-700">
+              {language === 'vi' ? 'Tải lên file' : 'Upload file'}
+            </Label>
+            <label
+              htmlFor="jd-upload"
+              className="flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100"
+            >
+              {uploadedFile ? (
+                <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                  <FileText className="w-10 h-10 mb-3 text-blue-500" />
+                  <p className="mb-2 text-sm text-gray-700 font-semibold">
+                    {uploadedFile.name}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {(uploadedFile.size / 1024).toFixed(2)} KB
+                  </p>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                  <UploadCloud className="w-10 h-10 mb-3 text-gray-400" />
+                  <p className="mb-2 text-sm text-gray-500 text-center">
+                    <span className="font-semibold">{t.clickToUpload}</span>{" "}
+                    {t.orDrag}
+                  </p>
+                  <p className="text-xs text-gray-500">{t.note}</p>
+                </div>
+              )}
+              <input
+                id="jd-upload"
+                type="file"
+                className="hidden"
+                onChange={handleFileChange}
+                accept=".pdf"
+              />
+            </label>
+            {/* Hidden Document component for processing */}
+            {uploadedFile && (
+              <div style={{ display: "none" }}>
+                <Document
+                  file={uploadedFile}
+                  onLoadSuccess={onDocumentLoadSuccess}
+                  onLoadError={(error) => {
+                    console.error("Error loading PDF for text extraction:", error);
+                    toast.error(`Lỗi khi xử lý file PDF: ${error.message}`);
+                  }}
+                />
               </div>
             )}
-            <input
-              id="jd-upload"
-              type="file"
-              className="hidden"
-              onChange={handleFileChange}
-              accept=".pdf"
-            />
-          </label>
-          {/* Hidden Document component for processing */}
-          {uploadedFile && (
-            <div style={{ display: "none" }}>
-              <Document
-                file={uploadedFile}
-                onLoadSuccess={onDocumentLoadSuccess}
-                onLoadError={(error) => {
-                  console.error("Error loading PDF for text extraction:", error);
-                  toast.error(`Lỗi khi xử lý file PDF: ${error.message}`);
-                }}
-              />
-            </div>
-          )}
+          </div>
         </div>
       </div>
 
@@ -234,7 +261,7 @@ function UploadJDContent() {
         </button>
         <button
           onClick={handleContinue}
-          disabled={!uploadedFile || isUploading || !extractedText}
+          disabled={isUploading || (!manualJdText && !extractedText)}
           className="flex items-center gap-2 px-8 py-3 text-lg font-semibold text-white bg-blue-500 rounded-full hover:bg-blue-600 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
         >
           {isUploading ? t.processing : t.finish}
