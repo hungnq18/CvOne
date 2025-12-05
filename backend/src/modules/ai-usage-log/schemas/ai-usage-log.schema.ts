@@ -21,7 +21,7 @@ export class AiUsageLog {
   @Prop({ type: Types.ObjectId, ref: "User", required: true })
   userId: Types.ObjectId;
 
-  @Prop({ type: String, enum: AiFeature, required: true, unique: true })
+  @Prop({ type: String, enum: AiFeature, required: true })
   feature: AiFeature;
 
   @Prop({ required: true })
