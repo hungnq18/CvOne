@@ -766,15 +766,23 @@ const CoverLetterBuilderContent = () => {
                     useCORS: true,
                     logging: true,
                     allowTaint: true,
+                    // Fix lỗi text bị lệch/nhảy chữ khi có letter-spacing
+                    onclone: (clonedDoc) => {
+                        const elements = clonedDoc.querySelectorAll('.tracking-wider');
+                        elements.forEach((el) => {
+                            (el as HTMLElement).style.letterSpacing = 'normal';
+                        });
+                    }
                 });
 
-                const pdf = new jsPDF({
-                    orientation: 'portrait',
-                    unit: 'px',
-                    format: [canvas.width, canvas.height]
-                });
+                // Tạo PDF chuẩn A4 (đơn vị mm)
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                const pdfWidth = pdf.internal.pageSize.getWidth();
 
-                pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, canvas.width, canvas.height);
+                // Tính toán chiều cao ảnh để vừa khít chiều rộng trang A4
+                const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+
+                pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, pdfWidth, imgHeight);
                 pdf.save(clTitle ? `${clTitle}.pdf` : 'cover-letter.pdf');
             } catch (error) {
                 console.error("Error generating PDF:", error);
@@ -846,14 +854,14 @@ const CoverLetterBuilderContent = () => {
                             className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-medium transition-colors"
                             onClick={handleDownloadPdf}
                         >
-                            Download as PDF
+                            Download
                         </button>
                         <button
                             className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-medium transition-colors"
                             onClick={handleFinishLetter}
                             disabled={isSaving}
                         >
-                            {isSaving ? "Saving..." : "Finish Letter"}
+                            {isSaving ? "Saving..." : "Complete"}
                         </button>
                     </div>
                 </div>

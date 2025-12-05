@@ -572,7 +572,7 @@ const PageCreateCVContent = () => {
         <style>
           {`
             @font-face {
-                font-family: '${fontName}'; 
+                font-family: '${fontName}';
                 src: url(${fontBase64}) format('woff2');
                 font-weight: normal;
                 font-style: normal;
@@ -626,19 +626,26 @@ const PageCreateCVContent = () => {
 
       await new Promise((resolve) => setTimeout(resolve, 500));
 
-      const html2pdf =
-        (await import("html2pdf.js"))?.default || (await import("html2pdf.js"));
+      const html2canvas = (await import("html2canvas")).default;
+      const jsPDF = (await import("jspdf")).default;
 
-      await html2pdf()
-        .from(iframe.contentWindow.document.body)
-        .set({
-          margin: 0,
-          filename: `${cvTitle || "cv"}.pdf`,
-          image: { type: "jpeg", quality: 0.98 },
-          html2canvas: { scale: 2, useCORS: true },
-          jsPDF: { unit: "px", format: [794, 1123], orientation: "portrait" },
-        })
-        .save();
+      const canvas = await html2canvas(iframe.contentWindow.document.body, {
+        scale: 2,
+        useCORS: true,
+        onclone: (clonedDoc) => {
+            const elements = clonedDoc.querySelectorAll('.tracking-wider');
+            elements.forEach((el) => {
+                (el as HTMLElement).style.letterSpacing = 'normal';
+            });
+        }
+      });
+
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+
+      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, pdfWidth, imgHeight);
+      pdf.save(`${cvTitle || "cv"}.pdf`);
     } catch (error) {
       console.error(t.pdfCreateError, error);
       notify.error(t.pdfCreateError);
