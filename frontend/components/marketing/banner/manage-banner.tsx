@@ -12,10 +12,10 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Progress } from "@/components/ui/progress"
-import { getAllAds, Ad, deleteAd } from "@/api/adsApi"
-import { toast } from "@/components/ui/use-toast"
-import { AddAdModal } from "./add-ad-modal"
-import { EditAdModal } from "./edit-ad-modal"
+import { getAllBanners, Banner, deleteBanner } from "@/api/bannerApi"
+import { showSuccessToast, showErrorToast } from "@/utils/popUpUtils"
+import { AddBannerModal } from "./add-banner-modal"
+import { EditBannerModal } from "./edit-banner-modal"
 import {
     AlertDialog,
     AlertDialogAction,
@@ -26,6 +26,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { useLanguage } from "@/providers/global_provider"
 
 
 const platformIcons: { [key: string]: React.ReactNode } = {
@@ -43,63 +44,60 @@ const statusInfo: { [key: string]: { icon: React.ReactNode; color: string } } = 
 };
 
 
-export function ManageAds() {
-    const [ads, setAds] = useState<Ad[]>([])
+export function ManageBanner() {
+    const [banners, setBanners] = useState<Banner[]>([])
     const [searchTerm, setSearchTerm] = useState("")
     const [isLoading, setIsLoading] = useState(true);
-    const [selectedAd, setSelectedAd] = useState<Ad | null>(null)
+    const [selectedBanner, setSelectedBanner] = useState<Banner | null>(null)
     const [isEditOpen, setIsEditOpen] = useState(false)
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+    const { t } = useLanguage();
 
-    const handleDelete = (ad: Ad) => {
-        setSelectedAd(ad)
+    const handleDelete = (banner: Banner) => {
+        setSelectedBanner(banner)
         setIsDeleteDialogOpen(true)
     }
 
     const confirmDelete = async () => {
-        if (!selectedAd) return
+        if (!selectedBanner) return
         try {
-            await deleteAd(selectedAd._id);
-            toast({ title: "Deleted", description: "Xóa quảng cáo thành công." });
-            fetchAds();
+            await deleteBanner(selectedBanner._id);
+            showSuccessToast(t.common.success, t.banner.messages.deleteSuccess);
+            fetchBanners();
         } catch (error) {
-            console.error("Failed to delete ad", error);
-            toast({
-                title: "Error",
-                description: "Xóa quảng cáo thất bại.",
-                variant: "destructive",
-            });
+            console.error("Failed to delete banner", error);
+            showErrorToast(t.common.error, t.banner.messages.deleteError);
         } finally {
             setIsDeleteDialogOpen(false);
-            setSelectedAd(null);
+            setSelectedBanner(null);
         }
     }
 
-    const fetchAds = async () => {
+    const fetchBanners = async () => {
         setIsLoading(true);
         try {
-            const data = await getAllAds();
-            setAds(data);
+            const data = await getAllBanners();
+            setBanners(data);
         } catch (error) {
-            console.error("Failed to fetch ads", error);
-            toast({ title: "Error", description: "Could not fetch ads.", variant: "destructive" });
+            console.error("Failed to fetch banners", error);
+            showErrorToast(t.common.error, "Could not fetch banners.");
         } finally {
             setIsLoading(false);
         }
     }
 
     useEffect(() => {
-        fetchAds();
+        fetchBanners();
     }, []);
 
-    const filteredAds = ads.filter(ad =>
-        ad.title.toLowerCase().includes(searchTerm.toLowerCase())
+    const filteredBanners = banners.filter(banner =>
+        banner.title.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    const getStatus = (ad: Ad): string => {
-        if (ad.isActive === false) return 'inactive';
+    const getStatus = (banner: Banner): string => {
+        if (banner.isActive === false) return 'inactive';
         const now = new Date();
-        const endDate = ad.endDate ? new Date(ad.endDate) : null;
+        const endDate = banner.endDate ? new Date(banner.endDate) : null;
         if (endDate && endDate < now) return 'ended';
         return 'active';
     }
@@ -109,19 +107,19 @@ export function ManageAds() {
         <div className="p-4 sm:p-6">
             <div className="flex items-center justify-between mb-6">
                 <div>
-                    <h1 className="text-2xl font-bold">Manage Ads</h1>
+                    <h1 className="text-2xl font-bold">{t.banner.manageTitle}</h1>
                     <p className="text-muted-foreground">
-                        Monitor and manage all your advertising campaigns.
+                        {t.banner.manageDesc}
                     </p>
                 </div>
                 <div className="flex items-center gap-2">
-                    <AddAdModal onAdAdded={fetchAds} />
+                    <AddBannerModal onBannerAdded={fetchBanners} />
                 </div>
             </div>
 
              <div className="mb-6">
                 <Input
-                    placeholder="Search by ad title..."
+                    placeholder={t.banner.searchPlaceholder}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="max-w-sm"
@@ -130,20 +128,20 @@ export function ManageAds() {
 
             {isLoading ? (
                 <div className="text-center py-12">
-                    <p className="text-muted-foreground">Loading ads...</p>
+                    <p className="text-muted-foreground">{t.common.loading}</p>
                 </div>
-            ) : filteredAds.length > 0 ? (
+            ) : filteredBanners.length > 0 ? (
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                    {filteredAds.map((ad) => {
-                        const status = getStatus(ad);
+                    {filteredBanners.map((banner) => {
+                        const status = getStatus(banner);
                         const statusDisplay = statusInfo[status] || statusInfo.inactive;
                         return (
-                        <Card key={ad._id} className={`flex flex-col border-l-4 ${statusDisplay.color}`}>
+                        <Card key={banner._id} className={`flex flex-col border-l-4 ${statusDisplay.color}`}>
                             <CardHeader>
                                  <div className="flex justify-between items-start">
                                     <div className="flex items-center gap-3">
                                         {/* Placeholder for platform icon if needed */}
-                                        <CardTitle className="text-lg">{ad.title}</CardTitle>
+                                        <CardTitle className="text-lg">{banner.title}</CardTitle>
                                     </div>
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
@@ -154,28 +152,28 @@ export function ManageAds() {
                                         <DropdownMenuContent align="end">
                                             <DropdownMenuItem
                                                 onClick={() => {
-                                                    setSelectedAd(ad)
+                                                    setSelectedBanner(banner)
                                                     setIsEditOpen(true)
                                                 }}
                                             >
-                                                Edit Ad
+                                                {t.banner.editTitle}
                                             </DropdownMenuItem>
                                             <DropdownMenuItem
                                                 className="text-red-500"
-                                                onClick={() => handleDelete(ad)}
+                                                onClick={() => handleDelete(banner)}
                                             >
-                                                Delete
+                                                {t.common.delete}
                                             </DropdownMenuItem>
                                         </DropdownMenuContent>
                                     </DropdownMenu>
                                 </div>
                             </CardHeader>
                             <CardContent className="flex-grow space-y-4">
-                               <img src={ad.imageUrl} alt={ad.title} className="rounded-md object-cover h-40 w-full" />
-                                <p className="text-sm text-muted-foreground">Redirects to: {ad.redirectUrl}</p>
+                               <img src={banner.imageUrl} alt={banner.title} className="rounded-md object-cover h-40 w-full" />
+                                <p className="text-sm text-muted-foreground">Redirects to: {banner.redirectUrl}</p>
                             </CardContent>
                             <CardFooter className="flex justify-between items-center text-sm text-muted-foreground">
-                                <span>Ends: {ad.endDate ? new Date(ad.endDate).toLocaleDateString() : 'N/A'}</span>
+                                <span>Ends: {banner.endDate ? new Date(banner.endDate).toLocaleDateString() : 'N/A'}</span>
                                 <div className="flex items-center gap-2">
                                     {statusDisplay.icon}
                                     <span className="capitalize">{status}</span>
@@ -186,32 +184,32 @@ export function ManageAds() {
                     })}
                 </div>
             ) : (
-                 <div className="text-center py-12">
-                    <p className="text-muted-foreground">No ads found.</p>
+                <div className="text-center py-12">
+                    <p className="text-muted-foreground">{t.banner.noBanners}</p>
                 </div>
             )}
-            <EditAdModal
-                ad={selectedAd as Ad}
-                open={isEditOpen && !!selectedAd}
+            <EditBannerModal
+                banner={selectedBanner as Banner}
+                open={isEditOpen && !!selectedBanner}
                 onOpenChange={(open) => {
                     setIsEditOpen(open)
                     if (!open) {
-                        setSelectedAd(null)
+                        setSelectedBanner(null)
                     }
                 }}
-                onAdUpdated={fetchAds}
+                onBannerUpdated={fetchBanners}
             />
             <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogTitle>{t.common.confirmDeleteTitle}</AlertDialogTitle>
                         <AlertDialogDescription>
-                            This action cannot be undone. This will permanently delete the ad.
+                            {t.common.confirmDeleteDesc}
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={confirmDelete}>Continue</AlertDialogAction>
+                        <AlertDialogCancel>{t.common.cancel}</AlertDialogCancel>
+                        <AlertDialogAction onClick={confirmDelete}>{t.common.continue}</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
