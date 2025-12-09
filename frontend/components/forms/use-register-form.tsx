@@ -1,6 +1,6 @@
- "use client";
+"use client";
 
-import { registerHR, verifyEmail } from "@/api/authApi";
+import { registerHR } from "@/api/authApi";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/providers/auth-provider";
 import { useLanguage } from "@/providers/global_provider";
@@ -277,16 +277,8 @@ export function useRegisterForm(formType: "user" | "hr" = "user") {
       try {
         // 1. Gọi API đăng ký
         await register(first_name, email, password, last_name);
-
-        // 2. Gửi email xác thực (Optional: nếu lỗi gửi mail vẫn cho qua để user đăng nhập rồi gửi lại sau)
-        try {
-          await verifyEmail(email);
-        } catch (err) {
-          // console.warn("Failed to auto-send verify email:", err);
-        }
-
-        // 3. Navigate CHỈ KHI đăng ký thành công
-        router.push("verify-email");
+        // 2. Chuyển tới trang verify-email, truyền sẵn email để hiển thị nhưng không tự gửi
+        router.push(`/verify-email?email=${encodeURIComponent(email)}`);
       } catch (error) {
         console.error("Registration error:", error);
         // Hiển thị lỗi (Ví dụ: Email đã tồn tại)

@@ -17,6 +17,7 @@ import { createAccountByAdmin, updateUserRole } from "@/api/authApi"
 import { User as UserType } from "@/types/auth"
 import { toast } from "react-hot-toast"
 import { MoreHorizontal } from "lucide-react"
+import { useLanguage } from "@/providers/global_provider"
 
 interface PopulatedAccount {
   _id: string;
@@ -41,6 +42,7 @@ const initialFormData = {
 }
 
 export function ManageUsers() {
+  const { t } = useLanguage()
   const [users, setUsers] = useState<PopulatedUser[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [isFormOpen, setIsFormOpen] = useState(false)
@@ -61,7 +63,7 @@ export function ManageUsers() {
       setUsers(usersData)
     } catch (error) {
       console.error("Failed to fetch users:", error)
-      toast.error("Failed to fetch users.")
+      toast.error(t.admin.manageUser.messages.fetchError)
     }
   }
 
@@ -110,7 +112,7 @@ export function ManageUsers() {
         await updateUserRole(selectedUser.account_id._id, formData.role)
       }
 
-        toast.success("User updated successfully.")
+        toast.success(t.admin.manageUser.messages.updateSuccess)
       } else {
         // Create user
         const newAccountData = {
@@ -124,13 +126,13 @@ export function ManageUsers() {
           country: formData.country,
         }
         await createAccountByAdmin(newAccountData)
-        toast.success("User created successfully.")
+        toast.success(t.admin.manageUser.messages.createSuccess)
       }
       fetchUsers()
       setIsFormOpen(false)
     } catch (error) {
       console.error("Failed to save user:", error)
-      toast.error("Failed to save user.")
+      toast.error(t.admin.manageUser.messages.saveError)
     }
   }
 
@@ -138,11 +140,11 @@ export function ManageUsers() {
     if (!selectedUser) return
     try {
       await deleteUser(selectedUser._id)
-      toast.success("User deleted successfully.")
+      toast.success(t.admin.manageUser.messages.deleteSuccess)
       fetchUsers()
     } catch (error) {
       console.error("Failed to delete user:", error)
-      toast.error("Failed to delete user.")
+      toast.error(t.admin.manageUser.messages.deleteError)
     } finally {
       setIsDeleteDialogOpen(false)
       setSelectedUser(null)
@@ -186,12 +188,12 @@ export function ManageUsers() {
     <div className="flex-1 space-y-6 p-6 pt-0 bg-gray-50">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Manage Users</h1>
-          <p className="text-muted-foreground">Manage user accounts and permissions</p>
+          <h1 className="text-3xl font-bold tracking-tight">{t.admin.manageUser.title}</h1>
+          <p className="text-muted-foreground">{t.admin.manageUser.desc}</p>
         </div>
         <Button type="button" className="bg-blue-600 hover:bg-blue-700" onClick={handleOpenCreateDialog}>
           <Plus className="mr-2 h-4 w-4" />
-          Add User
+          {t.admin.manageUser.addUser}
         </Button>
       </div>
 
@@ -199,12 +201,12 @@ export function ManageUsers() {
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle>Users ({filteredUsers.length})</CardTitle>
+            <CardTitle>{t.admin.manageUser.table.users} ({filteredUsers.length})</CardTitle>
             <form onSubmit={(e) => e.preventDefault()}>
               <div className="relative w-72">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  placeholder="Search users..."
+                  placeholder={t.admin.manageUser.searchPlaceholder}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -218,12 +220,12 @@ export function ManageUsers() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>User</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>City</TableHead>
-                  <TableHead>Country</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>{t.admin.manageUser.table.user}</TableHead>
+                  <TableHead>{t.admin.manageUser.table.role}</TableHead>
+                  <TableHead>{t.admin.manageUser.table.email}</TableHead>
+                  <TableHead>{t.admin.manageUser.table.city}</TableHead>
+                  <TableHead>{t.admin.manageUser.table.country}</TableHead>
+                  <TableHead className="text-right">{t.admin.manageUser.table.actions}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -264,14 +266,14 @@ export function ManageUsers() {
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => handleOpenEditDialog(user)}>
                             <Edit className="mr-2 h-4 w-4" />
-                            Edit User
+                            {t.admin.manageUser.dialog.editTitle}
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             className="text-red-600"
                             onClick={() => openDeleteDialog(user)}
                           >
                             <Trash2 className="mr-2 h-4 w-4" />
-                            Delete User
+                            {t.admin.manageUser.dialog.delete}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -285,14 +287,14 @@ export function ManageUsers() {
           {/* Pagination */}
           <div className="mt-4 flex items-center justify-between">
             <p className="text-sm text-muted-foreground">
-              Showing{" "}
+              {t.admin.manageUser.table.showing}{" "}
               {filteredUsers.length === 0
                 ? 0
                 : `${startIndex + 1}–${Math.min(
                     startIndex + pageSize,
                     filteredUsers.length
                   )}`}{" "}
-              of {filteredUsers.length} users
+              {t.admin.manageUser.table.of} {filteredUsers.length} {t.admin.manageUser.table.users}
             </p>
             <div className="flex items-center gap-2">
               <Button
@@ -327,39 +329,39 @@ export function ManageUsers() {
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>{isEditMode ? "Edit User" : "Add New User"}</DialogTitle>
+            <DialogTitle>{isEditMode ? t.admin.manageUser.dialog.editTitle : t.admin.manageUser.dialog.addTitle}</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-2 gap-4">
                 <div>
-                    <Label htmlFor="first_name">First Name</Label>
+                    <Label htmlFor="first_name">{t.admin.manageUser.dialog.firstName}</Label>
                     <Input id="first_name" value={formData.first_name} onChange={(e) => handleInputChange("first_name", e.target.value)} />
                 </div>
                 <div>
-                    <Label htmlFor="last_name">Last Name</Label>
+                    <Label htmlFor="last_name">{t.admin.manageUser.dialog.lastName}</Label>
                     <Input id="last_name" value={formData.last_name} onChange={(e) => handleInputChange("last_name", e.target.value)} />
                 </div>
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t.admin.manageUser.dialog.email}</Label>
               <Input id="email" type="email" value={formData.email} disabled={isEditMode} onChange={(e) => handleInputChange("email", e.target.value)} autoComplete="off" />
             </div>
             {!isEditMode && (
               <div className="grid gap-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">{t.admin.manageUser.dialog.password}</Label>
                 <Input id="password" type="password" value={formData.password} onChange={(e) => handleInputChange("password", e.target.value)} autoComplete="new-password" />
               </div>
             )}
             <div className="grid grid-cols-2 gap-4">
                 <div>
-                    <Label htmlFor="phone">Phone</Label>
+                    <Label htmlFor="phone">{t.admin.manageUser.dialog.phone}</Label>
                     <Input id="phone" value={formData.phone} onChange={(e) => handleInputChange("phone", e.target.value)} />
                 </div>
                 <div>
-                    <Label htmlFor="role">Role</Label>
+                    <Label htmlFor="role">{t.admin.manageUser.dialog.role}</Label>
                     <Select value={formData.role} onValueChange={(value) => handleInputChange("role", value)}>
                         <SelectTrigger>
-                            <SelectValue placeholder="Select role" />
+                            <SelectValue placeholder={t.admin.manageUser.dialog.selectRole} />
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="user">User</SelectItem>
@@ -372,20 +374,20 @@ export function ManageUsers() {
             </div>
              <div className="grid grid-cols-2 gap-4">
                 <div>
-                    <Label htmlFor="city">City</Label>
+                    <Label htmlFor="city">{t.admin.manageUser.dialog.city}</Label>
                     <Input id="city" value={formData.city} onChange={(e) => handleInputChange("city", e.target.value)} />
                 </div>
                 <div>
-                    <Label htmlFor="country">Country</Label>
+                    <Label htmlFor="country">{t.admin.manageUser.dialog.country}</Label>
                     <Input id="country" value={formData.country} onChange={(e) => handleInputChange("country", e.target.value)} />
                 </div>
             </div>
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setIsFormOpen(false)}>
-              Cancel
+              {t.admin.manageUser.dialog.cancel}
             </Button>
-            <Button type="button" onClick={handleSaveUser}>Save</Button>
+            <Button type="button" onClick={handleSaveUser}>{t.admin.manageUser.dialog.save}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -394,18 +396,17 @@ export function ManageUsers() {
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Are you sure?</DialogTitle>
+            <DialogTitle>{t.admin.manageUser.dialog.deleteTitle}</DialogTitle>
             <DialogDescription>
-              This action cannot be undone. This will permanently delete the user
-              and their associated account.
+              {t.admin.manageUser.dialog.deleteDesc}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
-              Cancel
+              {t.admin.manageUser.dialog.cancel}
             </Button>
             <Button type="button" variant="destructive" onClick={handleDeleteUser}>
-              Delete
+              {t.admin.manageUser.dialog.delete}
             </Button>
           </DialogFooter>
         </DialogContent>

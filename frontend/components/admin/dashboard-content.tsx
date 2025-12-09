@@ -8,6 +8,7 @@ import { getAllUsers, User } from "@/api/userApi"
 import { getJobs } from "@/api/jobApi"
 import { getCVTemplates } from "@/api/cvapi"
 import { getCLTemplates } from "@/api/clApi"
+import { useLanguage } from "@/providers/global_provider"
 
 interface UserData {
   month: string;
@@ -15,30 +16,31 @@ interface UserData {
 }
 
 export function DashboardContent() {
+  const { t } = useLanguage()
   const [stats, setStats] = useState([
     {
-      title: "Total CV Template",
+      key: "totalCvTemplate",
       value: "0",
       change: "+0%",
       changeType: "positive" as const,
       icon: Eye,
     },
     {
-      title: "Total CL Template",
+      key: "totalClTemplate",
       value: "0",
       change: "+0%",
       changeType: "positive" as const,
       icon: ShoppingCart,
     },
     {
-      title: "Total Job",
+      key: "totalJob",
       value: "0",
       change: "+0%",
       changeType: "positive" as const,
       icon: Package,
     },
     {
-      title: "Total User",
+      key: "totalUser",
       value: "0",
       change: "+0%",
       changeType: "positive" as const,
@@ -46,7 +48,6 @@ export function DashboardContent() {
     },
   ])
   const [userChartData, setUserChartData] = useState<UserData[]>([]);
-
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -58,11 +59,11 @@ export function DashboardContent() {
           getCLTemplates(),
         ])
 
-        setStats([
-          { ...stats[0], value: cvTemplates.length.toString() },
-          { ...stats[1], value: clTemplates.length.toString() },
-          { ...stats[2], value: jobs.length.toString() },
-          { ...stats[3], value: users.length.toString() },
+        setStats((prevStats) => [
+          { ...prevStats[0], value: cvTemplates.length.toString() },
+          { ...prevStats[1], value: clTemplates.length.toString() },
+          { ...prevStats[2], value: jobs.length.toString() },
+          { ...prevStats[3], value: users.length.toString() },
         ])
 
         const monthlyUserData = processUserData(users);
@@ -104,11 +105,14 @@ export function DashboardContent() {
       {/* Stats Cards */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => (
-          <Card key={stat.title} className="bg-white">
+          <Card key={stat.key} className="bg-white">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">{stat.title}</p>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    {/* @ts-ignore */}
+                    {t.admin.dashboard[stat.key]}
+                  </p>
                   <p className="text-2xl font-bold">{stat.value}</p>
                   <div className="flex items-center gap-1 mt-1">
                     <TrendingUp className="h-3 w-3 text-green-500" />
@@ -128,9 +132,9 @@ export function DashboardContent() {
       <div className="">
         <Card className="bg-white">
           <CardHeader>
-            <CardTitle className="text-lg">User Statistics</CardTitle>
+            <CardTitle className="text-lg">{t.admin.dashboard.userStatistics}</CardTitle>
             <div className="flex gap-4 text-sm text-muted-foreground">
-              <span>Last 12 months</span>
+              <span>{t.admin.dashboard.last12Months}</span>
             </div>
           </CardHeader>
           <CardContent>

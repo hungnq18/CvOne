@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { translations } from '@/utils/translations';
 
 type Language = 'en' | 'vi';
 
@@ -45,19 +46,23 @@ export function useGlobal() {
   return context;
 }
 
-// Simple useLanguage hook
+// Enhanced useLanguage hook with translations
 export function useLanguage() {
   const context = useContext(GlobalContext);
-  
+
   if (context === undefined) {
     // Return default values when context is not available
-    return { 
-      language: 'en' as Language, 
-      setLanguage: () => {} 
+    return {
+      language: 'en' as Language,
+      setLanguage: () => {},
+      t: translations['en']
     };
   }
-  
-  return context;
+
+  return {
+    ...context,
+    t: translations[context.language]
+  };
 }
 
 export default GlobalProvider;

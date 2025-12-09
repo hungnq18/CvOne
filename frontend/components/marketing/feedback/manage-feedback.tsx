@@ -22,14 +22,7 @@ import {
 import { getAllFeedback, type Feedback } from "@/api/feedbackApi"
 import { toast } from "@/components/ui/use-toast"
 import { MessageSquare } from "lucide-react"
-
-const featureLabels: Record<string, string> = {
-  translate_cv: "Translate CV with AI",
-  generate_cv: "Generate CV with AI",
-  generate_cl: "Generate Cover Letter with AI",
-  rebuild_cv_pdf: "Rebuild CV from PDF",
-  ai_interview: "AI Interview",
-}
+import { useLanguage } from "@/providers/global_provider"
 
 const featureColors: Record<string, string> = {
   translate_cv: "bg-blue-100 text-blue-700",
@@ -67,6 +60,15 @@ export function ManageFeedback() {
   const [isLoading, setIsLoading] = useState(true)
   const [selectedFeedback, setSelectedFeedback] = useState<Feedback | null>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const { t } = useLanguage();
+
+  const featureLabels: Record<string, string> = {
+    translate_cv: t.feedback.features.translate_cv,
+    generate_cv: t.feedback.features.generate_cv,
+    generate_cl: t.feedback.features.generate_cl,
+    rebuild_cv_pdf: t.feedback.features.rebuild_cv_pdf,
+    ai_interview: t.feedback.features.ai_interview,
+  }
 
   const fetchFeedback = async () => {
     setIsLoading(true)
@@ -82,7 +84,7 @@ export function ManageFeedback() {
     } catch (error) {
       console.error("Failed to fetch feedback", error)
       toast({
-        title: "Lỗi",
+        title: t.common.error,
         description: "Không thể tải danh sách feedback.",
         variant: "destructive",
       })
@@ -121,25 +123,25 @@ export function ManageFeedback() {
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <MessageSquare className="h-6 w-6 text-blue-600" />
-            Manage Feedback
+            {t.feedback.manageTitle}
           </h1>
           <p className="text-muted-foreground">
-            Xem và phân tích phản hồi người dùng từ các tính năng AI.
+            {t.feedback.manageDesc}
           </p>
         </div>
         <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
           <Input
-            placeholder="Tìm theo email hoặc nội dung..."
+            placeholder={t.feedback.searchPlaceholder}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="sm:w-64"
           />
           <Select value={featureFilter} onValueChange={setFeatureFilter}>
             <SelectTrigger className="sm:w-52">
-              <SelectValue placeholder="Lọc theo tính năng" />
+              <SelectValue placeholder={t.feedback.filterFeature} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Tất cả tính năng</SelectItem>
+              <SelectItem value="all">{t.feedback.allFeatures}</SelectItem>
               <SelectItem value="translate_cv">{featureLabels.translate_cv}</SelectItem>
               <SelectItem value="generate_cv">{featureLabels.generate_cv}</SelectItem>
               <SelectItem value="generate_cl">{featureLabels.generate_cl}</SelectItem>
@@ -152,11 +154,11 @@ export function ManageFeedback() {
 
       {isLoading ? (
         <div className="text-center py-12">
-          <p className="text-muted-foreground">Đang tải danh sách feedback...</p>
+          <p className="text-muted-foreground">{t.common.loading}</p>
         </div>
       ) : filteredFeedbacks.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-muted-foreground">Chưa có feedback nào phù hợp.</p>
+          <p className="text-muted-foreground">{t.feedback.noFeedback}</p>
         </div>
       ) : (
         <div className="grid gap-4 md:gap-6 md:grid-cols-2 xl:grid-cols-3">
@@ -194,7 +196,7 @@ export function ManageFeedback() {
                   </div>
                   <div className="flex justify-end">
                     <Button size="sm" variant="outline" onClick={() => openDetail(fb)}>
-                      Xem chi tiết
+                      {t.common.viewDetail}
                     </Button>
                   </div>
                 </CardContent>
@@ -213,9 +215,9 @@ export function ManageFeedback() {
       >
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Chi tiết feedback</DialogTitle>
+            <DialogTitle>{t.feedback.detailTitle}</DialogTitle>
             <DialogDescription>
-              Xem đầy đủ các câu hỏi và câu trả lời từ biểu mẫu Google Form.
+              {t.feedback.detailDesc}
             </DialogDescription>
           </DialogHeader>
           {selectedFeedback && (
@@ -256,6 +258,3 @@ export function ManageFeedback() {
     </div>
   )
 }
-
-
-

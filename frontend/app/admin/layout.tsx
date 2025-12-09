@@ -1,13 +1,23 @@
+"use client";
+
 import type React from "react"
 import { AppSidebar } from "@/components/admin/app-sidebar"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { DashboardHeader } from "@/components/admin/dashboard-header"
+import { usePathname } from "next/navigation"
 
 export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const pathname = usePathname();
+  const isLoginPage = pathname === "/admin/login";
+
+  if (isLoginPage) {
+    return <>{children}</>;
+  }
+
   return (
     <SidebarProvider>
       <div className="flex flex-1 min-h-0">

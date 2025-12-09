@@ -11,6 +11,7 @@ import { notify } from "@/lib/notify";
 import { Bot, Clock, Globe, Maximize2, Mic, Minimize2, Send, User, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import LanguageSelector from './LanguageSelector';
+import { useLanguage } from '@/providers/global_provider';
 
 interface AiInterviewModalProps {
   isOpen: boolean;
@@ -21,14 +22,156 @@ interface AiInterviewModalProps {
   numberOfQuestions?: number;
 }
 
-export default function AiInterviewModal({ 
-  isOpen, 
-  onClose, 
-  jobDescription, 
-  jobTitle, 
-  companyName, 
-  numberOfQuestions = 10 
+const modalTexts = {
+  en: {
+    loading: {
+      title: "Preparing Your Interview Room",
+      desc: "AI is analyzing the job description and generating personalized questions...",
+      analyzing: "Analyzing job requirements",
+      determining: "Determining difficulty level",
+      generating: "Generating interview questions...",
+    },
+    header: {
+      title: "Live Interview Session",
+      difficulty: "Difficulty",
+      exitFullscreen: "Exit Fullscreen",
+      enterFullscreen: "Enter Fullscreen",
+    },
+    progress: {
+      progress: "Progress",
+      questions: "questions",
+      answered: "answered",
+    },
+    feedback: {
+      thankYou: "Thank you for your answer! Your score:",
+      score: "Score",
+      strengths: "Strengths:",
+      improvements: "Need improvement:",
+      nextQuestion: "Next question →",
+    },
+    input: {
+      placeholder: "Type your answer here...",
+      placeholderWait: "Please wait for the question to finish displaying...",
+      waitMessage: "⏳ Displaying question, please wait...",
+      recording: "🎤 Recording",
+      transcript: "Transcript:",
+      listening: "Listening... Please speak into the microphone",
+      error: "Error:",
+      recordingError: "Recording error:",
+      helpText: "Press Ctrl + Enter to send • Click mic icon to start/stop recording • Select language for speech/text input",
+      waitTitle: "Please wait for the question to finish displaying",
+      stopRecording: "Click to stop recording",
+      startRecording: "Click to start recording",
+    },
+    complete: {
+      title: "All questions completed! 🎉",
+      desc: "You have answered all {count} questions. Click the button below to complete the interview and see overall results.",
+      button: "Complete Interview",
+      completing: "Completing...",
+    },
+    welcome: "Hello! 👋\n\nNice to meet you today! I'm AI Interviewer, and I'll accompany you in the interview for the position of {jobTitle}{company}.\n\nDon't worry, just relax and answer naturally! I will ask you {totalQuestions} questions to understand you better. Good luck! 🍀",
+    welcomeDefault: "this position",
+    welcomeCompany: " at {companyName}",
+    notify: {
+      submitError: "Failed to submit answer. Please try again.",
+      sessionError: "Failed to create interview session. Please try again.",
+      completeSuccess: "🎉 Interview Completed!\n\nOverall Score: {score}/10\nQuestions Answered: {answered}/{total}\n\nCheck your interview history to review detailed feedback.",
+      completeError: "Failed to complete session. Your answers have been saved.",
+    },
+    recommended: "💡 Recommended:",
+    languageNames: {
+      'vi-VN': 'Vietnamese',
+      'en-US': 'English',
+      'en-GB': 'English',
+      'ja-JP': 'Japanese',
+      'ko-KR': 'Korean',
+      'zh-CN': 'Chinese',
+      'fr-FR': 'French',
+      'de-DE': 'German',
+      'es-ES': 'Spanish',
+    },
+  },
+  vi: {
+    loading: {
+      title: "Đang chuẩn bị phòng phỏng vấn",
+      desc: "AI đang phân tích mô tả công việc và tạo các câu hỏi cá nhân hóa...",
+      analyzing: "Phân tích yêu cầu công việc",
+      determining: "Xác định mức độ khó",
+      generating: "Đang tạo câu hỏi phỏng vấn...",
+    },
+    header: {
+      title: "Phiên phỏng vấn trực tiếp",
+      difficulty: "Độ khó",
+      exitFullscreen: "Thoát toàn màn hình",
+      enterFullscreen: "Chế độ toàn màn hình",
+    },
+    progress: {
+      progress: "Tiến độ",
+      questions: "câu hỏi",
+      answered: "đã trả lời",
+    },
+    feedback: {
+      thankYou: "Cảm ơn bạn đã trả lời! Điểm số của bạn:",
+      score: "Điểm số",
+      strengths: "Điểm mạnh:",
+      improvements: "Cần cải thiện:",
+      nextQuestion: "Câu hỏi tiếp theo →",
+    },
+    input: {
+      placeholder: "Nhập câu trả lời của bạn...",
+      placeholderWait: "Vui lòng đợi câu hỏi hiển thị xong...",
+      waitMessage: "⏳ Đang hiển thị câu hỏi, vui lòng đợi...",
+      recording: "🎤 Đang ghi âm",
+      transcript: "Transcript:",
+      listening: "Đang lắng nghe... Hãy nói vào microphone",
+      error: "Lỗi:",
+      recordingError: "Lỗi ghi âm:",
+      helpText: "Nhấn Ctrl + Enter để gửi • Nhấn icon mic để bật/tắt ghi âm • Chọn ngôn ngữ để ghi âm/nhập text",
+      waitTitle: "Vui lòng đợi câu hỏi hiển thị xong",
+      stopRecording: "Nhấn để dừng ghi âm",
+      startRecording: "Nhấn để bắt đầu ghi âm",
+    },
+    complete: {
+      title: "Tất cả câu hỏi đã hoàn thành! 🎉",
+      desc: "Bạn đã trả lời tất cả {count} câu hỏi. Nhấn nút bên dưới để hoàn thành phỏng vấn và xem kết quả tổng thể.",
+      button: "Hoàn thành phỏng vấn",
+      completing: "Đang hoàn thành...",
+    },
+    welcome: "Xin chào! 👋\n\nRất vui được gặp bạn hôm nay! Tôi là AI Interviewer, và tôi sẽ đồng hành cùng bạn trong buổi phỏng vấn cho vị trí {jobTitle}{company}.\n\nĐừng lo lắng, hãy thư giãn và trả lời một cách tự nhiên nhé! Tôi sẽ hỏi bạn {totalQuestions} câu hỏi để hiểu rõ hơn về bạn. Chúc bạn may mắn! 🍀",
+    welcomeDefault: "này",
+    welcomeCompany: " tại {companyName}",
+    notify: {
+      submitError: "Gửi câu trả lời thất bại. Vui lòng thử lại.",
+      sessionError: "Tạo phiên phỏng vấn thất bại. Vui lòng thử lại.",
+      completeSuccess: "🎉 Hoàn thành phỏng vấn!\n\nĐiểm tổng thể: {score}/10\nSố câu đã trả lời: {answered}/{total}\n\nKiểm tra lịch sử phỏng vấn để xem phản hồi chi tiết.",
+      completeError: "Hoàn thành phiên thất bại. Câu trả lời của bạn đã được lưu.",
+    },
+    recommended: "💡 Đề xuất:",
+    languageNames: {
+      'vi-VN': 'Tiếng Việt',
+      'en-US': 'English',
+      'en-GB': 'English',
+      'ja-JP': '日本語',
+      'ko-KR': '한국어',
+      'zh-CN': '中文',
+      'fr-FR': 'Français',
+      'de-DE': 'Deutsch',
+      'es-ES': 'Español',
+    },
+  },
+} as const;
+
+export default function AiInterviewModal({
+  isOpen,
+  onClose,
+  jobDescription,
+  jobTitle,
+  companyName,
+  numberOfQuestions = 10
 }: AiInterviewModalProps) {
+  const { language } = useLanguage();
+  const t = modalTexts[language] ?? modalTexts.en;
+
   const [session, setSession] = useState<InterviewSession | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [userAnswer, setUserAnswer] = useState('');
@@ -69,7 +212,7 @@ export default function AiInterviewModal({
 
   // Get recommended language from session (detected from JD)
   const recommendedLanguage = session?.language as LanguageCode | undefined;
-  
+
   // State for selected language (for speech and text input)
   // Initialize with recommended language from session, fallback to detected language
   const [selectedLanguage, setSelectedLanguage] = useState<LanguageCode>(() => {
@@ -105,7 +248,7 @@ export default function AiInterviewModal({
       setUserAnswer((prev) => (prev !== text ? text : prev));
     },
     onError: (error) => {
-      notify.error(`Lỗi ghi âm: ${error}`);
+      notify.error(`${t.input.recordingError} ${error}`);
     },
   });
 
@@ -124,7 +267,7 @@ export default function AiInterviewModal({
       const timeoutId = setTimeout(() => {
         updateLanguageFromText(userAnswer);
       }, 500); // Debounce 500ms
-      
+
       return () => clearTimeout(timeoutId);
     }
   }, [userAnswer, isRecording]); // Removed updateLanguageFromText from deps to prevent loop
@@ -221,6 +364,10 @@ export default function AiInterviewModal({
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
 
+  const getLanguageName = (langCode: string) => {
+    return t.languageNames[langCode as keyof typeof t.languageNames] || langCode;
+  };
+
   const initializeInterview = async () => {
     setIsCreatingSession(true);
     try {
@@ -236,11 +383,14 @@ export default function AiInterviewModal({
         setCurrentQuestionIndex(0); // Start from first question
         setUserAnswer('');
         setFeedback(null);
-        
+
         // Initialize conversation with welcome message
         if (response.data) {
-          const welcomeMessage = `Xin chào! 👋\n\nRất vui được gặp bạn hôm nay! Tôi là AI Interviewer, và tôi sẽ đồng hành cùng bạn trong buổi phỏng vấn cho vị trí ${response.data.jobTitle || 'này'}${response.data.companyName ? ` tại ${response.data.companyName}` : ''}.\n\nĐừng lo lắng, hãy thư giãn và trả lời một cách tự nhiên nhé! Tôi sẽ hỏi bạn ${response.data.totalQuestions} câu hỏi để hiểu rõ hơn về bạn. Chúc bạn may mắn! 🍀`;
-          
+          const welcomeMessage = t.welcome
+            .replace('{jobTitle}', response.data.jobTitle || t.welcomeDefault)
+            .replace('{company}', response.data.companyName ? t.welcomeCompany.replace('{companyName}', response.data.companyName) : '')
+            .replace('{totalQuestions}', response.data.totalQuestions.toString());
+
           // Start with typing indicator
           setConversation([
             {
@@ -249,12 +399,12 @@ export default function AiInterviewModal({
               timestamp: new Date(),
             }
           ]);
-          
+
           // Type welcome message
           const welcomeId = 'welcome';
           let currentIndex = 0;
           const typingSpeed = 30;
-          
+
           const welcomeTypingInterval = setInterval(() => {
             if (currentIndex < welcomeMessage.length) {
               setDisplayedText(prev => ({
@@ -272,7 +422,7 @@ export default function AiInterviewModal({
                   timestamp: new Date(),
                 }
               ]);
-              
+
               // Show first question after welcome message (only question at index 0)
               // Use closure to capture the first question
               const firstQuestion = response.data?.questions?.[0];
@@ -288,11 +438,11 @@ export default function AiInterviewModal({
           }, typingSpeed);
         }
       } else {
-        notify.error('Failed to create interview session. Please try again.');
+        notify.error(t.notify.sessionError);
       }
     } catch (error) {
       console.error('Error initializing interview:', error);
-      notify.error('Failed to create interview session. Please try again.');
+      notify.error(t.notify.sessionError);
     } finally {
       setIsCreatingSession(false);
     }
@@ -310,7 +460,7 @@ export default function AiInterviewModal({
 
     setIsLoading(true);
     setIsEvaluating(true);
-    
+
     // Stop timer
     if (timerIntervalRef.current) {
       clearInterval(timerIntervalRef.current);
@@ -328,7 +478,7 @@ export default function AiInterviewModal({
     try {
       // Simulate thinking time for realism
       await new Promise(resolve => setTimeout(resolve, 2000));
-      
+
       const response = await aiInterviewApi.submitAnswer(session.sessionId, {
         questionId: currentQuestion.id,
         answer: userAnswer
@@ -338,18 +488,18 @@ export default function AiInterviewModal({
         const feedbackData = response.data.feedback;
         setFeedback(feedbackData);
         setShowFollowUp(true);
-        
+
         // Remove typing indicator and add feedback
         setConversation(prev => {
           const filtered = prev.filter(msg => msg.type !== 'typing');
           return [...filtered, {
             type: 'feedback',
-            content: `Cảm ơn bạn đã trả lời! Điểm số của bạn: ${feedbackData.score}/10\n\n${feedbackData.feedback}`,
+            content: `${t.feedback.thankYou} ${feedbackData.score}/10\n\n${feedbackData.feedback}`,
             timestamp: new Date(),
             feedback: feedbackData,
           }];
         });
-        
+
         // Update session completedQuestions count
         setSession({
           ...session,
@@ -358,7 +508,7 @@ export default function AiInterviewModal({
       }
     } catch (error) {
       console.error('Error submitting answer:', error);
-      notify.error('Failed to submit answer. Please try again.');
+      notify.error(t.notify.submitError);
       // Remove typing indicator on error
       setConversation(prev => prev.filter(msg => msg.type !== 'typing'));
     } finally {
@@ -385,7 +535,7 @@ export default function AiInterviewModal({
   };
 
   const formatMessageTime = (date: Date) => {
-    return date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+    return date.toLocaleTimeString(language === 'vi' ? 'vi-VN' : 'en-US', { hour: '2-digit', minute: '2-digit' });
   };
 
   // Scroll to bottom when conversation updates
@@ -398,24 +548,24 @@ export default function AiInterviewModal({
     if (addedQuestionsRef.current.has(question.id)) {
       return; // Don't add duplicate question
     }
-    
+
     // Mark question as added
     addedQuestionsRef.current.add(question.id);
     setIsQuestionReady(false);
     isQuestionReadyRef.current = false;
-    
+
     setIsTyping(true);
     setConversation(prev => [...prev, {
       type: 'typing',
       content: '',
       timestamp: new Date(),
     }]);
-    
+
     // Simulate typing effect
     const questionText = question.question;
     const typingSpeed = 30; // milliseconds per character
     let currentIndex = 0;
-    
+
     const typingInterval = setInterval(() => {
       if (currentIndex < questionText.length) {
         setDisplayedText(prev => ({
@@ -444,12 +594,12 @@ export default function AiInterviewModal({
 
   const handleNextQuestion = () => {
     if (!session) return;
-    
+
     // Stop recording if currently recording
     if (isRecording) {
       stopRecording();
     }
-    
+
     // Reset states cho câu hỏi mới
     setUserAnswer('');
     setFeedback(null);
@@ -459,16 +609,16 @@ export default function AiInterviewModal({
     setSampleAnswer('');
     setIsQuestionReady(false);
     isQuestionReadyRef.current = false;
-    
+
     // Reset speech transcript for new question
     if (resetSpeechTranscript) {
       resetSpeechTranscript();
     }
-    
+
     // Move to next question
     const nextIndex = currentQuestionIndex + 1;
     setCurrentQuestionIndex(nextIndex);
-    
+
     // Add next question to conversation after delay
     if (session.questions[nextIndex]) {
       setTimeout(() => {
@@ -523,17 +673,17 @@ export default function AiInterviewModal({
       const response = await aiInterviewApi.completeSession(session.sessionId);
       if (response.success && response.data) {
         // Show overall feedback
-        const message = `🎉 Interview Completed!\n\n` +
-          `Overall Score: ${response.data.averageScore.toFixed(1)}/10\n` +
-          `Questions Answered: ${response.data.answeredQuestions}/${response.data.totalQuestions}\n\n` +
-          `Check your interview history to review detailed feedback.`;
-        
+        const message = t.notify.completeSuccess
+          .replace('{score}', response.data.averageScore.toFixed(1))
+          .replace('{answered}', response.data.answeredQuestions.toString())
+          .replace('{total}', response.data.totalQuestions.toString());
+
         notify.success(message);
         onClose();
       }
     } catch (error) {
       console.error('Error completing session:', error);
-      notify.error('Failed to complete session. Your answers have been saved.');
+      notify.error(t.notify.completeError);
     } finally {
       setIsLoading(false);
     }
@@ -557,19 +707,17 @@ export default function AiInterviewModal({
           <div className="mb-4">
             <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto"></div>
           </div>
-          <h3 className="text-xl font-semibold mb-2">Preparing Your Interview Room</h3>
-          <p className="text-gray-600 mb-4">
-            AI is analyzing the job description and generating personalized questions...
-          </p>
+          <h3 className="text-xl font-semibold mb-2">{t.loading.title}</h3>
+          <p className="text-gray-600 mb-4">{t.loading.desc}</p>
           <div className="space-y-2 text-sm text-gray-500">
             <p className="flex items-center justify-center gap-2">
-              <span className="text-green-500">✓</span> Analyzing job requirements
+              <span className="text-green-500">✓</span> {t.loading.analyzing}
             </p>
             <p className="flex items-center justify-center gap-2">
-              <span className="text-green-500">✓</span> Determining difficulty level
+              <span className="text-green-500">✓</span> {t.loading.determining}
             </p>
             <p className="flex items-center justify-center gap-2 animate-pulse">
-              <span className="text-blue-500">⏳</span> Generating interview questions...
+              <span className="text-blue-500">⏳</span> {t.loading.generating}
             </p>
           </div>
         </div>
@@ -578,7 +726,7 @@ export default function AiInterviewModal({
   }
 
   return (
-    <div 
+    <div
       className="fixed inset-0 flex items-center justify-center z-50"
       style={{
         backgroundImage: 'url(https://res.cloudinary.com/dijayprrw/image/upload/v1764365074/mo-hinh-van-phong-cho-thue-6_tapr8g.jpg)',
@@ -593,7 +741,7 @@ export default function AiInterviewModal({
           <div className="flex-1">
             <div className="flex items-center gap-3">
               <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse shadow-lg shadow-red-500/50"></div>
-              <h2 className="text-2xl font-bold text-white drop-shadow-lg">Live Interview Session</h2>
+              <h2 className="text-2xl font-bold text-white drop-shadow-lg">{t.header.title}</h2>
             </div>
             {session && (
               <div className="flex items-center gap-2 mt-3">
@@ -607,11 +755,11 @@ export default function AiInterviewModal({
                     {session.companyName}
                   </Badge>
                 )}
-                <Badge 
+                <Badge
                   variant="default"
                   className="font-medium bg-blue-600 hover:bg-blue-700 text-white border-0"
                 >
-                  {session.difficulty.charAt(0).toUpperCase() + session.difficulty.slice(1)} Difficulty
+                  {session.difficulty.charAt(0).toUpperCase() + session.difficulty.slice(1)} {t.header.difficulty}
                 </Badge>
                 {currentQuestion && (
                   <Badge variant="outline" className="font-normal bg-white/90 backdrop-blur-sm text-gray-800 border-white/50 flex items-center gap-1">
@@ -619,20 +767,15 @@ export default function AiInterviewModal({
                     {formatTime(questionTimer)}
                   </Badge>
                 )}
-                <Badge variant="outline" className="font-normal bg-white/90 backdrop-blur-sm text-gray-800 border-white/50 flex items-center gap-1" title={`Ngôn ngữ: ${detectionInfo.detectedLanguage} (${detectionInfo.source === 'browser' ? 'Từ trình duyệt' : detectionInfo.source === 'text' ? 'Từ văn bản' : 'Mặc định'})`}>
+                <Badge variant="outline" className="font-normal bg-white/90 backdrop-blur-sm text-gray-800 border-white/50 flex items-center gap-1" title={`${language === 'vi' ? 'Ngôn ngữ' : 'Language'}: ${detectionInfo.detectedLanguage} (${detectionInfo.source === 'browser' ? (language === 'vi' ? 'Từ trình duyệt' : 'From browser') : detectionInfo.source === 'text' ? (language === 'vi' ? 'Từ văn bản' : 'From text') : (language === 'vi' ? 'Mặc định' : 'Default')})`}>
                   <Globe className="h-3 w-3" />
-                  {detectionInfo.detectedLanguage === 'vi-VN' ? 'Tiếng Việt' : 
-                   detectionInfo.detectedLanguage === 'en-US' || detectionInfo.detectedLanguage === 'en-GB' ? 'English' :
-                   detectionInfo.detectedLanguage === 'ja-JP' ? '日本語' :
-                   detectionInfo.detectedLanguage === 'ko-KR' ? '한국어' :
-                   detectionInfo.detectedLanguage === 'zh-CN' ? '中文' :
-                   detectionInfo.detectedLanguage}
+                  {getLanguageName(detectionInfo.detectedLanguage)}
                 </Badge>
               </div>
             )}
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={toggleFullscreen} title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}>
+            <Button variant="ghost" size="sm" onClick={toggleFullscreen} title={isFullscreen ? t.header.exitFullscreen : t.header.enterFullscreen}>
               {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
             </Button>
           <Button variant="ghost" size="sm" onClick={onClose}>
@@ -646,11 +789,11 @@ export default function AiInterviewModal({
           {session && (
             <div className="px-6 pt-4 pb-2 space-y-2 border-b border-white/20 bg-white/10 backdrop-blur-sm">
               <div className="flex justify-between text-sm text-white drop-shadow-md">
-                <span>Progress</span>
-                <span>{currentQuestionIndex + 1}/{session.totalQuestions} questions | {session.completedQuestions} answered</span>
+                <span>{t.progress.progress}</span>
+                <span>{currentQuestionIndex + 1}/{session.totalQuestions} {t.progress.questions} | {session.completedQuestions} {t.progress.answered}</span>
               </div>
-              <Progress 
-                value={((currentQuestionIndex + 1) / session.totalQuestions) * 100} 
+              <Progress
+                value={((currentQuestionIndex + 1) / session.totalQuestions) * 100}
                 className="h-2 bg-white/20"
               />
             </div>
@@ -678,11 +821,11 @@ export default function AiInterviewModal({
 
               if (message.type === 'question') {
                 const questionId = message.questionId || 'welcome';
-                const textToShow = displayedText[questionId] 
-                  ? displayedText[questionId] 
+                const textToShow = displayedText[questionId]
+                  ? displayedText[questionId]
                   : message.content;
                 const isTyping = displayedText[questionId] && displayedText[questionId].length < message.content.length;
-                
+
                 return (
                   <div key={index} className="flex items-start gap-3">
                     <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0 shadow-lg">
@@ -731,14 +874,14 @@ export default function AiInterviewModal({
                       <div className="bg-green-50/90 backdrop-blur-sm border-2 border-green-200/50 rounded-2xl rounded-tl-sm px-4 py-3 shadow-lg">
                         <div className="flex items-center gap-2 mb-2">
                           <span className="text-2xl font-bold text-green-600">{message.feedback?.score}/10</span>
-                          <span className="text-sm text-gray-700">Điểm số</span>
+                          <span className="text-sm text-gray-700">{t.feedback.score}</span>
                   </div>
                         <p className="text-gray-700 leading-relaxed whitespace-pre-wrap mb-3">{message.content.split('\n\n')[1]}</p>
                         {message.feedback && (
                           <div className="space-y-2 mt-3 pt-3 border-t border-green-200/50">
                             {message.feedback.strengths.length > 0 && (
                   <div>
-                                <h4 className="font-semibold text-green-700 text-sm mb-1">Điểm mạnh:</h4>
+                                <h4 className="font-semibold text-green-700 text-sm mb-1">{t.feedback.strengths}</h4>
                                 <ul className="text-xs text-green-600 space-y-1">
                                   {message.feedback.strengths.map((s, i) => (
                                     <li key={i} className="flex items-start gap-1">
@@ -751,7 +894,7 @@ export default function AiInterviewModal({
                 )}
                             {message.feedback.improvements.length > 0 && (
                   <div>
-                                <h4 className="font-semibold text-orange-700 text-sm mb-1">Cần cải thiện:</h4>
+                                <h4 className="font-semibold text-orange-700 text-sm mb-1">{t.feedback.improvements}</h4>
                                 <ul className="text-xs text-orange-600 space-y-1">
                                   {message.feedback.improvements.map((imp, i) => (
                                     <li key={i} className="flex items-start gap-1">
@@ -769,11 +912,11 @@ export default function AiInterviewModal({
                         {formatMessageTime(message.timestamp)}
                       </span>
                       {!isLastQuestion && (
-                        <Button 
-                          onClick={handleNextQuestion} 
+                        <Button
+                          onClick={handleNextQuestion}
                           className="mt-3 ml-2 bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
                         >
-                          Câu hỏi tiếp theo →
+                          {t.feedback.nextQuestion}
                         </Button>
                       )}
                     </div>
@@ -808,14 +951,7 @@ export default function AiInterviewModal({
                     />
                     {recommendedLanguage && recommendedLanguage !== selectedLanguage && (
                       <span className="text-xs text-white/70 drop-shadow-sm">
-                        💡 Recommended: {recommendedLanguage === 'vi-VN' ? 'Tiếng Việt' : 
-                                         recommendedLanguage === 'en-US' || recommendedLanguage === 'en-GB' ? 'English' :
-                                         recommendedLanguage === 'ja-JP' ? '日本語' :
-                                         recommendedLanguage === 'ko-KR' ? '한국어' :
-                                         recommendedLanguage === 'zh-CN' ? '中文' :
-                                         recommendedLanguage === 'fr-FR' ? 'Français' :
-                                         recommendedLanguage === 'de-DE' ? 'Deutsch' :
-                                         recommendedLanguage === 'es-ES' ? 'Español' : recommendedLanguage}
+                        {t.recommended} {getLanguageName(recommendedLanguage)}
                       </span>
                     )}
                   </div>
@@ -824,13 +960,13 @@ export default function AiInterviewModal({
                       <div className="flex items-center gap-2">
                         <div className="w-3 h-3 bg-yellow-500 rounded-full animate-pulse"></div>
                         <p className="font-semibold text-yellow-700">
-                          ⏳ Đang hiển thị câu hỏi, vui lòng đợi...
+                          {t.input.waitMessage}
                         </p>
                       </div>
                   </div>
                 )}
                   <Textarea
-                    placeholder={isQuestionReady ? "Nhập câu trả lời của bạn..." : "Vui lòng đợi câu hỏi hiển thị xong..."}
+                    placeholder={isQuestionReady ? t.input.placeholder : t.input.placeholderWait}
                     value={userAnswer}
                     onChange={(e) => {
                       if (isQuestionReady) {
@@ -850,42 +986,35 @@ export default function AiInterviewModal({
                       <div className="flex items-center gap-2 mb-2">
                         <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
                         <p className="font-semibold text-red-700">
-                          🎤 Đang ghi âm ({selectedLanguage === 'vi-VN' ? 'Tiếng Việt' : 
-                                          selectedLanguage === 'en-US' || selectedLanguage === 'en-GB' ? 'English' :
-                                          selectedLanguage === 'ja-JP' ? '日本語' :
-                                          selectedLanguage === 'ko-KR' ? '한국어' :
-                                          selectedLanguage === 'zh-CN' ? '中文' :
-                                          selectedLanguage === 'fr-FR' ? 'Français' :
-                                          selectedLanguage === 'de-DE' ? 'Deutsch' :
-                                          selectedLanguage === 'es-ES' ? 'Español' : selectedLanguage})
+                          {t.input.recording} ({getLanguageName(selectedLanguage)})
                         </p>
                       </div>
                       {transcript ? (
                         <div className="mt-2 p-2 bg-white/80 rounded border border-red-200/50">
-                          <p className="text-gray-800 font-medium mb-1">Transcript:</p>
+                          <p className="text-gray-800 font-medium mb-1">{t.input.transcript}</p>
                           <p className="text-gray-700">{transcript}</p>
                         </div>
                       ) : (
-                        <p className="text-red-600 text-xs italic">Đang lắng nghe... Hãy nói vào microphone</p>
+                        <p className="text-red-600 text-xs italic">{t.input.listening}</p>
                       )}
                     </div>
                   )}
                   {speechError && (
                     <div className="p-2 bg-red-50/90 backdrop-blur-sm border border-red-200/50 rounded text-sm text-red-700">
-                      <p>Lỗi: {speechError}</p>
+                      <p>{t.input.error} {speechError}</p>
                     </div>
                   )}
                 </div>
                 <div className="flex flex-col gap-2">
                   {isSupported && (
                     <>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                         size="icon"
                         onClick={toggleRecording}
                         disabled={!isQuestionReady}
                         className={isRecording ? 'bg-red-100 text-red-600 hover:bg-red-200 border-red-300 bg-white/90 backdrop-blur-sm active:scale-95 transition-transform disabled:opacity-50 disabled:cursor-not-allowed' : 'bg-white/90 backdrop-blur-sm border-white/30 active:scale-95 transition-transform disabled:opacity-50 disabled:cursor-not-allowed'}
-                        title={!isQuestionReady ? 'Vui lòng đợi câu hỏi hiển thị xong' : (isRecording ? 'Nhấn để dừng ghi âm' : 'Nhấn để bắt đầu ghi âm')}
+                        title={!isQuestionReady ? t.input.waitTitle : (isRecording ? t.input.stopRecording : t.input.startRecording)}
                       >
                         {isRecording ? (
                           <Mic className="h-4 w-4 animate-pulse text-red-600" />
@@ -897,21 +1026,21 @@ export default function AiInterviewModal({
                         <div className="mt-2 px-3 py-2 bg-black/40 border border-white/20 rounded-lg text-center text-xs text-white/80 backdrop-blur">
                           <p className="font-semibold text-red-200 flex items-center justify-center gap-1">
                             <span className="w-2 h-2 rounded-full bg-red-400 animate-pulse"></span>
-                            Đang ghi âm
+                            {t.input.recording}
                           </p>
                           <p className="mt-1 text-white/90 max-h-20 overflow-hidden text-ellipsis whitespace-pre-line">
-                            {transcript || 'Đang lắng nghe... Hãy nói vào microphone'}
+                            {transcript || t.input.listening}
                           </p>
                         </div>
                       )}
                     </>
                   )}
-                  <Button 
-                    onClick={handleSubmitAnswer} 
+                  <Button
+                    onClick={handleSubmitAnswer}
                     disabled={!userAnswer.trim() || isLoading || !isQuestionReady}
                     className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                     size="icon"
-                    title={!isQuestionReady ? 'Vui lòng đợi câu hỏi hiển thị xong' : ''}
+                    title={!isQuestionReady ? t.input.waitTitle : ''}
                   >
                     {isEvaluating ? (
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
@@ -922,7 +1051,7 @@ export default function AiInterviewModal({
                 </div>
               </div>
               <p className="text-xs text-white/80 mt-2 ml-1 drop-shadow-sm">
-                Nhấn Ctrl + Enter để gửi • {isSupported && 'Nhấn icon mic để bật/tắt ghi âm'} • Chọn ngôn ngữ để ghi âm/nhập text
+                {t.input.helpText}
               </p>
             </div>
           )}
@@ -930,12 +1059,12 @@ export default function AiInterviewModal({
           {/* No more questions */}
           {session && !currentQuestion && (
             <div className="border-t border-white/20 bg-white/10 backdrop-blur-sm p-6 text-center">
-              <h3 className="text-lg font-medium text-white mb-2 drop-shadow-lg">Tất cả câu hỏi đã hoàn thành! 🎉</h3>
+              <h3 className="text-lg font-medium text-white mb-2 drop-shadow-lg">{t.complete.title}</h3>
               <p className="text-white/90 mb-4 drop-shadow-md">
-                Bạn đã trả lời tất cả {session.totalQuestions} câu hỏi. Nhấn nút bên dưới để hoàn thành phỏng vấn và xem kết quả tổng thể.
+                {t.complete.desc.replace('{count}', session.totalQuestions.toString())}
               </p>
               <Button onClick={handleCompleteSession} disabled={isLoading} className="bg-green-600 hover:bg-green-700 text-white shadow-lg">
-                {isLoading ? 'Đang hoàn thành...' : 'Hoàn thành phỏng vấn'}
+                {isLoading ? t.complete.completing : t.complete.button}
               </Button>
             </div>
           )}

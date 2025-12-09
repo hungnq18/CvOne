@@ -24,7 +24,7 @@ export default async function CLTemplatePage() {
             <div>
               <VerticalAdvertisementSection position="left" />
             </div>
-            <div className="flex-1">
+            <div className="flex-1 max-w-7xl mx-auto w-full">
               <HeaderCVSection />
               <TemplateCVSection initialTemplates={cvTemplates} />
             </div>

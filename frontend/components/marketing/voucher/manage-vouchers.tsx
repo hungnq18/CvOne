@@ -15,7 +15,7 @@ import {
 import { getAllVouchers, deleteVoucher, Voucher } from "@/api/voucherApi"
 import { AddVoucherModal } from "./add-voucher-modal"
 import { EditVoucherModal } from "./edit-voucher-modal"
-import { toast } from "@/components/ui/use-toast"
+import { showSuccessToast, showErrorToast } from "@/utils/popUpUtils"
 import {
     AlertDialog,
     AlertDialogAction,
@@ -26,6 +26,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { useLanguage } from "@/providers/global_provider"
 
 const statusColors: { [key: string]: string } = {
     active: "bg-green-500",
@@ -55,6 +56,7 @@ export function ManageVouchers() {
     const [selectedVoucher, setSelectedVoucher] = useState<Voucher | null>(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+    const { t } = useLanguage();
 
 
     const fetchVouchers = async () => {
@@ -64,7 +66,7 @@ export function ManageVouchers() {
             setVouchers(data);
         } catch (error) {
             console.error("Failed to fetch vouchers", error);
-            toast({ title: "Error", description: "Could not fetch vouchers.", variant: "destructive" });
+            showErrorToast(t.common.error, "Could not fetch vouchers.");
         } finally {
             setIsLoading(false);
         }
@@ -88,10 +90,13 @@ export function ManageVouchers() {
         if (selectedVoucher) {
             try {
                 await deleteVoucher(selectedVoucher._id);
-                toast({ title: "Success", description: "Voucher deleted successfully." });
+                showSuccessToast(t.common.success, t.voucher.messages.deleteSuccess);
                 fetchVouchers(); // Refresh the list
-            } catch (error) {
-                 toast({ title: "Error", description: "Failed to delete voucher.", variant: "destructive" });
+            } catch (error: any) {
+                showErrorToast(
+                    t.common.error,
+                    error.message || t.voucher.messages.deleteError
+                );
             } finally {
                 setIsDeleteDialogOpen(false);
                 setSelectedVoucher(null);
@@ -110,9 +115,9 @@ export function ManageVouchers() {
         <div className="p-4 sm:p-6">
             <div className="flex items-center justify-between mb-6">
                 <div>
-                    <h1 className="text-2xl font-bold">Manage Vouchers</h1>
+                    <h1 className="text-2xl font-bold">{t.voucher.manageTitle}</h1>
                     <p className="text-muted-foreground">
-                        Here you can create, edit, and manage all promotional vouchers.
+                        {t.voucher.manageDesc}
                     </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -122,7 +127,7 @@ export function ManageVouchers() {
 
             <div className="mb-6">
                 <Input
-                    placeholder="Search by name or description..."
+                    placeholder={t.voucher.searchPlaceholder}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="max-w-sm"
@@ -131,7 +136,7 @@ export function ManageVouchers() {
 
             {isLoading ? (
                  <div className="text-center py-12">
-                    <p className="text-muted-foreground">Loading vouchers...</p>
+                    <p className="text-muted-foreground">{t.common.loading}</p>
                 </div>
             ) : filteredVouchers.length > 0 ? (
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -147,8 +152,8 @@ export function ManageVouchers() {
                                             </Button>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end">
-                                            <DropdownMenuItem onClick={() => handleEdit(voucher)}>Edit</DropdownMenuItem>
-                                            <DropdownMenuItem className="text-red-500" onClick={() => handleDelete(voucher)}>Delete</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => handleEdit(voucher)}>{t.common.edit}</DropdownMenuItem>
+                                            <DropdownMenuItem className="text-red-500" onClick={() => handleDelete(voucher)}>{t.common.delete}</DropdownMenuItem>
                                         </DropdownMenuContent>
                                     </DropdownMenu>
                                 </div>
@@ -177,7 +182,7 @@ export function ManageVouchers() {
                 </div>
             ) : (
                 <div className="text-center py-12">
-                    <p className="text-muted-foreground">No vouchers found.</p>
+                    <p className="text-muted-foreground">{t.voucher.noVouchers}</p>
                 </div>
             )}
             <EditVoucherModal voucher={selectedVoucher} onVoucherUpdated={fetchVouchers} isOpen={isEditModalOpen} setIsOpen={setIsEditModalOpen} />
@@ -185,14 +190,14 @@ export function ManageVouchers() {
             <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogTitle>{t.common.confirmDeleteTitle}</AlertDialogTitle>
                         <AlertDialogDescription>
-                            This action cannot be undone. This will permanently delete the voucher.
+                            {t.common.confirmDeleteDesc}
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={confirmDelete}>Continue</AlertDialogAction>
+                        <AlertDialogCancel>{t.common.cancel}</AlertDialogCancel>
+                        <AlertDialogAction onClick={confirmDelete}>{t.common.continue}</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>

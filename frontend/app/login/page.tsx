@@ -231,7 +231,7 @@ export default function LoginPage() {
     handleSubmit,
     handleGoogleLogin,
     setShowPassword
-  } = useLoginForm()
+  } = useLoginForm(["user", "hr"])
   const router = useRouter()
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/";

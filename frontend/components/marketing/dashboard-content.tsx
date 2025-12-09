@@ -7,8 +7,9 @@ import { useEffect, useState } from "react"
 import { getAllUsers } from "@/api/userApi"
 import type { User } from "@/types/auth"
 import { getAllVouchers } from "@/api/voucherApi"
-import { getAllAds } from "@/api/adsApi"
+import { getAllBanners } from "@/api/bannerApi"
 import { getActiveUsers } from "@/api/analyticsApi"
+import { useLanguage } from "@/providers/global_provider"
 
 interface UserData {
   month: string;
@@ -16,24 +17,25 @@ interface UserData {
 }
 
 export function DashboardContent() {
+  const { t } = useLanguage();
   const [stats, setStats] = useState([
     {
-      title: "Active Users (GA)",
+      title: "activeUsers",
       value: "0",
       icon: Activity,
     },
     {
-      title: "Active HRs",
+      title: "activeHRs",
       value: "0",
       icon: UserCheck,
     },
     {
-      title: "Total Vouchers",
+      title: "totalVouchers",
       value: "0",
       icon: Ticket,
     },
     {
-      title: "Total Ads Campaigns",
+      title: "totalBanners",
       value: "0",
       icon: Megaphone,
     },
@@ -46,7 +48,7 @@ export function DashboardContent() {
         const [users, vouchers, ads, activeUsersFromGA] = await Promise.all([
           getAllUsers(),
           getAllVouchers(),
-          getAllAds(),
+          getAllBanners(),
           getActiveUsers().catch((err) => {
             console.error("Failed to fetch GA active users:", err)
             return 0
@@ -107,7 +109,10 @@ export function DashboardContent() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">{stat.title}</p>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    {/* @ts-ignore */}
+                    {t.dashboard[stat.title]}
+                  </p>
                   <p className="text-2xl font-bold">{stat.value}</p>
                 </div>
                 <div className="h-12 w-12 rounded-lg bg-green-50 flex items-center justify-center">
@@ -122,9 +127,9 @@ export function DashboardContent() {
       <div className="">
         <Card className="bg-white">
           <CardHeader>
-            <CardTitle className="text-lg">New User Registration Statistics</CardTitle>
+            <CardTitle className="text-lg">{t.dashboard.userStats}</CardTitle>
             <div className="flex gap-4 text-sm text-muted-foreground">
-              <span>Last 12 months</span>
+              <span>{t.dashboard.last12Months}</span>
             </div>
           </CardHeader>
           <CardContent>

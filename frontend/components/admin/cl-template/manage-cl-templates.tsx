@@ -11,8 +11,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { getCLTemplates, CLTemplate } from "@/api/clApi"
+import { useLanguage } from "@/providers/global_provider"
 
 export function ManageCLTemplates() {
+  const { t } = useLanguage()
   const [templates, setTemplates] = useState<CLTemplate[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [previewTemplate, setPreviewTemplate] = useState<CLTemplate | null>(null)
@@ -57,20 +59,20 @@ export function ManageCLTemplates() {
   return (
     <div className="flex-1 space-y-6 p-6 pt-0 bg-gray-50">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Manage Cover Letter Templates</h1>
+        <h1 className="text-3xl font-bold tracking-tight">{t.admin.clTemplate.title}</h1>
         <p className="text-muted-foreground">
-          View and manage cover letter templates for different industries
+          {t.admin.clTemplate.desc}
         </p>
       </div>
 
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle>Cover Letter Templates ({filteredTemplates.length})</CardTitle>
+            <CardTitle>{t.admin.clTemplate.title} ({filteredTemplates.length})</CardTitle>
             <div className="relative w-72">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Search templates..."
+                placeholder={t.admin.clTemplate.searchPlaceholder}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
@@ -82,10 +84,10 @@ export function ManageCLTemplates() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Template</TableHead>
-                <TableHead>Industry</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead>{t.admin.clTemplate.table.template}</TableHead>
+                <TableHead>{t.admin.clTemplate.table.industry}</TableHead>
+                <TableHead>{t.admin.clTemplate.table.status}</TableHead>
+                <TableHead className="text-right">{t.admin.clTemplate.table.actions}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -103,10 +105,10 @@ export function ManageCLTemplates() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge className={getIndustryColor("Business")}>Business</Badge>
+                    <Badge className={getIndustryColor("Business")}>{t.admin.clTemplate.industries.business}</Badge>
                   </TableCell>
                   <TableCell>
-                    <Badge className={getStatusColor("Active")}>Active</Badge>
+                    <Badge className={getStatusColor("Active")}>{t.admin.cvTemplate.status.active}</Badge>
                   </TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
@@ -118,15 +120,15 @@ export function ManageCLTemplates() {
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => setPreviewTemplate(template)}>
                           <Eye className="mr-2 h-4 w-4" />
-                          Preview
+                          {t.admin.clTemplate.actions.preview}
                         </DropdownMenuItem>
                         <DropdownMenuItem>
                           <Download className="mr-2 h-4 w-4" />
-                          Export
+                          {t.admin.clTemplate.actions.export}
                         </DropdownMenuItem>
                         <DropdownMenuItem className="text-red-600">
                           <Trash2 className="mr-2 h-4 w-4" />
-                          Delete Template
+                          {t.admin.clTemplate.actions.delete}
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -143,7 +145,7 @@ export function ManageCLTemplates() {
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {previewTemplate ? previewTemplate.title : "Template preview"}
+              {previewTemplate ? previewTemplate.title : t.admin.clTemplate.dialog.preview}
             </DialogTitle>
           </DialogHeader>
           {previewTemplate && (
