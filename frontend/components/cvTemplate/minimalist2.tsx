@@ -469,12 +469,27 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
                 <div className="bg-white/60 backdrop-blur-sm p-6 rounded-xl shadow-md">
                   <div className="space-y-4">
                     {userData.skills.map((skill: any, i: number) => {
-                      const rating = Math.max(0, Math.min(5, Number(skill.rating || 0)));
+                      const ratingRaw = Number(skill.rating);
+                      const hasRating = !isNaN(ratingRaw) && ratingRaw > 0;
+                      const rating = hasRating
+                        ? Math.max(0, Math.min(5, ratingRaw))
+                        : 0;
                       const width = `${(rating / 5) * 100}%`;
+
+                      if (!hasRating) {
+                        return (
+                          <div key={i} className="group">
+                            <span className="text-base font-semibold text-gray-900 break-words">
+                              {skill.name}
+                            </span>
+                          </div>
+                        );
+                      }
+
                       return (
                         <div key={i} className="group">
                           <div className="flex items-start justify-between gap-6 mb-3">
-                            <span className="text-sm text-gray-800 font-medium leading-relaxed">
+                            <span className="text-base text-gray-900 font-semibold leading-relaxed">
                               {skill.name}
                             </span>
                             <span className="text-green-800 text-xs font-semibold whitespace-nowrap">
@@ -738,22 +753,39 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
                   {t.projectLabel}
                 </h2>
               </div>
-              <div className="space-y-4">
+              <ul className="space-y-4 list-disc pl-5 ml-2">
                 {userData.Project.map((project: any, i: number) => (
-                  <div key={i} className="bg-white p-5 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 border-l-4 border-lime-500 break-words overflow-hidden">
-                    <h3 className="text-lg font-bold text-gray-900 mb-2 break-words">{project.title || project["title "]}</h3>
+                  <li key={i} className="bg-white p-5 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 border-l-4 border-lime-500 break-words overflow-hidden list-none pl-0">
+                    <h3 className="text-lg font-bold text-gray-900 mb-2 break-words">
+                      {project.title || project["title "]}
+                    </h3>
                     {project.startDate && (
                       <span className="text-sm text-gray-600 whitespace-nowrap">
-                        {new Date(project.startDate).toLocaleDateString("vi-VN", { month: "2-digit", year: "numeric" })}
-                        {project.endDate ? ` - ${new Date(project.endDate).toLocaleDateString("vi-VN", { month: "2-digit", year: "numeric" })}` : ` - ${t.present}`}
+                        {new Date(project.startDate).toLocaleDateString("vi-VN", {
+                          month: "2-digit",
+                          year: "numeric",
+                        })}
+                        {project.endDate
+                          ? ` - ${new Date(project.endDate).toLocaleDateString("vi-VN", {
+                              month: "2-digit",
+                              year: "numeric",
+                            })}`
+                          : ` - ${t.present}`}
                       </span>
                     )}
                     {project.summary && (
-                      <p className="text-sm text-gray-700 mt-2 break-words">{project.summary}</p>
+                      <ul className="text-sm text-gray-700 mt-2 break-words whitespace-pre-line list-disc pl-5 space-y-1">
+                        {String(project.summary)
+                          .split(/\r?\n/)
+                          .filter((line: string) => line.trim().length > 0)
+                          .map((line: string, idx: number) => (
+                            <li key={idx}>{line}</li>
+                          ))}
+                      </ul>
                     )}
-                  </div>
+                  </li>
                 ))}
-              </div>
+              </ul>
             </div>
           </HoverableWrapper>
         );

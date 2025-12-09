@@ -1372,8 +1372,14 @@ export const ProjectPopup: FC<{
   const t = translations[language].projectPopup;
 
   const [projects, setProjects] = useState<ProjectItem[]>(() => {
+    const rawProjects =
+      initialData.Project ||
+      initialData.project ||
+      initialData.projects ||
+      [];
+
     // Nếu không có Project hoặc Project rỗng, tạo một project mẫu
-    if (!initialData.Project || initialData.Project.length === 0) {
+    if (!rawProjects || rawProjects.length === 0) {
       return [
         {
           title: "",
@@ -1385,7 +1391,7 @@ export const ProjectPopup: FC<{
     }
 
     // Chuyển đổi từ ISO date string sang format YYYY-MM-DD cho input date
-    return initialData.Project.map((item: any) => {
+    return rawProjects.map((item: any) => {
       let startDate = "";
       let endDate = "";
 

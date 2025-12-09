@@ -570,12 +570,27 @@ const Modern2: React.FC<Modern2Props> = ({
             >
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 items-stretch">
                 {userData.skills.map((skill: any, i: number) => {
-                  const rating = Math.max(0, Math.min(5, Number(skill.rating || 0)));
+                  const ratingRaw = Number(skill.rating);
+                  const hasRating = !isNaN(ratingRaw) && ratingRaw > 0;
+                  const rating = hasRating
+                    ? Math.max(0, Math.min(5, ratingRaw))
+                    : 0;
                   const width = `${(rating / 5) * 100}%`;
+
+                  if (!hasRating) {
+                    return (
+                      <div key={i} className="group flex flex-col justify-between min-h-[40px]">
+                        <span className="text-base font-semibold text-slate-900 break-words">
+                          {skill.name}
+                        </span>
+                      </div>
+                    );
+                  }
+
                   return (
                     <div key={i} className="group flex flex-col justify-between min-h-[40px]">
                       <div className="flex items-center justify-between gap-3 mb-2">
-                        <span className="text-sm font-medium text-slate-800 transition-colors group-hover:text-blue-600">
+                        <span className="text-base font-semibold text-slate-800 transition-colors group-hover:text-blue-600">
                           {skill.name}
                         </span>
                         <span className="bg-gray-100 px-3 py-1 rounded-full text-slate-700 text-xs font-semibold flex-shrink-0">
@@ -680,22 +695,39 @@ const Modern2: React.FC<Modern2Props> = ({
             dragHandleProps={dragHandleProps}
             isDragging={isDragging}
           >
-            <div className="space-y-4">
+            <ul className="space-y-4 list-disc pl-5 ml-2">
               {userData.Project.map((project: any, i: number) => (
-                <div key={i} className="professional-card bg-slate-50 p-6 border-l-4 border-slate-700 break-words overflow-hidden">
-                  <h3 className="text-lg font-bold text-slate-800 mb-1 break-words">{project.title || project["title "]}</h3>
+                <li key={i} className="professional-card bg-slate-50 p-6 border-l-4 border-slate-700 break-words overflow-hidden list-none pl-0">
+                  <h3 className="text-lg font-bold text-slate-800 mb-1 break-words">
+                    {project.title || project["title "]}
+                  </h3>
                   {project.startDate && (
                     <span className="text-sm text-slate-600 whitespace-nowrap">
-                      {new Date(project.startDate).toLocaleDateString("vi-VN", { month: "2-digit", year: "numeric" })}
-                      {project.endDate ? ` - ${new Date(project.endDate).toLocaleDateString("vi-VN", { month: "2-digit", year: "numeric" })}` : ` - ${t.present}`}
+                      {new Date(project.startDate).toLocaleDateString("vi-VN", {
+                        month: "2-digit",
+                        year: "numeric",
+                      })}
+                      {project.endDate
+                        ? ` - ${new Date(project.endDate).toLocaleDateString("vi-VN", {
+                            month: "2-digit",
+                            year: "numeric",
+                          })}`
+                        : ` - ${t.present}`}
                     </span>
                   )}
                   {project.summary && (
-                    <p className="text-sm text-slate-700 mt-2 break-words">{project.summary}</p>
+                    <ul className="text-sm text-slate-700 mt-2 break-words whitespace-pre-line list-disc pl-5 space-y-1">
+                      {String(project.summary)
+                        .split(/\r?\n/)
+                        .filter((line: string) => line.trim().length > 0)
+                        .map((line: string, idx: number) => (
+                          <li key={idx}>{line}</li>
+                        ))}
+                    </ul>
                   )}
-                </div>
+                </li>
               ))}
-            </div>
+            </ul>
           </Section>
         );
 

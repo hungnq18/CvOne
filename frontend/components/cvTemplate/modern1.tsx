@@ -436,23 +436,45 @@ const ModernCV1: React.FC<ModernCV1Props> = ({
               dragHandleProps={dragHandleProps}
               isDragging={isDragging}
             >
-              <div className="space-y-8">
+              <ul className="space-y-8 list-disc pl-5">
                 {userData.skills.map((skill: any, i: number) => {
-                  const rating = Math.max(0, Math.min(5, Number(skill.rating || 0)));
+                  const ratingRaw = Number(skill.rating);
+                  const hasRating = !isNaN(ratingRaw) && ratingRaw > 0;
+                  const rating = hasRating
+                    ? Math.max(0, Math.min(5, ratingRaw))
+                    : 0;
                   const width = `${(rating / 5) * 100}%`;
+
+                  if (!hasRating) {
+                    return (
+                      <li key={i} className="group list-outside">
+                        <span className="text-xl font-semibold leading-relaxed flex-1 text-white">
+                          {skill.name}
+                        </span>
+                      </li>
+                    );
+                  }
+
                   return (
-                    <div key={i} className="group">
+                    <li key={i} className="group list-outside">
                       <div className="flex items-start justify-between gap-6 mb-3 text-white-600 group-hover:text-teal-200">
-                        <span className="text-lg font-normal leading-relaxed flex-1 transition-colors duration-200">{skill.name}</span>
-                        <span className="text-2xl font-normal whitespace-nowrap flex-shrink-0">{rating}/5</span>
+                        <span className="text-xl font-semibold leading-relaxed flex-1 transition-colors duration-200">
+                          {skill.name}
+                        </span>
+                        <span className="text-2xl font-semibold whitespace-nowrap flex-shrink-0">
+                          {rating}/5
+                        </span>
                       </div>
                       <div className="relative h-1.5 bg-white/10 rounded-full overflow-hidden">
-                        <div className="absolute inset-y-0 left-0 bg-gradient-to-r from-teal-400/60 to-teal-300/60 rounded-full transition-all duration-500 ease-out" style={{ width }} />
+                        <div
+                          className="absolute inset-y-0 left-0 bg-gradient-to-r from-teal-400/60 to-teal-300/60 rounded-full transition-all duration-500 ease-out"
+                          style={{ width }}
+                        />
                       </div>
-                    </div>
+                    </li>
                   );
                 })}
-              </div>
+              </ul>
             </Section>
           );
 
@@ -623,8 +645,9 @@ const ModernCV1: React.FC<ModernCV1Props> = ({
             dragHandleProps={dragHandleProps}
             isDragging={isDragging}
           >
-            {(userData.Project || []).map((project: any, i: number) => (
-              <div key={i} className="mb-8 last:mb-0">
+              <div className="space-y-8 list-none pl-0 ml-2">
+              {(userData.Project || []).map((project: any, i: number) => (
+              <div key={i} className="mb-8 last:mb-0 list-none">
                 <h3 className="font-bold text-xl">{project.title || project["title "]}</h3>
                 {project.startDate && (
                   <span className="text-base italic text-gray-600">
@@ -633,10 +656,20 @@ const ModernCV1: React.FC<ModernCV1Props> = ({
                   </span>
                 )}
                 {project.summary && (
-                  <p className="text-lg mt-2">{project.summary}</p>
+                  <ul className="text-lg mt-2 whitespace-pre-line break-words list-disc pl-5 space-y-1">
+                    {String(project.summary)
+                      .split(/\r?\n/)
+                      .filter((line: string) => line.trim().length > 0)
+                      .map((line: string, idx: number) => (
+                    <li key={idx} className="list-disc">
+                      {line}
+                    </li>
+                      ))}
+                  </ul>
                 )}
               </div>
             ))}
+              </div>
           </Section>
         );
 

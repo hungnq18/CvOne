@@ -580,12 +580,27 @@ const CVTemplateInspired: React.FC<CVTemplateProps> = ({
 
                 <div className="space-y-6 text-gray-700 w-full">
                   {userData.skills.map((skill: any, i: number) => {
-                    const rating = Math.max(0, Math.min(5, Number(skill.rating || 0)));
+                    const ratingRaw = Number(skill.rating);
+                    const hasRating = !isNaN(ratingRaw) && ratingRaw > 0;
+                    const rating = hasRating
+                      ? Math.max(0, Math.min(5, ratingRaw))
+                      : 0;
                     const width = `${(rating / 5) * 100}%`;
+
+                    if (!hasRating) {
+                      return (
+                        <div key={i} className="w-full">
+                          <span className="text-lg font-semibold text-gray-800 break-words">
+                            {skill.name}
+                          </span>
+                        </div>
+                      );
+                    }
+
                     return (
                       <div key={i} className="group w-full">
                         <div className="flex items-center justify-between gap-6 mb-2">
-                          <span className="text-gray-800 font-medium transition-colors group-hover:text-gray-600 break-words">
+                          <span className="text-lg text-gray-800 font-semibold transition-colors group-hover:text-gray-600 break-words">
                             {skill.name}
                           </span>
                           <span className="text-gray-900 text-sm font-semibold bg-gray-100 px-3 py-1 rounded-full flex-shrink-0">
@@ -707,22 +722,39 @@ const CVTemplateInspired: React.FC<CVTemplateProps> = ({
               <h2 className="text-xl font-bold text-gray-800 uppercase tracking-wider mb-4 pb-2 border-b-2 border-gray-300 break-words">
                 {t.projectLabel}
               </h2>
-              <div className="space-y-4 w-full">
+              <ul className="space-y-4 w-full list-none pl-0 ml-2">
                 {userData.Project.map((project: any, i: number) => (
-                  <div key={i} className="w-full">
-                    <h3 className="font-bold text-lg text-gray-800 break-words w-full">{project.title || project["title "]}</h3>
+                  <li key={i} className="w-full">
+                    <h3 className="font-bold text-lg text-gray-800 break-words w-full">
+                      {project.title || project["title "]}
+                    </h3>
                     {project.startDate && (
                       <span className="text-base italic text-gray-600 whitespace-nowrap block mb-1">
-                        {new Date(project.startDate).toLocaleDateString("vi-VN", { month: "2-digit", year: "numeric" })}
-                        {project.endDate ? ` - ${new Date(project.endDate).toLocaleDateString("vi-VN", { month: "2-digit", year: "numeric" })}` : ` - ${t.present}`}
+                        {new Date(project.startDate).toLocaleDateString("vi-VN", {
+                          month: "2-digit",
+                          year: "numeric",
+                        })}
+                        {project.endDate
+                          ? ` - ${new Date(project.endDate).toLocaleDateString("vi-VN", {
+                              month: "2-digit",
+                              year: "numeric",
+                            })}`
+                          : ` - ${t.present}`}
                       </span>
                     )}
                     {project.summary && (
-                      <p className="text-base text-gray-700 break-words w-full">{project.summary}</p>
+                      <ul className="text-base text-gray-700 break-words whitespace-pre-line w-full list-disc pl-5 space-y-1">
+                        {String(project.summary)
+                          .split(/\r?\n/)
+                          .filter((line: string) => line.trim().length > 0)
+                          .map((line: string, idx: number) => (
+                            <li key={idx}>{line}</li>
+                          ))}
+                      </ul>
                     )}
-                  </div>
+                  </li>
                 ))}
-              </div>
+              </ul>
             </HoverableWrapper>
           </div>
         );
