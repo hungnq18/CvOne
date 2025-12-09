@@ -10,9 +10,20 @@ export default function VerifyEmailPage() {
   const searchParams = useSearchParams()
   const prefilledEmail = searchParams.get("email") || ""
   const [isLoading, setIsLoading] = useState(false)
+  const [cooldown, setCooldown] = useState(0)
+  const [lastMessage, setLastMessage] = useState<string>("")
   const [email, setEmail] = useState(prefilledEmail) // Lưu email đã truyền từ đăng ký
   const router = useRouter()
   const token = searchParams.get("token")
+
+  // Countdown timer for resend
+  useEffect(() => {
+    if (cooldown <= 0) return
+    const timer = setInterval(() => {
+      setCooldown((prev) => (prev > 0 ? prev - 1 : 0))
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [cooldown])
 
   // Logic kiểm tra token trên URL để chuyển sang trang check (Giữ nguyên)
   useEffect(() => {
@@ -22,13 +33,19 @@ export default function VerifyEmailPage() {
   }, [token, router])
 
   const handleResendVerification = async () => {
+    if (cooldown > 0) {
+      toast.info(`Vui lòng chờ ${cooldown}s rồi thử lại`)
+      return
+    }
     // Validate: Bắt buộc phải có email
     if (!email) {
       toast.error("Please enter your email address")
+      setLastMessage("Please enter your email address")
       return
     }
 
     setIsLoading(true)
+    setLastMessage("")
     try {
       const response = await fetch(`${API_URL}${API_ENDPOINTS.ACCOUNTS.RESEND_VERIFICATION}`, {
         method: "POST",
@@ -48,6 +65,7 @@ export default function VerifyEmailPage() {
       if (isAlreadyVerified) {
         // YÊU CẦU CỦA BẠN: Chỉ hiện thông báo, KHÔNG NAVIGATE (không chuyển trang)
         toast.info("Email này đã được xác thực rồi. Bạn có thể đăng nhập.")
+        setLastMessage("Email này đã được xác thực rồi. Bạn có thể đăng nhập.")
         // Không gọi router.push() ở đây
         setIsLoading(false)
         return
@@ -55,11 +73,15 @@ export default function VerifyEmailPage() {
 
       if (response.ok) {
         toast.success(data.message || "Verification email sent!")
+        setLastMessage(data.message || "Verification email sent!")
+        setCooldown(30)
       } else {
         toast.error(data.message || "Failed to resend verification email")
+        setLastMessage(data.message || "Failed to resend verification email")
       }
     } catch (error) {
       toast.error("Failed to resend verification email")
+      setLastMessage("Failed to resend verification email")
     } finally {
       setIsLoading(false)
     }
@@ -96,10 +118,17 @@ export default function VerifyEmailPage() {
 
             <StyledButton 
               onClick={handleResendVerification}
-              disabled={isLoading}
+              disabled={isLoading || cooldown > 0}
             >
-              {isLoading ? "Sending..." : "Resend Verification Email"}
+              {isLoading
+                ? "Sending..."
+                : cooldown > 0
+                  ? `Resend in ${cooldown}s`
+                  : "Resend Verification Email"}
             </StyledButton>
+            {lastMessage && (
+              <StatusText>{lastMessage}</StatusText>
+            )}
           </div>
         </CardContentStyled>
       </VerifyCard>
@@ -206,4 +235,12 @@ const StyledButton = styled.button`
     transform: none;
     box-shadow: none;
   }
+`
+
+const StatusText = styled.p`
+  text-align: center;
+  color: #374151;
+  font-size: 0.95rem;
+  margin: 8px 0 0;
+  line-height: 1.4;
 `
