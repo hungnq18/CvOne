@@ -175,11 +175,14 @@ export function useLoginForm(allowedRoles?: string[]) {
       } else if (err?.response?.status === 401) {
         // Check if it's email verification error
         const errorMessage = err?.response?.data?.message || "";
-        if (
+        const isUnverified =
           errorMessage.includes("Email not verified") ||
-          errorMessage.includes("Email chưa được xác thực")
-        ) {
+          errorMessage.includes("Email chưa được xác thực");
+
+        if (isUnverified) {
           msg = t.emailNotVerified;
+          // Điều hướng sang verify-email, truyền sẵn email để người dùng gửi lại
+          router.push(`/verify-email?email=${encodeURIComponent(formData.email)}`);
         } else {
           msg = t.invalidCredentials;
         }

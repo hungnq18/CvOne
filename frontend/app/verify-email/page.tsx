@@ -7,10 +7,11 @@ import { toast } from "sonner"
 import styled from "styled-components"
 
 export default function VerifyEmailPage() {
-  const [isLoading, setIsLoading] = useState(false)
-  const [email, setEmail] = useState("") // Thêm state để lưu email người dùng nhập
-  const router = useRouter()
   const searchParams = useSearchParams()
+  const prefilledEmail = searchParams.get("email") || ""
+  const [isLoading, setIsLoading] = useState(false)
+  const [email, setEmail] = useState(prefilledEmail) // Lưu email đã truyền từ đăng ký
+  const router = useRouter()
   const token = searchParams.get("token")
 
   // Logic kiểm tra token trên URL để chuyển sang trang check (Giữ nguyên)
@@ -21,7 +22,7 @@ export default function VerifyEmailPage() {
   }, [token, router])
 
   const handleResendVerification = async () => {
-    // Validate: Bắt buộc phải nhập email mới cho gửi
+    // Validate: Bắt buộc phải có email
     if (!email) {
       toast.error("Please enter your email address")
       return
@@ -80,12 +81,17 @@ export default function VerifyEmailPage() {
             </StyledText>
             
             {/* Thêm ô Input nhập Email */}
-            <StyledInput 
-              type="email" 
-              placeholder="Enter your email" 
+            <StyledInput
+              type="email"
+              placeholder="Enter your email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={isLoading}
+              onChange={(e) => {
+                // Nếu có email truyền sang từ register thì khóa không cho sửa
+                if (prefilledEmail) return
+                setEmail(e.target.value)
+              }}
+              disabled={isLoading || !!prefilledEmail}
+              readOnly={!!prefilledEmail}
             />
 
             <StyledButton 
