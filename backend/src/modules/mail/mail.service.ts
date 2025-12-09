@@ -2,69 +2,55 @@
 author: HungNQ
 date: 2025-03-06
   The MailService is responsible for sending verification emails to users.
-  It uses nodemailer to create a transporter and send emails with a verification link.
+  It uses SendGrid's HTTP API to send emails with verification links and attachments.
   The service retrieves configuration values from the ConfigService for email settings.
-  MAIL_HOST, MAIL_PORT, MAIL_USER, MAIL_PASS, and MAIL_FROM are expected to be set in the environment variables.
+  SENDGRID_API_KEY and MAIL_FROM (or SENDGRID_FROM) are expected to be set in the environment variables.
 */
 import { Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import * as nodemailer from "nodemailer";
+import * as sgMail from "@sendgrid/mail";
 
 @Injectable()
 export class MailService {
-  private transporter: nodemailer.Transporter;
+  private fromEmail: string | undefined;
+  private isConfigured = false;
 
   constructor(private configService: ConfigService) {
-    const mailHost = this.configService.get("MAIL_HOST");
-    const mailPort = this.configService.get("MAIL_PORT");
-    const mailUser = this.configService.get("MAIL_USER");
-    const mailPass = this.configService.get("MAIL_PASS");
-    const mailSecure = this.configService.get("MAIL_SECURE") === "true";
+    const apiKey = this.configService.get<string>("SENDGRID_API_KEY");
+    this.fromEmail =
+      this.configService.get<string>("MAIL_FROM") ||
+      this.configService.get<string>("SENDGRID_FROM");
 
-    // Check if mail configuration is available
-    if (!mailHost || !mailPort || !mailUser || !mailPass) {
+    if (!apiKey || !this.fromEmail) {
       console.warn(
-        "Mail configuration is incomplete. Email sending will be disabled."
+        "SendGrid configuration missing. Required: SENDGRID_API_KEY and MAIL_FROM/SENDGRID_FROM"
       );
-      console.warn("Required: MAIL_HOST, MAIL_PORT, MAIL_USER, MAIL_PASS");
       return;
     }
 
-    this.transporter = nodemailer.createTransport({
-      host: mailHost,
-      port: parseInt(mailPort),
-      secure: parseInt(mailPort) === 465, // Port 465 requires secure: true
-      auth: {
-        user: mailUser,
-        pass: mailPass,
-      },
-    });
-
-    // Verify connection configuration
-    this.transporter.verify((error, success) => {
-      if (error) {
-        console.error("Mail transporter verification failed:", error);
-      } else {
-        console.log("Mail transporter is ready to send emails");
-      }
-    });
+    sgMail.setApiKey(apiKey);
+    this.isConfigured = true;
   }
 
-  async sendVerificationEmail(email: string, token: string) {
-    if (!this.transporter) {
+  private ensureConfigured() {
+    if (!this.isConfigured || !this.fromEmail) {
       console.error(
-        "Mail transporter is not configured. Cannot send verification email."
+        "SendGrid is not configured. Cannot send emails. Check SENDGRID_API_KEY and MAIL_FROM/SENDGRID_FROM."
       );
       throw new Error(
         "Email service is not configured. Please contact administrator."
       );
     }
+  }
+
+  async sendVerificationEmail(email: string, token: string) {
+    this.ensureConfigured();
 
     const verificationLink = `${this.configService.get("FRONTEND_URL")}/verify-email/check?token=${token}`;
 
     try {
-      await this.transporter.sendMail({
-        from: this.configService.get("MAIL_FROM"),
+      await sgMail.send({
+        from: this.fromEmail as string,
         to: email,
         subject: "Verify your email",
         html: `
@@ -83,20 +69,13 @@ export class MailService {
   }
 
   async sendPasswordResetEmail(email: string, token: string) {
-    if (!this.transporter) {
-      console.error(
-        "Mail transporter is not configured. Cannot send password reset email."
-      );
-      throw new Error(
-        "Email service is not configured. Please contact administrator."
-      );
-    }
+    this.ensureConfigured();
 
     const resetLink = `${this.configService.get("FRONTEND_URL")}/reset-password?token=${token}`;
 
     try {
-      await this.transporter.sendMail({
-        from: this.configService.get("MAIL_FROM"),
+      await sgMail.send({
+        from: this.fromEmail as string,
         to: email,
         subject: "Reset Your Password",
         html: `
@@ -117,18 +96,11 @@ export class MailService {
   }
 
   async sendPasswordResetCodeEmail(email: string, code: string) {
-    if (!this.transporter) {
-      console.error(
-        "Mail transporter is not configured. Cannot send password reset code email."
-      );
-      throw new Error(
-        "Email service is not configured. Please contact administrator."
-      );
-    }
+    this.ensureConfigured();
 
     try {
-      await this.transporter.sendMail({
-        from: this.configService.get("MAIL_FROM"),
+      await sgMail.send({
+        from: this.fromEmail as string,
         to: email,
         subject: "Your Password Reset Code",
         html: `
@@ -160,22 +132,15 @@ export class MailService {
     pdfBuffer: Buffer,
     cvTitle: string
   ) {
-    if (!this.transporter) {
-      console.error(
-        "Mail transporter is not configured. Cannot send CV PDF email."
-      );
-      throw new Error(
-        "Email service is not configured. Please contact administrator."
-      );
-    }
+    this.ensureConfigured();
 
     if (!recipientEmail || !pdfBuffer) {
       throw new Error("Recipient email and PDF buffer are required");
     }
 
     try {
-      await this.transporter.sendMail({
-        from: this.configService.get("MAIL_FROM"),
+      await sgMail.send({
+        from: this.fromEmail as string,
         to: recipientEmail,
         subject: `Your CV - ${cvTitle}`,
         html: `
@@ -187,8 +152,9 @@ export class MailService {
         attachments: [
           {
             filename: `${cvTitle.replace(/[^a-zA-Z0-9]/g, "_")}.pdf`,
-            content: pdfBuffer,
-            contentType: "application/pdf",
+            content: pdfBuffer.toString("base64"),
+            type: "application/pdf",
+            disposition: "attachment",
           },
         ],
       });
@@ -199,18 +165,13 @@ export class MailService {
     }
   }
   async sendEmailActiveHr(email: string) {
-    if (!this.transporter) {
-      console.error("Mail transporter is not configured.");
-      throw new Error(
-        "Email service is not configured. Please contact administrator."
-      );
-    }
+    this.ensureConfigured();
 
     const frontendUrl = this.configService.get("FRONTEND_URL");
 
     try {
-      await this.transporter.sendMail({
-        from: this.configService.get("MAIL_FROM"),
+      await sgMail.send({
+        from: this.fromEmail as string,
         to: email,
         subject: "Your HR Account Has Been Activated",
         html: `
