@@ -753,9 +753,9 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
                   {t.projectLabel}
                 </h2>
               </div>
-              <ul className="space-y-4 list-disc pl-5 ml-2">
+              <div className="space-y-4">
                 {userData.Project.map((project: any, i: number) => (
-                  <li key={i} className="bg-white p-5 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 border-l-4 border-lime-500 break-words overflow-hidden list-none pl-0">
+                  <div key={i} className="bg-white p-5 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 border-l-4 border-lime-500 break-words overflow-hidden">
                     <h3 className="text-lg font-bold text-gray-900 mb-2 break-words">
                       {project.title || project["title "]}
                     </h3>
@@ -774,7 +774,7 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
                       </span>
                     )}
                     {project.summary && (
-                      <ul className="text-sm text-gray-700 mt-2 break-words whitespace-pre-line list-disc pl-5 space-y-1">
+                      <ul className="text-sm text-gray-700 mt-2 break-words whitespace-pre-line list-disc pl-6 space-y-1">
                         {String(project.summary)
                           .split(/\r?\n/)
                           .filter((line: string) => line.trim().length > 0)
@@ -783,9 +783,9 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
                           ))}
                       </ul>
                     )}
-                  </li>
+                  </div>
                 ))}
-              </ul>
+              </div>
             </div>
           </HoverableWrapper>
         );

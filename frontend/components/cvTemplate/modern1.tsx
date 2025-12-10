@@ -645,9 +645,9 @@ const ModernCV1: React.FC<ModernCV1Props> = ({
             dragHandleProps={dragHandleProps}
             isDragging={isDragging}
           >
-              <div className="space-y-8 list-none pl-0 ml-2">
+              <div className="space-y-8">
               {(userData.Project || []).map((project: any, i: number) => (
-              <div key={i} className="mb-8 last:mb-0 list-none">
+              <div key={i} className="mb-8 last:mb-0">
                 <h3 className="font-bold text-xl">{project.title || project["title "]}</h3>
                 {project.startDate && (
                   <span className="text-base italic text-gray-600">
@@ -656,7 +656,7 @@ const ModernCV1: React.FC<ModernCV1Props> = ({
                   </span>
                 )}
                 {project.summary && (
-                  <ul className="text-lg mt-2 whitespace-pre-line break-words list-disc pl-5 space-y-1">
+                  <ul className="text-lg mt-2 whitespace-pre-line break-words list-disc pl-6 space-y-1">
                     {String(project.summary)
                       .split(/\r?\n/)
                       .filter((line: string) => line.trim().length > 0)
