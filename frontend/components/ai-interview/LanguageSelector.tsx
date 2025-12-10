@@ -3,9 +3,9 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
 } from '@/components/ui/popover';
 import { LanguageCode } from '@/hooks/useLanguageDetection';
 import { Check, Globe, Sparkles } from 'lucide-react';
@@ -108,50 +108,52 @@ export default function LanguageSelector({
             </div>
           )}
           
-          <div className="space-y-1">
+          <div>
             <p className="text-xs font-semibold text-gray-700 mb-2 px-1">
               Select Language:
             </p>
-            {LANGUAGES.map((lang) => {
-              const isSelected = lang.code === selectedLanguage;
-              const isRecommended = lang.code === recommendedLanguage;
-              
-              return (
-                <button
-                  key={lang.code}
-                  onClick={() => {
-                    onLanguageChange(lang.code);
-                    setIsOpen(false);
-                  }}
-                  className={`w-full flex items-center justify-between p-2 rounded-lg transition-colors ${
-                    isSelected
-                      ? 'bg-blue-50 border border-blue-200'
-                      : 'hover:bg-gray-50 border border-transparent'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="text-xl">{lang.flag}</span>
-                    <div className="text-left">
-                      <p className="text-sm font-medium text-gray-900">
-                        {lang.nativeName}
-                      </p>
-                      <p className="text-xs text-gray-500">{lang.name}</p>
+            <div className="max-h-64 overflow-y-auto space-y-1 pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 hover:scrollbar-thumb-gray-400">
+              {LANGUAGES.map((lang) => {
+                const isSelected = lang.code === selectedLanguage;
+                const isRecommended = lang.code === recommendedLanguage;
+                
+                return (
+                  <button
+                    key={lang.code}
+                    onClick={() => {
+                      onLanguageChange(lang.code);
+                      setIsOpen(false);
+                    }}
+                    className={`w-full flex items-center justify-between p-2 rounded-lg transition-colors ${
+                      isSelected
+                        ? 'bg-blue-50 border border-blue-200'
+                        : 'hover:bg-gray-50 border border-transparent'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-xl">{lang.flag}</span>
+                      <div className="text-left">
+                        <p className="text-sm font-medium text-gray-900">
+                          {lang.nativeName}
+                        </p>
+                        <p className="text-xs text-gray-500">{lang.name}</p>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {isRecommended && !isSelected && (
-                      <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
-                        <Sparkles className="h-3 w-3 mr-1" />
-                        Recommended
-                      </Badge>
-                    )}
-                    {isSelected && (
-                      <Check className="h-4 w-4 text-blue-600" />
-                    )}
-                  </div>
-                </button>
-              );
-            })}
+                    <div className="flex items-center gap-2">
+                      {isRecommended && !isSelected && (
+                        <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                          <Sparkles className="h-3 w-3 mr-1" />
+                          Recommended
+                        </Badge>
+                      )}
+                      {isSelected && (
+                        <Check className="h-4 w-4 text-blue-600" />
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
       </PopoverContent>

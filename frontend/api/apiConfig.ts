@@ -173,4 +173,16 @@ export const API_ENDPOINTS = {
     GET_ALL_AVERAGE: "/ai-average/average-stats",
     RESET_AVERAGE: "/ai-average/reset",
   },
+  AI_INTERVIEW: {
+    CREATE_SESSION: "/ai-interview/create-session",
+    GET_SESSION: (sessionId: string) => `/ai-interview/session/${sessionId}`,
+    GET_CURRENT_QUESTION: (sessionId: string) => `/ai-interview/session/${sessionId}/current-question`,
+    SUBMIT_ANSWER: (sessionId: string) => `/ai-interview/session/${sessionId}/submit-answer`,
+    FOLLOW_UP_QUESTION: (sessionId: string) => `/ai-interview/session/${sessionId}/follow-up-question`,
+    SAMPLE_ANSWER: (sessionId: string, questionId: string) => `/ai-interview/session/${sessionId}/sample-answer/${questionId}`,
+    COMPLETE_SESSION: (sessionId: string) => `/ai-interview/session/${sessionId}/complete`,
+    GET_HISTORY: "/ai-interview/history",
+    RETAKE_SESSION: (sessionId: string) => `/ai-interview/retake-session/${sessionId}`,
+    PRE_GENERATE_QUESTIONS: "/ai-interview/pre-generate-questions",
+  },
 } as const;
