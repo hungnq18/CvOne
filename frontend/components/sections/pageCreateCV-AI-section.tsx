@@ -213,10 +213,15 @@ const PageCreateCVAIContent = () => {
 
   const templateDropdownRef = useRef(null);
   const previewRef = useRef<HTMLDivElement>(null);
+  const hasLoadedRef = useRef<string | null>(null); // Track đã load template nào
 
   useOnClickOutside(templateDropdownRef, () => setShowTemplatePopup(false));
 
   useEffect(() => {
+    // Chỉ load nếu id thay đổi và chưa load template này
+    if (id && id === hasLoadedRef.current) {
+      return; // Đã load rồi, không load lại
+    }
     try {
       if (typeof window !== "undefined") {
         sessionStorage.removeItem("suppressAISuggest");
@@ -231,10 +236,12 @@ const PageCreateCVAIContent = () => {
       getCVById(idFromUrl)
         .then((templateData) => {
           if (templateData) {
+            hasLoadedRef.current = idFromUrl; // Đánh dấu đã load
             loadTemplate(templateData);
             if (templateData.title) {
               setCvTitle(templateData.title);
             }
+            // CV đã lưu - giữ nguyên sectionPositions của nó
             if (
               (!userData || Object.keys(userData).length === 0) &&
               templateData.content?.userData
@@ -251,13 +258,23 @@ const PageCreateCVAIContent = () => {
           setCvId(null);
           getCVTemplateById(idFromUrl).then((templateData) => {
             if (templateData) {
+              hasLoadedRef.current = idFromUrl; // Đánh dấu đã load
               loadTemplate(templateData);
+              
+              // Reset sectionPositions về default khi load template mới (không phải CV đã lưu)
+              const defaultPositions = getDefaultSectionPositions(templateData.title);
+              updateSectionPositions(templateData._id, defaultPositions);
+              
               if (
                 (!userData || Object.keys(userData).length === 0) &&
                 templateData.data?.userData
               ) {
-                updateUserData(templateData.data.userData);
+                updateUserData({ ...templateData.data.userData, sectionPositions: defaultPositions });
+              } else if (userData) {
+                // Nếu đã có userData, vẫn reset sectionPositions về default để tránh vỡ giao diện
+                updateUserData({ ...userData, sectionPositions: defaultPositions });
               }
+              
               if (templateData.data?.uiTexts) {
                 setCvUiTexts(templateData.data.uiTexts);
               }
@@ -269,7 +286,7 @@ const PageCreateCVAIContent = () => {
     } else {
       setLoading(false);
     }
-  }, [id, loadTemplate, updateUserData, userData, t]);
+  }, [id]); // Chỉ load khi id thay đổi, không load lại khi userData thay đổi
 
   const handleTemplateSelect = async (selectedTemplate: CVTemplate) => {
     try {
@@ -1280,8 +1297,14 @@ const PageCreateCVAIContent = () => {
                       {suggestedTemplate.title}
                     </div>
                     <button
-                      onClick={() => {
+                      onClick={async () => {
                         setShowSuggestModal(false);
+                        // Reset sectionPositions về default trước khi navigate
+                        const defaultPositions = getDefaultSectionPositions(suggestedTemplate!.title);
+                        updateSectionPositions(suggestedTemplate!._id, defaultPositions);
+                        if (userData) {
+                          updateUserData({ ...userData, sectionPositions: defaultPositions });
+                        }
                         router.push(
                           `/createCV-AIManual?id=${suggestedTemplate!._id}`
                         );
