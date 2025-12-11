@@ -127,29 +127,69 @@ const EyeIcon = styled.span`
 `
 
 const SubmitButton = styled.button`
-  margin-top: 8px;
-  padding: 12px 0;
-  border-radius: 8px;
-  border: none;
-  background: linear-gradient(90deg,rgb(75, 195, 246) 0%,rgb(17, 135, 195) 100%);
-  color: #fff;
+  flex: 1;
+  padding: 14px;
+  border-radius: 12px;
+  border: 2px solid rgb(51, 131, 236);
+  background: linear-gradient(135deg,rgb(58, 137, 241) 0%,rgb(56, 123, 211) 100%);
+  color: white;
   font-weight: 600;
-  font-size: 18px;
-  letter-spacing: 1px;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(46,204,64,0.10);
-  transition: all 0.2s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 15px rgba(24, 119, 242, 0.35);
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+  }
+
+  &:hover::before {
+    left: 100%;
+  }
 
   &:hover {
+    background: linear-gradient(135deg,rgb(30, 111, 217) 0%,rgb(23, 91, 187) 100%);
+    box-shadow: 0 6px 25px rgba(24, 119, 242, 0.5);
+    transform: translateY(-3px);
+  }
+
+  &:active {
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(46,204,64,0.15);
   }
 
   &:disabled {
     background: #ccc;
     cursor: not-allowed;
+    border-color: #ccc;
     transform: none;
     box-shadow: none;
+    
+    &::before {
+      display: none;
+    }
+  }
+
+  svg {
+    position: relative;
+    z-index: 1;
+  }
+
+  span {
+    position: relative;
+    z-index: 1;
   }
 `
 
