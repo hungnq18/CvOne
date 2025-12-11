@@ -161,6 +161,26 @@ const navigationItems = {
         href: "/hr/dashboard",
       },
       {
+        name: "Dashboard",
+        href: "/userDashboard",
+      },
+      {
+        name: "My Documents",
+        href: "/myDocuments",
+      },
+      {
+        name: "CV",
+        href: "/cvTemplates",
+      },
+      {
+        name: "Cover Letter",
+        href: "/clTemplate",
+      },
+      {
+        name: "Saved Jobs",
+        href: "/myJobs",
+      },
+      {
         name: "My Profile",
         href: "/user/profile",
       },
@@ -231,11 +251,36 @@ const navigationItems = {
     ],
     hr: [
       {
-        name: "Bảng điều khiển",
+        name: "Bảng điều khiển HR",
         href: "/hr/dashboard",
       },
       {
-        name: "Hồ sơ của tôi",
+        name: "Bảng điều khiển",
+        href: "/userDashboard",
+      },
+      {
+        name: "Tài liệu",
+        href: "/myDocuments",
+      },
+      {
+        name: "CV",
+        href: "/cvTemplates",
+      },
+
+      {
+        name: "Thư Ngỏ",
+        href: "/clTemplate",
+      },
+      {
+        name: "Công việc đã lưu",
+        href: "/myJobs",
+      },
+      {
+        name: "Công việc",
+        href: "/jobPage",
+      },
+      {
+        name: "Hồ sơ",
         href: "/user/profile",
       },
     ],
@@ -426,7 +471,64 @@ export function Header() {
         href: "#",
         dropdownItems: [
           {
-            name: language === "en" ? "Dashboard" : "Bảng điều khiển",
+            name: language === "en" ? "My Dashboard" : "Trang của tôi",
+            href: "/userDashboard",
+          },
+          {
+            name: language === "en" ? "My Profile" : "Hồ sơ của tôi",
+            href: "/user/profile",
+          },
+          {
+            name: language === "en" ? "wallet" : "ví của tôi",
+            href: "/user/wallet",
+          }
+        ],
+      },
+      {
+        name: language === "en" ? "My Documents" : "Tài liệu",
+        href: "/myDocuments",
+      },
+      {
+        name: language === "en" ? "CV" : "CV",
+        href: "/cvTemplates",
+      },
+      {
+        name: language === "en" ? "Cover Letter" : "Thư Ngỏ",
+        href: "/clTemplate",
+      },
+      {
+        name: language === "en" ? "Jobs" : "Công việc",
+        href: "/jobPage",
+        dropdownItems: [
+          { name: language === "en" ? "Jobs" : "Công việc", href: "/jobPage" },
+          {
+            name: language === "en" ? "Saved Jobs" : "Công việc đã lưu",
+            href: "/myJobs",
+          },
+        ],
+      },
+      {
+        name: language === "en" ? "AI-Interview" : "AI phỏng vấn",
+        href: "/ai-interview",
+      },
+      {
+        name: language === "en" ? "Voucher" : "Mã giảm giá",
+        href: "/voucher",
+      },
+    ];
+  }
+  if (role === "hr") {
+    navItems = [
+      {
+        name: language === "en" ? "User" : "Người dùng",
+        href: "#",
+        dropdownItems: [
+          {
+            name: language === "en" ? "HR Dashboard" : "Bảng điều khiển HR",
+            href: "/hr/dashboard",
+          },
+          {
+            name: language === "en" ? "Dashboard" : "Trang của tôi",
             href: "/userDashboard",
           },
           {
