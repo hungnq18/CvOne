@@ -78,6 +78,7 @@ const JobDialog: React.FC<JobDialogProps> = ({
                 id="job-title"
                 value={job["Job Title"] || ""}
                 onChange={(e) =>
+                  e.target.value.length <= 100 &&
                   onChange({ ...job, "Job Title": e.target.value })
                 }
               />
@@ -92,6 +93,7 @@ const JobDialog: React.FC<JobDialogProps> = ({
               <Input
                 id="role"
                 value={job.Role || ""}
+
                 onChange={(e) => onChange({ ...job, Role: e.target.value })}
               />
               {errors?.Role && (
@@ -106,6 +108,7 @@ const JobDialog: React.FC<JobDialogProps> = ({
                 id="experience"
                 value={job.Experience || ""}
                 onChange={(e) =>
+                  e.target.value.length <= 200 &&
                   onChange({ ...job, Experience: e.target.value })
                 }
                 placeholder="e.g., 3 to 8 Years"
@@ -122,6 +125,7 @@ const JobDialog: React.FC<JobDialogProps> = ({
                 id="qualifications"
                 value={job.Qualifications || ""}
                 onChange={(e) =>
+                  e.target.value.length <= 150 &&
                   onChange({ ...job, Qualifications: e.target.value })
                 }
                 placeholder="e.g., B.Tech, M.Tech"
@@ -140,6 +144,7 @@ const JobDialog: React.FC<JobDialogProps> = ({
                 id="salary-range"
                 value={job["Salary Range"] || ""}
                 onChange={(e) =>
+                  e.target.value.length <= 50 &&
                   onChange({ ...job, "Salary Range": e.target.value })
                 }
                 placeholder="e.g., $45K-$75K"
@@ -162,8 +167,8 @@ const JobDialog: React.FC<JobDialogProps> = ({
                   <SelectValue placeholder="Select work type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Full-time">Full-time</SelectItem>
-                  <SelectItem value="Part-time">Part-time</SelectItem>
+                  <SelectItem value="Full-Time">Full-Time</SelectItem>
+                  <SelectItem value="Part-Time">Part-Time</SelectItem>
                   <SelectItem value="Intern">Intern</SelectItem>
                   <SelectItem value="Temporary">Temporary</SelectItem>
                 </SelectContent>
@@ -181,7 +186,10 @@ const JobDialog: React.FC<JobDialogProps> = ({
               <Input
                 id="location"
                 value={job.location || ""}
-                onChange={(e) => onChange({ ...job, location: e.target.value })}
+                onChange={(e) =>
+                  e.target.value.length <= 100 &&
+                  onChange({ ...job, location: e.target.value })
+                }
               />
               {errors?.location && (
                 <div className="text-red-500 text-xs mt-1">
@@ -194,7 +202,7 @@ const JobDialog: React.FC<JobDialogProps> = ({
               <Input
                 id="country"
                 value={job.Country || ""}
-                onChange={(e) => onChange({ ...job, Country: e.target.value })}
+                onChange={(e) => e.target.value.length <= 100 && onChange({ ...job, Country: e.target.value })}
               />
               {errors?.Country && (
                 <div className="text-red-500 text-xs mt-1">
@@ -208,11 +216,11 @@ const JobDialog: React.FC<JobDialogProps> = ({
             <Input
               id="application-deadline"
               type="date"
-              min={new Date().toISOString().split("T")[0]} // Đảm bảo ngày tối thiểu là hôm nay: 2025-07-24
+              min={new Date().toISOString().split("T")[0]}
               value={
                 job.applicationDeadline ||
                 new Date().toISOString().split("T")[0]
-              } // Mặc định là ngày hiện tại: 2025-07-24
+              }
               onChange={(e) =>
                 onChange({
                   ...job,
@@ -220,7 +228,7 @@ const JobDialog: React.FC<JobDialogProps> = ({
                     e.target.value || new Date().toISOString().split("T")[0],
                 })
               }
-              required // Đảm bảo người dùng phải chọn ngày
+              required
             />
             {errors?.applicationDeadline && (
               <div className="text-red-500 text-xs mt-1">
@@ -234,6 +242,7 @@ const JobDialog: React.FC<JobDialogProps> = ({
               id="job-description"
               value={job["Job Description"] || ""}
               onChange={(e) =>
+                e.target.value.length <= 1000 &&
                 onChange({ ...job, "Job Description": e.target.value })
               }
               rows={3}
@@ -250,6 +259,7 @@ const JobDialog: React.FC<JobDialogProps> = ({
               id="responsibilities"
               value={job.Responsibilities || ""}
               onChange={(e) =>
+                e.target.value.length <= 400 &&
                 onChange({ ...job, Responsibilities: e.target.value })
               }
               rows={3}
@@ -265,7 +275,7 @@ const JobDialog: React.FC<JobDialogProps> = ({
             <Textarea
               id="skills"
               value={job.skills || ""}
-              onChange={(e) => onChange({ ...job, skills: e.target.value })}
+              onChange={(e) => e.target.value.length <= 200 && onChange({ ...job, skills: e.target.value })}
               rows={2}
               placeholder="Enter skills separated by commas"
             />
@@ -278,7 +288,7 @@ const JobDialog: React.FC<JobDialogProps> = ({
             <Textarea
               id="benefits"
               value={job.Benefits || ""}
-              onChange={(e) => onChange({ ...job, Benefits: e.target.value })}
+              onChange={(e) => e.target.value.length <= 200 && onChange({ ...job, Benefits: e.target.value })}
               rows={2}
               placeholder="Enter benefits separated by commas"
             />
