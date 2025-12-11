@@ -8,8 +8,8 @@ export class VietnameseContentService {
 
   constructor(
     private openaiApiService: OpenaiApiService,
-    private readonly logService: AiUsageLogService
-  ) {}
+    private readonly logService: AiUsageLogService,
+  ) { }
 
   /**
    * Generate professional summary in Vietnamese using OpenAI
@@ -17,25 +17,27 @@ export class VietnameseContentService {
   async generateProfessionalSummaryVi(
     jobAnalysis: any,
     additionalRequirements?: string,
-    userId?: string
+    userId?: string,
   ): Promise<string> {
     try {
       const prompt = `
-Viết một đoạn Professional Summary bằng tiếng Việt, chuyên nghiệp, phù hợp với phân tích JD sau:
-
-Phân tích JD:
-${JSON.stringify(jobAnalysis)}
-
-${additionalRequirements ? `Yêu cầu bổ sung: ${additionalRequirements}` : ""}
-
-Yêu cầu:
-- Độ dài 2-3 câu
-- Sử dụng ngôn ngữ chuyên nghiệp, tự nhiên
-- Không đề cập tên người dùng
-- Tập trung vào kỹ năng, kinh nghiệm và giá trị phù hợp với JD
-
-Chỉ trả về đoạn summary, không giải thích, không markdown.
-`;
+      Viết Professional Summary bằng tiếng Việt cho CV dựa trên phân tích JD:
+      
+      ${JSON.stringify(jobAnalysis)}
+      
+      ${additionalRequirements ? `Yêu cầu bổ sung: ${additionalRequirements}` : ""}
+      
+      QUY TẮC:
+      - ĐÚNG 2-3 câu (không được 4 câu)
+      - Bắt đầu bằng job title cụ thể (VD: "Lập trình viên back-end") - KHÔNG dùng "Nhân sự trẻ", "Ứng viên"
+      - Ngôi thứ ba ẩn, không có "tôi/mình/em"
+      - Liệt kê ĐẦY ĐỦ technologies từ CẢ "requiredSkills" và "technologies", ưu tiên ngôn ngữ lập trình đầu tiên (VD: C#, .NET Core, SQL Server)
+      - Experience level: junior="với kinh nghiệm", KHÔNG dùng "thành thạo" cho junior
+      - Soft skills dùng active voice: "có kỹ năng..." KHÔNG "kỹ năng được đánh giá cao"
+      - Động từ: phát triển, triển khai, xây dựng, tối ưu
+      
+      Chỉ trả về đoạn summary, không markdown, không giải thích.
+      `;
 
       const openai = this.openaiApiService.getOpenAI();
       const completion = await openai.chat.completions.create({
@@ -65,7 +67,7 @@ Chỉ trả về đoạn summary, không giải thích, không markdown.
           tokensUsed: usage.total_tokens,
         });
       }
-      let response = completion.choices[0]?.message?.content;
+      const response = completion.choices[0]?.message?.content;
       if (!response) {
         throw new Error("No response from OpenAI");
       }
@@ -81,7 +83,7 @@ Chỉ trả về đoạn summary, không giải thích, không markdown.
     } catch (error) {
       this.logger.error(
         `Error generating Vietnamese professional summary: ${error.message}`,
-        error.stack
+        error.stack,
       );
       return "Ứng viên có kỹ năng và kinh nghiệm phù hợp với yêu cầu công việc, sẵn sàng đóng góp và phát triển trong môi trường chuyên nghiệp.";
     }
@@ -93,7 +95,7 @@ Chỉ trả về đoạn summary, không giải thích, không markdown.
   async generateProfessionalSummariesVi(
     jobAnalysis: any,
     additionalRequirements?: string,
-    count: number = 3
+    count: number = 3,
   ): Promise<string[]> {
     try {
       const prompt = `
@@ -135,7 +137,7 @@ Không giải thích, không markdown.
         ],
       });
 
-      let response = completion.choices[0]?.message?.content;
+      const response = completion.choices[0]?.message?.content;
       if (!response) {
         throw new Error("No response from OpenAI");
       }
@@ -160,7 +162,7 @@ Không giải thích, không markdown.
     } catch (error) {
       this.logger.error(
         `Error generating Vietnamese professional summaries: ${error.message}`,
-        error.stack
+        error.stack,
       );
       // fallback: return multiple copies of fallback
       const fallback =
