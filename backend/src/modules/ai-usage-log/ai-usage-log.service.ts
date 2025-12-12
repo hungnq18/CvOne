@@ -1,8 +1,8 @@
 import { Injectable } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model, Types } from "mongoose";
-import { AiUsageLog, AiUsageLogDocument } from "./schemas/ai-usage-log.schema";
 import { CreateAiUsageLogDto } from "./dto/create-log.dto";
+import { AiUsageLog, AiUsageLogDocument } from "./schemas/ai-usage-log.schema";
 
 @Injectable()
 export class AiUsageLogService {

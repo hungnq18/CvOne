@@ -2,10 +2,13 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import * as crypto from 'crypto';
 import { Model, Types } from 'mongoose';
+import { JobAnalysisService } from '../../cv/services/job-analysis.service';
+import { OpenaiApiService } from '../../cv/services/openai-api.service';
 import { AiInterviewSession } from '../schemas/ai-interview.schema';
 import { InterviewQuestionPool } from '../schemas/interview-question-pool.schema';
-import { JobAnalysisService } from './job-analysis.service';
-import { OpenaiApiService } from './openai-api.service';
+// @ts-ignore: install @google-cloud/text-to-speech in runtime environment
+import { TextToSpeechClient } from '@google-cloud/text-to-speech';
+import { detectLanguageSmart } from '../../cv/utils/language-detector';
 
 export interface InterviewQuestion {
   id: string;
@@ -29,6 +32,7 @@ export interface InterviewFeedback {
 @Injectable()
 export class AiInterviewService {
   private readonly logger = new Logger(AiInterviewService.name);
+  private readonly ttsClient: TextToSpeechClient;
 
   constructor(
     @InjectModel(AiInterviewSession.name)
@@ -37,7 +41,64 @@ export class AiInterviewService {
     private interviewQuestionPoolModel: Model<InterviewQuestionPool>,
     private readonly openaiApiService: OpenaiApiService,
     private readonly jobAnalysisService: JobAnalysisService
-  ) {}
+  ) {
+    this.ttsClient = new TextToSpeechClient();
+  }
+
+  /**
+   * Google Cloud Text-to-Speech
+   */
+  async synthesizeSpeech(params: {
+    text: string;
+    language?: string;
+    voice?: string;
+    speakingRate?: number;
+    pitch?: number;
+    audioEncoding?: 'MP3' | 'OGG_OPUS' | 'LINEAR16';
+  }): Promise<string> {
+    const {
+      text,
+      language = 'vi-VN',
+      voice = 'vi-VN-Wavenet-A',
+      speakingRate = 0.95,
+      pitch = 0,
+      audioEncoding = 'MP3',
+    } = params;
+
+    if (!text || !text.trim()) {
+      throw new Error('Text is required for TTS');
+    }
+
+    try {
+      const [response] = await this.ttsClient.synthesizeSpeech({
+        input: { text },
+        voice: {
+          languageCode: language,
+          name: voice,
+        },
+        audioConfig: {
+          audioEncoding,
+          speakingRate,
+          pitch,
+        },
+      });
+
+      if (!response.audioContent) {
+        throw new Error('No audio content returned from Google TTS');
+      }
+
+      // Return base64 string
+      const audioBase64 =
+        typeof response.audioContent === 'string'
+          ? response.audioContent
+          : Buffer.from(response.audioContent).toString('base64');
+
+      return audioBase64;
+    } catch (error) {
+      this.logger.error(`Google TTS failed: ${error.message}`, error.stack);
+      throw new Error('Failed to synthesize speech');
+    }
+  }
 
   /**
    * Helper method to parse JSON response from OpenAI
@@ -78,70 +139,6 @@ export class AiInterviewService {
     }
   }
 
-  /**
-   * Detect language from job description
-   * Returns language code: 'vi-VN', 'en-US', 'ja-JP', 'ko-KR', 'zh-CN', 'fr-FR', 'de-DE', 'es-ES'
-   */
-  private detectLanguageFromText(text: string): string {
-    if (!text || text.trim().length < 3) {
-      return 'vi-VN'; // Default to Vietnamese
-    }
-
-    // Simple heuristic detection
-    const vietnamesePattern = /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]/i;
-    const chinesePattern = /[\u4e00-\u9fff]/;
-    const japanesePattern = /[\u3040-\u309f\u30a0-\u30ff]/;
-    const koreanPattern = /[\uac00-\ud7a3]/;
-    
-    const vietnameseCount = (text.match(vietnamesePattern) || []).length;
-    const chineseCount = (text.match(chinesePattern) || []).length;
-    const japaneseCount = (text.match(japanesePattern) || []).length;
-    const koreanCount = (text.match(koreanPattern) || []).length;
-    
-    // Check for English (common words)
-    const englishWords = /\b(the|is|are|and|or|but|in|on|at|to|for|of|with|by|we|you|they|this|that|these|those)\b/i;
-    const englishCount = (text.match(englishWords) || []).length;
-    
-    // Check for French
-    const frenchPattern = /[àâäéèêëïîôùûüÿç]/i;
-    const frenchCount = (text.match(frenchPattern) || []).length;
-    const frenchWords = /\b(le|la|les|de|du|des|et|ou|est|sont|dans|pour|avec|par)\b/i;
-    const frenchWordCount = (text.match(frenchWords) || []).length;
-    
-    // Check for German
-    const germanPattern = /[äöüßÄÖÜ]/i;
-    const germanCount = (text.match(germanPattern) || []).length;
-    const germanWords = /\b(der|die|das|und|oder|ist|sind|in|für|mit|von)\b/i;
-    const germanWordCount = (text.match(germanWords) || []).length;
-    
-    // Check for Spanish
-    const spanishPattern = /[áéíóúñüÁÉÍÓÚÑÜ]/i;
-    const spanishCount = (text.match(spanishPattern) || []).length;
-    const spanishWords = /\b(el|la|los|las|y|o|es|son|en|para|con|de)\b/i;
-    const spanishWordCount = (text.match(spanishWords) || []).length;
-    
-    // Determine language based on patterns
-    if (vietnameseCount > 0 && vietnameseCount > englishCount) {
-      return 'vi-VN';
-    } else if (chineseCount > 0) {
-      return 'zh-CN';
-    } else if (japaneseCount > 0) {
-      return 'ja-JP';
-    } else if (koreanCount > 0) {
-      return 'ko-KR';
-    } else if (frenchCount > 0 || frenchWordCount > 2) {
-      return 'fr-FR';
-    } else if (germanCount > 0 || germanWordCount > 2) {
-      return 'de-DE';
-    } else if (spanishCount > 0 || spanishWordCount > 2) {
-      return 'es-ES';
-    } else if (englishCount > 2) {
-      return 'en-US';
-    }
-    
-    // Default to Vietnamese
-    return 'vi-VN';
-  }
 
   /**
    * Get language name for prompts
@@ -418,8 +415,8 @@ QUAN TRỌNG: Chỉ trả về JSON, không có text giải thích thêm. Format
     companyName?: string
   ): Promise<AiInterviewSession> {
     try {
-      // Detect language from job description
-      const detectedLanguage = this.detectLanguageFromText(jobDescription);
+      // Detect language from job description (AI first, fallback heuristic)
+      const detectedLanguage = await detectLanguageSmart(jobDescription, this.openaiApiService, this.logger);
       this.logger.log(`Detected language: ${detectedLanguage} from job description`);
 
       // Lấy câu hỏi từ pool hoặc generate mới (tự động check pool trước)
@@ -469,8 +466,8 @@ QUAN TRỌNG: Chỉ trả về JSON, không có text giải thích thêm. Format
     difficulty?: 'easy' | 'medium' | 'hard'
   ): Promise<InterviewQuestionPool> {
     try {
-      // Detect language from job description
-      const detectedLanguage = this.detectLanguageFromText(jobDescription);
+      // Detect language from job description (AI first, fallback heuristic)
+      const detectedLanguage = await detectLanguageSmart(jobDescription, this.openaiApiService, this.logger);
       this.logger.log(`Pre-generating questions with detected language: ${detectedLanguage}`);
       
       // Check xem đã có pool chưa
@@ -1082,6 +1079,43 @@ Criterios de evaluación:
     }
 
     return session;
+  }
+
+  /**
+   * Tạo lại session với cùng questions từ session cũ (Retake)
+   */
+  async retakeInterviewSession(
+    userId: string,
+    originalSessionId: string
+  ): Promise<AiInterviewSession> {
+    try {
+      // Lấy session gốc
+      const originalSession = await this.getSessionById(originalSessionId, userId);
+
+      // Tạo session mới với cùng questions, job description, etc.
+      const newSession = new this.aiInterviewSessionModel({
+        userId: new Types.ObjectId(userId),
+        jobDescription: originalSession.jobDescription,
+        jobTitle: originalSession.jobTitle,
+        companyName: originalSession.companyName,
+        questions: originalSession.questions, // Sử dụng lại questions cũ
+        numberOfQuestions: originalSession.numberOfQuestions,
+        difficulty: originalSession.difficulty,
+        language: originalSession.language,
+        status: 'in-progress',
+        currentQuestionIndex: 0,
+        userAnswers: new Map(),
+        feedbacks: [], // Reset feedbacks
+      });
+
+      await newSession.save();
+      this.logger.log(`Retake interview session ${newSession._id} from original session ${originalSessionId} for user ${userId}`);
+      
+      return newSession;
+    } catch (error) {
+      this.logger.error(`Error retaking interview session: ${error.message}`, error.stack);
+      throw new Error('Failed to retake interview session');
+    }
   }
 
   /**

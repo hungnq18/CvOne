@@ -7,10 +7,11 @@ import InterviewSetupModal, { InterviewConfig } from "@/components/ai-interview/
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useRequireLogin } from "@/hooks/requireLogin";
+import { notify } from "@/lib/notify";
+import { useLanguage } from "@/providers/global_provider";
 import { Brain, Clock, History, Play, Sparkles, Star, TrendingUp, Users } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useRequireLogin } from "@/hooks/requireLogin";
-import { useLanguage } from "@/providers/global_provider";
 
 const aiInterviewTexts = {
   en: {
@@ -195,6 +196,29 @@ export default function AiInterviewPage() {
     loadStats();
   };
 
+  const handleRetakeInterview = async (sessionId: string) => {
+    try {
+      const response = await aiInterviewApi.retakeInterviewSession(sessionId);
+      if (response.success && response.data) {
+        // Tạo config từ session data
+        setInterviewConfig({
+          jobDescription: response.data.jobDescription,
+          jobTitle: response.data.jobTitle,
+          companyName: response.data.companyName,
+          numberOfQuestions: response.data.totalQuestions,
+          sessionData: response.data, // Pass session data để modal có thể sử dụng
+        });
+        setShowInterviewModal(true);
+        setShowHistory(false);
+      } else {
+        notify.error(response.error || "Failed to retake interview");
+      }
+    } catch (error) {
+      console.error("Error retaking interview:", error);
+      notify.error("Failed to retake interview");
+    }
+  };
+
   const displayStats = [
     { label: t.stats.practiceSessions, value: stats.totalSessions.toString(), icon: Play },
     {
@@ -354,6 +378,7 @@ export default function AiInterviewPage() {
             jobTitle={interviewConfig.jobTitle}
             companyName={interviewConfig.companyName}
             numberOfQuestions={interviewConfig.numberOfQuestions}
+            sessionData={interviewConfig.sessionData}
           />
         )}
 
@@ -367,7 +392,9 @@ export default function AiInterviewPage() {
                 </Button>
               </div>
               <div className="p-6">
-                <InterviewHistory />
+                <InterviewHistory 
+                  onRetakeInterview={handleRetakeInterview}
+                />
               </div>
             </div>
           </div>

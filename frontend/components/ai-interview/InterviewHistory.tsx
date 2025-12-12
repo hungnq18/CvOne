@@ -5,9 +5,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { useLanguage } from "@/providers/global_provider";
 import { Calendar, Eye, RotateCcw, Star, TrendingUp } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useLanguage } from "@/providers/global_provider";
+import InterviewDetailModal from "./InterviewDetailModal";
 
 interface InterviewSession {
   id: string;
@@ -76,6 +77,8 @@ export default function InterviewHistory({ onViewDetails, onRetakeInterview }: I
     averageScore: 0,
     totalTime: 0,
   });
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
 
   useEffect(() => {
     loadInterviewHistory();
@@ -267,7 +270,11 @@ export default function InterviewHistory({ onViewDetails, onRetakeInterview }: I
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => onViewDetails?.(session.id)}
+                        onClick={() => {
+                          setSelectedSessionId(session.id);
+                          setShowDetailModal(true);
+                          onViewDetails?.(session.id);
+                        }}
                       >
                         <Eye className="h-4 w-4 mr-1" />
                         {t.view}
@@ -288,6 +295,16 @@ export default function InterviewHistory({ onViewDetails, onRetakeInterview }: I
           </div>
         )}
       </div>
+
+      {/* Detail Modal */}
+      <InterviewDetailModal
+        isOpen={showDetailModal && !!selectedSessionId}
+        onClose={() => {
+          setShowDetailModal(false);
+          setSelectedSessionId(null);
+        }}
+        sessionId={selectedSessionId || ""}
+      />
     </div>
   );
 }
