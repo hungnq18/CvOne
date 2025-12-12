@@ -19,6 +19,7 @@ import { MailModule } from "./modules/mail/mail.module";
 import { NotificationsModule } from "./modules/notifications/notifications.module";
 import { OrdersModule } from "./modules/orders/orders.module";
 import { PayosModule } from "./modules/payos/payos.module";
+import { RevenueProfitModule } from "./modules/revenue-profit/revenue-profit.module";
 import { SavedJobModule } from "./modules/saved-job/saved-job.module";
 import { UploadModule } from "./modules/upload/upload.module";
 import { UsersModule } from "./modules/users/users.module";
@@ -58,6 +59,7 @@ import { VouchersModule } from "./modules/vouchers/vouchers.module";
     OrdersModule,
     CreditsModule,
     FormFeedbackModule,
+    RevenueProfitModule,
   ],
 })
 export class AppModule {}
