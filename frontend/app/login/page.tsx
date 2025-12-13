@@ -9,6 +9,7 @@ import styled from "styled-components"
 import logoImg from "../../public/logo/logoCVOne.svg"
 import { useLoginForm } from "@/components/forms/use-login-form"
 import { useRouter, useSearchParams } from "next/navigation"
+import { useLanguage } from "@/providers/global_provider"
 
 
 const LoginWrapper = styled.div`
@@ -225,7 +226,8 @@ const LinksContainer = styled.div`
   align-items: center;
   gap: 10px;
   margin-top: 6px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  width: 100%;
 `
 
 const StyledLink = styled(Link)`
@@ -233,11 +235,15 @@ const StyledLink = styled(Link)`
   font-weight: 500;
   font-size: 14px;
   text-decoration: none;
-  padding: 8px 20px;
+  padding: 8px 16px;
   border-radius: 10px;
   transition: all 0.3s ease;
   background: white;
   border: 2px solid #058ac3;
+  white-space: nowrap;
+  flex-shrink: 0;
+  display: inline-block;
+  min-width: fit-content;
 
   &:hover {
     background: #058ac3;
@@ -328,7 +334,7 @@ const GoogleButton = styled.button`
   }
 `
 
-const FacebookButton = styled.button`
+const FacebookButton = styled.button<{ $isVietnamese?: boolean }>`
   flex: 1;
   padding: 14px;
   border-radius: 12px;
@@ -336,7 +342,7 @@ const FacebookButton = styled.button`
   background: linear-gradient(135deg, #1877f2 0%, #0c65d8 100%);
   color: white;
   font-weight: 600;
-  font-size: 16px;
+  font-size: ${props => props.$isVietnamese ? '14px' : '16px'};
   display: flex;
   align-items: center;
   justify-content: center;
@@ -432,6 +438,8 @@ export default function LoginPage() {
   const router = useRouter()
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/";
+  const { language } = useLanguage();
+  const isVietnamese = language === "vi";
 
   const handleLogin = async (role: string) => {
     try {
@@ -507,9 +515,9 @@ export default function LoginPage() {
             </RegisterLink>
 
             <LinksContainer>
-              <StyledLink href="/hr-register">Nhà tuyển dụng</StyledLink>
+              <StyledLink href="/hr-register">{t.employerLink}</StyledLink>
               <Separator>|</Separator>
-              <StyledLink href="/fogetPassword">Quên mật khẩu</StyledLink>
+              <StyledLink href="/fogetPassword">{t.fogetPassword}</StyledLink>
             </LinksContainer>
             
             <Divider>
@@ -523,16 +531,17 @@ export default function LoginPage() {
                 disabled={isLoading}
               >
                 <FcGoogle size={24} />
-                <span>Google</span>
+                <span>{t.googleButton}</span>
               </GoogleButton>
 
               <FacebookButton
                 type="button"
                 onClick={handleFacebookLogin}
                 disabled={isLoading}
+                $isVietnamese={isVietnamese}
               >
                 <FaFacebook size={24} />
-                <span>Facebook</span>
+                <span>{t.facebookButton}</span>
               </FacebookButton>
             </SocialButtonsContainer>
 
