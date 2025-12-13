@@ -21,7 +21,7 @@ export class AiUsageLog {
   @Prop({ type: Types.ObjectId, ref: "User", required: true })
   userId: Types.ObjectId;
 
-  @Prop({ type: String, enum: AiFeature, required: true, unique: false })
+  @Prop({ type: String, enum: AiFeature, required: true })
   feature: AiFeature;
 
   @Prop({ required: true })
@@ -29,3 +29,4 @@ export class AiUsageLog {
 }
 
 export const AiUsageLogSchema = SchemaFactory.createForClass(AiUsageLog);
+AiUsageLogSchema.index({ userId: 1, feature: 1 });
