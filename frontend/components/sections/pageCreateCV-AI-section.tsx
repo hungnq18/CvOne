@@ -1170,9 +1170,9 @@ const PageCreateCVAIContent = () => {
               )}
               {language === "vi" ? "AI gợi ý mẫu" : "AI suggest template"}
             </button>
-            <button className="w-full flex items-center gap-3 p-3 rounded-md text-slate-700 hover:bg-slate-100 font-medium">
+            {/* <button className="w-full flex items-center gap-3 p-3 rounded-md text-slate-700 hover:bg-slate-100 font-medium">
               <Printer size={20} /> {t.print}
-            </button>
+            </button> */}
             {/* <button className="w-full flex items-center gap-3 p-3 rounded-md text-slate-700 hover:bg-slate-100 font-medium">
               <Mail size={20} /> {t.email}
             </button> */}

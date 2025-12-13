@@ -429,15 +429,17 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
               dragHandleProps={dragHandleProps}
               isDragging={isDragging}
             >
-              <div className="px-8 lg:px-10">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="h-1 w-8 bg-green-700 rounded-full"></div>
-                  <h2 className="text-lg font-bold tracking-wider text-green-900">
+              <div className="px-8 lg:px-12 py-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-green-700 flex items-center justify-center">
+                    <Briefcase className="w-5 h-5 text-white" />
+                  </div>
+                  <h2 className="text-xl lg:text-2xl font-bold tracking-tight text-gray-900 uppercase">
                     {t.careerObjectiveLabel}
                   </h2>
                 </div>
-                <div className="bg-white/60 backdrop-blur-sm p-4 rounded-xl shadow-md">
-                  <p className="text-sm text-gray-800 leading-relaxed font-medium">
+                <div className="bg-white p-5 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 border-l-4 border-lime-500">
+                  <p className="text-base text-gray-800 leading-relaxed">
                     {userData.summary}
                   </p>
                 </div>
@@ -601,27 +603,26 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
             dragHandleProps={dragHandleProps}
             isDragging={isDragging}
           >
-            <div className="px-8 lg:px-12 py-6 bg-gradient-to-br from-gray-50 to-white">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-xl bg-green-700 flex items-center justify-center">
-                  <Award className="w-5 h-5 text-white" />
-                </div>
-                <h2 className="text-xl lg:text-2xl font-bold tracking-tight text-gray-900 uppercase">
+            <div className="px-8 lg:px-10">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="h-1 w-8 bg-green-700 rounded-full"></div>
+                <h2 className="text-lg font-bold tracking-wider text-green-900">
                   {t.educationLabel}
                 </h2>
               </div>
-              <div className="space-y-4">
+              <div className="bg-white/60 backdrop-blur-sm p-4 rounded-xl shadow-md space-y-3">
                 {(userData.education || []).map((edu: any, i: number) => (
-                  <div key={i} className="bg-white p-5 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 border-l-4 border-lime-500">
-                    <p className="text-lg font-bold text-gray-900 mb-2">
-                      {edu.major} - {edu.institution}
+                  <div key={i} className="border-b border-green-200 last:border-b-0 pb-3 last:pb-0">
+                    <p className="text-sm font-bold text-gray-800 mb-1">
+                       {edu.institution} - {edu.major}
                     </p>
-                    <p className="text-sm text-gray-600 mb-1">
-                      <span className="font-semibold">{t.degree}</span> {edu.degree}
-                    </p>
-                    <p className="text-sm font-medium text-green-700">
+                    <p className="text-xs font-medium text-green-700">
                       {edu.startDate?.slice(0, 4)} - {edu.endDate?.slice(0, 4)}
                     </p>
+                    <p className="text-xs text-gray-600 mb-1">
+                      <span className="font-semibold">{t.degree}</span> {edu.degree}
+                    </p>
+                    
                   </div>
                 ))}
               </div>
