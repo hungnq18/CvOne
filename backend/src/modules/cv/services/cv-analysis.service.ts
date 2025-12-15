@@ -179,9 +179,8 @@ Return only valid JSON without any additional text.
    */
   async rewriteWorkDescription(
     description: string,
-    language?: string,
-    userId?: string
-  ): Promise<string> {
+    language?: string
+  ): Promise<{ workDescription: string; total_tokens: number }> {
     try {
       let languageNote = "";
       if (language === "vi") {
@@ -226,13 +225,6 @@ Return only the rewritten description, no explanation, no markdown.
         total_tokens: 0,
       };
       console.log("Usage summary:", usage);
-      if (userId) {
-        await this.logService.createLog({
-          userId: userId,
-          feature: "rewriteWorkDescription",
-          tokensUsed: usage.total_tokens,
-        });
-      }
       // Remove markdown if present
       let cleanResponse = response.trim();
       if (cleanResponse.startsWith("```")) {
@@ -241,7 +233,10 @@ Return only the rewritten description, no explanation, no markdown.
           .replace(/```$/, "")
           .trim();
       }
-      return cleanResponse;
+      return {
+        workDescription: cleanResponse,
+        total_tokens: usage.total_tokens,
+      };
     } catch (error) {
       this.logger.error(
         `Error rewriting work description: ${error.message}`,

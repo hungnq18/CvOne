@@ -13,7 +13,7 @@ export enum AiFeature {
   SUGGESTION_SKILLS_CV_AI = "suggestionSkillsCvAI",
   SUGGESTION_WORKS_EXPERIENCE_CV_AI = "suggestionWorksExperienceCvAI",
   REWRITE_WORK_DESCRIPTION = "rewriteWorkDescription",
-  SUGGESTION_TAGS_CV_AI = "suggestionTagsCvAI",
+  SUGGESTION_TEMPLATES_AI = "suggestionTemplatesAI",
 }
 
 @Schema({ timestamps: true })

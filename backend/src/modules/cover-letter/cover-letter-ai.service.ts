@@ -16,8 +16,7 @@ export class CoverLetterAiService {
 
   async generateCoverLetterByAi(
     createClAi: CreateGenerateCoverLetterDto,
-    jobDescription: string,
-    userId: string
+    jobDescription: string
   ) {
     try {
       const {
@@ -112,15 +111,6 @@ export class CoverLetterAiService {
         completion_tokens: 0,
         total_tokens: 0,
       };
-      console.log("Usage:", usage);
-      if (userId) {
-        await this.logService.createLog({
-          userId: userId,
-          feature: "coverLetterAI",
-          tokensUsed: usage.total_tokens,
-        });
-      }
-
       const cleanedResponse = response
         .replace(/```json/g, "")
         .replace(/```/g, "");
@@ -157,7 +147,7 @@ export class CoverLetterAiService {
         },
       };
 
-      return coverLetter;
+      return { coverLetter, total_tokens: usage.total_tokens };
     } catch (error) {
       throw new Error("Failed to generate cover letter: " + error.message);
     }
@@ -166,15 +156,10 @@ export class CoverLetterAiService {
   async extractCoverLetter(
     coverLetter: string,
     jobDescription: string,
-    templateId: string,
-    userId: string
+    templateId: string
   ) {
     try {
       const promptSystem = `You are an advanced AI system specialized in extracting structured data from job application cover letters with high precision. Your tasks: 1. Read and analyze both the Cover Letter and the Job Description provided by the user. 2. Determine the language of the Job Description (English or Vietnamese) with maximum accuracy. 3. Produce a complete JSON object using the same language as the Job Description. 4. Always fill in all fields, even if the Cover Letter lacks details — infer reasonable values based on context. 5. Ensure the tone remains formal, professional, and consistent throughout. 6. When information is ambiguous, select the most contextually appropriate interpretation rather than leaving any field empty. Output strictly the following JSON structure: { "firstName": "", "lastName": "", "email": "", "phone": "", "subject": "", "greeting": "", "opening": "", "body": "", "callToAction": "", "closing": "", "signature": "" } Strict Rules: - Output **only** a valid JSON object. - Do **not** include any explanation, notes, markup, backticks, commentary, or surrounding text. - Do **not** change the key names. - Do **not** omit any required field. - The final output must be fully parseable JSON with no trailing characters. Quality Requirements: - Extract personal information accurately and avoid fabricating details unless necessary for completeness. - Ensure extracted text is coherent, logically structured, and aligned with the job description context. - Maintain consistent language throughout the output.
-
-
-
-
       `;
       const prompt = `
     Cover Letter:
@@ -224,17 +209,11 @@ export class CoverLetterAiService {
         total_tokens: 0,
       };
       console.log("Usage cover letter:", usage);
-      if (userId) {
-        await this.logService.createLog({
-          userId: userId,
-          feature: "coverLetterAI",
-          tokensUsed: usage.total_tokens,
-        });
-      }
       return {
         templateId,
         title: "Extracted from PDF",
         data: parsed,
+        total_tokens: usage.total_tokens,
       };
     } catch (error) {
       Logger.error("Error extracting cover letter", error);

@@ -6,6 +6,7 @@ import {
   Post,
   Req,
   UseGuards,
+  UseInterceptors,
 } from "@nestjs/common";
 import { Public } from "../auth/decorators/public.decorator";
 import { CvTemplateService } from "./cv-template.service";
@@ -14,6 +15,9 @@ import { RolesGuard } from "../auth/guards/roles.guard";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { Roles } from "src/common/decorators/roles.decorator";
 import { User } from "src/common/decorators/user.decorator";
+import { UseAiFeature } from "src/common/decorators/ai-feature.decorator";
+import { AiFeature } from "../ai-usage-log/schemas/ai-usage-log.schema";
+import { AiUsageInterceptor } from "src/common/interceptors/ai-usage.interceptor";
 
 /**
  * Controller for handling CV template related requests
@@ -35,12 +39,11 @@ export class CvTemplateController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @UseAiFeature(AiFeature.SUGGESTION_TEMPLATES_AI)
+  @UseInterceptors(AiUsageInterceptor)
   @Post("suggest")
-  async getSuggestTemplateCv(
-    @Body("jobDescription") jobDescription: string,
-    @User("_id") userId: string
-  ) {
-    return this.cvTemplateService.getSuggestTemplateCv(jobDescription, userId);
+  async getSuggestTemplateCv(@Body("jobDescription") jobDescription: string) {
+    return this.cvTemplateService.getSuggestTemplateCv(jobDescription);
   }
 
   @Public()

@@ -34,18 +34,14 @@ export class ClTemplateService {
   }
 
   async getSuggestTemplateCl(
-    jobDescription: string,
-    userId: string
-  ): Promise<ClTemplate[]> {
+    jobDescription: string
+  ): Promise<{ clTemplates: ClTemplate[]; total_tokens: number }> {
     const tags = await this.clTemplateModel.distinct("tags").exec();
-    console.log(tags);
 
     const suggestTags = await this.cvTemplateAiService.suggestTagsByAi(
       jobDescription,
-      tags,
-      userId
+      tags
     );
-    console.log("suggestTags", suggestTags);
 
     if (suggestTags && suggestTags.tags.length > 0) {
       const templates = await this.clTemplateModel
@@ -55,9 +51,12 @@ export class ClTemplateService {
         .lean()
         .exec();
 
-      return templates;
+      return { clTemplates: templates, total_tokens: suggestTags.total_tokens };
     }
 
-    return this.clTemplateModel.find().exec();
+    return {
+      clTemplates: await this.clTemplateModel.find().exec(),
+      total_tokens: suggestTags.total_tokens,
+    };
   }
 }

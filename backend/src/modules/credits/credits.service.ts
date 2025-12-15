@@ -297,4 +297,22 @@ export class CreditsService {
 
     return availableVouchers;
   }
+  async hasEnoughToken(
+    userId: string | Types.ObjectId,
+    requiredToken: number
+  ): Promise<boolean> {
+    const userObjectId =
+      typeof userId === "string" ? new Types.ObjectId(userId) : userId;
+
+    const credit = await this.creditModel.findOne(
+      { userId: userObjectId },
+      { token: 1 }
+    );
+
+    if (!credit) {
+      throw new NotFoundException("Credit not found");
+    }
+
+    return credit.token >= requiredToken;
+  }
 }

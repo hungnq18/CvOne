@@ -31,6 +31,7 @@ import { JobAnalysisService } from "./services/job-analysis.service";
 import { OpenaiApiService } from "./services/openai-api.service";
 import { OpenAiService } from "./services/openai.service";
 import { VietnameseContentService } from "./services/vietnamese-content.service";
+import { AiCoreModule } from "../AiCore/ai-core.module";
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { VietnameseContentService } from "./services/vietnamese-content.service"
     ]),
     MailModule,
     AiUsageLogModule,
+    AiCoreModule,
   ],
   controllers: [CvController, AiInterviewController],
   providers: [

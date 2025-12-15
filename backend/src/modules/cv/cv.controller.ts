@@ -26,6 +26,10 @@ import { CvContentGenerationService } from "./services/cv-content-generation.ser
 import { CvUploadService } from "./services/cv-upload.service";
 import { JobAnalysisService } from "./services/job-analysis.service";
 import { OpenAiService } from "./services/openai.service";
+import { AiTokenGuard } from "src/common/guards/ai-token.guard";
+import { AiUsageInterceptor } from "src/common/interceptors/ai-usage.interceptor";
+import { AiFeature } from "../ai-usage-log/schemas/ai-usage-log.schema";
+import { UseAiFeature } from "src/common/decorators/ai-feature.decorator";
 /**
  * Controller for handling CV (Curriculum Vitae) related requests
  * Most endpoints require authentication using JWT
@@ -40,8 +44,8 @@ export class CvController {
     private readonly cvContentGenerationService: CvContentGenerationService,
     private readonly jobAnalysisService: JobAnalysisService,
     private readonly openAiService: OpenAiService,
-    @InjectModel(UserSchema.name) private userModel: Model<UserSchema>,
-  ) { }
+    @InjectModel(UserSchema.name) private userModel: Model<UserSchema>
+  ) {}
 
   /**
    * Upload and analyze CV PDF using AI
@@ -59,24 +63,24 @@ export class CvController {
         if (!file.mimetype || !file.mimetype.includes("pdf")) {
           return cb(
             new BadRequestException("Only PDF files are allowed!"),
-            false,
+            false
           );
         }
         cb(null, true);
       },
-    }),
+    })
   )
   async uploadAndAnalyzeCv(
     @UploadedFile() file: any,
     @Body("jobDescription") jobDescription: string,
     @Body("additionalRequirements") additionalRequirements: string,
-    @User("_id") userId: string,
+    @User("_id") userId: string
   ) {
     return this.cvUploadService.uploadCvToCloudAndAnalyze(
       file,
       jobDescription,
       userId,
-      additionalRequirements,
+      additionalRequirements
     );
   }
 
@@ -110,7 +114,7 @@ export class CvController {
   @Post(":id/generate-share-link")
   async generateShareLink(
     @Param("id") id: string,
-    @User("_id") userId: string,
+    @User("_id") userId: string
   ) {
     return this.cvService.generateShareLink(id, userId);
   }
@@ -171,16 +175,12 @@ export class CvController {
   /**
    * Phân tích Job Description (JD) bằng AI, trả về kết quả phân tích
    */
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, AiTokenGuard)
+  @UseAiFeature(AiFeature.ANALYZE_JD)
+  @UseInterceptors(AiUsageInterceptor)
   @Post("analyze-jd")
-  async analyzeJobDescription(
-    @Body("jobDescription") jobDescription: string,
-    @User("_id") userId: string,
-  ) {
-    return this.jobAnalysisService.analyzeJobDescription(
-      jobDescription,
-      userId,
-    );
+  async analyzeJobDescription(@Body("jobDescription") jobDescription: string) {
+    return this.jobAnalysisService.analyzeJobDescription(jobDescription);
   }
 
   /**
@@ -194,7 +194,7 @@ export class CvController {
   async generateCvWithAI(
     @User("_id") userId: string,
     @Body("jobAnalysis") jobAnalysis: any,
-    @Body("additionalRequirements") additionalRequirements?: string,
+    @Body("additionalRequirements") additionalRequirements?: string
   ) {
     // Get user data
     const user = await this.userModel.findById(userId);
@@ -204,7 +204,7 @@ export class CvController {
     const cvContent = await this.cvContentGenerationService.generateCvContent(
       user,
       jobAnalysis,
-      additionalRequirements,
+      additionalRequirements
     );
 
     return {
@@ -226,7 +226,7 @@ export class CvController {
   @Post("generate-and-save")
   async generateAndSaveCv(
     @Body() generateCvDto: GenerateCvDto,
-    @User("_id") userId: string,
+    @User("_id") userId: string
   ) {
     try {
       // 1. Get user data
@@ -237,14 +237,14 @@ export class CvController {
 
       // 2. Analyze job description
       const jobAnalysis = await this.jobAnalysisService.analyzeJobDescription(
-        generateCvDto.jobDescription,
+        generateCvDto.jobDescription
       );
 
       // 3. Generate CV content
       const cvContent = await this.cvContentGenerationService.generateCvContent(
         user,
         jobAnalysis,
-        generateCvDto.additionalRequirements,
+        generateCvDto.additionalRequirements
       );
 
       // Get default template if not specified
@@ -256,7 +256,8 @@ export class CvController {
 
       // Check if we're using fallback methods
       const isUsingFallback =
-        !jobAnalysis.softSkills || jobAnalysis.softSkills.length === 0;
+        !jobAnalysis.analyzedJob.softSkills ||
+        jobAnalysis.analyzedJob.softSkills.length === 0;
       const message = isUsingFallback
         ? "CV generated using basic analysis (OpenAI quota exceeded). Please check your OpenAI billing to enable AI-powered features."
         : "CV generated successfully using AI analysis";
@@ -289,57 +290,60 @@ export class CvController {
   /**
    * Gợi ý Professional Summary bằng AI
    */
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, AiTokenGuard)
+  @UseAiFeature(AiFeature.SUGGESTION_SUMMARY_CV_AI)
+  @UseInterceptors(AiUsageInterceptor)
   @Post("suggest/summary")
   async suggestSummary(
-    @User("_id") userId: string,
     @Body("jobAnalysis") jobAnalysis: any,
-    @Body("additionalRequirements") additionalRequirements?: string,
+    @Body("additionalRequirements") additionalRequirements?: string
   ) {
     // Không truyền userProfile nữa, chỉ truyền jobAnalysis và additionalRequirements
     const summary = await this.openAiService.generateProfessionalSummaryVi(
       jobAnalysis,
-      additionalRequirements,
-      userId,
+      additionalRequirements
     );
 
-    return { summaries: [summary] };
+    return { summaries: [summary], total_tokens: summary.total_tokens };
   }
 
   /**
    * Gợi ý Skills Section bằng AI
    */
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, AiTokenGuard)
+  @UseAiFeature(AiFeature.SUGGESTION_SKILLS_CV_AI)
+  @UseInterceptors(AiUsageInterceptor)
   @Post("suggest/skills")
   async suggestSkills(
-    @User("_id") userId: string,
     @Body("jobAnalysis") jobAnalysis: any,
-    @Body("userSkills") userSkills?: Array<{ name: string; rating: number }>,
+    @Body("userSkills") userSkills?: Array<{ name: string; rating: number }>
   ) {
+    const skillsOptions =
+      await this.cvContentGenerationService.generateSkillsSection(
+        jobAnalysis,
+        userSkills
+      );
+
     return {
-      skillsOptions:
-        await this.cvContentGenerationService.generateSkillsSection(
-          jobAnalysis,
-          userSkills,
-          userId,
-        ),
+      skillsOptions: skillsOptions,
+      total_tokens: skillsOptions.total_tokens,
     };
   }
 
   /**
    * Gợi ý Work Experience bằng AI
    */
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, AiTokenGuard)
+  @UseAiFeature(AiFeature.SUGGESTION_WORKS_EXPERIENCE_CV_AI)
+  @UseInterceptors(AiUsageInterceptor)
   @Post("suggest/work-experience")
   async suggestWorkExperience(
-    @User("_id") userId: string,
     @Body("jobAnalysis") jobAnalysis: any,
-    @Body("experienceLevel") experienceLevel: string,
+    @Body("experienceLevel") experienceLevel: string
   ) {
     return this.cvContentGenerationService.generateWorkExperience(
       jobAnalysis,
-      experienceLevel,
-      userId,
+      experienceLevel
     );
   }
 
@@ -352,7 +356,7 @@ export class CvController {
   @Post()
   async createCV(
     @Body() createCvDto: CreateCvDto,
-    @User("_id") userId: string,
+    @User("_id") userId: string
   ) {
     return this.cvService.createCV(createCvDto, userId);
   }
@@ -433,13 +437,15 @@ export class CvController {
    * Accepts JSON `content` following the CV schema and `targetLanguage` (e.g., "vi", "en").
    * Returns translated JSON with the same structure.
    */
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, AiTokenGuard)
+  @UseAiFeature(AiFeature.TRANS_CV_AI)
+  @UseInterceptors(AiUsageInterceptor)
   @Post("translate")
   async translateCv(
     @Body("content") content: any,
     @Body("uiTexts") uiTexts: Record<string, string> = {},
     @Body("targetLanguage") targetLanguage: string,
-    @User("_id") userId: string,
+    @User("_id") userId: string
   ) {
     if (!content || typeof content !== "object") {
       throw new BadRequestException("content (CV JSON) is required");
@@ -452,34 +458,35 @@ export class CvController {
     const translated = await this.cvContentGenerationService.translateCvContent(
       content,
       uiTexts,
-      targetLanguage,
-      userId,
+      targetLanguage
     );
 
     return {
       success: true,
       data: translated,
+      total_tokens: translated.total_tokens,
     };
   }
 
   /**
    * Viết lại mô tả công việc trong work experience cho chuyên nghiệp hơn
    */
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, AiTokenGuard)
+  @UseAiFeature(AiFeature.REWRITE_WORK_DESCRIPTION)
+  @UseInterceptors(AiUsageInterceptor)
   @Post("rewrite-work-description")
   async rewriteWorkDescription(
     @Body("description") description: string,
     @User("_id") userId: string,
-    @Body("language") language?: string,
+    @Body("language") language?: string
   ) {
     if (!description || description.trim().length === 0) {
       throw new BadRequestException("Description is required.");
     }
     const rewritten = await this.cvAnalysisService.rewriteWorkDescription(
       description,
-      language,
-      userId,
+      language
     );
-    return { rewritten };
+    return { rewritten, total_tokens: rewritten.total_tokens };
   }
 }
