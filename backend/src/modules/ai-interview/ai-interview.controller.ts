@@ -93,7 +93,10 @@ export class AiInterviewController {
           difficulty: session.difficulty,
           language: session.language || 'vi-VN',
           averageScore: session.averageScore,
-          createdAt: session.createdAt
+          overallFeedback: session.overallFeedback,
+          feedbacks: session.feedbacks,
+          createdAt: session.createdAt,
+          completedAt: session.completedAt
         }
       };
     } catch (error) {
@@ -348,6 +351,51 @@ export class AiInterviewController {
   }
 
   /**
+   * Retake interview với cùng questions từ session cũ
+   */
+  @UseGuards(JwtAuthGuard)
+  @Post('retake-session/:sessionId')
+  async retakeInterviewSession(
+    @Param('sessionId') sessionId: string,
+    @User('_id') userId: string
+  ) {
+    try {
+      const session = await this.aiInterviewService.retakeInterviewSession(
+        userId,
+        sessionId
+      );
+
+      const response: InterviewSessionResponse = {
+        sessionId: String(session._id),
+        jobDescription: session.jobDescription,
+        jobTitle: session.jobTitle,
+        companyName: session.companyName,
+        questions: session.questions,
+        currentQuestionIndex: session.currentQuestionIndex,
+        totalQuestions: session.questions.length,
+        completedQuestions: session.feedbacks.length,
+        status: session.status,
+        difficulty: session.difficulty,
+        language: session.language || 'vi-VN',
+        createdAt: session.createdAt
+      };
+
+      return {
+        success: true,
+        data: response,
+        message: 'Interview session retaken successfully with same questions'
+      };
+
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message,
+        message: 'Failed to retake interview session'
+      };
+    }
+  }
+
+  /**
    * Pre-generate questions cho job description (admin/batch job)
    * Tạo trước để không tốn token khi user thực hiện interview
    */
@@ -391,4 +439,43 @@ export class AiInterviewController {
     }
   }
 
+  /**
+   * Google Cloud Text-to-Speech endpoint
+   * Requires server-side Google credentials (GOOGLE_APPLICATION_CREDENTIALS or default ADC).
+   */
+  @UseGuards(JwtAuthGuard)
+  @Post('tts/google')
+  async synthesizeTts(
+    @Body() body: {
+      text: string;
+      language?: string;
+      voice?: string;
+      speakingRate?: number;
+      pitch?: number;
+      audioEncoding?: 'MP3' | 'OGG_OPUS' | 'LINEAR16';
+    }
+  ) {
+    try {
+      const audioContent = await this.aiInterviewService.synthesizeSpeech({
+        text: body.text,
+        language: body.language || 'vi-VN',
+        voice: body.voice || 'vi-VN-Wavenet-A',
+        speakingRate: body.speakingRate ?? 0.95,
+        pitch: body.pitch ?? 0,
+        audioEncoding: body.audioEncoding || 'MP3',
+      });
+
+      return {
+        success: true,
+        data: { audioContent },
+        message: 'TTS generated successfully',
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message,
+        message: 'Failed to generate TTS',
+      };
+    }
+  }
 }

@@ -13,7 +13,7 @@ export enum AiFeature {
   SUGGESTION_SKILLS_CV_AI = "suggestionSkillsCvAI",
   SUGGESTION_WORKS_EXPERIENCE_CV_AI = "suggestionWorksExperienceCvAI",
   REWRITE_WORK_DESCRIPTION = "rewriteWorkDescription",
-  SUGGESTION_TAGS_CV_AI = "suggestionTagsCvAI",
+  SUGGESTION_TEMPLATES_AI = "suggestionTemplatesAI",
 }
 
 @Schema({ timestamps: true })
@@ -21,7 +21,7 @@ export class AiUsageLog {
   @Prop({ type: Types.ObjectId, ref: "User", required: true })
   userId: Types.ObjectId;
 
-  @Prop({ type: String, enum: AiFeature, required: true, unique: false })
+  @Prop({ type: String, enum: AiFeature, required: true })
   feature: AiFeature;
 
   @Prop({ required: true })
@@ -29,3 +29,7 @@ export class AiUsageLog {
 }
 
 export const AiUsageLogSchema = SchemaFactory.createForClass(AiUsageLog);
+
+// Remove unique index on feature field if it exists
+// Add compound index for better query performance
+AiUsageLogSchema.index({ userId: 1, feature: 1 });

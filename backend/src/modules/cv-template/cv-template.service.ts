@@ -30,18 +30,14 @@ export class CvTemplateService {
   }
 
   async getSuggestTemplateCv(
-    jobDescription: string,
-    userId: string
-  ): Promise<CvTemplate[]> {
+    jobDescription: string
+  ): Promise<{ cvTemplates: CvTemplate[]; total_tokens: number }> {
     const tags = await this.cvTemplateModel.distinct("tags").exec();
-    console.log(tags);
 
     const suggestTags = await this.cvTemplateAiService.suggestTagsByAi(
       jobDescription,
-      tags,
-      userId
+      tags
     );
-    console.log("suggestTags", suggestTags);
 
     if (suggestTags && suggestTags.tags.length > 0) {
       const templates = await this.cvTemplateModel
@@ -51,9 +47,12 @@ export class CvTemplateService {
         .lean()
         .exec();
 
-      return templates;
+      return { cvTemplates: templates, total_tokens: suggestTags.total_tokens };
     }
 
-    return this.cvTemplateModel.find().exec();
+    return {
+      cvTemplates: await this.cvTemplateModel.find().exec(),
+      total_tokens: suggestTags.total_tokens,
+    };
   }
 }

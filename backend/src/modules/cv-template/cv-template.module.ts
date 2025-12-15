@@ -9,6 +9,7 @@ import { ConfigModule } from "@nestjs/config";
 import { UsersModule } from "../users/users.module";
 import { CvModule } from "../cv/cv.module";
 import { AiUsageLogModule } from "../ai-usage-log/ai-usage-log.module";
+import { AiCoreModule } from "../AiCore/ai-core.module";
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { AiUsageLogModule } from "../ai-usage-log/ai-usage-log.module";
     UsersModule,
     CvModule,
     AiUsageLogModule,
+    AiCoreModule,
   ],
   controllers: [CvTemplateController],
   providers: [CvTemplateService, CvTemplateAiService],

@@ -16,11 +16,10 @@ export class CvTemplateAiService {
 
   async suggestTagsByAi(
     jobDescription: string,
-    tags: any,
-    userId: string
+    tags: any
   ): Promise<{
     tags: string[];
-    tokens: { prompt: number; completion: number; total: number };
+    total_tokens: number;
   }> {
     const prompt = `
 Tags: ${tags.join(", ")}
@@ -84,21 +83,10 @@ Task:
       total_tokens: 0,
     };
     console.log(usage);
-    if (userId) {
-      await this.logService.createLog({
-        userId,
-        feature: "suggestionTagsCvAI",
-        tokensUsed: usage.total_tokens,
-      });
-    }
 
     return {
       tags: tagsResult,
-      tokens: {
-        prompt: usage.prompt_tokens,
-        completion: usage.completion_tokens,
-        total: usage.total_tokens,
-      },
+      total_tokens: usage.total_tokens,
     };
   }
 }

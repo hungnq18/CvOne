@@ -173,4 +173,37 @@ export const API_ENDPOINTS = {
     GET_ALL_AVERAGE: "/ai-average/average-stats",
     RESET_AVERAGE: "/ai-average/reset",
   },
+  AI_INTERVIEW: {
+    CREATE_SESSION: "/ai-interview/create-session",
+    GET_SESSION: (sessionId: string) => `/ai-interview/session/${sessionId}`,
+    GET_CURRENT_QUESTION: (sessionId: string) => `/ai-interview/session/${sessionId}/current-question`,
+    SUBMIT_ANSWER: (sessionId: string) => `/ai-interview/session/${sessionId}/submit-answer`,
+    FOLLOW_UP_QUESTION: (sessionId: string) => `/ai-interview/session/${sessionId}/follow-up-question`,
+    SAMPLE_ANSWER: (sessionId: string, questionId: string) => `/ai-interview/session/${sessionId}/sample-answer/${questionId}`,
+    COMPLETE_SESSION: (sessionId: string) => `/ai-interview/session/${sessionId}/complete`,
+    GET_HISTORY: "/ai-interview/history",
+    RETAKE_SESSION: (sessionId: string) => `/ai-interview/retake-session/${sessionId}`,
+    PRE_GENERATE_QUESTIONS: "/ai-interview/pre-generate-questions",
+  },
+  REVENUE_PROFIT: {
+    // Revenue
+    CREATE_REVENUE: "/revenue-profit/revenue",
+    LIST_REVENUE: "/revenue-profit/revenue",
+    REVENUE_SUMMARY: "/revenue-profit/revenue/summary",
+    REVENUE_BY_TYPE: (type: string) => `/revenue-profit/revenue/type/${type}`,
+    REVENUE_BY_ID: (id: string) => `/revenue-profit/revenue/${id}`,
+    UPDATE_REVENUE: (id: string) => `/revenue-profit/revenue/${id}`,
+    DELETE_REVENUE: (id: string) => `/revenue-profit/revenue/${id}`,
+
+    // Profit
+    CREATE_PROFIT: "/revenue-profit/profit",
+    LIST_PROFIT: "/revenue-profit/profit",
+    PROFIT_SUMMARY: "/revenue-profit/profit/summary",
+    PROFIT_BY_ID: (id: string) => `/revenue-profit/profit/${id}`,
+    UPDATE_PROFIT: (id: string) => `/revenue-profit/profit/${id}`,
+    ADD_COST: (id: string) => `/revenue-profit/profit/${id}/cost`,
+    UPDATE_COST_STATUS: (id: string, costIndex: number) =>
+      `/revenue-profit/profit/${id}/cost/${costIndex}`,
+    DELETE_PROFIT: (id: string) => `/revenue-profit/profit/${id}`,
+  },
 } as const;
