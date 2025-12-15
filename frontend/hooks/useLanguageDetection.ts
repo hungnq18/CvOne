@@ -67,7 +67,7 @@ export function useLanguageDetection() {
     });
   }, []);
 
-  // Detect từ text input
+  // Detect từ text input - improved to handle mixed languages
   const detectFromText = useCallback((text: string): LanguageCode => {
     if (!text || text.trim().length < 3) {
       return detectedLanguage; // Return current if text too short
@@ -75,29 +75,39 @@ export function useLanguageDetection() {
 
     // Simple heuristic detection
     const vietnamesePattern = /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]/i;
+    const vietnameseWords = /\b(của|và|với|cho|từ|về|trong|này|đó|được|sẽ|có|không|một|hai|ba|bạn|tôi|chúng|nó|họ|nhưng|nếu|khi|để|vì|nên|mà|đã|sẽ|đang|rất|nhiều|ít|hơn|nhất|tất cả|mỗi|mọi|nào|đâu|sao|thế nào|tại sao)\b/i;
     const chinesePattern = /[\u4e00-\u9fff]/;
     const japanesePattern = /[\u3040-\u309f\u30a0-\u30ff]/;
     const koreanPattern = /[\uac00-\ud7a3]/;
     
     const vietnameseCount = (text.match(vietnamesePattern) || []).length;
+    const vietnameseWordCount = (text.match(vietnameseWords) || []).length;
     const chineseCount = (text.match(chinesePattern) || []).length;
     const japaneseCount = (text.match(japanesePattern) || []).length;
     const koreanCount = (text.match(koreanPattern) || []).length;
     
-    // Check for English (common words)
-    const englishWords = /\b(the|is|are|and|or|but|in|on|at|to|for|of|with|by)\b/i;
+    // Check for English (common words - expanded list)
+    const englishWords = /\b(the|is|are|and|or|but|in|on|at|to|for|of|with|by|this|that|these|those|was|were|been|have|has|had|do|does|did|will|would|should|could|can|may|might|what|when|where|why|how|which|who|whom|whose|about|above|across|after|against|along|among|around|before|behind|below|beneath|beside|between|beyond|during|except|inside|into|near|outside|over|through|throughout|under|until|upon|within|without)\b/i;
     const englishCount = (text.match(englishWords) || []).length;
     
-    // Determine language based on patterns
-    if (vietnameseCount > 0 && vietnameseCount > englishCount) {
+    // Calculate total scores for each language
+    const vietnameseScore = vietnameseCount * 2 + vietnameseWordCount * 3; // Weight Vietnamese more
+    const englishScore = englishCount * 2;
+    const chineseScore = chineseCount * 3;
+    const japaneseScore = japaneseCount * 3;
+    const koreanScore = koreanCount * 3;
+    
+    // Determine language based on highest score
+    // For mixed languages, prefer the one with higher score
+    if (vietnameseScore > 0 && vietnameseScore >= englishScore && vietnameseScore >= chineseScore && vietnameseScore >= japaneseScore && vietnameseScore >= koreanScore) {
       return 'vi-VN';
-    } else if (chineseCount > 0) {
+    } else if (chineseScore > 0 && chineseScore >= vietnameseScore && chineseScore >= englishScore && chineseScore >= japaneseScore && chineseScore >= koreanScore) {
       return 'zh-CN';
-    } else if (japaneseCount > 0) {
+    } else if (japaneseScore > 0 && japaneseScore >= vietnameseScore && japaneseScore >= englishScore && japaneseScore >= chineseScore && japaneseScore >= koreanScore) {
       return 'ja-JP';
-    } else if (koreanCount > 0) {
+    } else if (koreanScore > 0 && koreanScore >= vietnameseScore && koreanScore >= englishScore && koreanScore >= chineseScore && koreanScore >= japaneseScore) {
       return 'ko-KR';
-    } else if (englishCount > 2) {
+    } else if (englishScore > 2 || (englishScore > 0 && englishScore >= vietnameseScore)) {
       return 'en-US';
     }
     

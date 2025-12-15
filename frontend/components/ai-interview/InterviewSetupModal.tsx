@@ -7,9 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useLanguage } from "@/providers/global_provider";
 import { Briefcase, FileText, Play, Settings, Sparkles, X } from "lucide-react";
 import { useState } from "react";
-import { useLanguage } from "@/providers/global_provider";
 
 interface InterviewSetupModalProps {
   isOpen: boolean;
@@ -22,6 +22,7 @@ export interface InterviewConfig {
   jobTitle?: string;
   companyName?: string;
   numberOfQuestions: number;
+  sessionData?: any; // Session data từ retake (optional)
 }
 
 const setupTexts = {

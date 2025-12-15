@@ -29,4 +29,7 @@ export class AiUsageLog {
 }
 
 export const AiUsageLogSchema = SchemaFactory.createForClass(AiUsageLog);
+
+// Remove unique index on feature field if it exists
+// Add compound index for better query performance
 AiUsageLogSchema.index({ userId: 1, feature: 1 });

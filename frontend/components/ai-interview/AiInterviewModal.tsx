@@ -1,6 +1,7 @@
 "use client";
 
 import { aiInterviewApi, InterviewFeedback, InterviewSession } from '@/api/aiInterviewApi';
+import { FeedbackPopup } from '@/components/modals/feedbackPopup';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -8,10 +9,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { LanguageCode, useLanguageDetection } from '@/hooks/useLanguageDetection';
 import { useWebSpeechToText } from '@/hooks/useWebSpeechToText';
 import { notify } from "@/lib/notify";
+import { useLanguage } from '@/providers/global_provider';
 import { Bot, Clock, Globe, Maximize2, Mic, Minimize2, Send, User, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import InterviewSummaryPopup from './InterviewSummaryPopup';
 import LanguageSelector from './LanguageSelector';
-import { useLanguage } from '@/providers/global_provider';
 
 interface AiInterviewModalProps {
   isOpen: boolean;
@@ -20,6 +22,7 @@ interface AiInterviewModalProps {
   jobTitle?: string;
   companyName?: string;
   numberOfQuestions?: number;
+  sessionData?: InterviewSession; // Session data từ retake (optional)
 }
 
 const modalTexts = {
@@ -62,6 +65,11 @@ const modalTexts = {
       waitTitle: "Please wait for the question to finish displaying",
       stopRecording: "Click to stop recording",
       startRecording: "Click to start recording",
+      languageSwitched: "Language auto-switched to",
+      finalText: "Confirmed",
+      interimText: "Recognizing...",
+      editHint: "You can edit the text above if needed",
+      missingViVoice: "Vietnamese voice not available on this browser. We'll use English voice to read. Please try Edge or install a Vietnamese voice on your system.",
     },
     complete: {
       title: "All questions completed! 🎉",
@@ -130,6 +138,11 @@ const modalTexts = {
       waitTitle: "Vui lòng đợi câu hỏi hiển thị xong",
       stopRecording: "Nhấn để dừng ghi âm",
       startRecording: "Nhấn để bắt đầu ghi âm",
+      languageSwitched: "Đã tự động chuyển sang",
+      finalText: "Đã xác nhận",
+      interimText: "Đang nhận diện...",
+      editHint: "Bạn có thể chỉnh sửa văn bản ở trên nếu cần",
+      missingViVoice: "Trình duyệt không có giọng tiếng Việt. Hệ thống sẽ đọc bằng giọng tiếng Anh. Vui lòng dùng Edge hoặc cài đặt giọng tiếng Việt trên hệ điều hành.",
     },
     complete: {
       title: "Tất cả câu hỏi đã hoàn thành! 🎉",
@@ -167,7 +180,8 @@ export default function AiInterviewModal({
   jobDescription,
   jobTitle,
   companyName,
-  numberOfQuestions = 10
+  numberOfQuestions = 10,
+  sessionData
 }: AiInterviewModalProps) {
   const { language } = useLanguage();
   const t = modalTexts[language] ?? modalTexts.en;
@@ -201,6 +215,24 @@ export default function AiInterviewModal({
   const [displayedText, setDisplayedText] = useState<{ [key: string]: string }>({});
   const addedQuestionsRef = useRef<Set<string>>(new Set());
   const hasInitializedRef = useRef(false);
+  const isUserEditingRef = useRef(false); // Track if user is manually editing
+  const lastTranscriptRef = useRef<string>(''); // Track last transcript to detect user edits
+  const [showSummaryPopup, setShowSummaryPopup] = useState(false);
+  const speechSynthesisRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const [showFeedbackForm, setShowFeedbackForm] = useState(false);
+  const [sessionSummary, setSessionSummary] = useState<{
+    overallFeedback: string;
+    averageScore: number;
+    totalQuestions: number;
+    answeredQuestions: number;
+    feedbacks: InterviewFeedback[];
+  } | null>(null);
+  const [missingVietnameseVoice, setMissingVietnameseVoice] = useState(false);
+  const [languageSwitchNotification, setLanguageSwitchNotification] = useState<{
+    from: LanguageCode;
+    to: LanguageCode;
+    timestamp: number;
+  } | null>(null);
 
   // Language detection hook
   const {
@@ -233,22 +265,60 @@ export default function AiInterviewModal({
   const {
     isRecording,
     transcript,
+    finalTranscript,
+    interimTranscript,
     isSupported,
     startRecording,
     stopRecording,
     setLanguage: setSpeechLanguage,
     resetTranscript: resetSpeechTranscript,
-    error: speechError
+    error: speechError,
+    currentLanguage: currentSpeechLanguage
   } = useWebSpeechToText({
     language: selectedLanguage,
+    // Enable multiple languages support for mixed language recognition
+    // Try to use both Vietnamese and English if primary language is Vietnamese
+    languages: selectedLanguage?.toLowerCase().includes('vi') 
+      ? [selectedLanguage, 'en-US'] 
+      : selectedLanguage?.toLowerCase().includes('en')
+      ? [selectedLanguage, 'vi-VN']
+      : undefined,
     continuous: true,
     interimResults: true,
-    onTranscript: (text) => {
-      if (!text || !isQuestionReadyRef.current) return;
-      setUserAnswer((prev) => (prev !== text ? text : prev));
+    autoSwitchLanguage: true, // Enable auto language switching based on transcript
+    minConfidence: 0.6, // Filter out results with confidence < 60%
+    enableTextNormalization: true, // Enable text normalization and punctuation correction
+    enableAudioConstraints: true, // Note: Web Speech API manages audio, but we can optimize settings
+    onTranscript: (text, isFinal) => {
+      if (!isQuestionReadyRef.current) return;
+      // Only update if user is not manually editing
+      // If it's a final result, always update (confirmed text)
+      if (isFinal || !isUserEditingRef.current) {
+        setUserAnswer(text);
+        lastTranscriptRef.current = text;
+      }
     },
     onError: (error) => {
       notify.error(`${t.input.recordingError} ${error}`);
+    },
+    onLanguageDetected: (detectedLang) => {
+      // Update selected language when auto-detected from speech
+      if (detectedLang !== selectedLanguage) {
+        const oldLang = selectedLanguage;
+        setSelectedLanguage(detectedLang as LanguageCode);
+        setDetectedLanguage(detectedLang as LanguageCode);
+        // Show subtle notification about language switch
+        setLanguageSwitchNotification({
+          from: oldLang,
+          to: detectedLang as LanguageCode,
+          timestamp: Date.now(),
+        });
+        // Auto-hide notification after 3 seconds
+        setTimeout(() => {
+          setLanguageSwitchNotification(null);
+        }, 3000);
+        console.log(`Language auto-switched from ${oldLang} to ${detectedLang}`);
+      }
     },
   });
 
@@ -271,6 +341,37 @@ export default function AiInterviewModal({
       return () => clearTimeout(timeoutId);
     }
   }, [userAnswer, isRecording]); // Removed updateLanguageFromText from deps to prevent loop
+
+  // Preload voices when component mounts
+  useEffect(() => {
+    if ('speechSynthesis' in window) {
+      // Force load voices
+      const loadVoices = () => {
+        const voices = window.speechSynthesis.getVoices();
+        console.log('Voices preloaded:', voices.length);
+      };
+      
+      // Try to load voices immediately
+      loadVoices();
+      
+      // Also listen for voices changed event
+      window.speechSynthesis.onvoiceschanged = loadVoices;
+      
+      return () => {
+        window.speechSynthesis.onvoiceschanged = null;
+      };
+    }
+  }, []);
+
+  // Cleanup: Stop speech when component unmounts or modal closes
+  useEffect(() => {
+    return () => {
+      if (speechSynthesisRef.current) {
+        window.speechSynthesis.cancel();
+        speechSynthesisRef.current = null;
+      }
+    };
+  }, []);
 
   // Get current question from session
   const currentQuestion = session?.questions[currentQuestionIndex];
@@ -308,6 +409,9 @@ export default function AiInterviewModal({
     if (currentQuestion && resetSpeechTranscript) {
       // Reset transcript when a new question is shown (by question ID)
       resetSpeechTranscript();
+      // Reset editing flags
+      isUserEditingRef.current = false;
+      lastTranscriptRef.current = '';
     }
   }, [currentQuestion?.id, resetSpeechTranscript]);
 
@@ -352,6 +456,9 @@ export default function AiInterviewModal({
       setIsQuestionReady(false);
       isQuestionReadyRef.current = false;
       addedQuestionsRef.current.clear();
+      setShowSummaryPopup(false);
+      setShowFeedbackForm(false);
+      setSessionSummary(null);
     }
   }, [isOpen, jobDescription]);
 
@@ -368,28 +475,38 @@ export default function AiInterviewModal({
     return t.languageNames[langCode as keyof typeof t.languageNames] || langCode;
   };
 
+  // Helper function to get welcome message based on language
+  const getWelcomeMessage = (lang: string, jobTitle?: string, companyName?: string, totalQuestions?: number): string => {
+    const langCode = lang?.toLowerCase().includes('vi') ? 'vi' : 'en';
+    const welcomeTexts = langCode === 'vi' ? modalTexts.vi : modalTexts.en;
+    
+    const welcome = welcomeTexts.welcome
+      .replace('{jobTitle}', jobTitle || welcomeTexts.welcomeDefault)
+      .replace('{company}', companyName ? welcomeTexts.welcomeCompany.replace('{companyName}', companyName) : '')
+      .replace('{totalQuestions}', (totalQuestions || 10).toString());
+    
+    return welcome;
+  };
+
   const initializeInterview = async () => {
     setIsCreatingSession(true);
     try {
-      const response = await aiInterviewApi.createInterviewSession({
-        jobDescription,
-        jobTitle,
-        companyName,
-        numberOfQuestions
-      });
-
-      if (response.success && response.data) {
-        setSession(response.data);
+      // Nếu có sessionData từ retake, sử dụng nó luôn
+      if (sessionData) {
+        setSession(sessionData);
         setCurrentQuestionIndex(0); // Start from first question
         setUserAnswer('');
         setFeedback(null);
 
         // Initialize conversation with welcome message
-        if (response.data) {
-          const welcomeMessage = t.welcome
-            .replace('{jobTitle}', response.data.jobTitle || t.welcomeDefault)
-            .replace('{company}', response.data.companyName ? t.welcomeCompany.replace('{companyName}', response.data.companyName) : '')
-            .replace('{totalQuestions}', response.data.totalQuestions.toString());
+        // Use language from session (detected from JD) to get correct welcome message
+        const sessionLang = sessionData?.language || selectedLanguage || 'vi-VN';
+        const welcomeMessage = getWelcomeMessage(
+          sessionLang,
+          sessionData.jobTitle,
+          sessionData.companyName,
+          sessionData.totalQuestions
+        );
 
           // Start with typing indicator
           setConversation([
@@ -423,22 +540,121 @@ export default function AiInterviewModal({
                 }
               ]);
 
-              // Show first question after welcome message (only question at index 0)
-              // Use closure to capture the first question
-              const firstQuestion = response.data?.questions?.[0];
-              if (firstQuestion) {
-                setTimeout(() => {
-                  // Only add the first question, ensure it's not already added
-                  if (!addedQuestionsRef.current.has(firstQuestion.id)) {
-                    addQuestionToConversation(firstQuestion);
-                  }
-                }, 2000);
-              }
+              // Speak welcome message with natural voice, then show first question
+              speakWelcome(welcomeMessage, sessionData?.language).then(() => {
+                // Show first question after welcome message finishes
+                const firstQuestion = sessionData?.questions?.[0];
+                if (firstQuestion) {
+                  // Small delay after welcome finishes
+                  setTimeout(() => {
+                    if (!addedQuestionsRef.current.has(firstQuestion.id)) {
+                      addQuestionToConversation(firstQuestion, true);
+                    }
+                  }, 500);
+                }
+              }).catch(err => {
+                console.error('Error speaking welcome:', err);
+                // Still show question even if welcome speech fails
+                const firstQuestion = sessionData?.questions?.[0];
+                if (firstQuestion) {
+                  setTimeout(() => {
+                    if (!addedQuestionsRef.current.has(firstQuestion.id)) {
+                      addQuestionToConversation(firstQuestion, true);
+                    }
+                  }, 500);
+                }
+              });
             }
           }, typingSpeed);
-        }
+        setIsCreatingSession(false);
       } else {
-        notify.error(t.notify.sessionError);
+        // Tạo session mới như bình thường
+        const response = await aiInterviewApi.createInterviewSession({
+          jobDescription,
+          jobTitle,
+          companyName,
+          numberOfQuestions
+        });
+
+        if (response.success && response.data) {
+          setSession(response.data);
+          setCurrentQuestionIndex(0); // Start from first question
+          setUserAnswer('');
+          setFeedback(null);
+
+          // Initialize conversation with welcome message
+          if (response.data) {
+            // Use language from session (detected from JD) to get correct welcome message
+            const sessionLang = response.data?.language || selectedLanguage || 'vi-VN';
+            const welcomeMessage = getWelcomeMessage(
+              sessionLang,
+              response.data.jobTitle,
+              response.data.companyName,
+              response.data.totalQuestions
+            );
+
+            // Start with typing indicator
+            setConversation([
+              {
+                type: 'typing',
+                content: '',
+                timestamp: new Date(),
+              }
+            ]);
+
+            // Type welcome message
+            const welcomeId = 'welcome';
+            let currentIndex = 0;
+            const typingSpeed = 30;
+
+            const welcomeTypingInterval = setInterval(() => {
+              if (currentIndex < welcomeMessage.length) {
+                setDisplayedText(prev => ({
+                  ...prev,
+                  [welcomeId]: welcomeMessage.substring(0, currentIndex + 1)
+                }));
+                currentIndex++;
+              } else {
+                clearInterval(welcomeTypingInterval);
+                // Remove typing and add welcome message
+                setConversation([
+                  {
+                    type: 'question',
+                    content: welcomeMessage,
+                    timestamp: new Date(),
+                  }
+                ]);
+
+                // Speak welcome message with natural voice, then show first question
+                speakWelcome(welcomeMessage, response.data?.language).then(() => {
+                  // Show first question after welcome message finishes
+                  const firstQuestion = response.data?.questions?.[0];
+                  if (firstQuestion) {
+                    // Small delay after welcome finishes
+                    setTimeout(() => {
+                      if (!addedQuestionsRef.current.has(firstQuestion.id)) {
+                        addQuestionToConversation(firstQuestion, true);
+                      }
+                    }, 500);
+                  }
+                }).catch(err => {
+                  console.error('Error speaking welcome:', err);
+                  // Still show question even if welcome speech fails
+                  const firstQuestion = response.data?.questions?.[0];
+                  if (firstQuestion) {
+                    setTimeout(() => {
+                      if (!addedQuestionsRef.current.has(firstQuestion.id)) {
+                        addQuestionToConversation(firstQuestion, true);
+                      }
+                    }, 500);
+                  }
+                });
+              }
+            }, typingSpeed);
+          }
+        } else {
+          notify.error(t.notify.sessionError);
+        }
       }
     } catch (error) {
       console.error('Error initializing interview:', error);
@@ -543,7 +759,688 @@ export default function AiInterviewModal({
     conversationEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [conversation]);
 
-  const addQuestionToConversation = (question: any) => {
+  // Function to detect language from text - improved version
+  const detectLanguageFromText = (text: string): string | null => {
+    if (!text || text.trim().length < 3) return null;
+    
+    // Vietnamese characters (with diacritics)
+    const vietnamesePattern = /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđĐ]/;
+    
+    // Vietnamese common words (expanded list)
+    const vietnameseWords = /\b(của|và|với|cho|từ|về|trong|này|đó|được|sẽ|có|không|một|hai|ba|bạn|tôi|chúng|nó|họ|nhưng|nếu|khi|để|vì|nên|mà|đã|sẽ|đang|rất|nhiều|ít|hơn|nhất|tất cả|mỗi|mọi|nào|đâu|sao|thế nào|tại sao|bạn|anh|chị|em|ông|bà|cô|chú|bác|dì|dượng|cậu|mợ)\b/i;
+    
+    // English common words (expanded list)
+    const englishWords = /\b(the|is|are|and|or|but|in|on|at|to|for|of|with|by|this|that|these|those|was|were|been|have|has|had|do|does|did|will|would|should|could|can|may|might|what|when|where|why|how|which|who|whom|whose|about|above|across|after|against|along|among|around|before|behind|below|beneath|beside|between|beyond|during|except|inside|into|near|outside|over|through|throughout|under|until|upon|within|without|you|your|yours|we|our|ours|they|their|theirs|he|she|it|his|her|its)\b/i;
+    
+    // Count matches
+    const vietnameseCharCount = (text.match(vietnamesePattern) || []).length;
+    const vietnameseWordCount = (text.match(vietnameseWords) || []).length;
+    const englishWordCount = (text.match(englishWords) || []).length;
+    
+    // Calculate scores (Vietnamese characters are more reliable indicators)
+    const vietnameseScore = vietnameseCharCount * 3 + vietnameseWordCount * 2;
+    const englishScore = englishWordCount * 2;
+    
+    // Determine language based on scores
+    if (vietnameseScore > 0 && vietnameseScore >= englishScore) {
+      return 'vi-VN';
+    } else if (englishScore > 2 && englishScore > vietnameseScore) {
+      return 'en-US';
+    } else if (vietnameseCharCount > 0) {
+      // If we see Vietnamese characters, it's Vietnamese
+      return 'vi-VN';
+    } else if (englishWordCount > 2) {
+      return 'en-US';
+    }
+    
+    // If no clear indicator, return null to use fallback
+    return null;
+  };
+
+  // Function to normalize language code
+  const normalizeLanguageCode = (lang?: string): string => {
+    if (!lang) return 'vi-VN';
+    
+    const langLower = lang.toLowerCase();
+    
+    // Normalize Vietnamese language codes
+    if (langLower === 'vi' || langLower === 'vietnamese' || langLower.startsWith('vi-')) {
+      return 'vi-VN';
+    }
+    
+    // Normalize other common language codes
+    if (langLower === 'en' || langLower === 'english') {
+      return 'en-US';
+    }
+    
+    // Return as is if already in correct format
+    return lang;
+  };
+
+  // Function to clean text for speech (remove emojis, format text)
+  const cleanTextForSpeech = (text: string, language?: string): string => {
+    if (!text) return '';
+    
+    const lang = language || session?.language || selectedLanguage || 'vi-VN';
+    const isVietnamese = lang.toLowerCase().includes('vi');
+    
+    // Remove emojis and special unicode characters
+    let cleaned = text.replace(/[\u{1F300}-\u{1F9FF}]/gu, ''); // Emojis
+    cleaned = cleaned.replace(/[\u{1F600}-\u{1F64F}]/gu, ''); // Emoticons
+    cleaned = cleaned.replace(/[\u{1F680}-\u{1F6FF}]/gu, ''); // Transport symbols
+    cleaned = cleaned.replace(/[\u{2600}-\u{26FF}]/gu, ''); // Miscellaneous symbols
+    cleaned = cleaned.replace(/[\u{2700}-\u{27BF}]/gu, ''); // Dingbats
+    
+    // For Vietnamese: add space after punctuation for better pronunciation
+    if (isVietnamese) {
+      // Add space after common punctuation if not already present
+      cleaned = cleaned.replace(/([.,!?;:])([^\s])/g, '$1 $2');
+      // Ensure space before opening parentheses
+      cleaned = cleaned.replace(/([^\s])(\()/g, '$1 $2');
+      // Ensure space after closing parentheses
+      cleaned = cleaned.replace(/(\))([^\s])/g, '$1 $2');
+    }
+    
+    // Replace newlines with periods or spaces for better speech flow
+    cleaned = cleaned.replace(/\n+/g, '. ');
+    
+    // Remove multiple spaces
+    cleaned = cleaned.replace(/\s+/g, ' ');
+    
+    // Remove markdown formatting
+    cleaned = cleaned.replace(/\*\*(.*?)\*\*/g, '$1'); // Bold
+    cleaned = cleaned.replace(/\*(.*?)\*/g, '$1'); // Italic
+    cleaned = cleaned.replace(/_(.*?)_/g, '$1'); // Underline
+    cleaned = cleaned.replace(/`(.*?)`/g, '$1'); // Code
+    
+    // For Vietnamese: normalize common abbreviations and numbers
+    if (isVietnamese) {
+      // Normalize common Vietnamese abbreviations
+      cleaned = cleaned.replace(/\b(vd|vd\.|ví dụ)\b/gi, 'ví dụ');
+      cleaned = cleaned.replace(/\b(etc|etc\.)\b/gi, 'vân vân');
+      // Add pauses for better flow
+      cleaned = cleaned.replace(/([.!?])\s+/g, '$1 ');
+    }
+    
+    // Trim whitespace
+    cleaned = cleaned.trim();
+    
+    return cleaned;
+  };
+
+  // Function to get the best female voice for a language
+  const getBestVoice = (lang: string): SpeechSynthesisVoice | null => {
+    const voices = window.speechSynthesis.getVoices();
+    if (voices.length === 0) return null;
+
+    const langCode = lang.split('-')[0].toLowerCase();
+    const fullLang = lang.toLowerCase();
+
+    // Special handling for Vietnamese - prioritize best voices per browser
+    // Best Vietnamese voices:
+    // - Chrome: "Google Vietnamese" (female)
+    // - Edge: "Microsoft HoaiMy Online (Natural)" (female) or "Microsoft NamMinh Online (Natural)" (male)
+    // - Safari/macOS: "Vietnamese (Female)" or "Vietnamese (Male)"
+    if (langCode === 'vi' || fullLang === 'vi-vn') {
+      // First, try exact match for Vietnamese
+      const viVoices = voices.filter(voice => 
+        voice.lang.toLowerCase() === 'vi-vn' || 
+        voice.lang.toLowerCase() === 'vi' ||
+        voice.lang.toLowerCase().startsWith('vi-')
+      );
+      
+      if (viVoices.length > 0) {
+        console.log('Available Vietnamese voices:', viVoices.map(v => `${v.name} (${v.lang})`));
+        setMissingVietnameseVoice(false);
+        
+        // PRIORITY 1: Microsoft Edge voices (Natural voices - best quality)
+        // "Microsoft HoaiMy Online (Natural) - Vietnamese (Vietnam)" - Female, very natural
+        // "Microsoft NamMinh Online (Natural) - Vietnamese (Vietnam)" - Male, strong
+        const microsoftNaturalVoice = viVoices.find(voice => {
+          const nameLower = voice.name.toLowerCase();
+          return (nameLower.includes('microsoft') && 
+                  (nameLower.includes('hoaimy') || nameLower.includes('namminh')) &&
+                  nameLower.includes('natural')) ||
+                 (nameLower.includes('hoaimy') && nameLower.includes('natural')) ||
+                 (nameLower.includes('namminh') && nameLower.includes('natural'));
+        });
+        
+        if (microsoftNaturalVoice) {
+          console.log('Found Microsoft Natural Vietnamese voice (Edge - best quality):', microsoftNaturalVoice.name, microsoftNaturalVoice.lang);
+          return microsoftNaturalVoice;
+        }
+        
+        // PRIORITY 2: Google Vietnamese voice (Chrome - good quality)
+        // "Google Vietnamese" - Female voice, clear and natural
+        const googleVietnameseVoice = viVoices.find(voice => {
+          const nameLower = voice.name.toLowerCase();
+          return (nameLower.includes('google') && nameLower.includes('vietnamese')) ||
+                 nameLower === 'google vietnamese' ||
+                 nameLower.includes('vi-vn-google') ||
+                 (nameLower.includes('google') && nameLower.includes('vi'));
+        });
+        
+        if (googleVietnameseVoice) {
+          console.log('Found Google Vietnamese voice (Chrome - good quality):', googleVietnameseVoice.name, googleVietnameseVoice.lang);
+          return googleVietnameseVoice;
+        }
+        
+        // PRIORITY 3: Any Google voice that supports Vietnamese
+        const allGoogleVoices = voices.filter(voice => {
+          const nameLower = voice.name.toLowerCase();
+          return nameLower.includes('google');
+        });
+        
+        const googleViVoice = allGoogleVoices.find(voice => 
+          voice.lang.toLowerCase().includes('vi') || 
+          voice.lang.toLowerCase() === 'vi-vn'
+        );
+        
+        if (googleViVoice) {
+          console.log('Found Google voice for Vietnamese:', googleViVoice.name, googleViVoice.lang);
+          return googleViVoice;
+        }
+        
+        // PRIORITY 4: Safari/macOS voices
+        // "Vietnamese (Female)" or "Vietnamese (Male)"
+        const safariVoice = viVoices.find(voice => {
+          const nameLower = voice.name.toLowerCase();
+          return (nameLower.includes('vietnamese') && 
+                  (nameLower.includes('female') || nameLower.includes('male'))) ||
+                 nameLower === 'vietnamese (female)' ||
+                 nameLower === 'vietnamese (male)';
+        });
+        
+        if (safariVoice) {
+          console.log('Found Safari/macOS Vietnamese voice:', safariVoice.name, safariVoice.lang);
+          return safariVoice;
+        }
+        
+        // PRIORITY 5: Microsoft voices (any Microsoft voice for Vietnamese)
+        const microsoftVoice = viVoices.find(voice => {
+          const nameLower = voice.name.toLowerCase();
+          return nameLower.includes('microsoft');
+        });
+        
+        if (microsoftVoice) {
+          console.log('Found Microsoft Vietnamese voice:', microsoftVoice.name, microsoftVoice.lang);
+          return microsoftVoice;
+        }
+        
+        // PRIORITY 6: Vietnamese female voice names (common in Windows, macOS, etc.)
+        const viFemaleNames = ['linh', 'mai', 'lan', 'hong', 'anh', 'thu', 'ha', 'hoaimy'];
+        
+        // Try to find Vietnamese female voice
+        const viFemaleVoice = viVoices.find(voice => {
+          const nameLower = voice.name.toLowerCase();
+          return viFemaleNames.some(name => nameLower.includes(name)) ||
+                 (nameLower.includes('vietnamese') && nameLower.includes('female'));
+        });
+        
+        if (viFemaleVoice) {
+          console.log('Found Vietnamese female voice:', viFemaleVoice.name, viFemaleVoice.lang);
+          return viFemaleVoice;
+        }
+        
+        // PRIORITY 7: Any voice with "Vietnamese" in name
+        const anyVietnameseVoice = viVoices.find(voice => {
+          const nameLower = voice.name.toLowerCase();
+          return nameLower.includes('vietnamese') || nameLower.includes('vi-vn');
+        });
+        
+        if (anyVietnameseVoice) {
+          console.log('Found Vietnamese voice:', anyVietnameseVoice.name, anyVietnameseVoice.lang);
+          return anyVietnameseVoice;
+        }
+        
+        // Last resort: use first Vietnamese voice
+        console.log('Using first available Vietnamese voice:', viVoices[0].name, viVoices[0].lang);
+        return viVoices[0];
+      } else {
+        console.warn('No Vietnamese voices found. Available voices:', voices.map(v => `${v.name} (${v.lang})`));
+        setMissingVietnameseVoice(true);
+      }
+    }
+
+    // Filter voices by language
+    const langVoices = voices.filter(voice => 
+      voice.lang.toLowerCase().startsWith(langCode) ||
+      voice.lang.toLowerCase() === fullLang
+    );
+    
+    // If no voices for this language, try to find similar language
+    const allLangVoices = langVoices.length > 0 ? langVoices : 
+      voices.filter(voice => voice.lang.toLowerCase().includes(langCode));
+
+    if (allLangVoices.length === 0) {
+      console.warn('No voices found for language:', lang);
+      return null;
+    }
+
+    // List of known female voice names for different languages
+    const femaleVoiceNames: { [key: string]: string[] } = {
+      'en': ['zira', 'samantha', 'susan', 'karen', 'tessa', 'fiona', 'victoria', 'siri', 'alex'],
+      'vi': ['linh', 'mai', 'lan', 'hong', 'anh', 'thu', 'ha'],
+      'ja': ['kyoko', 'nanami', 'otoya'],
+      'ko': ['yuna', 'sora'],
+      'zh': ['ting-ting', 'sin-ji', 'mei-jia'],
+      'fr': ['amelie', 'thomas', 'thomas'],
+      'de': ['anna', 'katrin', 'helena'],
+      'es': ['monica', 'soledad', 'maria', 'paulina'],
+    };
+
+    const langFemaleNames = femaleVoiceNames[langCode] || femaleVoiceNames['en'];
+
+    // PRIORITY 1: Try to find Google voice (giọng chị Google) for any language
+    const googleVoice = allLangVoices.find(voice => {
+      const nameLower = voice.name.toLowerCase();
+      return nameLower.includes('google');
+    });
+    
+    if (googleVoice) {
+      console.log('Found Google voice (giọng chị Google):', googleVoice.name, googleVoice.lang);
+      return googleVoice;
+    }
+
+    // PRIORITY 2: Try to find neural/premium female voices
+    const neuralFemaleVoice = allLangVoices.find(voice => {
+      const nameLower = voice.name.toLowerCase();
+      return (nameLower.includes('neural') || 
+              nameLower.includes('premium') ||
+              nameLower.includes('enhanced') ||
+              nameLower.includes('natural')) &&
+             langFemaleNames.some(femaleName => nameLower.includes(femaleName));
+    });
+    
+    if (neuralFemaleVoice) {
+      console.log('Found neural female voice:', neuralFemaleVoice.name, neuralFemaleVoice.lang);
+      return neuralFemaleVoice;
+    }
+
+    // PRIORITY 3: Try to find any female voice
+    const femaleVoice = allLangVoices.find(voice => 
+      langFemaleNames.some(femaleName => voice.name.toLowerCase().includes(femaleName)) ||
+      voice.name.toLowerCase().includes('female')
+    );
+
+    if (femaleVoice) {
+      console.log('Found female voice:', femaleVoice.name, femaleVoice.lang);
+      return femaleVoice;
+    }
+
+    // Last resort: use first available voice for the language
+    console.warn('No female voice found, using first available voice for language:', lang);
+    return allLangVoices[0];
+  };
+
+  // Function to speak text with natural voice
+  const speakText = (text: string, language?: string, options?: {
+    rate?: number;
+    pitch?: number;
+    volume?: number;
+    isWelcome?: boolean;
+  }) => {
+    // Stop any ongoing speech
+    if (speechSynthesisRef.current) {
+      window.speechSynthesis.cancel();
+    }
+
+    // Check if browser supports speech synthesis
+    if (!('speechSynthesis' in window)) {
+      console.warn('Speech synthesis not supported');
+      return;
+    }
+
+    // Detect language from text if not provided, then normalize
+    let detectedLang = language;
+    
+    // Always try to detect from text first for accuracy
+    const textDetectedLang = detectLanguageFromText(text);
+    if (textDetectedLang) {
+      detectedLang = textDetectedLang;
+    } else {
+      // Fallback to provided language or session language
+      detectedLang = language || session?.language || selectedLanguage || 'vi-VN';
+    }
+    
+    // Normalize language code (vi -> vi-VN, en -> en-US, etc.)
+    const speechLang = normalizeLanguageCode(detectedLang);
+    const effectiveLang = speechLang.toLowerCase().includes('vi') && missingVietnameseVoice ? 'en-US' : speechLang;
+    
+    console.log('Speech language detection:', {
+      provided: language,
+      textDetected: textDetectedLang,
+      final: effectiveLang,
+      textPreview: text.substring(0, 50) + '...'
+    });
+
+    // Wait for voices to be loaded
+    const speakWithVoice = () => {
+      try {
+        // Clean text before speaking (pass language for proper formatting)
+        const cleanedText = cleanTextForSpeech(text, speechLang);
+        const langForVoice = effectiveLang;
+        
+        if (!cleanedText || cleanedText.trim().length === 0) {
+          console.warn('Text is empty after cleaning, skipping speech');
+          return;
+        }
+
+        const voices = window.speechSynthesis.getVoices();
+        const isVietnamese = langForVoice.toLowerCase().includes('vi');
+        
+        console.log('Available voices:', voices.length);
+        console.log('Original text:', text.substring(0, 100) + '...');
+        console.log('Cleaned text:', cleanedText.substring(0, 100) + '...');
+        console.log('Detected language:', detectedLang);
+        console.log('Normalized language code:', speechLang);
+        console.log('Effective language code:', langForVoice);
+        console.log('Is Vietnamese:', isVietnamese);
+
+        const utterance = new SpeechSynthesisUtterance(cleanedText);
+        // Force set language code to ensure correct pronunciation
+        utterance.lang = langForVoice;
+        
+        // Adjust settings based on language for more natural speech
+        if (isVietnamese) {
+          // Vietnamese-specific settings for clearer pronunciation
+          utterance.rate = options?.rate ?? 0.8; // Slightly faster for Vietnamese (more natural)
+          utterance.pitch = options?.pitch ?? 1.1; // Slightly lower pitch for Vietnamese
+          utterance.volume = options?.volume ?? 1.0;
+        } else {
+          // Default settings for other languages
+          utterance.rate = options?.rate ?? 0.75; // Slower for clarity
+          utterance.pitch = options?.pitch ?? 1.15; // Slightly higher pitch for female voice
+          utterance.volume = options?.volume ?? 1.0; // Full volume for clarity
+        }
+
+        // Try to select the best voice for the language
+        const bestVoice = getBestVoice(langForVoice);
+        if (bestVoice) {
+          utterance.voice = bestVoice;
+          // Ensure voice language matches
+          if (bestVoice.lang) {
+            utterance.lang = bestVoice.lang;
+          }
+          console.log('Using voice:', bestVoice.name, 'with lang:', bestVoice.lang || langForVoice);
+        } else {
+          console.warn('No suitable voice found, using default with lang:', langForVoice);
+          // Still set language even if no specific voice found
+          utterance.lang = langForVoice;
+        }
+
+        utterance.onstart = () => {
+          console.log('Speech started');
+        };
+
+        utterance.onend = () => {
+          console.log('Speech ended');
+          speechSynthesisRef.current = null;
+        };
+
+        utterance.onerror = (error) => {
+          console.error('Speech synthesis error:', error);
+          speechSynthesisRef.current = null;
+        };
+
+        speechSynthesisRef.current = utterance;
+        window.speechSynthesis.speak(utterance);
+        console.log('Speech synthesis speak() called');
+      } catch (error) {
+        console.error('Error in speakWithVoice:', error);
+      }
+    };
+
+    // Load voices if not already loaded
+    const voices = window.speechSynthesis.getVoices();
+    if (voices.length === 0) {
+      console.log('Voices not loaded, waiting for onvoiceschanged...');
+      // Some browsers need this event to fire
+      window.speechSynthesis.onvoiceschanged = () => {
+        console.log('Voices changed event fired');
+        speakWithVoice();
+        window.speechSynthesis.onvoiceschanged = null;
+      };
+      // Force load voices in some browsers
+      window.speechSynthesis.getVoices();
+      // Fallback: try after a short delay
+      setTimeout(() => {
+        if (window.speechSynthesis.getVoices().length > 0) {
+          speakWithVoice();
+        }
+      }, 100);
+    } else {
+      console.log('Voices already loaded, speaking immediately');
+      speakWithVoice();
+    }
+  };
+
+  // Function to speak question using text-to-speech
+  const speakQuestion = async (text: string, language?: string, withIntroduction: boolean = false, isFirstQuestion: boolean = false): Promise<void> => {
+    // Detect language from question text first, then fallback to provided language or session language
+    const detectedLang = detectLanguageFromText(text) || language || session?.language || selectedLanguage || 'vi-VN';
+    const questionLang = normalizeLanguageCode(detectedLang);
+    
+    if (withIntroduction) {
+      // Use detected language for introduction
+      const intro = getQuestionIntroduction(questionLang, isFirstQuestion);
+      // Speak introduction first, then question
+      await speakTextAsync(intro, questionLang, { isWelcome: false });
+      // Small pause between introduction and question
+      await new Promise(resolve => setTimeout(resolve, 300));
+    }
+    // Use detected language for question
+    return speakTextAsync(text, questionLang, { isWelcome: false });
+  };
+
+  // Function to get question introduction based on language
+  const getQuestionIntroduction = (language?: string, isFirstQuestion: boolean = false): string => {
+    const lang = language || session?.language || selectedLanguage || 'vi-VN';
+    const langCode = lang.split('-')[0].toLowerCase();
+    
+    const introductions: { [key: string]: { first: string; next: string } } = {
+      'vi': { 
+        first: 'Câu hỏi đầu tiên là:',
+        next: 'Câu hỏi tiếp theo là:'
+      },
+      'en': { 
+        first: 'The first question is:',
+        next: 'The next question is:'
+      },
+      'ja': { 
+        first: '最初の質問は:',
+        next: '次の質問は:'
+      },
+      'ko': { 
+        first: '첫 번째 질문은:',
+        next: '다음 질문은:'
+      },
+      'zh': { 
+        first: '第一个问题是:',
+        next: '下一个问题是:'
+      },
+      'fr': { 
+        first: 'La première question est:',
+        next: 'La question suivante est:'
+      },
+      'de': { 
+        first: 'Die erste Frage lautet:',
+        next: 'Die nächste Frage lautet:'
+      },
+      'es': { 
+        first: 'La primera pregunta es:',
+        next: 'La siguiente pregunta es:'
+      },
+    };
+    
+    const intro = introductions[langCode] || introductions['en'];
+    return isFirstQuestion ? intro.first : intro.next;
+  };
+
+  // Function to speak text and return a promise that resolves when done
+  const speakTextAsync = (text: string, language?: string, options?: {
+    rate?: number;
+    pitch?: number;
+    volume?: number;
+    isWelcome?: boolean;
+  }): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      // Stop any ongoing speech
+      if (speechSynthesisRef.current) {
+        window.speechSynthesis.cancel();
+      }
+
+      // Check if browser supports speech synthesis
+      if (!('speechSynthesis' in window)) {
+        console.warn('Speech synthesis not supported');
+        reject(new Error('Speech synthesis not supported'));
+        return;
+      }
+
+      // Detect language from text if not provided, then normalize
+      let detectedLang = language;
+      
+      // Always try to detect from text first for accuracy
+      const textDetectedLang = detectLanguageFromText(text);
+      if (textDetectedLang) {
+        detectedLang = textDetectedLang;
+      } else {
+        // Fallback to provided language or session language
+        detectedLang = language || session?.language || selectedLanguage || 'vi-VN';
+      }
+      
+      // Normalize language code (vi -> vi-VN, en -> en-US, etc.)
+      const speechLang = normalizeLanguageCode(detectedLang);
+      const effectiveLang = speechLang.toLowerCase().includes('vi') && missingVietnameseVoice ? 'en-US' : speechLang;
+      
+      console.log('Speech language detection (async):', {
+        provided: language,
+        textDetected: textDetectedLang,
+        final: effectiveLang,
+        textPreview: text.substring(0, 50) + '...'
+      });
+
+      // Wait for voices to be loaded
+      const speakWithVoice = () => {
+        try {
+          // Clean text before speaking (pass language for proper formatting)
+          const cleanedText = cleanTextForSpeech(text, speechLang);
+          const langForVoice = effectiveLang;
+          
+          if (!cleanedText || cleanedText.trim().length === 0) {
+            console.warn('Text is empty after cleaning, skipping speech');
+            resolve();
+            return;
+          }
+
+          const voices = window.speechSynthesis.getVoices();
+          const isVietnamese = langForVoice.toLowerCase().includes('vi');
+          
+          console.log('Available voices:', voices.length);
+          console.log('Original text:', text.substring(0, 100) + '...');
+          console.log('Cleaned text:', cleanedText.substring(0, 100) + '...');
+          console.log('Detected language:', detectedLang);
+          console.log('Normalized language code:', speechLang);
+          console.log('Effective language code:', langForVoice);
+          console.log('Is Vietnamese:', isVietnamese);
+
+          const utterance = new SpeechSynthesisUtterance(cleanedText);
+          // Force set language code to ensure correct pronunciation
+          utterance.lang = langForVoice;
+          
+          // Adjust settings based on language for more natural speech
+          if (isVietnamese) {
+            // Vietnamese-specific settings for clearer pronunciation with tones
+            utterance.rate = options?.rate ?? 0.85; // Slightly slower for better clarity with tones
+            utterance.pitch = options?.pitch ?? 1.0; // Neutral pitch (tones are more important than pitch)
+            utterance.volume = options?.volume ?? 1.0;
+          } else {
+            // Default settings for other languages
+            utterance.rate = options?.rate ?? 0.75; // Slower for clarity
+            utterance.pitch = options?.pitch ?? 1.15; // Slightly higher pitch for female voice
+            utterance.volume = options?.volume ?? 1.0; // Full volume for clarity
+          }
+
+          // Try to select the best voice for the language
+          const bestVoice = getBestVoice(langForVoice);
+          if (bestVoice) {
+            utterance.voice = bestVoice;
+            // Ensure voice language matches
+            if (bestVoice.lang) {
+              utterance.lang = bestVoice.lang;
+            }
+            console.log('Using voice:', bestVoice.name, 'with lang:', bestVoice.lang || langForVoice);
+          } else {
+            console.warn('No suitable voice found, using default with lang:', langForVoice);
+            // Still set language even if no specific voice found
+            utterance.lang = langForVoice;
+          }
+
+          utterance.onstart = () => {
+            console.log('Speech started');
+          };
+
+          utterance.onend = () => {
+            console.log('Speech ended');
+            speechSynthesisRef.current = null;
+            resolve();
+          };
+
+          utterance.onerror = (error) => {
+            console.error('Speech synthesis error:', error);
+            speechSynthesisRef.current = null;
+            reject(error);
+          };
+
+          speechSynthesisRef.current = utterance;
+          window.speechSynthesis.speak(utterance);
+          console.log('Speech synthesis speak() called');
+        } catch (error) {
+          console.error('Error in speakWithVoice:', error);
+          reject(error);
+        }
+      };
+
+      // Load voices if not already loaded
+      const voices = window.speechSynthesis.getVoices();
+      if (voices.length === 0) {
+        console.log('Voices not loaded, waiting for onvoiceschanged...');
+        window.speechSynthesis.onvoiceschanged = () => {
+          console.log('Voices changed event fired');
+          speakWithVoice();
+          window.speechSynthesis.onvoiceschanged = null;
+        };
+        window.speechSynthesis.getVoices();
+        setTimeout(() => {
+          if (window.speechSynthesis.getVoices().length > 0) {
+            speakWithVoice();
+          }
+        }, 100);
+      } else {
+        console.log('Voices already loaded, speaking immediately');
+        speakWithVoice();
+      }
+    });
+  };
+
+  // Function to speak welcome message with friendly voice
+  // Language should be detected from JD (session.language), not UI language
+  const speakWelcome = async (text: string, language?: string): Promise<void> => {
+    // Detect language from welcome message text if not provided
+    // This ensures correct pronunciation even if language parameter is missing
+    const detectedLang = detectLanguageFromText(text) || language || session?.language || selectedLanguage || 'vi-VN';
+    const welcomeLang = normalizeLanguageCode(detectedLang);
+    console.log('Welcome message language:', {
+      provided: language,
+      textDetected: detectLanguageFromText(text),
+      sessionLang: session?.language,
+      final: welcomeLang,
+      textPreview: text.substring(0, 50) + '...'
+    });
+    return speakTextAsync(text, welcomeLang, { isWelcome: true });
+  };
+
+  const addQuestionToConversation = async (question: any, isFirstQuestion: boolean = false) => {
     // Check if question already added using ref
     if (addedQuestionsRef.current.has(question.id)) {
       return; // Don't add duplicate question
@@ -563,6 +1460,28 @@ export default function AiInterviewModal({
 
     // Simulate typing effect
     const questionText = question.question;
+    
+    // Detect language from question text to ensure correct pronunciation
+    const questionLanguage = detectLanguageFromText(questionText) || session?.language || selectedLanguage || 'vi-VN';
+    console.log('Question language detected:', questionLanguage, 'for question:', questionText.substring(0, 50) + '...');
+    
+    // If this is the first question, wait a bit for welcome to finish, then speak with introduction
+    if (isFirstQuestion) {
+      // Wait a bit to ensure welcome message has finished
+      await new Promise(resolve => setTimeout(resolve, 500));
+      // Speak question with introduction, using detected language
+      speakQuestion(questionText, questionLanguage, true, true).catch(err => {
+        console.error('Error speaking question:', err);
+      });
+    } else {
+      // For subsequent questions, speak immediately with introduction
+      setTimeout(() => {
+        speakQuestion(questionText, questionLanguage, true, false).catch(err => {
+          console.error('Error speaking question:', err);
+        });
+      }, 100);
+    }
+    
     const typingSpeed = 30; // milliseconds per character
     let currentIndex = 0;
 
@@ -600,6 +1519,12 @@ export default function AiInterviewModal({
       stopRecording();
     }
 
+    // Stop any ongoing speech
+    if (speechSynthesisRef.current) {
+      window.speechSynthesis.cancel();
+      speechSynthesisRef.current = null;
+    }
+
     // Reset states cho câu hỏi mới
     setUserAnswer('');
     setFeedback(null);
@@ -622,7 +1547,7 @@ export default function AiInterviewModal({
     // Add next question to conversation after delay
     if (session.questions[nextIndex]) {
       setTimeout(() => {
-        addQuestionToConversation(session.questions[nextIndex]);
+        addQuestionToConversation(session.questions[nextIndex], false);
       }, 1000);
     }
   };
@@ -672,14 +1597,17 @@ export default function AiInterviewModal({
     try {
       const response = await aiInterviewApi.completeSession(session.sessionId);
       if (response.success && response.data) {
-        // Show overall feedback
-        const message = t.notify.completeSuccess
-          .replace('{score}', response.data.averageScore.toFixed(1))
-          .replace('{answered}', response.data.answeredQuestions.toString())
-          .replace('{total}', response.data.totalQuestions.toString());
-
-        notify.success(message);
-        onClose();
+        // Lưu summary data để hiển thị popup
+        setSessionSummary({
+          overallFeedback: response.data.overallFeedback,
+          averageScore: response.data.averageScore,
+          totalQuestions: response.data.totalQuestions,
+          answeredQuestions: response.data.answeredQuestions,
+          feedbacks: response.data.feedbacks,
+        });
+        
+        // Hiển thị popup tổng hợp
+        setShowSummaryPopup(true);
       }
     } catch (error) {
       console.error('Error completing session:', error);
@@ -687,6 +1615,23 @@ export default function AiInterviewModal({
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleCloseSummary = () => {
+    setShowSummaryPopup(false);
+    // Sau khi đóng popup tổng hợp, hiển thị form feedback
+    setShowFeedbackForm(true);
+  };
+
+  const handleCloseFeedback = () => {
+    setShowFeedbackForm(false);
+    // Stop any ongoing speech
+    if (speechSynthesisRef.current) {
+      window.speechSynthesis.cancel();
+      speechSynthesisRef.current = null;
+    }
+    // Đóng modal interview sau khi đóng feedback
+    onClose();
   };
 
   const toggleRecording = () => {
@@ -955,6 +1900,12 @@ export default function AiInterviewModal({
                       </span>
                     )}
                   </div>
+                  {missingVietnameseVoice && (selectedLanguage.toLowerCase().includes('vi') || currentSpeechLanguage?.toLowerCase().includes('vi')) && (
+                    <div className="p-3 bg-yellow-50/90 backdrop-blur-sm border-2 border-yellow-300/50 rounded-lg text-sm text-yellow-800 flex items-start gap-2">
+                      <div className="w-3 h-3 bg-yellow-500 rounded-full mt-1 animate-pulse"></div>
+                      <p>{t.input.missingViVoice}</p>
+                    </div>
+                  )}
                   {!isQuestionReady && (
                     <div className="p-3 bg-yellow-50/90 backdrop-blur-sm border-2 border-yellow-300/50 rounded-lg text-sm">
                       <div className="flex items-center gap-2">
@@ -970,8 +1921,24 @@ export default function AiInterviewModal({
                     value={userAnswer}
                     onChange={(e) => {
                       if (isQuestionReady) {
-                        setUserAnswer(e.target.value);
+                        const newValue = e.target.value;
+                        setUserAnswer(newValue);
+                        // Track if user is editing (value differs from last transcript)
+                        if (newValue !== lastTranscriptRef.current) {
+                          isUserEditingRef.current = true;
+                        }
                       }
+                    }}
+                    onFocus={() => {
+                      // When user focuses, they might be editing
+                      isUserEditingRef.current = true;
+                    }}
+                    onBlur={() => {
+                      // Reset editing flag after a delay to allow transcript updates
+                      setTimeout(() => {
+                        isUserEditingRef.current = false;
+                        lastTranscriptRef.current = userAnswer;
+                      }, 1000);
                     }}
                     disabled={!isQuestionReady}
                     className="min-h-[80px] resize-none bg-white/90 backdrop-blur-sm border-white/30 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -981,18 +1948,45 @@ export default function AiInterviewModal({
                       }
                     }}
                   />
+                  {isRecording && userAnswer && (
+                    <p className="text-xs text-gray-600 mt-1 italic">
+                      💡 {t.input.editHint}
+                    </p>
+                  )}
                   {isRecording && (
                     <div className="p-3 bg-red-50/90 backdrop-blur-sm border-2 border-red-300/50 rounded-lg text-sm">
                       <div className="flex items-center gap-2 mb-2">
                         <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
                         <p className="font-semibold text-red-700">
-                          {t.input.recording} ({getLanguageName(selectedLanguage)})
+                          {t.input.recording} ({getLanguageName(currentSpeechLanguage || selectedLanguage)})
                         </p>
+                        {languageSwitchNotification && (
+                          <span className="ml-2 px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full animate-pulse" title={`${t.input.languageSwitched} ${getLanguageName(languageSwitchNotification.to)}`}>
+                            🔄 {getLanguageName(languageSwitchNotification.to)}
+                          </span>
+                        )}
                       </div>
-                      {transcript ? (
-                        <div className="mt-2 p-2 bg-white/80 rounded border border-red-200/50">
-                          <p className="text-gray-800 font-medium mb-1">{t.input.transcript}</p>
-                          <p className="text-gray-700">{transcript}</p>
+                      {(finalTranscript || interimTranscript) ? (
+                        <div className="mt-2 space-y-2">
+                          {finalTranscript && (
+                            <div className="p-2 bg-green-50/80 rounded border border-green-200/50">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="text-xs font-semibold text-green-700">{t.input.finalText}</span>
+                                <span className="text-xs text-green-600">✓</span>
+                              </div>
+                              <p className="text-gray-800">{finalTranscript}</p>
+                            </div>
+                          )}
+                          {interimTranscript && (
+                            <div className="p-2 bg-yellow-50/80 rounded border border-yellow-200/50">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="text-xs font-semibold text-yellow-700">{t.input.interimText}</span>
+                                <span className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></span>
+                              </div>
+                              <p className="text-gray-700 italic">{interimTranscript}</p>
+                            </div>
+                          )}
+                          <p className="text-xs text-gray-600 italic mt-1">{t.input.editHint}</p>
                         </div>
                       ) : (
                         <p className="text-red-600 text-xs italic">{t.input.listening}</p>
@@ -1071,6 +2065,28 @@ export default function AiInterviewModal({
 
         </div>
       </div>
+
+      {/* Summary Popup */}
+      {showSummaryPopup && sessionSummary && (
+        <InterviewSummaryPopup
+          isOpen={showSummaryPopup}
+          onClose={handleCloseSummary}
+          onShowFeedback={() => {
+            setShowSummaryPopup(false);
+            setShowFeedbackForm(true);
+          }}
+          data={sessionSummary}
+        />
+      )}
+
+      {/* Feedback Form */}
+      {showFeedbackForm && (
+        <FeedbackPopup
+          feature="interview"
+          onClose={handleCloseFeedback}
+          onFeedbackSent={handleCloseFeedback}
+        />
+      )}
     </div>
   );
 }
