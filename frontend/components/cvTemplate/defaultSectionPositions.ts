@@ -6,9 +6,9 @@ const fallbackSectionPositionsMap: Record<string, SectionPositions> = {
   "The Signature": {
     avatar: { place: 1, order: 0 },
     info: { place: 2, order: 0 },
-    summary: { place: 1, order: 2 },
-    experience: { place: 2, order: 1 },
-    education: { place: 2, order: 2 },
+    summary: { place: 2, order: 1 },      // Career objective moves to main content
+    experience: { place: 2, order: 2 },
+    education: { place: 1, order: 2 },     // Education moves to sidebar
     skills: { place: 1, order: 3 },
     contact: { place: 1, order: 1 },
     certification: { place: 0, order: 0 },
@@ -18,9 +18,9 @@ const fallbackSectionPositionsMap: Record<string, SectionPositions> = {
   "The Vanguard": {
     avatar: { place: 1, order: 0 },
     info: { place: 1, order: 1 },
-    summary: { place: 2, order: 1 },
-    experience: { place: 3, order: 0 },
-    education: { place: 3, order: 1 },
+    summary: { place: 3, order: 0 },      // Career objective moves to main content
+    experience: { place: 3, order: 1 },
+    education: { place: 2, order: 1 },     // Education moves to sidebar
     skills: { place: 2, order: 2 },
     contact: { place: 2, order: 0 },
     certification: { place: 0, order: 0 },
@@ -42,9 +42,9 @@ const fallbackSectionPositionsMap: Record<string, SectionPositions> = {
   "The Minimalist": {
     avatar: { place: 1, order: 0 },
     info: { place: 2, order: 0 },
-    summary: { place: 1, order: 2 },
-    experience: { place: 2, order: 1 },
-    education: { place: 2, order: 2 },
+    summary: { place: 2, order: 1 },      // Career objective moves to main content
+    experience: { place: 2, order: 2 },
+    education: { place: 1, order: 2 },     // Education moves to sidebar
     skills: { place: 1, order: 3 },
     contact: { place: 1, order: 1 },
     certification: { place: 0, order: 0 },

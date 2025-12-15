@@ -51,6 +51,7 @@ const translations = {
     networkError: "Network error. Please check your connection.",
     or: "OR LOGIN WITH",
     unauthorizedRole: "Your account is not authorized to access this page.",
+    employerLink: "Employer",
   },
   vi: {
     title: "Đăng nhập",
@@ -79,6 +80,7 @@ const translations = {
     networkError: "Lỗi kết nối. Vui lòng kiểm tra kết nối của bạn.",
     or: "HOẶC ĐĂNG NHẬP BẰNG",
     unauthorizedRole: "Tài khoản của bạn không có quyền truy cập trang này.",
+    employerLink: "Nhà tuyển dụng",
   },
 };
 

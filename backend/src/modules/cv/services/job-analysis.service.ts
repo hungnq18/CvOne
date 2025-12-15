@@ -8,15 +8,15 @@ export class JobAnalysisService {
 
   constructor(
     private openaiApiService: OpenaiApiService,
-    private readonly logService: AiUsageLogService
-  ) {}
+    private readonly logService: AiUsageLogService,
+  ) { }
 
   /**
    * Analyze job description using OpenAI
    */
   async analyzeJobDescription(
     jobDescription: string,
-    userId?: string
+    userId?: string,
   ): Promise<{
     requiredSkills: string[];
     experienceLevel: string;
@@ -29,34 +29,36 @@ export class JobAnalysisService {
   }> {
     try {
       const prompt = `
-Analyze the following job description and extract key information in JSON format:
-
-Job Description:
-${jobDescription}
-
-Please provide a detailed analysis in the following JSON structure:
-{
-  "requiredSkills": ["skill1", "skill2", "skill3"],
-  "experienceLevel": "junior|mid-level|senior",
-  "keyResponsibilities": ["responsibility1", "responsibility2"],
-  "industry": "technology|finance|healthcare|etc",
-  "technologies": ["tech1", "tech2", "tech3"],
-  "softSkills": ["communication", "leadership", "teamwork"],
-  "education": "Bachelor's|Master's|PhD|etc",
-  "certifications": ["cert1", "cert2"]
-}
-
-Focus on:
-- Technical skills and programming languages
-- Frameworks and tools mentioned
-- Experience level indicators (junior, senior, lead, etc.)
-- Industry context
-- Required soft skills
-- Educational requirements
-- Any certifications mentioned
-
-Return only valid JSON without any additional text.
-`;
+      Extract key information from this job description and return ONLY a valid JSON object.
+      
+      Job Description:
+      ${jobDescription}
+      
+      Required JSON structure:
+      {
+        "requiredSkills": ["skill1", "skill2"],
+        "experienceLevel": "junior|mid-level|senior",
+        "keyResponsibilities": ["responsibility1", "responsibility2"],
+        "industry": "technology|finance|healthcare|etc",
+        "technologies": ["tech1", "tech2"],
+        "softSkills": ["skill1", "skill2"],
+        "education": "Bachelor's|Master's|PhD|etc",
+        "certifications": ["cert1", "cert2"]
+      }
+      
+      EXTRACTION RULES - Be thorough:
+      
+      - requiredSkills: ALL technical skills from required AND preferred sections (include OOP, SOLID, design patterns, debugging, optimization, etc.)
+      - experienceLevel: Based on years (1-2=junior, 3-5=mid-level, 6+=senior)
+      - keyResponsibilities: Copy FULL original sentences, do not summarize
+      - industry: Infer from job context
+      - technologies: ALL tools/frameworks/platforms mentioned - languages, ORMs, cloud services, containers, CI/CD
+      - softSkills: Extract explicit mentions AND infer from duties (e.g., "work closely"=collaboration, "team"=teamwork)
+      - education: Extract if stated, default "Bachelor's" for tech roles
+      - certifications: Check entire description INCLUDING benefits section, use [] if none
+      
+      Return only the JSON object.
+      `;
 
       const openai = this.openaiApiService.getOpenAI();
       const completion = await openai.chat.completions.create({
@@ -113,7 +115,7 @@ Return only valid JSON without any additional text.
     } catch (error) {
       this.logger.error(
         `Error analyzing job description: ${error.message}`,
-        error.stack
+        error.stack,
       );
 
       // Check if it's a quota exceeded error

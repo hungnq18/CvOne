@@ -115,9 +115,11 @@ const HoverableWrapper: React.FC<HoverableWrapperProps> = ({
   const hoverEffectMap: { [key: string]: string } = {
     info: "hover:scale-105 hover:bg-white hover:shadow-lg",
     experience: "hover:scale-105 hover:bg-white hover:shadow-lg",
-    education: "hover:scale-105 hover:bg-white hover:shadow-lg",
+    // Giữ nền sáng để không làm tối chữ khi hover phần Học vấn ở sidebar
+    education: "hover:scale-105 hover:bg-[#004d40] hover:shadow-lg",
     contact: "hover:scale-105 hover:bg-[#004d40] hover:shadow-lg",
-    summary: "hover:scale-105 hover:bg-[#004d40] hover:shadow-lg",
+    // Mục tiêu sự nghiệp nằm cột nội dung (nền sáng) nên hover cũng giữ nền sáng
+    summary: "hover:scale-105 hover:bg-white hover:shadow-lg",
     skills: "hover:scale-105 hover:bg-[#004d40] hover:shadow-lg",
     hobby: "hover:scale-105 hover:bg-[#004d40] hover:shadow-lg", // Thêm hiệu ứng cho hobby
     avatar: "hover:scale-105 hover:bg-[#004D3F] hover:shadow-lg ",
@@ -417,9 +419,10 @@ const ModernCV1: React.FC<ModernCV1Props> = ({
             isDragging={isDragging}
           >
             <div className="px-8 lg:px-12">
-              <h2 className="text-xl lg:text-2xl font-bold mb-6 pb-3 border-b border-white/50 pt-3">
+              <h2 className="text-xl lg:text-2xl font-bold pb-3 border-b border-white/50 pt-3">
                 {t.careerObjectiveLabel}
               </h2>
+              <div className="border-t-2 border-[#004d40] mb-6" />
               <p className="text-lg lg:text-xl leading-loose">{userData.summary}</p>
             </div>
           </HoverableWrapper>
@@ -546,11 +549,11 @@ const ModernCV1: React.FC<ModernCV1Props> = ({
               <div key={i} className="mb-8 last:mb-0">
                 <div className="flex justify-between items-baseline mb-2">
                   <h3 className="font-bold text-xl">{edu.institution}</h3>
-                  <span className="text-base italic text-gray-600 shrink-0 ml-4">
+                </div>
+                <span className="text-base italic text-gray-300 shrink-0">
                     {edu.startDate?.slice(0, 4)} - {edu.endDate?.slice(0, 4)}
                   </span>
-                </div>
-                <h4 className="font-bold text-lg text-gray-700">{t.major} {edu.major}</h4>
+                <h4 className="font-bold text-lg text-gray-200">{t.major} {edu.major}</h4>
                 <p className="text-lg">{t.degree} {edu.degree}</p>
               </div>
             ))}
@@ -708,13 +711,16 @@ const ModernCV1: React.FC<ModernCV1Props> = ({
 
   if (isPdfMode) {
     return (
-      <div className="bg-white font-sans text-gray-800 flex flex-col lg:flex-row min-h-screen">
-        <div className="w-full lg:w-[38%] bg-[#004d40] text-white flex flex-col gap-8 py-8 lg:py-12">
+      <div
+        className="bg-white font-sans text-gray-800 flex flex-row min-h-screen"
+        style={{ width: "794px", minHeight: "1123px" }}
+      >
+        <div className="basis-[38%] min-w-[38%] max-w-[38%] bg-[#004d40] text-white flex flex-col gap-8 py-10 px-8">
           {leftSections.map((id) => (
             <div key={id}>{renderSectionContent(id)}</div>
           ))}
         </div>
-        <div className="w-full lg:w-[62%]">
+        <div className="basis-[62%] min-w-[62%] max-w-[62%] py-10 px-8">
           {rightSections.map((id) => (
             <div key={id}>{renderSectionContent(id)}</div>
           ))}

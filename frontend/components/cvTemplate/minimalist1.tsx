@@ -478,30 +478,36 @@ const CVTemplateInspired: React.FC<CVTemplateProps> = ({
 
       case "education":
         return (
-          <SectionWrapper
-            key="education"
-            title={t.education}
-            sectionId={sectionMap.education}
-            onSectionClick={onSectionClick}
-            isPdfMode={isPdfMode}
-            dragHandleProps={dragHandleProps}
-            isDragging={isDragging}
-            place={place}
-          >
-            {(userData.education || []).map((edu: any, i: number) => (
-              <div key={edu.id || i} className="break-words w-full">
-                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-baseline">
-                  <h3 className="font-bold text-lg break-words">{edu.institution}</h3>
-                  <span className="text-sm font-medium text-gray-600 shrink-0 sm:ml-4 mt-1 sm:mt-0">
-                    {edu.startDate?.slice(0, 4)} - {edu.endDate?.slice(0, 4)}
-                  </span>
-                </div>
-                <h4 className="font-semibold text-md text-gray-700 break-words">
-                  {edu.degree} - {edu.major}
-                </h4>
+          <div key="education" className={containerClass}>
+            <HoverableWrapper
+              label={t.education}
+              sectionId={sectionMap.education}
+              onClick={onSectionClick}
+              className={`${innerPadding} relative w-full`}
+              isPdfMode={isPdfMode}
+              dragHandleProps={dragHandleProps}
+              isDragging={isDragging}
+            >
+              <h2 className="text-xl font-bold text-gray-800 uppercase tracking-wider mb-4 pb-2 border-b-2 border-gray-300 break-words">
+                {t.education}
+              </h2>
+              <div className="space-y-6 w-full">
+                {(userData.education || []).map((edu: any, i: number) => (
+                  <div key={edu.id || i} className="break-words w-full">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-baseline">
+                      <h3 className="font-bold text-lg break-words">{edu.institution}</h3>
+                      <span className="text-sm font-medium text-gray-600 shrink-0 sm:ml-4 mt-1 sm:mt-0">
+                        {edu.startDate?.slice(0, 4)} - {edu.endDate?.slice(0, 4)}
+                      </span>
+                    </div>
+                    <h4 className="font-semibold text-md text-gray-700 break-words">
+                      {edu.degree} - {edu.major}
+                    </h4>
+                  </div>
+                ))}
               </div>
-            ))}
-          </SectionWrapper>
+            </HoverableWrapper>
+          </div>
         );
 
       case "contact":
@@ -541,24 +547,20 @@ const CVTemplateInspired: React.FC<CVTemplateProps> = ({
 
       case "summary":
         return (
-          <div key="summary" className={containerClass}>
-            <HoverableWrapper
-              label={t.careerObjective}
-              sectionId={sectionMap.summary}
-              onClick={onSectionClick}
-              className={`${innerPadding} relative w-full`}
-              isPdfMode={isPdfMode}
-              dragHandleProps={dragHandleProps}
-              isDragging={isDragging}
-            >
-              <h2 className="text-xl font-bold text-gray-800 uppercase tracking-wider mb-3 pb-2 border-b-2 border-gray-300 break-words">
-                {t.careerObjectiveLower}
-              </h2>
-              <p className="text-gray-700 leading-relaxed break-words w-full">
-                {userData.summary}
-              </p>
-            </HoverableWrapper>
-          </div>
+          <SectionWrapper
+            key="summary"
+            title={t.careerObjective}
+            sectionId={sectionMap.summary}
+            onSectionClick={onSectionClick}
+            isPdfMode={isPdfMode}
+            dragHandleProps={dragHandleProps}
+            isDragging={isDragging}
+            place={place}
+          >
+            <p className="text-gray-700 leading-relaxed break-words w-full">
+              {userData.summary}
+            </p>
+          </SectionWrapper>
         );
 
       case "skills":
