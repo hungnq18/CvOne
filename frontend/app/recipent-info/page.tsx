@@ -1,7 +1,9 @@
 "use client";
 
 import {
+  Country,
   District,
+  getCountries,
   getDistrictsByProvinceCode,
   getProvinces,
   Province,
@@ -40,7 +42,7 @@ const recipientInfoTranslations = {
       companyName: "Company name is required",
       emailRequired: "Email address is required",
       emailInvalid: "Please enter a valid email address",
-      phoneInvalid: "Phone number must be 10 digits",
+      phoneInvalid: "Phone number must be between 7 and 15 digits",
     },
   },
   vi: {
@@ -71,7 +73,7 @@ const recipientInfoTranslations = {
       companyName: "Vui lòng nhập tên công ty",
       emailRequired: "Vui lòng nhập email",
       emailInvalid: "Email không hợp lệ",
-      phoneInvalid: "Số điện thoại phải có 10 chữ số",
+      phoneInvalid: "Số điện thoại phải có từ 7 đến 15 chữ số",
     },
   },
 };
@@ -165,6 +167,7 @@ function RecipentInfoContent() {
     companyName: "",
     recipientCity: "",
     recipientState: "",
+    recipientCountryCode: "+84",
     recipientPhone: "",
     recipientEmail: "",
   });
@@ -172,6 +175,7 @@ function RecipentInfoContent() {
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [provinces, setProvinces] = useState<Province[]>([]);
   const [districts, setDistricts] = useState<District[]>([]);
+  const [countries, setCountries] = useState<Country[]>([]);
   const [selectedProvinceCode, setSelectedProvinceCode] = useState<
     number | null
   >(null);
@@ -180,21 +184,25 @@ function RecipentInfoContent() {
   const t = recipientInfoTranslations[language];
   const [loading, setLoading] = useState(false);
 
-  // Load provinces on component mount
+  // Load provinces and countries on component mount
   useEffect(() => {
-    const loadProvinces = async () => {
+    const loadData = async () => {
       setLoading(true);
       try {
-        const provincesData = await getProvinces();
+        const [provincesData, countriesData] = await Promise.all([
+          getProvinces(),
+          getCountries(),
+        ]);
         setProvinces(provincesData);
+        setCountries(countriesData);
       } catch (error) {
-        console.error("Error loading provinces:", error);
+        console.error("Error loading data:", error);
       } finally {
         setLoading(false);
       }
     };
 
-    loadProvinces();
+    loadData();
   }, []);
 
   // Load data from localStorage and initialize the form
@@ -209,6 +217,7 @@ function RecipentInfoContent() {
           companyName: coverLetterData.companyName || "",
           recipientCity: coverLetterData.recipientCity || "",
           recipientState: coverLetterData.recipientState || "",
+          recipientCountryCode: coverLetterData.recipientCountryCode || "+84",
           recipientPhone: coverLetterData.recipientPhone || "",
           recipientEmail: coverLetterData.recipientEmail || "",
         });
@@ -248,7 +257,7 @@ function RecipentInfoContent() {
   const handleInputChange = (field: string, value: string) => {
     if (field === "recipientPhone") {
       const numericValue = value.replace(/[^0-9]/g, "");
-      if (numericValue.length <= 10) {
+      if (numericValue.length <= 15) {
         setFormData((prev) => ({
           ...prev,
           [field]: numericValue,
@@ -283,20 +292,20 @@ function RecipentInfoContent() {
     const newErrors: { [key: string]: string } = {};
 
     if (!formData.recipientFirstName.trim())
-      newErrors.recipientFirstName = "First name is required";
+      newErrors.recipientFirstName = t.errors.firstName;
     if (!formData.recipientLastName.trim())
-      newErrors.recipientLastName = "Last name is required";
+      newErrors.recipientLastName = t.errors.lastName;
     if (!formData.companyName.trim())
-      newErrors.companyName = "Company name is required";
+      newErrors.companyName = t.errors.companyName;
     if (!formData.recipientEmail.trim())
-      newErrors.recipientEmail = "Email address is required";
+      newErrors.recipientEmail = t.errors.emailRequired;
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.recipientEmail)) {
-      newErrors.recipientEmail = "Please enter a valid email address";
+      newErrors.recipientEmail = t.errors.emailInvalid;
     }
 
     if (
       formData.recipientPhone.trim() &&
-      !/^\d{10}$/.test(formData.recipientPhone)
+      !/^\d{7,15}$/.test(formData.recipientPhone)
     ) {
       newErrors.recipientPhone = t.errors.phoneInvalid;
     }
@@ -415,18 +424,45 @@ function RecipentInfoContent() {
 
           {/* Contact Row */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <InputField
-              label={t.phone}
-              field="recipientPhone"
-              placeholder={t.placeholder.phone}
-              type="tel"
-              formData={formData}
-              handleInputChange={handleInputChange}
-              handleProvinceChange={handleProvinceChange}
-              errors={errors}
-              loading={loading}
-              selectedProvinceCode={selectedProvinceCode}
-            />
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700 uppercase tracking-wide">
+                {t.phone}
+              </label>
+              <div className="flex gap-2">
+                <div className="relative w-32">
+                  <select
+                    value={formData.recipientCountryCode}
+                    onChange={(e) => handleInputChange("recipientCountryCode", e.target.value)}
+                    className={`w-full px-3 py-3 border rounded-lg bg-white appearance-none pr-8 focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                      errors.recipientCountryCode ? "border-red-500" : "border-gray-300"
+                    }`}
+                    disabled={loading}
+                  >
+                    {countries.map((country) => (
+                      <option key={country.code} value={country.phoneCode}>
+                        {country.flag} {country.phoneCode}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown
+                    className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"
+                    size={20}
+                  />
+                </div>
+                <div className="flex-1">
+                  <input
+                    type="tel"
+                    value={formData.recipientPhone}
+                    onChange={(e) => handleInputChange("recipientPhone", e.target.value)}
+                    placeholder={t.placeholder.phone}
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                      errors.recipientPhone ? "border-red-500" : "border-gray-300"
+                    }`}
+                  />
+                </div>
+              </div>
+              {errors.recipientPhone && <p className="text-red-500 text-sm">{errors.recipientPhone}</p>}
+            </div>
             <InputField
               label={t.email}
               field="recipientEmail"

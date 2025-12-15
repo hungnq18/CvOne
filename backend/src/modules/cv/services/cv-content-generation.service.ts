@@ -8,8 +8,8 @@ export class CvContentGenerationService {
 
   constructor(
     private openaiApiService: OpenaiApiService,
-    private readonly logService: AiUsageLogService
-  ) {}
+    private readonly logService: AiUsageLogService,
+  ) { }
 
   /**
    * Generate multiple professional summaries using OpenAI
@@ -18,7 +18,7 @@ export class CvContentGenerationService {
     userProfile: any,
     jobAnalysis: any,
     additionalRequirements?: string,
-    userId?: string
+    userId?: string,
   ): Promise<string[]> {
     try {
       const prompt = `
@@ -110,12 +110,12 @@ Do not include any explanation or markdown, only valid JSON.
     } catch (error) {
       this.logger.error(
         `Error generating professional summary: ${error.message}`,
-        error.stack
+        error.stack,
       );
       // fallback: return 3 copies of fallback summary
       const fallback = this.generateFallbackSummary(
         userProfile,
-        jobAnalysis || {}
+        jobAnalysis || {},
       );
       return [fallback, fallback, fallback];
     }
@@ -127,7 +127,7 @@ Do not include any explanation or markdown, only valid JSON.
   async generateWorkExperience(
     jobAnalysis: any,
     experienceLevel: string,
-    userId?: string
+    userId?: string,
   ): Promise<
     Array<{
       title: string;
@@ -145,12 +145,12 @@ Do not include any explanation or markdown, only valid JSON.
             ? 3
             : 1;
       const startDate = new Date(
-        Date.now() - years * 365 * 24 * 60 * 60 * 1000
+        Date.now() - years * 365 * 24 * 60 * 60 * 1000,
       );
       const endDate = new Date();
 
       const prompt = `
-Generate a realistic work experience entry for a CV based on the following job analysis:
+Generate a realistic and accurate work experience entry in JSON format based strictly on the provided job analysis.
 
 Job Analysis:
 - Required Skills: ${jobAnalysis.requiredSkills?.join(", ") || "Not specified"}
@@ -160,24 +160,23 @@ Job Analysis:
 
 Experience Duration: ${years} year(s)
 
-Create a work experience entry in JSON format:
+Output JSON structure:
 {
   "title": "Job Title",
   "company": "Company Name",
   "startDate": "YYYY-MM-DD",
   "endDate": "YYYY-MM-DD",
-  "description": "Detailed description of responsibilities and achievements"
+  "description": "2–3 sentences describing responsibilities, applied technologies, and measurable achievements"
 }
 
 Requirements:
-- Job title should match the experience level
-- Company name should be realistic
-- Description should highlight relevant skills and technologies
-- Include specific achievements and responsibilities
-- Use action verbs and quantifiable results when possible
-- Keep description to 2-3 sentences
+- Job title must reflect the experience level and focus.
+- Company name must be realistic and not generic placeholders.
+- Description must incorporate required skills, technologies, and responsibilities from the job analysis without adding unrelated information.
+- Include at least one measurable achievement.
+- Use clear business-professional language and action verbs.
+- Return only valid JSON with no additional text.
 
-Return only valid JSON.
 `;
 
       const openai = this.openaiApiService.getOpenAI();
@@ -224,19 +223,19 @@ Return only valid JSON.
     } catch (error) {
       this.logger.error(
         `Error generating work experience: ${error.message}`,
-        error.stack
+        error.stack,
       );
 
       // Check if it's a quota exceeded error
       if (error.message.includes("429") || error.message.includes("quota")) {
         this.logger.warn(
-          "OpenAI quota exceeded, using fallback work experience"
+          "OpenAI quota exceeded, using fallback work experience",
         );
       }
 
       return this.generateFallbackWorkExperience(
         jobAnalysis || {},
-        experienceLevel
+        experienceLevel,
       );
     }
   }
@@ -247,7 +246,7 @@ Return only valid JSON.
   async generateSkillsSection(
     jobAnalysis: any,
     userSkills?: Array<{ name: string; rating: number }>,
-    userId?: string
+    userId?: string,
   ): Promise<Array<Array<{ name: string; rating: number }>>> {
     try {
       const existingSkills =
@@ -345,12 +344,12 @@ Do not include any explanation or markdown, only valid JSON.
         // Filter and reassign rating if found in userSkills
         return list
           .filter((skillObj) =>
-            validSkills.includes(skillObj.name.toLowerCase())
+            validSkills.includes(skillObj.name.toLowerCase()),
           )
           .map((skillObj) => {
             if (userSkills) {
               const found = userSkills.find(
-                (s) => s.name.toLowerCase() === skillObj.name.toLowerCase()
+                (s) => s.name.toLowerCase() === skillObj.name.toLowerCase(),
               );
               if (found) {
                 return { ...skillObj, rating: found.rating };
@@ -368,7 +367,7 @@ Do not include any explanation or markdown, only valid JSON.
     } catch (error) {
       this.logger.error(
         `Error generating skills section: ${error.message}`,
-        error.stack
+        error.stack,
       );
       // fallback: return 3 copies of fallback skills
       const fallback = this.generateFallbackSkills(jobAnalysis || {});
@@ -390,7 +389,7 @@ Do not include any explanation or markdown, only valid JSON.
 
   private generateFallbackWorkExperience(
     jobAnalysis: any,
-    experienceLevel: string
+    experienceLevel: string,
   ): Array<any> {
     const years =
       experienceLevel === "senior"
@@ -414,7 +413,7 @@ Do not include any explanation or markdown, only valid JSON.
   }
 
   private generateFallbackSkills(
-    jobAnalysis: any
+    jobAnalysis: any,
   ): Array<{ name: string; rating: number }> {
     const allSkills = [
       ...(jobAnalysis?.requiredSkills || []),
@@ -434,13 +433,13 @@ Do not include any explanation or markdown, only valid JSON.
   async generateCvContent(
     user: any,
     jobAnalysis: any,
-    additionalRequirements?: string
+    additionalRequirements?: string,
   ): Promise<any> {
     // Generate professional summary using OpenAI
     const summary = await this.generateProfessionalSummary(
       user,
       jobAnalysis,
-      additionalRequirements
+      additionalRequirements,
     );
 
     // Generate skills section using OpenAI
@@ -449,7 +448,7 @@ Do not include any explanation or markdown, only valid JSON.
     // Generate work experience using OpenAI
     const workHistory = await this.generateWorkExperience(
       jobAnalysis,
-      jobAnalysis.experienceLevel
+      jobAnalysis.experienceLevel,
     );
 
     // Generate education
@@ -509,7 +508,7 @@ Do not include any explanation or markdown, only valid JSON.
     content: any,
     uiTexts: any,
     targetLanguage: string,
-    userId?: string
+    userId?: string,
   ): Promise<any> {
     try {
       const languageNote = targetLanguage
@@ -635,12 +634,12 @@ Clear, natural phrasing - no awkward machine translations
           translatedUiTexts = parsed;
         } else {
           this.logger.warn(
-            "UI Texts translation is not object, fallback to empty object"
+            "UI Texts translation is not object, fallback to empty object",
           );
         }
       } catch {
         this.logger.warn(
-          "Invalid JSON returned for uiTexts, fallback to empty object"
+          "Invalid JSON returned for uiTexts, fallback to empty object",
         );
       }
 
@@ -654,7 +653,7 @@ Clear, natural phrasing - no awkward machine translations
     } catch (error) {
       this.logger.error(
         `Error translating CV content: ${error.message}`,
-        error.stack
+        error.stack,
       );
       throw new Error(`Translate failed: ${error.message}`);
     }

@@ -8,6 +8,7 @@ import {
   getCVTemplateById,
   getCVTemplates,
   updateCV,
+  translateCV,
 } from "@/api/cvapi";
 import { templateComponentMap } from "@/components/cvTemplate/index";
 import { CVEditorPopupsManager } from "@/components/forms/CVEditorPopups";
@@ -23,6 +24,7 @@ import {
   Printer,
   Minus,
   Plus,
+  Languages,
 } from "lucide-react";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -32,6 +34,7 @@ import { useLanguage } from "@/providers/global_provider";
 import CVTemplateLayoutPopup from "@/components/forms/CVTemplateLayoutPopup";
 import { getDefaultSectionPositions } from "../cvTemplate/defaultSectionPositions";
 import { notify } from "@/lib/notify";
+import TranslateCVModal from "@/components/modals/TranslateCVModal";
 
 // --- BƯỚC 2: TẠO ĐỐI TƯỢNG TRANSLATIONS ---
 const translations = {
@@ -75,6 +78,9 @@ const translations = {
     saveError: "An error occurred while saving your CV.",
     pdfCreateEnvError: "Cannot create environment to export PDF.",
     pdfCreateError: "An error occurred while exporting the PDF file.",
+    translate: "Translate CV",
+    translateSuccess: "CV translated successfully!",
+    translateError: "An error occurred while translating your CV.",
 
     // Dynamic titles
     loadingTemplateForNew: "Loading template to create new...",
@@ -121,6 +127,9 @@ const translations = {
     saveError: "Có lỗi xảy ra khi lưu CV của bạn.",
     pdfCreateEnvError: "Không thể tạo môi trường để xuất PDF.",
     pdfCreateError: "Đã có lỗi xảy ra khi xuất file PDF.",
+    translate: "Dịch CV",
+    translateSuccess: "Dịch CV thành công!",
+    translateError: "Có lỗi xảy ra khi dịch CV của bạn.",
 
     // Dynamic titles
     loadingTemplateForNew: "Đang tải template để tạo mới...",
@@ -180,6 +189,9 @@ const PageCreateCVContent = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [cvTitle, setCvTitle] = useState<string>("");
   const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [showTranslateModal, setShowTranslateModal] = useState(false);
+  const [isTranslating, setIsTranslating] = useState(false);
+  const [cvUiTexts, setCvUiTexts] = useState<any>(null);
 
   const templateDropdownRef = useRef(null);
   const previewRef = useRef<HTMLDivElement>(null);
@@ -495,9 +507,14 @@ const PageCreateCVContent = () => {
       };
 
       // Ensure content ONLY contains userData, nothing else
-      const contentData = {
+      const contentData: any = {
         userData: completeUserData,
       };
+
+      // Nếu có cvUiTexts, thêm vào (không nằm trong userData)
+      if (cvUiTexts) {
+        contentData.uiTexts = cvUiTexts;
+      }
 
       if (cvId) {
         const dataToUpdate: Partial<CV> = {
@@ -547,6 +564,95 @@ const PageCreateCVContent = () => {
     }
   };
 
+  const handleTranslateCV = async (targetLanguage: string) => {
+    if (!userData || !currentTemplate) {
+      notify.error(t.noDataToSave);
+      return;
+    }
+    setIsTranslating(true);
+    try {
+      const defaultLabels =
+        language === "vi"
+          ? {
+              personalInformation: "Thông tin cá nhân",
+              contact: "Liên hệ",
+              careerObjective: "Mục tiêu sự nghiệp",
+              workExperience: "Kinh nghiệm làm việc",
+              education: "Học vấn",
+              skills: "Kỹ năng",
+              certification: "Chứng chỉ",
+              achievement: "Thành tựu",
+              hobby: "Sở thích",
+              project: "Dự án",
+              phone: "Điện thoại:",
+              email: "Email:",
+              address: "Địa chỉ:",
+              dateOfBirth: "Ngày sinh:",
+              gender: "Giới tính:",
+              avatar: "Ảnh đại diện",
+              fullNameAndTitle: "Họ tên & Chức danh",
+            }
+          : {
+              personalInformation: "Personal Information",
+              contact: "Contact",
+              careerObjective: "Career Objective",
+              workExperience: "Work Experience",
+              education: "Education",
+              skills: "Skills",
+              certification: "Certification",
+              achievement: "Achievement",
+              hobby: "Hobby",
+              project: "Project",
+              phone: "Phone:",
+              email: "Email:",
+              address: "Address:",
+              dateOfBirth: "Date of Birth:",
+              gender: "Gender:",
+              avatar: "Avatar",
+              fullNameAndTitle: "Full Name & Title",
+            };
+
+      const currentUiTexts = cvUiTexts || defaultLabels;
+
+      const translatedData = await translateCV(
+        userData,
+        targetLanguage,
+        currentUiTexts
+      );
+
+      const nextUserData =
+        translatedData?.data?.data?.content?.userData ??
+        translatedData?.data?.content?.userData;
+      const nextUiTexts =
+        translatedData?.data?.data?.uiTexts ??
+        translatedData?.data?.uiTexts;
+
+      if (nextUserData) {
+        updateUserData(nextUserData);
+        setIsDirty(true);
+
+        if (nextUiTexts) {
+          const mergedUiTexts = {
+            ...(currentUiTexts || {}),
+            ...nextUiTexts,
+          };
+          setCvUiTexts(mergedUiTexts);
+        } else if (currentUiTexts) {
+          setCvUiTexts(currentUiTexts);
+        }
+
+        setShowTranslateModal(false);
+        notify.success(t.translateSuccess);
+      } else {
+        notify.error(t.translateError);
+      }
+    } catch (error) {
+      notify.error(t.translateError);
+    } finally {
+      setIsTranslating(false);
+    }
+  };
+
   const renderCVForPDF = () => {
     if (!currentTemplate || !userData) return null;
     const TemplateComponent = templateComponentMap?.[currentTemplate.title];
@@ -584,6 +690,7 @@ const PageCreateCVContent = () => {
             data={componentData}
             isPdfMode={true}
             language={language}
+            cvUiTexts={cvUiTexts}
           />
         </div>
       </div>
@@ -698,7 +805,8 @@ const PageCreateCVContent = () => {
             onSectionClick={handleSectionClick}
             onLayoutChange={handleLayoutChange}
             language={language}
-            scale={scaleFactor} // <--- THÊM DÒNG NÀY
+            scale={scaleFactor}
+            cvUiTexts={cvUiTexts}
           />
         </div>
       </div>
@@ -928,8 +1036,14 @@ const PageCreateCVContent = () => {
             >
               <FileDown size={20} /> {t.download}
             </button>
-            <button className="w-full flex items-center gap-3 p-3 rounded-md text-slate-700 hover:bg-slate-100 font-medium">
+            {/* <button className="w-full flex items-center gap-3 p-3 rounded-md text-slate-700 hover:bg-slate-100 font-medium">
               <Printer size={20} /> {t.print}
+            </button> */}
+            <button
+              className="w-full flex items-center gap-3 p-3 rounded-md text-slate-700 hover:bg-slate-100 font-medium"
+              onClick={() => setShowTranslateModal(true)}
+            >
+              <Languages size={20} /> {t.translate}
             </button>
             {/* <button className="w-full flex items-center gap-3 p-3 rounded-md text-slate-700 hover:bg-slate-100 font-medium">
               <Mail size={20} /> {t.email}
@@ -937,6 +1051,13 @@ const PageCreateCVContent = () => {
           </div>
         </aside>
       </main>
+
+      <TranslateCVModal
+        isOpen={showTranslateModal}
+        onClose={() => setShowTranslateModal(false)}
+        onTranslate={handleTranslateCV}
+        isTranslating={isTranslating}
+      />
 
       <CVEditorPopupsManager
         activePopup={activePopup}

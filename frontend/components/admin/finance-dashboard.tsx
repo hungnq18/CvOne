@@ -17,6 +17,8 @@ import { ArrowUpRight, ArrowDownRight, CreditCard, Wallet, TrendingUp, Receipt }
 import { ProfitChart } from "@/components/admin/profit-chart"
 import { RevenueChart } from "@/components/hr/revenue-chart"
 import { useLanguage } from "@/providers/global_provider"
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
 
 function formatCurrencyVND(amount: number) {
   return new Intl.NumberFormat("vi-VN", {
@@ -97,7 +99,7 @@ export function AdminFinanceDashboard() {
       completedOrders: completed.length,
       averageOrderValue: avg,
       completionRate: rate,
-      latestOrders: sorted.slice(0, 8),
+      latestOrders: sorted.slice(0, 5), // Only take top 5
     }
   }, [orders])
 
@@ -202,8 +204,13 @@ export function AdminFinanceDashboard() {
 
       {/* Transaction List */}
       <Card className="bg-white">
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>{t.admin.finance.latestTransactions}</CardTitle>
+          <Link href="/admin/orders">
+            <Button variant="outline" size="sm" className="bg-white hover:bg-gray-100 text-gray-900 border-gray-200">
+              {t.common.viewAll}
+            </Button>
+          </Link>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">

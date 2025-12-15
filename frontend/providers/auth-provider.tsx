@@ -16,6 +16,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>
   register: (first_name: string, email: string, password: string, last_name: string) => Promise<void>
   logout: () => void
+  refreshUser: () => Promise<void>
 }
 
 export const AuthContext = createContext<AuthContextType>({
@@ -24,6 +25,7 @@ export const AuthContext = createContext<AuthContextType>({
   login: async () => { },
   register: async () => { },
   logout: () => { },
+  refreshUser: async () => { },
 })
 
 export function useAuth() {

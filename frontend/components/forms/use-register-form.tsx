@@ -6,6 +6,7 @@ import { useAuth } from "@/providers/auth-provider";
 import { useLanguage } from "@/providers/global_provider";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { showErrorToast, showSuccessToast } from "@/utils/popUpUtils";
 
 interface RegisterFormData {
   email: string;
@@ -105,6 +106,9 @@ const translations: {
       registerFailed: "Registration failed",
       checkEmail: "Please check your email for verification",
       agreeToTerms: "You must agree to the terms and conditions.",
+      wordLimitError: "Họ, Tên và Tên công ty chỉ được chứa tối đa 5 từ mỗi trường!",
+      invalidVatNumber: "Mã số thuế phải là số dương tối đa 14 chữ số, không được có số âm!",
+      nameTooLong: "Họ và Tên không được quá 100 ký tự!",
     },
   },
   vi: {
@@ -177,8 +181,26 @@ const translations: {
       registerFailed: "Đăng ký thất bại",
       checkEmail: "Vui lòng kiểm tra email của bạn để xác nhận",
       agreeToTerms: "Bạn phải đồng ý với các điều khoản và điều kiện.",
+      wordLimitError: "Họ, Tên và Tên công ty chỉ được chứa tối đa 5 từ mỗi trường!",
+      invalidVatNumber: "Mã số thuế phải là số dương tối đa 14 chữ số, không được có số âm!",
+      nameTooLong: "Họ và Tên không được quá 100 ký tự!",
     },
   },
+};
+
+type CheckEmailFn = (email: string) => Promise<boolean>;
+
+const checkEmailExists: CheckEmailFn = async (email) => {
+  try {
+    // Ví dụ: gọi API backend kiểm tra email đã tồn tại (replace by real API else always return false)
+    // const res = await fetch(`/api/check-email?email=${encodeURIComponent(email)}`);
+    // const { exists } = await res.json();
+    // return exists;
+    return false; // TODO: replace when ready
+  } catch (err) {
+    // Gặp lỗi thì không chặn đăng ký
+    return false;
+  }
 };
 
 export function useRegisterForm(formType: "user" | "hr" = "user") {
@@ -246,11 +268,45 @@ export function useRegisterForm(formType: "user" | "hr" = "user") {
       terms,
     } = formData;
 
-    // Validate Email Format
-    if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email!)) {
+    // Validate Email Format (Nâng cao)
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
+    const disposableDomains = [
+      // Một số ví dụ, chèn thêm nếu cần
+      '10minutemail.com', 'mailinator.com', 'tempmail.net', 'guerrillamail.com', 'dispostable.com',
+    ];
+
+    if (!emailRegex.test(email!)) {
       setMessage(t.invalidEmail);
       setIsLoading(false);
       return;
+    }
+
+    // Nếu hệ thống chỉ cho phép email nội bộ (domain công ty), tùy chỉnh lại domain này
+    if (formType === 'hr' && email && !email.endsWith('@yourcompany.com')) {
+      setMessage('Chỉ được dùng email công ty: @yourcompany.com');
+      setIsLoading(false);
+      return;
+    }
+
+    // Chặn email tạm/disposable
+    const emailDomain = email.split('@')[1]?.toLowerCase();
+    if (emailDomain && disposableDomains.some((d) => emailDomain.endsWith(d))) {
+      setMessage('Không sử dụng email tạm thời!');
+      setIsLoading(false);
+      return;
+    }
+
+    // Kiểm tra async email đã tồn tại (API đã có/tự viết tuỳ backend).
+    try {
+      // Hàm checkEmailExists nhận email, trả về true nếu tồn tại
+      if (await checkEmailExists(email)) {
+        setMessage('Email này đã được đăng ký!');
+        setIsLoading(false);
+        return;
+      }
+    } catch (err) {
+      // Cho phép tiếp tục khi hệ thống không thể kiểm tra được
+      console.warn('Không thể kiểm tra email tồn tại:', err);
     }
 
     // Validate Password Match
@@ -301,13 +357,36 @@ export function useRegisterForm(formType: "user" | "hr" = "user") {
         !district ||
         !vatRegistrationNumber
       ) {
-        setMessage(t.requiredFields);
+        showErrorToast(t.requiredFields);
+        setIsLoading(false);
+        return;
+      }
+
+      // Validate word count các trường bắt buộc (first_name, last_name, company_name):
+      const wcErrMsg = t.wordLimitError;
+      const validateWordCount = (val: string, max: number = 5, min: number = 1) => {
+        return val.trim().split(/\s+/).length >= min && val.trim().split(/\s+/).length <= max;
+      };
+      if (!validateWordCount(first_name) || !validateWordCount(last_name) || !validateWordCount(company_name)) {
+        showErrorToast(wcErrMsg);
+        setIsLoading(false);
+        return;
+      }
+      // Validate độ dài Họ, Tên <= 100 ký tự
+      if (first_name.trim().length > 100 || last_name.trim().length > 100) {
+        showErrorToast(t.nameTooLong);
+        setIsLoading(false);
+        return;
+      }
+      // Validate mã số thuế (vatRegistrationNumber) phải là số, không âm, tối đa 14 chữ số
+      if (!/^\d{1,14}$/.test(vatRegistrationNumber.trim()) || vatRegistrationNumber.trim().startsWith("-")) {
+        showErrorToast(t.invalidVatNumber);
         setIsLoading(false);
         return;
       }
 
       if (!terms) {
-        setMessage(t.agreeToTerms);
+        showErrorToast(t.agreeToTerms);
         setIsLoading(false);
         return;
       }
@@ -320,7 +399,6 @@ export function useRegisterForm(formType: "user" | "hr" = "user") {
           first_name,
           last_name,
           phone: phone_number,
-          // Thông tin cá nhân có thể mở rộng sau, hiện tại cố định country
           country: "Vietnam",
           city: "",
           company_name,
@@ -330,19 +408,14 @@ export function useRegisterForm(formType: "user" | "hr" = "user") {
           vatRegistrationNumber,
         });
 
-        // Toast + chuyển sang trang đăng nhập
-        toast({
-          title: t.registerSuccess,
-          description: t.checkEmail,
-        });
-
-        setMessage(t.checkEmail);
+        showSuccessToast(t.registerSuccess, t.checkEmail);
+        setMessage(""); // Không cần hiển thị message phía dưới
         setIsSuccess(true);
 
         router.push("/login");
       } catch (error) {
-        console.error("Registration error:", error);
-        setMessage(error instanceof Error ? error.message : t.registerFailed);
+        const msg = error instanceof Error ? error.message : t.registerFailed;
+        showErrorToast(t.registerFailed, msg);
       } finally {
         setIsLoading(false);
       }

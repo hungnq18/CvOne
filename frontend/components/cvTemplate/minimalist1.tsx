@@ -478,30 +478,36 @@ const CVTemplateInspired: React.FC<CVTemplateProps> = ({
 
       case "education":
         return (
-          <SectionWrapper
-            key="education"
-            title={t.education}
-            sectionId={sectionMap.education}
-            onSectionClick={onSectionClick}
-            isPdfMode={isPdfMode}
-            dragHandleProps={dragHandleProps}
-            isDragging={isDragging}
-            place={place}
-          >
-            {(userData.education || []).map((edu: any, i: number) => (
-              <div key={edu.id || i} className="break-words w-full">
-                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-baseline">
-                  <h3 className="font-bold text-lg break-words">{edu.institution}</h3>
-                  <span className="text-sm font-medium text-gray-600 shrink-0 sm:ml-4 mt-1 sm:mt-0">
-                    {edu.startDate?.slice(0, 4)} - {edu.endDate?.slice(0, 4)}
-                  </span>
-                </div>
-                <h4 className="font-semibold text-md text-gray-700 break-words">
-                  {edu.degree} - {edu.major}
-                </h4>
+          <div key="education" className={containerClass}>
+            <HoverableWrapper
+              label={t.education}
+              sectionId={sectionMap.education}
+              onClick={onSectionClick}
+              className={`${innerPadding} relative w-full`}
+              isPdfMode={isPdfMode}
+              dragHandleProps={dragHandleProps}
+              isDragging={isDragging}
+            >
+              <h2 className="text-xl font-bold text-gray-800 uppercase tracking-wider mb-4 pb-2 border-b-2 border-gray-300 break-words">
+                {t.education}
+              </h2>
+              <div className="space-y-6 w-full">
+                {(userData.education || []).map((edu: any, i: number) => (
+                  <div key={edu.id || i} className="break-words w-full">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-baseline">
+                      <h3 className="font-bold text-lg break-words">{edu.institution}</h3>
+                      <span className="text-sm font-medium text-gray-600 shrink-0 sm:ml-4 mt-1 sm:mt-0">
+                        {edu.startDate?.slice(0, 4)} - {edu.endDate?.slice(0, 4)}
+                      </span>
+                    </div>
+                    <h4 className="font-semibold text-md text-gray-700 break-words">
+                      {edu.degree} - {edu.major}
+                    </h4>
+                  </div>
+                ))}
               </div>
-            ))}
-          </SectionWrapper>
+            </HoverableWrapper>
+          </div>
         );
 
       case "contact":
@@ -541,24 +547,20 @@ const CVTemplateInspired: React.FC<CVTemplateProps> = ({
 
       case "summary":
         return (
-          <div key="summary" className={containerClass}>
-            <HoverableWrapper
-              label={t.careerObjective}
-              sectionId={sectionMap.summary}
-              onClick={onSectionClick}
-              className={`${innerPadding} relative w-full`}
-              isPdfMode={isPdfMode}
-              dragHandleProps={dragHandleProps}
-              isDragging={isDragging}
-            >
-              <h2 className="text-xl font-bold text-gray-800 uppercase tracking-wider mb-3 pb-2 border-b-2 border-gray-300 break-words">
-                {t.careerObjectiveLower}
-              </h2>
-              <p className="text-gray-700 leading-relaxed break-words w-full">
-                {userData.summary}
-              </p>
-            </HoverableWrapper>
-          </div>
+          <SectionWrapper
+            key="summary"
+            title={t.careerObjective}
+            sectionId={sectionMap.summary}
+            onSectionClick={onSectionClick}
+            isPdfMode={isPdfMode}
+            dragHandleProps={dragHandleProps}
+            isDragging={isDragging}
+            place={place}
+          >
+            <p className="text-gray-700 leading-relaxed break-words w-full">
+              {userData.summary}
+            </p>
+          </SectionWrapper>
         );
 
       case "skills":
@@ -625,62 +627,54 @@ const CVTemplateInspired: React.FC<CVTemplateProps> = ({
 
       case "certification":
         return userData.certification?.length > 0 && (
-          <div key="certification" className={containerClass}>
-            <HoverableWrapper
-              label={t.certificationLabel}
-              sectionId={sectionMap.certification}
-              onClick={onSectionClick}
-              className={`${innerPadding} relative w-[100%]`}
-              isPdfMode={isPdfMode}
-              dragHandleProps={dragHandleProps}
-              isDragging={isDragging}
-            >
-              <h2 className="text-xl font-bold text-gray-800 uppercase tracking-wider mb-4 pb-2 border-b-2 border-gray-300 break-words">
-                {t.certificationLabel}
-              </h2>
-              <div className="space-y-4 w-full">
-                {userData.certification.map((cert: any, i: number) => (
-                  <div key={i} className="w-full">
-                    <h3 className="font-bold text-lg text-gray-800 break-words w-full">{cert.title}</h3>
-                    <div className="flex flex-wrap gap-2 text-base text-gray-600 mt-1">
-                      {cert.startDate && (
-                        <span className="whitespace-nowrap">{new Date(cert.startDate).toLocaleDateString("vi-VN", { month: "2-digit", year: "numeric" })}</span>
-                      )}
-                      {cert.endDate ? (
-                        <span className="whitespace-nowrap">- {new Date(cert.endDate).toLocaleDateString("vi-VN", { month: "2-digit", year: "numeric" })}</span>
-                      ) : cert.startDate && (
-                        <span className="whitespace-nowrap">- {t.present}</span>
-                      )}
-                    </div>
+          <SectionWrapper
+            key="certification"
+            title={t.certificationLabel}
+            sectionId={sectionMap.certification}
+            onSectionClick={onSectionClick}
+            isPdfMode={isPdfMode}
+            dragHandleProps={dragHandleProps}
+            isDragging={isDragging}
+            place={place}
+          >
+            <div className="space-y-4 w-full">
+              {userData.certification.map((cert: any, i: number) => (
+                <div key={i} className="w-full">
+                  <h3 className="font-bold text-lg text-gray-800 break-words w-full">{cert.title}</h3>
+                  <div className="flex flex-wrap gap-2 text-base text-gray-600 mt-1">
+                    {cert.startDate && (
+                      <span className="whitespace-nowrap">{new Date(cert.startDate).toLocaleDateString("vi-VN", { month: "2-digit", year: "numeric" })}</span>
+                    )}
+                    {cert.endDate ? (
+                      <span className="whitespace-nowrap">- {new Date(cert.endDate).toLocaleDateString("vi-VN", { month: "2-digit", year: "numeric" })}</span>
+                    ) : cert.startDate && (
+                      <span className="whitespace-nowrap">- {t.present}</span>
+                    )}
                   </div>
-                ))}
-              </div>
-            </HoverableWrapper>
-          </div>
+                </div>
+              ))}
+            </div>
+          </SectionWrapper>
         );
 
       case "achievement":
         return userData.achievement?.length > 0 && (
-          <div key="achievement" className={containerClass}>
-            <HoverableWrapper
-              label={t.achievementLabel}
-              sectionId={sectionMap.achievement}
-              onClick={onSectionClick}
-              className={`${innerPadding} relative w-full`}
-              isPdfMode={isPdfMode}
-              dragHandleProps={dragHandleProps}
-              isDragging={isDragging}
-            >
-              <h2 className="text-xl font-bold text-gray-800 uppercase tracking-wider mb-4 pb-2 border-b-2 border-gray-300 break-words">
-                {t.achievementLabel}
-              </h2>
-              <ul className="list-disc pl-6 space-y-2 text-gray-700 w-full">
-                {userData.achievement.map((ach: string, i: number) => (
-                  <li key={i} className="break-words">{ach}</li>
-                ))}
-              </ul>
-            </HoverableWrapper>
-          </div>
+          <SectionWrapper
+            key="achievement"
+            title={t.achievementLabel}
+            sectionId={sectionMap.achievement}
+            onSectionClick={onSectionClick}
+            isPdfMode={isPdfMode}
+            dragHandleProps={dragHandleProps}
+            isDragging={isDragging}
+            place={place}
+          >
+            <ul className="list-disc pl-6 space-y-2 text-gray-700 w-full">
+              {userData.achievement.map((ach: string, i: number) => (
+                <li key={i} className="break-words">{ach}</li>
+              ))}
+            </ul>
+          </SectionWrapper>
         );
 
       case "hobby":
@@ -709,54 +703,48 @@ const CVTemplateInspired: React.FC<CVTemplateProps> = ({
 
       case "Project":
         return userData.Project?.length > 0 && (
-          <div key="Project" className={containerClass}>
-            <HoverableWrapper
-              label={t.projectLabel}
-              sectionId={sectionMap.Project}
-              onClick={onSectionClick}
-              className={`${innerPadding} relative w-full`}
-              isPdfMode={isPdfMode}
-              dragHandleProps={dragHandleProps}
-              isDragging={isDragging}
-            >
-              <h2 className="text-xl font-bold text-gray-800 uppercase tracking-wider mb-4 pb-2 border-b-2 border-gray-300 break-words">
-                {t.projectLabel}
-              </h2>
-              <ul className="space-y-4 w-full list-none pl-0 ml-2">
-                {userData.Project.map((project: any, i: number) => (
-                  <li key={i} className="w-full">
-                    <h3 className="font-bold text-lg text-gray-800 break-words w-full">
-                      {project.title || project["title "]}
-                    </h3>
-                    {project.startDate && (
-                      <span className="text-base italic text-gray-600 whitespace-nowrap block mb-1">
-                        {new Date(project.startDate).toLocaleDateString("vi-VN", {
+          <SectionWrapper
+            key="Project"
+            title={t.projectLabel}
+            sectionId={sectionMap.Project}
+            onSectionClick={onSectionClick}
+            isPdfMode={isPdfMode}
+            dragHandleProps={dragHandleProps}
+            isDragging={isDragging}
+            place={place}
+          >
+            {userData.Project.map((project: any, i: number) => (
+              <div key={i} className="break-words w-full">
+                <h3 className="font-bold text-lg text-gray-800 break-words w-full">
+                  {project.title || project["title "]}
+                </h3>
+                {project.startDate && (
+                  <span className="text-base italic text-gray-600 whitespace-nowrap block mb-1">
+                    {new Date(project.startDate).toLocaleDateString("vi-VN", {
+                      month: "2-digit",
+                      year: "numeric",
+                    })}
+                    {project.endDate
+                      ? ` - ${new Date(project.endDate).toLocaleDateString("vi-VN", {
                           month: "2-digit",
                           year: "numeric",
-                        })}
-                        {project.endDate
-                          ? ` - ${new Date(project.endDate).toLocaleDateString("vi-VN", {
-                              month: "2-digit",
-                              year: "numeric",
-                            })}`
-                          : ` - ${t.present}`}
-                      </span>
-                    )}
-                    {project.summary && (
-                      <ul className="text-base text-gray-700 break-words whitespace-pre-line w-full list-disc pl-5 space-y-1">
-                        {String(project.summary)
-                          .split(/\r?\n/)
-                          .filter((line: string) => line.trim().length > 0)
-                          .map((line: string, idx: number) => (
-                            <li key={idx}>{line}</li>
-                          ))}
-                      </ul>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            </HoverableWrapper>
-          </div>
+                        })}`
+                      : ` - ${t.present}`}
+                  </span>
+                )}
+                {project.summary && (
+                  <ul className="text-base text-gray-700 break-words whitespace-pre-line w-full list-disc pl-6 space-y-1 mt-1">
+                    {String(project.summary)
+                      .split(/\r?\n/)
+                      .filter((line: string) => line.trim().length > 0)
+                      .map((line: string, idx: number) => (
+                        <li key={idx}>{line}</li>
+                      ))}
+                  </ul>
+                )}
+              </div>
+            ))}
+          </SectionWrapper>
         );
 
       default:
@@ -797,17 +785,19 @@ const CVTemplateInspired: React.FC<CVTemplateProps> = ({
   if (isPdfMode) {
     return (
       <div className="bg-white font-sans text-gray-800 flex flex-row min-h-screen">
-        <div className="w-[65%]">
+        <div className="w-[65%] px-4 pt-4"> 
           <div className="flex items-center gap-6 mb-12">
             {headerSections.map(id => (
               <div key={id}>{renderSection(id, undefined, false, 1)}</div>
             ))}
           </div>
+  
           {mainSections.map(id => (
             <div key={id}>{renderSection(id, undefined, false, 3)}</div>
           ))}
         </div>
-        <div className="w-[35%] bg-gray-50 p-4">
+  
+        <div className="w-[35%] bg-gray-50 p-4 pt-8">
           {sidebarSections.map(id => (
             <div key={id}>{renderSection(id, undefined, false, 2)}</div>
           ))}
@@ -815,6 +805,7 @@ const CVTemplateInspired: React.FC<CVTemplateProps> = ({
       </div>
     );
   }
+  
 
   // --- EDITOR VIEW ---
   return (

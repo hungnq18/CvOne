@@ -89,13 +89,23 @@ export function EditVoucherModal({ voucher, onVoucherUpdated, isOpen, setIsOpen 
         if (!formData.startDate) errors.push(t.voucher.validation.requiredStartDate);
         if (!formData.endDate) errors.push(t.voucher.validation.requiredEndDate);
         if ((formData.discountValue || 0) <= 0) errors.push(t.voucher.validation.invalidDiscount);
-        if ((formData.usageLimit || 0) <= 0) errors.push(t.voucher.validation.invalidLimit);
-
+        if (formData.discountType === 'percent' && (formData.discountValue || 0) > 100) errors.push(t.voucher.validation?.discountTooHigh || 'Discount không được quá 100%');
+        if ((formData.usageLimit || 0) < 1) errors.push(t.voucher.validation?.invalidLimit);
+        if ((formData.maxDiscountValue || 0) < 1) errors.push(t.voucher.validation?.invalidMaxDiscount || 'Max Discount phải lớn hơn 0');
+        if ((formData.minOrderValue || 0) < 1) errors.push(t.voucher.validation?.invalidMinOrder || 'Min Order phải lớn hơn 0');
+        if ((formData.perUserLimit || 0) < 1) errors.push(t.voucher.validation?.invalidUserLimit || 'User Limit phải lớn hơn 0');
+        // Validate ngày bắt đầu và kết thúc
+        if (formData.startDate && formData.endDate) {
+            const start = new Date(formData.startDate);
+            const end = new Date(formData.endDate);
+            if (end < start) {
+                errors.push(t.voucher.validation?.invalidDate || 'Ngày kết thúc không được trước ngày bắt đầu');
+            }
+        }
         if (errors.length > 0) {
             showErrorToast(t.voucher.validation.validationError, `${t.voucher.validation.checkAgain}${errors.join(", ")}`);
             return;
         }
-
         setIsConfirmOpen(true);
     };
 

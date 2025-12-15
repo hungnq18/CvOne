@@ -5,6 +5,7 @@ export interface User {
   last_name: string;
   phone?: string;
   city?: string;
+  district?: string;
   country?: string;
   role?: 'customer' | 'hr' | 'admin' | 'mkt';
   isActive?: boolean;

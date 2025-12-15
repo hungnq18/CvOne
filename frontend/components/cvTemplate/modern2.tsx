@@ -695,9 +695,9 @@ const Modern2: React.FC<Modern2Props> = ({
             dragHandleProps={dragHandleProps}
             isDragging={isDragging}
           >
-            <ul className="space-y-4 list-disc pl-5 ml-2">
+            <div className="space-y-4">
               {userData.Project.map((project: any, i: number) => (
-                <li key={i} className="professional-card bg-slate-50 p-6 border-l-4 border-slate-700 break-words overflow-hidden list-none pl-0">
+                <div key={i} className="professional-card bg-slate-50 p-4 border-l-4 border-slate-700 break-words overflow-hidden">
                   <h3 className="text-lg font-bold text-slate-800 mb-1 break-words">
                     {project.title || project["title "]}
                   </h3>
@@ -716,7 +716,7 @@ const Modern2: React.FC<Modern2Props> = ({
                     </span>
                   )}
                   {project.summary && (
-                    <ul className="text-sm text-slate-700 mt-2 break-words whitespace-pre-line list-disc pl-5 space-y-1">
+                    <ul className="text-sm text-slate-700 mt-2 break-words whitespace-pre-line list-disc pl-6 space-y-1">
                       {String(project.summary)
                         .split(/\r?\n/)
                         .filter((line: string) => line.trim().length > 0)
@@ -725,9 +725,9 @@ const Modern2: React.FC<Modern2Props> = ({
                         ))}
                     </ul>
                   )}
-                </li>
+                </div>
               ))}
-            </ul>
+            </div>
           </Section>
         );
 

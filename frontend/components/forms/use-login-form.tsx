@@ -32,6 +32,7 @@ const translations = {
     passwordPlaceholder: "Enter your password",
     loginButton: "Sign In",
     googleButton: "Sign in with Google",
+    facebookButton: "Sign in with Facebook",
     contactPrefix: "Contact ",
     contactSupport: "support",
     contactSuffix: " to register as HR",
@@ -48,8 +49,9 @@ const translations = {
     passwordRequired: "Password is required",
     loading: "Loading...",
     networkError: "Network error. Please check your connection.",
-    or: "OR",
+    or: "OR LOGIN WITH",
     unauthorizedRole: "Your account is not authorized to access this page.",
+    employerLink: "Employer",
   },
   vi: {
     title: "Đăng nhập",
@@ -59,6 +61,7 @@ const translations = {
     passwordPlaceholder: "Nhập mật khẩu của bạn",
     loginButton: "Đăng nhập",
     googleButton: "Đăng nhập với Google",
+    facebookButton: "Đăng nhập với Facebook",
     contactPrefix: "Liên hệ ",
     contactSupport: "chăm sóc khách hàng",
     contactSuffix: " để đăng kí HR",
@@ -75,8 +78,9 @@ const translations = {
     passwordRequired: "Mật khẩu là bắt buộc",
     loading: "Đang tải...",
     networkError: "Lỗi kết nối. Vui lòng kiểm tra kết nối của bạn.",
-    or: "HOẶC",
+    or: "HOẶC ĐĂNG NHẬP BẰNG",
     unauthorizedRole: "Tài khoản của bạn không có quyền truy cập trang này.",
+    employerLink: "Nhà tuyển dụng",
   },
 };
 
@@ -200,6 +204,11 @@ export function useLoginForm(allowedRoles?: string[]) {
     console.log("Login with Google");
   };
 
+  const handleFacebookLogin = () => {
+    // Placeholder for Facebook login logic
+    console.log("Login with Facebook");
+  };
+
   return {
     formData,
     showPassword,
@@ -209,6 +218,7 @@ export function useLoginForm(allowedRoles?: string[]) {
     handleInputChange,
     handleSubmit,
     handleGoogleLogin,
+    handleFacebookLogin,
     setShowPassword,
   };
 }

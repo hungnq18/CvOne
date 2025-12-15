@@ -76,12 +76,24 @@ export function AddVoucherModal({ onVoucherAdded }: { onVoucherAdded: () => void
         if (!formData.endDate) errors.push(t.voucher.validation.requiredEndDate);
         if (formData.discountValue <= 0) errors.push(t.voucher.validation.invalidDiscount);
         if (formData.usageLimit <= 0) errors.push(t.voucher.validation.invalidLimit);
+        // Validate % giảm giá không lớn hơn 100 nếu là percent
+        if (formData.discountType === 'percent' && formData.discountValue > 100) errors.push(t.voucher.validation?.discountTooHigh || 'Discount không được quá 100%');
+        if (formData.maxDiscountValue < 1) errors.push(t.voucher.validation?.invalidMaxDiscount || 'Max Discount phải lớn hơn 0');
+        if (formData.minOrderValue < 1) errors.push(t.voucher.validation?.invalidMinOrder || 'Min Order phải lớn hơn 0');
+        if (formData.perUserLimit < 1) errors.push(t.voucher.validation?.invalidUserLimit || 'User Limit phải lớn hơn 0');
 
+        // Validate ngày bắt đầu và kết thúc
+        if (formData.startDate && formData.endDate) {
+            const start = new Date(formData.startDate);
+            const end = new Date(formData.endDate);
+            if (end < start) {
+                errors.push(t.voucher.validation?.invalidDate || 'Ngày kết thúc không được trước ngày bắt đầu');
+            }
+        }
         if (errors.length > 0) {
             showErrorToast(t.voucher.validation.validationError, `${t.voucher.validation.checkAgain}${errors.join(", ")}`);
             return;
         }
-
         setIsConfirmOpen(true);
     };
 
@@ -98,6 +110,20 @@ export function AddVoucherModal({ onVoucherAdded }: { onVoucherAdded: () => void
             onVoucherAdded(); // Callback to refresh data
             setIsOpen(false);
             setIsConfirmOpen(false);
+            // Reset lại form về mặc định
+            setFormData({
+                name: "",
+                description: "",
+                type: "direct",
+                discountValue: 0,
+                discountType: "percent",
+                maxDiscountValue: 0,
+                minOrderValue: 0,
+                usageLimit: 1,
+                perUserLimit: 1,
+                startDate: "",
+                endDate: "",
+            });
         } catch (error: any) {
             console.error("Failed to create voucher:", error);
             showErrorToast(
