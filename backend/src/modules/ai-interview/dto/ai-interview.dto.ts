@@ -55,6 +55,7 @@ export class InterviewSessionResponse {
   difficulty: string;
   language?: string;
   createdAt: Date;
+  total_tokens: any;
 }
 
 export class InterviewFeedbackResponse {

@@ -6,8 +6,13 @@ import {
   Post,
   Query,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
+import { UseAiFeature } from 'src/common/decorators/ai-feature.decorator';
+import { AiTokenGuard } from 'src/common/guards/ai-token.guard';
+import { AiUsageInterceptor } from 'src/common/interceptors/ai-usage.interceptor';
 import { User } from '../../common/decorators/user.decorator';
+import { AiFeature } from '../ai-usage-log/schemas/ai-usage-log.schema';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CreateInterviewSessionDto, InterviewSessionResponse, SubmitAnswerDto } from './dto/ai-interview.dto';
 import { AiInterviewService } from './services/ai-interview.service';
@@ -21,14 +26,16 @@ export class AiInterviewController {
   /**
    * Tạo buổi phỏng vấn mới với AI - độ khó tự động xác định từ JD
    */
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, AiTokenGuard)
+  @UseAiFeature(AiFeature.INTERVIEW_AI)
+  @UseInterceptors(AiUsageInterceptor)      
   @Post('create-session')
   async createInterviewSession(
     @Body() createInterviewDto: CreateInterviewSessionDto,
     @User('_id') userId: string
   ) {
     try {
-      const session = await this.aiInterviewService.createInterviewSession(
+      const { session, total_tokens } = await this.aiInterviewService.createInterviewSession(
         userId,
         createInterviewDto.jobDescription,
         createInterviewDto.numberOfQuestions || 10,
@@ -48,12 +55,14 @@ export class AiInterviewController {
         status: session.status,
         difficulty: session.difficulty,
         language: session.language || 'vi-VN',
-        createdAt: session.createdAt
+        createdAt: session.createdAt,
+        total_tokens,
       };
 
       return {
         success: true,
         data: response,
+        total_tokens,
         message: `Interview session created successfully with ${session.difficulty} difficulty (auto-determined from JD)`
       };
 
@@ -142,7 +151,9 @@ export class AiInterviewController {
   /**
    * Nộp câu trả lời và nhận feedback
    */
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, AiTokenGuard)
+  @UseAiFeature(AiFeature.INTERVIEW_AI)
+  @UseInterceptors(AiUsageInterceptor)
   @Post('session/:sessionId/submit-answer')
   async submitAnswer(
     @Param('sessionId') sessionId: string,
@@ -230,7 +241,9 @@ export class AiInterviewController {
   /**
    * Lấy câu trả lời mẫu cho câu hỏi
    */
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, AiTokenGuard)
+  @UseAiFeature(AiFeature.INTERVIEW_AI)
+  @UseInterceptors(AiUsageInterceptor)
   @Get('session/:sessionId/sample-answer/:questionId')
   async getSampleAnswer(
     @Param('sessionId') sessionId: string,
@@ -275,7 +288,9 @@ export class AiInterviewController {
   /**
    * Hoàn thành session và nhận feedback tổng quan
    */
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, AiTokenGuard)
+  @UseAiFeature(AiFeature.INTERVIEW_AI)
+  @UseInterceptors(AiUsageInterceptor)
   @Post('session/:sessionId/complete')
   async completeSession(
     @Param('sessionId') sessionId: string,
@@ -353,7 +368,9 @@ export class AiInterviewController {
   /**
    * Retake interview với cùng questions từ session cũ
    */
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, AiTokenGuard)
+  @UseAiFeature(AiFeature.INTERVIEW_AI)
+  @UseInterceptors(AiUsageInterceptor)
   @Post('retake-session/:sessionId')
   async retakeInterviewSession(
     @Param('sessionId') sessionId: string,
@@ -377,7 +394,8 @@ export class AiInterviewController {
         status: session.status,
         difficulty: session.difficulty,
         language: session.language || 'vi-VN',
-        createdAt: session.createdAt
+        createdAt: session.createdAt,
+        total_tokens: session.questions.length,
       };
 
       return {
