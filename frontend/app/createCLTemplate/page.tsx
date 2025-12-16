@@ -762,7 +762,7 @@ const CoverLetterBuilderContent = () => {
         if (input) {
             try {
                 const canvas = await html2canvas(input, {
-                    scale: 2,
+                    scale: 1.2,
                     useCORS: true,
                     logging: true,
                     allowTaint: true,
@@ -782,7 +782,7 @@ const CoverLetterBuilderContent = () => {
                 // Tính toán chiều cao ảnh để vừa khít chiều rộng trang A4
                 const imgHeight = (canvas.height * pdfWidth) / canvas.width;
 
-                pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, pdfWidth, imgHeight);
+                pdf.addImage(canvas.toDataURL('image/jpeg', 0.8), 'JPEG', 0, 0, pdfWidth, imgHeight);
                 pdf.save(clTitle ? `${clTitle}.pdf` : 'cover-letter.pdf');
             } catch (error) {
                 console.error("Error generating PDF:", error);
