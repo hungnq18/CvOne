@@ -189,7 +189,9 @@ export class CvController {
    * @param jobAnalysis - Kết quả phân tích JD
    * @param additionalRequirements - Yêu cầu bổ sung (nếu có)
    */
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, AiTokenGuard)
+  @UseAiFeature(AiFeature.GENERATE_CV_AI)
+  @UseInterceptors(AiUsageInterceptor)
   @Post("generate-with-ai")
   async generateCvWithAI(
     @User("_id") userId: string,
@@ -214,6 +216,7 @@ export class CvController {
         jobAnalysis,
         message: "CV generated from provided job analysis",
       },
+      total_tokens: cvContent.total_tokens,
     };
   }
 
@@ -281,6 +284,7 @@ export class CvController {
         jobAnalysis,
         aiMessage: message,
         isUsingFallback,
+        total_tokens: cvContent.total_tokens + jobAnalysis.total_tokens,
       };
     } catch (error) {
       throw new Error(`Failed to generate CV with AI: ${error.message}`);

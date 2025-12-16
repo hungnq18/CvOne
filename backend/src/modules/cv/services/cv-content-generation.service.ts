@@ -17,9 +17,8 @@ export class CvContentGenerationService {
   async generateProfessionalSummary(
     userProfile: any,
     jobAnalysis: any,
-    additionalRequirements?: string,
-    userId?: string
-  ): Promise<string[]> {
+    additionalRequirements?: string
+  ): Promise<{ professional: string[]; total_tokens: number }> {
     try {
       const prompt = `
 Generate 3 different compelling professional summaries for a CV based on the following information:
@@ -80,13 +79,6 @@ Do not include any explanation or markdown, only valid JSON.
         total_tokens: 0,
       };
       console.log("Usage summary:", usage);
-      if (userId) {
-        await this.logService.createLog({
-          userId: userId,
-          feature: "suggestionSummaryCvAI",
-          tokensUsed: usage.total_tokens,
-        });
-      }
       // Remove markdown if present
       let cleanResponse = response.trim();
       if (cleanResponse.startsWith("```json")) {
@@ -102,11 +94,14 @@ Do not include any explanation or markdown, only valid JSON.
       }
       const summaries = JSON.parse(cleanResponse);
       if (Array.isArray(summaries) && summaries.length === 3) {
-        return summaries;
+        return { professional: summaries, total_tokens: usage.total_tokens };
       }
 
       // fallback: wrap single summary in array
-      return [cleanResponse];
+      return {
+        professional: [cleanResponse],
+        total_tokens: usage.total_tokens,
+      };
     } catch (error) {
       this.logger.error(
         `Error generating professional summary: ${error.message}`,
@@ -117,7 +112,7 @@ Do not include any explanation or markdown, only valid JSON.
         userProfile,
         jobAnalysis || {}
       );
-      return [fallback, fallback, fallback];
+      return { professional: [fallback, fallback, fallback], total_tokens: 0 };
     }
   }
 
@@ -476,6 +471,8 @@ Do not include any explanation or markdown, only valid JSON.
         hobby: [],
         sectionPositions: {},
       },
+      total_tokens:
+        summary.total_tokens + skills.total_tokens + workHistory.total_tokens,
     };
   }
 

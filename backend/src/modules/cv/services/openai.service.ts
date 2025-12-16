@@ -30,8 +30,7 @@ export class OpenAiService {
     return this.cvContentGenerationService.generateProfessionalSummary(
       userProfile,
       jobAnalysis,
-      additionalRequirements,
-      userId
+      additionalRequirements
     );
   }
 
