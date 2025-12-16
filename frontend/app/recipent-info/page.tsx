@@ -31,7 +31,7 @@ const recipientInfoTranslations = {
       companyName: "e.g. Google, Microsoft",
       city: "Select city/province",
       state: "Select district",
-      phone: "e.g. +84123456789",
+      phone: "e.g. 0987654321",
       email: "recipient.email@example.com",
     },
     back: "Back",
@@ -62,7 +62,7 @@ const recipientInfoTranslations = {
       companyName: "VD: Google, Microsoft",
       city: "Chọn tỉnh/thành phố",
       state: "Chọn quận/huyện",
-      phone: "VD: +84123456789",
+      phone: "VD: 0987654321",
       email: "nguoinhan@email.com",
     },
     back: "Quay lại",
@@ -167,7 +167,6 @@ function RecipentInfoContent() {
     companyName: "",
     recipientCity: "",
     recipientState: "",
-    recipientCountryCode: "+84",
     recipientPhone: "",
     recipientEmail: "",
   });
@@ -175,7 +174,7 @@ function RecipentInfoContent() {
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [provinces, setProvinces] = useState<Province[]>([]);
   const [districts, setDistricts] = useState<District[]>([]);
-  const [countries, setCountries] = useState<Country[]>([]);
+  // const [countries, setCountries] = useState<Country[]>([]);
   const [selectedProvinceCode, setSelectedProvinceCode] = useState<
     number | null
   >(null);
@@ -189,12 +188,8 @@ function RecipentInfoContent() {
     const loadData = async () => {
       setLoading(true);
       try {
-        const [provincesData, countriesData] = await Promise.all([
-          getProvinces(),
-          getCountries(),
-        ]);
+        const provincesData = await getProvinces();
         setProvinces(provincesData);
-        setCountries(countriesData);
       } catch (error) {
         console.error("Error loading data:", error);
       } finally {
@@ -217,7 +212,6 @@ function RecipentInfoContent() {
           companyName: coverLetterData.companyName || "",
           recipientCity: coverLetterData.recipientCity || "",
           recipientState: coverLetterData.recipientState || "",
-          recipientCountryCode: coverLetterData.recipientCountryCode || "+84",
           recipientPhone: coverLetterData.recipientPhone || "",
           recipientEmail: coverLetterData.recipientEmail || "",
         });
@@ -230,8 +224,11 @@ function RecipentInfoContent() {
             setSelectedProvinceCode(selectedProvince.code);
           }
         }
+      // Xóa recipientCountryCode khỏi localStorage nếu có
+      if (coverLetterData.recipientCountryCode) {
+        delete coverLetterData.recipientCountryCode;
       }
-    }
+    }}
   }, [provinces]);
 
   // Load districts when province changes
@@ -429,26 +426,6 @@ function RecipentInfoContent() {
                 {t.phone}
               </label>
               <div className="flex gap-2">
-                <div className="relative w-32">
-                  <select
-                    value={formData.recipientCountryCode}
-                    onChange={(e) => handleInputChange("recipientCountryCode", e.target.value)}
-                    className={`w-full px-3 py-3 border rounded-lg bg-white appearance-none pr-8 focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                      errors.recipientCountryCode ? "border-red-500" : "border-gray-300"
-                    }`}
-                    disabled={loading}
-                  >
-                    {countries.map((country) => (
-                      <option key={country.code} value={country.phoneCode}>
-                        {country.flag} {country.phoneCode}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown
-                    className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"
-                    size={20}
-                  />
-                </div>
                 <div className="flex-1">
                   <input
                     type="tel"
