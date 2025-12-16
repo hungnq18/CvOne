@@ -64,13 +64,11 @@ export class OpenAiService {
   // Vietnamese Content methods
   async generateProfessionalSummaryVi(
     jobAnalysis: any,
-    additionalRequirements?: string,
-    userId?: string
+    additionalRequirements?: string
   ) {
     return this.vietnameseContentService.generateProfessionalSummaryVi(
       jobAnalysis,
-      additionalRequirements,
-      userId
+      additionalRequirements
     );
   }
 

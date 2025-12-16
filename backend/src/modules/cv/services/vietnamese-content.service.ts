@@ -8,17 +8,16 @@ export class VietnameseContentService {
 
   constructor(
     private openaiApiService: OpenaiApiService,
-    private readonly logService: AiUsageLogService,
-  ) { }
+    private readonly logService: AiUsageLogService
+  ) {}
 
   /**
    * Generate professional summary in Vietnamese using OpenAI
    */
   async generateProfessionalSummaryVi(
     jobAnalysis: any,
-    additionalRequirements?: string,
-    userId?: string,
-  ): Promise<string> {
+    additionalRequirements?: string
+  ): Promise<{ summary: string; total_tokens: number }> {
     try {
       const prompt = `
       Viết Professional Summary bằng tiếng Việt cho CV dựa trên phân tích JD:
@@ -60,13 +59,6 @@ export class VietnameseContentService {
         total_tokens: 0,
       };
       console.log("Usage summary:", usage);
-      if (userId) {
-        await this.logService.createLog({
-          userId: userId,
-          feature: "suggestionSummaryCvAI",
-          tokensUsed: usage.total_tokens,
-        });
-      }
       const response = completion.choices[0]?.message?.content;
       if (!response) {
         throw new Error("No response from OpenAI");
@@ -79,13 +71,17 @@ export class VietnameseContentService {
           .replace(/```$/, "")
           .trim();
       }
-      return cleanResponse;
+      return { summary: cleanResponse, total_tokens: usage.total_tokens };
     } catch (error) {
       this.logger.error(
         `Error generating Vietnamese professional summary: ${error.message}`,
-        error.stack,
+        error.stack
       );
-      return "Ứng viên có kỹ năng và kinh nghiệm phù hợp với yêu cầu công việc, sẵn sàng đóng góp và phát triển trong môi trường chuyên nghiệp.";
+      return {
+        summary:
+          "Ứng viên có kỹ năng và kinh nghiệm phù hợp với yêu cầu công việc, sẵn sàng đóng góp và phát triển trong môi trường chuyên nghiệp.",
+        total_tokens: 0,
+      };
     }
   }
 
@@ -95,7 +91,7 @@ export class VietnameseContentService {
   async generateProfessionalSummariesVi(
     jobAnalysis: any,
     additionalRequirements?: string,
-    count: number = 3,
+    count: number = 3
   ): Promise<string[]> {
     try {
       const prompt = `
@@ -162,7 +158,7 @@ Không giải thích, không markdown.
     } catch (error) {
       this.logger.error(
         `Error generating Vietnamese professional summaries: ${error.message}`,
-        error.stack,
+        error.stack
       );
       // fallback: return multiple copies of fallback
       const fallback =

@@ -8,24 +8,24 @@ export class JobAnalysisService {
 
   constructor(
     private openaiApiService: OpenaiApiService,
-    private readonly logService: AiUsageLogService,
-  ) { }
+    private readonly logService: AiUsageLogService
+  ) {}
 
   /**
    * Analyze job description using OpenAI
    */
-  async analyzeJobDescription(
-    jobDescription: string,
-    userId?: string,
-  ): Promise<{
-    requiredSkills: string[];
-    experienceLevel: string;
-    keyResponsibilities: string[];
-    industry: string;
-    technologies: string[];
-    softSkills: string[];
-    education: string;
-    certifications: string[];
+  async analyzeJobDescription(jobDescription: string): Promise<{
+    analyzedJob: {
+      requiredSkills: string[];
+      experienceLevel: string;
+      keyResponsibilities: string[];
+      industry: string;
+      technologies: string[];
+      softSkills: string[];
+      education: string;
+      certifications: string[];
+    };
+    total_tokens: number;
   }> {
     try {
       const prompt = `
@@ -103,29 +103,28 @@ export class JobAnalysisService {
         total_tokens: 0,
       };
       console.log("Usage analysis:", usage);
-      if (userId) {
-        await this.logService.createLog({
-          userId: userId,
-          feature: "analyzeJD",
-          tokensUsed: usage.total_tokens,
-        });
-      }
       this.logger.log("Job description analysis completed successfully");
-      return analysis;
+      return { analyzedJob: analysis, total_tokens: usage.total_tokens };
     } catch (error) {
       this.logger.error(
         `Error analyzing job description: ${error.message}`,
-        error.stack,
+        error.stack
       );
 
       // Check if it's a quota exceeded error
       if (error.message.includes("429") || error.message.includes("quota")) {
         this.logger.warn("OpenAI quota exceeded, using fallback analysis");
-        return this.fallbackAnalysis(jobDescription);
+        return {
+          analyzedJob: this.fallbackAnalysis(jobDescription),
+          total_tokens: 0,
+        };
       }
 
       // Fallback to basic analysis if OpenAI fails
-      return this.fallbackAnalysis(jobDescription);
+      return {
+        analyzedJob: this.fallbackAnalysis(jobDescription),
+        total_tokens: 0,
+      };
     }
   }
 

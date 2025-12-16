@@ -347,7 +347,7 @@ const ModernCV1: React.FC<ModernCV1Props> = ({
                 dragHandleProps={dragHandleProps}
                 isDragging={isDragging}
               >
-                <div className="w-40 h-40 lg:w-48 lg:h-48 rounded-full overflow-hidden border-4 border-white/80 relative">
+                <div className="aspect-square w-40 lg:w-48 rounded-full overflow-hidden border-4 border-white/80 flex-shrink-0 relative">
                   {isPdfMode ? (
                     <div
                       style={{ 

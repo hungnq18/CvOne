@@ -130,16 +130,30 @@ export class CreditsService {
     return credit;
   }
   async useToken(userId: string, token: number) {
-    const credit = await this.creditModel.findOneAndUpdate(
-      { userId: new Types.ObjectId(userId) },
-      { $inc: { token: -token } },
-      { new: true }
-    );
+    // 1️⃣ Lấy credit hiện tại
+    const credit = await this.creditModel.findOne({
+      userId: new Types.ObjectId(userId),
+    });
+
     if (!credit) {
       throw new NotFoundException("Credit not found");
     }
+
+    // 2️⃣ Kiểm tra số token đủ hay không
+    if (credit.token < token) {
+      throw new BadRequestException(
+        `Not enough token. Required: ${token}, available: ${credit.token}`
+      );
+    }
+
+    // 3️⃣ Trừ token khi hợp lệ
+    credit.token -= token;
+
+    await credit.save();
+
     return credit;
   }
+
   async updateUsageVoucher(
     userId: string,
     voucherId: string,
@@ -282,5 +296,23 @@ export class CreditsService {
     });
 
     return availableVouchers;
+  }
+  async hasEnoughToken(
+    userId: string | Types.ObjectId,
+    requiredToken: number
+  ): Promise<boolean> {
+    const userObjectId =
+      typeof userId === "string" ? new Types.ObjectId(userId) : userId;
+
+    const credit = await this.creditModel.findOne(
+      { userId: userObjectId },
+      { token: 1 }
+    );
+
+    if (!credit) {
+      throw new NotFoundException("Credit not found");
+    }
+
+    return credit.token >= requiredToken;
   }
 }

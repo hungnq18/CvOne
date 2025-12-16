@@ -8,8 +8,8 @@ export class CvContentGenerationService {
 
   constructor(
     private openaiApiService: OpenaiApiService,
-    private readonly logService: AiUsageLogService,
-  ) { }
+    private readonly logService: AiUsageLogService
+  ) {}
 
   /**
    * Generate multiple professional summaries using OpenAI
@@ -18,7 +18,7 @@ export class CvContentGenerationService {
     userProfile: any,
     jobAnalysis: any,
     additionalRequirements?: string,
-    userId?: string,
+    userId?: string
   ): Promise<string[]> {
     try {
       const prompt = `
@@ -110,12 +110,12 @@ Do not include any explanation or markdown, only valid JSON.
     } catch (error) {
       this.logger.error(
         `Error generating professional summary: ${error.message}`,
-        error.stack,
+        error.stack
       );
       // fallback: return 3 copies of fallback summary
       const fallback = this.generateFallbackSummary(
         userProfile,
-        jobAnalysis || {},
+        jobAnalysis || {}
       );
       return [fallback, fallback, fallback];
     }
@@ -126,17 +126,17 @@ Do not include any explanation or markdown, only valid JSON.
    */
   async generateWorkExperience(
     jobAnalysis: any,
-    experienceLevel: string,
-    userId?: string,
-  ): Promise<
-    Array<{
+    experienceLevel: string
+  ): Promise<{
+    experience: Array<{
       title: string;
       company: string;
       startDate: string;
       endDate: string;
       description: string;
-    }>
-  > {
+    }>;
+    total_tokens: number;
+  }> {
     try {
       const years =
         experienceLevel === "senior"
@@ -145,7 +145,7 @@ Do not include any explanation or markdown, only valid JSON.
             ? 3
             : 1;
       const startDate = new Date(
-        Date.now() - years * 365 * 24 * 60 * 60 * 1000,
+        Date.now() - years * 365 * 24 * 60 * 60 * 1000
       );
       const endDate = new Date();
 
@@ -201,13 +201,6 @@ Requirements:
       };
       console.log("Usage summary:", usage);
 
-      if (userId) {
-        await this.logService.createLog({
-          userId: userId,
-          feature: "suggestionWorksExperienceCvAI",
-          tokensUsed: usage.total_tokens,
-        });
-      }
       const response = completion.choices[0]?.message?.content;
       if (!response) {
         throw new Error("No response from OpenAI");
@@ -219,24 +212,27 @@ Requirements:
       workExperience.startDate = startDate.toISOString().split("T")[0];
       workExperience.endDate = endDate.toISOString().split("T")[0];
 
-      return [workExperience];
+      return { experience: [workExperience], total_tokens: usage.total_tokens };
     } catch (error) {
       this.logger.error(
         `Error generating work experience: ${error.message}`,
-        error.stack,
+        error.stack
       );
 
       // Check if it's a quota exceeded error
       if (error.message.includes("429") || error.message.includes("quota")) {
         this.logger.warn(
-          "OpenAI quota exceeded, using fallback work experience",
+          "OpenAI quota exceeded, using fallback work experience"
         );
       }
 
-      return this.generateFallbackWorkExperience(
-        jobAnalysis || {},
-        experienceLevel,
-      );
+      return {
+        experience: this.generateFallbackWorkExperience(
+          jobAnalysis || {},
+          experienceLevel
+        ),
+        total_tokens: 0,
+      };
     }
   }
 
@@ -245,9 +241,11 @@ Requirements:
    */
   async generateSkillsSection(
     jobAnalysis: any,
-    userSkills?: Array<{ name: string; rating: number }>,
-    userId?: string,
-  ): Promise<Array<Array<{ name: string; rating: number }>>> {
+    userSkills?: Array<{ name: string; rating: number }>
+  ): Promise<{
+    skillsOptions: Array<Array<{ name: string; rating: number }>>;
+    total_tokens: number;
+  }> {
     try {
       const existingSkills =
         userSkills?.map((s) => s.name).join(", ") || "None";
@@ -313,13 +311,6 @@ Do not include any explanation or markdown, only valid JSON.
         total_tokens: 0,
       };
       console.log("Usage skills :", usage);
-      if (userId) {
-        await this.logService.createLog({
-          userId: userId,
-          feature: "suggestionSkillsCvAI",
-          tokensUsed: usage.total_tokens,
-        });
-      }
       // Remove markdown if present
       let cleanResponse = response.trim();
       if (cleanResponse.startsWith("```json")) {
@@ -344,12 +335,12 @@ Do not include any explanation or markdown, only valid JSON.
         // Filter and reassign rating if found in userSkills
         return list
           .filter((skillObj) =>
-            validSkills.includes(skillObj.name.toLowerCase()),
+            validSkills.includes(skillObj.name.toLowerCase())
           )
           .map((skillObj) => {
             if (userSkills) {
               const found = userSkills.find(
-                (s) => s.name.toLowerCase() === skillObj.name.toLowerCase(),
+                (s) => s.name.toLowerCase() === skillObj.name.toLowerCase()
               );
               if (found) {
                 return { ...skillObj, rating: found.rating };
@@ -359,19 +350,25 @@ Do not include any explanation or markdown, only valid JSON.
           });
       }
       if (Array.isArray(skillsLists) && skillsLists.length === 3) {
-        return skillsLists.map(filterSkills);
+        return {
+          skillsOptions: skillsLists.map(filterSkills),
+          total_tokens: usage.total_tokens,
+        };
       }
 
       // fallback: wrap single list in array
-      return [filterSkills(skillsLists)];
+      return {
+        skillsOptions: [filterSkills(skillsLists)],
+        total_tokens: usage.total_tokens,
+      };
     } catch (error) {
       this.logger.error(
         `Error generating skills section: ${error.message}`,
-        error.stack,
+        error.stack
       );
       // fallback: return 3 copies of fallback skills
       const fallback = this.generateFallbackSkills(jobAnalysis || {});
-      return [fallback, fallback, fallback];
+      return { skillsOptions: [fallback, fallback, fallback], total_tokens: 0 };
     }
   }
 
@@ -389,7 +386,7 @@ Do not include any explanation or markdown, only valid JSON.
 
   private generateFallbackWorkExperience(
     jobAnalysis: any,
-    experienceLevel: string,
+    experienceLevel: string
   ): Array<any> {
     const years =
       experienceLevel === "senior"
@@ -413,7 +410,7 @@ Do not include any explanation or markdown, only valid JSON.
   }
 
   private generateFallbackSkills(
-    jobAnalysis: any,
+    jobAnalysis: any
   ): Array<{ name: string; rating: number }> {
     const allSkills = [
       ...(jobAnalysis?.requiredSkills || []),
@@ -433,13 +430,13 @@ Do not include any explanation or markdown, only valid JSON.
   async generateCvContent(
     user: any,
     jobAnalysis: any,
-    additionalRequirements?: string,
+    additionalRequirements?: string
   ): Promise<any> {
     // Generate professional summary using OpenAI
     const summary = await this.generateProfessionalSummary(
       user,
       jobAnalysis,
-      additionalRequirements,
+      additionalRequirements
     );
 
     // Generate skills section using OpenAI
@@ -448,7 +445,7 @@ Do not include any explanation or markdown, only valid JSON.
     // Generate work experience using OpenAI
     const workHistory = await this.generateWorkExperience(
       jobAnalysis,
-      jobAnalysis.experienceLevel,
+      jobAnalysis.experienceLevel
     );
 
     // Generate education
@@ -507,8 +504,7 @@ Do not include any explanation or markdown, only valid JSON.
   async translateCvContent(
     content: any,
     uiTexts: any,
-    targetLanguage: string,
-    userId?: string,
+    targetLanguage: string
   ): Promise<any> {
     try {
       const languageNote = targetLanguage
@@ -608,13 +604,7 @@ Clear, natural phrasing - no awkward machine translations
       console.log("Content Tokens:", contentTokens);
       console.log("UI Tokens:", uiTextTokens);
       console.log("Total Tokens:", totalTokens);
-      if (userId) {
-        await this.logService.createLog({
-          userId,
-          feature: "transCvAI",
-          tokensUsed: totalTokens,
-        });
-      }
+
       // ======= Xử lý phần uiTexts =======
       let uiTranslated = uiTextResponse.choices[0]?.message?.content?.trim();
       if (!uiTranslated)
@@ -634,12 +624,12 @@ Clear, natural phrasing - no awkward machine translations
           translatedUiTexts = parsed;
         } else {
           this.logger.warn(
-            "UI Texts translation is not object, fallback to empty object",
+            "UI Texts translation is not object, fallback to empty object"
           );
         }
       } catch {
         this.logger.warn(
-          "Invalid JSON returned for uiTexts, fallback to empty object",
+          "Invalid JSON returned for uiTexts, fallback to empty object"
         );
       }
 
@@ -649,11 +639,12 @@ Clear, natural phrasing - no awkward machine translations
           content: translatedContent,
           uiTexts: translatedUiTexts,
         },
+        total_tokens: totalTokens,
       };
     } catch (error) {
       this.logger.error(
         `Error translating CV content: ${error.message}`,
-        error.stack,
+        error.stack
       );
       throw new Error(`Translate failed: ${error.message}`);
     }

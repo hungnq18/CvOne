@@ -68,11 +68,11 @@ export async function detectLanguageSmart(
   text: string,
   openaiApiService: OpenaiApiService,
   logger?: Logger,
-): Promise<string> {
+): Promise<{ language: string, total_tokens: number }> {
   const safeText = (text || '').trim();
 
   if (safeText.length < 3) {
-    return heuristicDetectLanguage(safeText);
+    return { language: heuristicDetectLanguage(safeText), total_tokens: 0 };
   }
 
   try {
@@ -93,10 +93,10 @@ If uncertain, choose the closest. Text: """${safeText.substring(0, 3000)}"""`;
     if (code && ALLOWED_CODES.includes(code)) {
       return code;
     }
+    return { language: code, total_tokens: completion.usage?.total_tokens || 0 };
   } catch (err: any) {
     logger?.warn?.(`AI language detect failed, fallback heuristic: ${err.message}`);
   }
 
-  return heuristicDetectLanguage(safeText);
-}
-
+  return { language: heuristicDetectLanguage(safeText), total_tokens: 0 };
+} 
