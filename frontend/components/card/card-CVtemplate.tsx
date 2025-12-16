@@ -97,7 +97,7 @@ const CardCVTemplate: React.FC<CardCVTemplateProps> = ({
       );
     }
 
-    const containerWidth = 250;
+    const containerWidth = 300;
     const templateOriginalWidth = 794;
     const scaleFactor = containerWidth / templateOriginalWidth;
 
