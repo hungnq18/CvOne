@@ -35,7 +35,7 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
   const [unreadCount, setUnreadCount] = useState(0);
   const [messages, setMessages] = useState<Record<string, Message[]>>({});
 
-  // ⭐ Connect socket
+  //  Connect socket
   useEffect(() => {
     if (!user) return;
 
@@ -69,7 +69,7 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
     load();
   }, [user]);
 
-  // ⭐ Listen to all socket events
+  // Listen to all socket events
   useEffect(() => {
     if (!socketRef.current || !user) return;
 
@@ -83,12 +83,12 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
         const updated = prev.map((c) =>
           c._id === msg.conversationId
             ? {
-                ...c,
-                unreadCount: c.unreadCount.map((u: any) =>
-                  u.userId === user._id ? { ...u, count: u.count + 1 } : u
-                ),
-                lastMessage: msg,
-              }
+              ...c,
+              unreadCount: c.unreadCount.map((u: any) =>
+                u.userId === user._id ? { ...u, count: u.count + 1 } : u
+              ),
+              lastMessage: msg,
+            }
             : c
         );
         setUnreadCount(calcUnread(updated, user._id));
@@ -127,11 +127,11 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
           prev.map((c) =>
             c._id === conversationId
               ? {
-                  ...c,
-                  unreadCount: c.unreadCount.map((u: any) =>
-                    u.userId === user._id ? { ...u, count: 0 } : u
-                  ),
-                }
+                ...c,
+                unreadCount: c.unreadCount.map((u: any) =>
+                  u.userId === user._id ? { ...u, count: 0 } : u
+                ),
+              }
               : c
           )
         );
@@ -157,11 +157,11 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
         const updated = prev.map((conv) =>
           conv._id === conversationId
             ? {
-                ...conv,
-                unreadCount: conv.unreadCount.map((u: any) =>
-                  u.userId === user._id ? { ...u, count: 0 } : u
-                ),
-              }
+              ...conv,
+              unreadCount: conv.unreadCount.map((u: any) =>
+                u.userId === user._id ? { ...u, count: 0 } : u
+              ),
+            }
             : conv
         );
         setUnreadCount(calcUnread(updated, user._id));
