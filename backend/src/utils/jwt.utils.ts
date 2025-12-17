@@ -19,5 +19,6 @@ export const generateJwtToken = (
     access_token: jwtService.sign(payload),
     email: account.email,
     role: account.role,
+    isActive: account.isActive,
   };
 };
