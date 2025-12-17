@@ -888,8 +888,21 @@ const PageCreateCVAIContent = () => {
       } else {
         notify.error(t.translateError);
       }
-    } catch (error) {
-      notify.error(t.translateError);
+    } catch (error: any) {
+      const message: string =
+        (error?.data && typeof error.data.message === "string"
+          ? error.data.message
+          : error?.message) || "";
+
+      if (message.includes("Not enough tokens")) {
+        notify.error(
+          language === "vi"
+            ? "Không đủ token AI. Vui lòng nạp thêm để tiếp tục sử dụng tính năng AI."
+            : "Not enough AI tokens. Please top up to continue using AI features."
+        );
+      } else {
+        notify.error(t.translateError);
+      }
     } finally {
       setIsTranslating(false);
       setShowTranslateModal(false);
@@ -898,6 +911,7 @@ const PageCreateCVAIContent = () => {
 
   const handleAISuggestTemplate = async () => {
     if (!userData || !jobDescription) {
+      return;
     }
     setIsSuggesting(true);
     try {
@@ -905,23 +919,53 @@ const PageCreateCVAIContent = () => {
         userData || {},
         jobDescription || ""
       );
-      const first = Array.isArray(result)
-        ? result[0]
-        : Array.isArray(result?.templates)
-        ? result.templates[0]
-        : Array.isArray(result?.data)
-        ? result.data[0]
-        : result;
+      console.log("AI suggestTemplate raw result:", result);
+
+      // Response mới: { cvTemplates: [ ... ], total_tokens: number }
+      // Nhưng vẫn phòng khi backend bọc thêm data / đổi field nhẹ.
+      const templatesArray: any[] =
+        (result as any)?.cvTemplates ??
+        (result as any)?.data?.cvTemplates ??
+        (Array.isArray((result as any)?.data) ? (result as any).data : []) ??
+        [];
+
+      const first =
+        Array.isArray(templatesArray) && templatesArray.length > 0
+          ? templatesArray[0]
+          : null;
+
+      if (!first) {
+        notify.error(
+          language === "vi"
+            ? "AI không tìm được mẫu CV phù hợp"
+            : "AI could not find a suitable CV template"
+        );
+        return;
+      }
+
       const templateId =
         typeof first === "string" ? first : first?.templateId || first?._id;
       let found: CVTemplate | undefined;
-      if (templateId)
+      if (templateId) {
         found = (allTemplates || []).find((t) => t._id === templateId);
+      }
+
       const finalTemplate: CVTemplate | null =
         found || (first && first.imageUrl && first.title ? first : null);
+
+      if (!finalTemplate) {
+        notify.error(
+          language === "vi"
+            ? "Không thể ánh xạ mẫu CV AI trả về"
+            : "Could not map AI suggested template"
+        );
+        return;
+      }
+
       setSuggestedTemplate(finalTemplate);
       setShowSuggestModal(true);
     } catch (e) {
+      console.error("AI suggestTemplate error:", e);
       notify.error(
         language === "vi" ? "AI đề xuất mẫu thất bại" : "AI suggestion failed"
       );

@@ -431,11 +431,48 @@ export const SummaryForm: FC<FormProps> = ({ data, onUpdate }) => {
     try {
       const jobAnalysis = data?.jobAnalysis || {};
       const res = await suggestSummary({}, jobAnalysis);
-      if (res && Array.isArray(res.summaries)) {
-        setAiSuggestions(res.summaries);
+      console.log("suggestSummary raw res:", res);
+
+      const rawSummaries: any =
+        (res as any)?.summaries ??
+        (res as any)?.data?.summaries ??
+        (res as any)?.data?.data?.summaries;
+      console.log("suggestSummary extracted summaries:", rawSummaries);
+
+      if (Array.isArray(rawSummaries) && rawSummaries.length > 0) {
+        const texts = rawSummaries
+          .map((item: any) =>
+            typeof item === "string" ? item : item?.summary
+          )
+          .filter(
+            (v: any) => typeof v === "string" && v.trim().length > 0
+          );
+        console.log("suggestSummary final texts:", texts);
+        setAiSuggestions(texts);
+      } else {
+        console.log("suggestSummary no summaries found, fallback to []");
+        setAiSuggestions([]);
       }
-    } catch (err) {
+    } catch (error: any) {
       setAiSuggestions([]);
+      const message: string =
+        (error?.data && typeof error.data.message === "string"
+          ? error.data.message
+          : error?.message) || "";
+
+      if (message.includes("Not enough tokens")) {
+        notify.error(
+          language === "vi"
+            ? "Không đủ token AI. Vui lòng nạp thêm để tiếp tục sử dụng tính năng AI."
+            : "Not enough AI tokens. Please top up to continue using AI features."
+        );
+      } else {
+        notify.error(
+          language === "vi"
+            ? "Không thể lấy gợi ý AI. Vui lòng thử lại."
+            : "Failed to get AI suggestions. Please try again."
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -584,10 +621,24 @@ export const ExperienceForm: FC<FormProps> = ({ data, onUpdate }) => {
       const { rewriteWorkDescription } = await import("@/api/cvapi");
       // Giả sử ngôn ngữ hiện tại là target language cho việc rewrite
       const res = await rewriteWorkDescription(currentItem.description, language);
-      const rewritten = res?.rewritten || res;
+      const rewritten = res?.rewritten.workDescription || res;
+      // console.log("rewritten: ", rewritten)
       setCurrentItem({ ...currentItem, description: rewritten });
-    } catch (err) {
-      notify.error(t.aiRewriteError);
+    } catch (error: any) {
+      const message: string =
+        (error?.data && typeof error.data.message === "string"
+          ? error.data.message
+          : error?.message) || "";
+
+      if (message.includes("Not enough tokens")) {
+        notify.error(
+          language === "vi"
+            ? "Không đủ token AI. Vui lòng nạp thêm để tiếp tục sử dụng tính năng AI."
+            : "Not enough AI tokens. Please top up to continue using AI features."
+        );
+      } else {
+        notify.error(t.aiRewriteError);
+      }
     } finally {
       setLoadingAI(false);
     }
@@ -931,9 +982,9 @@ export const SkillsForm: FC<FormProps> = ({ data, onUpdate }) => {
       setAnalyzingJD(true);
       try {
         const result = await analyzeJD(jobDescription);
-        setJobAnalysis(result);
-        // Sau khi có jobAnalysis thì gọi tiếp suggestSkills
-        await fetchSuggestions(result);
+        console.log("result: ", result)
+        setJobAnalysis(result.analyzedJob);
+        await fetchSuggestions(result.requiredSkills);
       } catch (err) {
         console.error("Error analyzing JD:", err);
         setAnalyzingJD(false);
@@ -949,16 +1000,55 @@ export const SkillsForm: FC<FormProps> = ({ data, onUpdate }) => {
     setAnalyzingJD(false); // Đảm bảo tắt loading JD
     setLoading(true);
     try {
+      console.log("analysisData: ", analysisData)
       const res = await suggestSkills(analysisData);
-      if (res && Array.isArray(res.skillsOptions) && res.skillsOptions.length > 0) {
-        const firstList = res.skillsOptions[0];
-        if (Array.isArray(firstList)) {
-          setAiSkillSuggestions(firstList.map((s: any) => s.name));
-        }
+      console.log("res suggest skill:" , res)
+      if (!res) {
+        setAiSkillSuggestions([]);
+        return;
       }
-    } catch (err) {
-      console.error("Error fetching skills:", err);
+      const rawOptions: any =
+        (res as any).skillsOptions?.skillsOptions ?? (res as any).skillsOptions;
+
+      if (Array.isArray(rawOptions) && rawOptions.length > 0) {
+        // Lấy list đầu tiên có phần tử, hoặc list đầu tiên nếu tất cả rỗng
+        const firstNonEmpty =
+          rawOptions.find((list: any) => Array.isArray(list) && list.length > 0) ||
+          rawOptions[0];
+
+        if (Array.isArray(firstNonEmpty)) {
+          const names = firstNonEmpty
+            .map((s: any) => (typeof s === "string" ? s : s?.name))
+            .filter((v: any) => typeof v === "string" && v.trim().length > 0);
+          setAiSkillSuggestions(names);
+        } else {
+          setAiSkillSuggestions([]);
+        }
+      } else {
+        setAiSkillSuggestions([]);
+      }
+    } catch (error: any) {
+      console.error("Error fetching skills:", error);
       setAiSkillSuggestions([]);
+
+      const message: string =
+        (error?.data && typeof error.data.message === "string"
+          ? error.data.message
+          : error?.message) || "";
+
+      if (message.includes("Not enough tokens")) {
+        notify.error(
+          language === "vi"
+            ? "Không đủ token AI. Vui lòng nạp thêm để tiếp tục sử dụng tính năng AI."
+            : "Not enough AI tokens. Please top up to continue using AI features."
+        );
+      } else {
+        notify.error(
+          language === "vi"
+            ? "Không thể lấy gợi ý kỹ năng từ AI. Vui lòng thử lại."
+            : "Failed to get skill suggestions from AI. Please try again."
+        );
+      }
     } finally {
       setLoading(false);
     }

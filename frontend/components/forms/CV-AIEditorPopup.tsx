@@ -629,17 +629,51 @@ export const TargetPopup: FC<{
     setLoading(true);
     try {
       const res = await suggestSummary({}, jobAnalysis || {});
-      if (res && Array.isArray(res.summaries)) {
-        setAiSuggestions(res.summaries);
+      console.log("TargetPopup suggestSummary raw res:", res);
+
+      const payload: any =
+        (res as any)?.data?.data ??
+        (res as any)?.data ??
+        res;
+
+      const rawSummaries: any = payload?.summaries;
+      console.log("TargetPopup extracted summaries:", rawSummaries);
+
+      if (Array.isArray(rawSummaries) && rawSummaries.length > 0) {
+        const texts = rawSummaries
+          .map((item: any) =>
+            typeof item === "string" ? item : item?.summary
+          )
+          .filter(
+            (v: any) => typeof v === "string" && v.trim().length > 0
+          );
+        console.log("TargetPopup final texts:", texts);
+        setAiSuggestions(texts);
+      } else {
+        console.log("TargetPopup no summaries found, fallback to []");
+        setAiSuggestions([]);
       }
       setHasLoadedAI(true);
-    } catch (err) {
+    } catch (error: any) {
       setAiSuggestions([]);
-      notify.error(
-        language === "vi"
-          ? "Không thể lấy gợi ý AI"
-          : "Failed to get AI suggestions"
-      );
+      const message: string =
+        (error?.data && typeof error.data.message === "string"
+          ? error.data.message
+          : error?.message) || "";
+
+      if (message.includes("Not enough tokens")) {
+        notify.error(
+          language === "vi"
+            ? "Không đủ token AI. Vui lòng nạp thêm để tiếp tục sử dụng tính năng AI."
+            : "Not enough AI tokens. Please top up to continue using AI features."
+        );
+      } else {
+        notify.error(
+          language === "vi"
+            ? "Không thể lấy gợi ý AI"
+            : "Failed to get AI suggestions"
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -815,10 +849,26 @@ export const ExperiencePopup: FC<{
       const { rewriteWorkDescription } = await import("@/api/cvapi");
       const res = await rewriteWorkDescription(currentItem.description, "vi");
 
-      const rewritten = res?.rewritten || res;
+      const rewritten =
+        (res as any)?.rewritten?.workDescription ??
+        (res as any)?.rewritten ??
+        res;
       setCurrentItem({ ...currentItem, description: rewritten });
-    } catch (err) {
-      notify.error(t.aiRewriteError);
+    } catch (error: any) {
+      const message: string =
+        (error?.data && typeof error.data.message === "string"
+          ? error.data.message
+          : error?.message) || "";
+
+      if (message.includes("Not enough tokens")) {
+        notify.error(
+          language === "vi"
+            ? "Không đủ token AI. Vui lòng nạp thêm để tiếp tục sử dụng tính năng AI."
+            : "Not enough AI tokens. Please top up to continue using AI features."
+        );
+      } else {
+        notify.error(t.aiRewriteError);
+      }
     } finally {
       setLoadingAI(false);
     }
@@ -1231,13 +1281,26 @@ export const SkillsPopup: FC<{
         }
       }
       setHasLoadedAI(true);
-    } catch (err) {
+    } catch (error: any) {
       setAiSkillSuggestions([]);
-      notify.error(
-        language === "vi"
-          ? "Không thể lấy gợi ý AI"
-          : "Failed to get AI suggestions"
-      );
+      const message: string =
+        (error?.data && typeof error.data.message === "string"
+          ? error.data.message
+          : error?.message) || "";
+
+      if (message.includes("Not enough tokens")) {
+        notify.error(
+          language === "vi"
+            ? "Không đủ token AI. Vui lòng nạp thêm để tiếp tục sử dụng tính năng AI."
+            : "Not enough AI tokens. Please top up to continue using AI features."
+        );
+      } else {
+        notify.error(
+          language === "vi"
+            ? "Không thể lấy gợi ý AI"
+            : "Failed to get AI suggestions"
+        );
+      }
     } finally {
       setLoading(false);
     }

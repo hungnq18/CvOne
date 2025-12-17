@@ -194,7 +194,7 @@ const Section: React.FC<SectionProps> = ({
   isDragging
 }) => {
   return (
-    <div className="mb-6 px-8">
+    <div className={`px-8 ${isPdfMode ? "mb-4" : "mb-6"}`}>
       <HoverableWrapper
         label={title}
         sectionId={sectionId}
@@ -203,13 +203,21 @@ const Section: React.FC<SectionProps> = ({
         dragHandleProps={dragHandleProps}
         isDragging={isDragging}
       >
-        <div className="bg-card rounded-xl p-8 shadow-md border-2 border-border elegant-hover relative overflow-hidden">
+        <div
+          className={`bg-card rounded-xl shadow-md border-2 border-border elegant-hover relative overflow-hidden ${
+            isPdfMode ? "p-6" : "p-8"
+          }`}
+        >
           <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-primary/5 to-transparent rounded-bl-full"></div>
 
-          <div className="mb-4 relative">
+          <div className={`${isPdfMode ? "mb-3" : "mb-4"} relative`}>
             <div className="flex items-center gap-3 mb-2">
               <div className="w-1.5 h-8 bg-gradient-to-b from-primary to-accent rounded-full"></div>
-              <h2 className="font-serif text-xl font-semibold text-foreground tracking-tight break-words">
+              <h2
+                className={`font-serif font-semibold text-foreground tracking-tight break-words ${
+                  isPdfMode ? "text-lg" : "text-xl"
+                }`}
+              >
                 {title}
               </h2>
             </div>

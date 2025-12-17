@@ -28,7 +28,7 @@ export default function ApplyWithExistingCVPage() {
   }, [jobDescription]);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-white py-10">
+    <div className="pt-20 min-h-screen flex flex-col items-center justify-center bg-white py-10">
       <h1 className="text-2xl font-bold text-blue-700 mb-4">
         Select a CV to Apply
       </h1>

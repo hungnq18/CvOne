@@ -50,7 +50,6 @@ export const getCVTemplates = async (): Promise<CVTemplate[]> => {
   const url = `${API_ENDPOINTS.CV.TEMPLATES}${cacheBuster}`;
 
   const response = await fetchWithoutAuth(url);
-
   return response;
 };
 
