@@ -260,6 +260,7 @@ export default function DepositForm() {
                         type="number"
                         min={MIN_AMOUNT}
                         max={MAX_AMOUNT}
+                        maxLength={50}
                         value={customAmount}
                         onChange={(e) => {
                             setCustomAmount(e.target.value)
@@ -351,6 +352,7 @@ export default function DepositForm() {
                             </div>
                             <input
                                 type="text"
+                                maxLength={50}
                                 value={voucherCode}
                                 onChange={(e) => { setVoucherCode(e.target.value); setVoucherError(null) }}
                                 onKeyPress={(e) => { if (e.key === "Enter") handleApplyVoucher() }}

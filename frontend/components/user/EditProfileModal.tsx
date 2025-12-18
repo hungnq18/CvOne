@@ -22,6 +22,8 @@ const EditProfileModal: React.FC<{
     const [isLoadingCountries, setIsLoadingCountries] = useState(true);
     const [isLoadingCities, setIsLoadingCities] = useState(false);
     const [selectedCountryIso2, setSelectedCountryIso2] = useState<string>('');
+    const [phoneError, setPhoneError] = useState<string>('');
+    const [nameError, setNameError] = useState<string>('');
 
     useEffect(() => {
         if (isOpen) setFormData(user as UserWithIso2);
@@ -100,11 +102,47 @@ const EditProfileModal: React.FC<{
     };
 
     const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setFormData({ ...formData, phone: e.target.value || undefined });
+        const value = e.target.value || undefined;
+        setFormData({ ...formData, phone: value });
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setNameError('');
+        setPhoneError('');
+
+        // Validate first name
+        if (!formData.first_name || !formData.first_name.trim()) {
+            setNameError(language === 'vi' ? 'Tên không được để trống' : 'First name is required');
+            return;
+        }
+        if (!/^[a-zA-Z\s]+$/.test(formData.first_name)) {
+            setNameError(language === 'vi' ? 'Tên chỉ được chứa chữ cái và khoảng trắng' : 'First name can only contain letters and spaces');
+            return;
+        }
+
+        // Validate last name
+        if (!formData.last_name || !formData.last_name.trim()) {
+            setNameError(language === 'vi' ? 'Họ không được để trống' : 'Last name is required');
+            return;
+        }
+        if (!/^[a-zA-Z\s]+$/.test(formData.last_name)) {
+            setNameError(language === 'vi' ? 'Họ chỉ được chứa chữ cái và khoảng trắng' : 'Last name can only contain letters and spaces');
+            return;
+        }
+
+        // Validate phone
+        if (formData.phone) {
+            if (formData.phone.length < 3) {
+                setPhoneError(language === 'vi' ? 'Số điện thoại phải có mã quốc gia (ít nhất 2 ký tự) + số điện thoại' : 'Phone must include country code (at least 2 digits) + phone number');
+                return;
+            }
+            if (!/^[0-9+\-\s]+$/.test(formData.phone)) {
+                setPhoneError(language === 'vi' ? 'Số điện thoại chỉ được chứa số, +, -, và khoảng trắng' : 'Phone can only contain numbers, +, -, and spaces');
+                return;
+            }
+        }
+
         setIsLoading(true);
         try {
             await onSave(formData);
@@ -139,6 +177,7 @@ const EditProfileModal: React.FC<{
                             </label>
                             <input
                                 type="text"
+                                maxLength={50}
                                 value={formData.first_name || ''}
                                 onChange={e => setFormData({ ...formData, first_name: e.target.value })}
                                 required
@@ -151,6 +190,7 @@ const EditProfileModal: React.FC<{
                             </label>
                             <input
                                 type="text"
+                                maxLength={50}
                                 value={formData.last_name || ''}
                                 onChange={e => setFormData({ ...formData, last_name: e.target.value })}
                                 required
@@ -158,6 +198,7 @@ const EditProfileModal: React.FC<{
                             />
                         </div>
                     </div>
+                    {nameError && <p className="text-sm text-red-500">{nameError}</p>}
 
                     {/* Phone */}
                     <div>
@@ -166,11 +207,16 @@ const EditProfileModal: React.FC<{
                         </label>
                         <input
                             type="tel"
+                            maxLength={15}
                             value={formData.phone || ''}
                             onChange={handlePhoneChange}
                             placeholder="1234567890"
                             className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
                         />
+                        {phoneError && <p className="text-sm text-red-500 mt-1">{phoneError}</p>}
+                        <p className="text-xs text-gray-500 mt-1">
+                            {language === 'vi' ? 'VD: 84 (mã quốc gia) + số điện thoại, tối thiểu 3 ký tự' : 'Ex: 84 (country code) + phone number, minimum 3 characters'}
+                        </p>
                     </div>
 
                     {/* Country & City */}
