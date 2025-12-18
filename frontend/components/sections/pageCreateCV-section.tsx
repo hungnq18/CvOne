@@ -646,8 +646,21 @@ const PageCreateCVContent = () => {
       } else {
         notify.error(t.translateError);
       }
-    } catch (error) {
-      notify.error(t.translateError);
+    } catch (error: any) {
+      const message: string =
+        (error?.data && typeof error.data.message === "string"
+          ? error.data.message
+          : error?.message) || "";
+
+      if (message.includes("Not enough tokens")) {
+        notify.error(
+          language === "vi"
+            ? "Không đủ token AI. Vui lòng nạp thêm để tiếp tục sử dụng tính năng AI."
+            : "Not enough AI tokens. Please top up to continue using AI features."
+        );
+      } else {
+        notify.error(t.translateError);
+      }
     } finally {
       setIsTranslating(false);
     }
@@ -765,6 +778,7 @@ const PageCreateCVContent = () => {
       }
     }
   };
+  
 
   const renderCVPreview = () => {
     if (loading || !currentTemplate || !userData) {

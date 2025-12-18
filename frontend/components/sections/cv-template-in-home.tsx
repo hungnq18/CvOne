@@ -108,24 +108,32 @@ const TemplatePreviewModal: FC<TemplatePreviewModalProps> = ({
             <X size={24} />
           </button>
         </div>
-
-        {/* Preview */}
-        <div className="flex-grow pt-4 overflow-y-auto flex justify-center items-start">
+        <div className="flex-grow pt-4 overflow-y-auto bg-gray-50">
           {!TemplateComponent ? (
-            <div className=" text-red-600">
+            <div className="text-red-600">
               Không tìm thấy component cho mẫu "{templateTitle}".
             </div>
           ) : (
-            <div className="mt-8 w-full max-w-[850px] shadow-2xl origin-top scale-[0.6] md:scale-[0.7] lg:scale-[0.8]">
-              <TemplateComponent 
-                data={defaultPreviewData} 
-                isPdfMode={true}
-                language={language}
-              />
+            <div className="flex justify-center">
+              <div
+                style={{
+                  width: 794,
+                  height: 1123,
+                  transform: "scale(0.75)",
+                  transformOrigin: "top",
+                  boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
+                }}
+              >
+                <TemplateComponent
+                  data={defaultPreviewData}
+                  isPdfMode={true}
+                  scale={0.75}
+                  language={language}
+                />
+              </div>
             </div>
           )}
         </div>
-
         {/* Footer */}
         <div className="flex justify-center items-center py-4 px-5 rounded-b-lg border-t bg-gray-100">
           <button
@@ -140,7 +148,12 @@ const TemplatePreviewModal: FC<TemplatePreviewModalProps> = ({
               viewBox="0 0 24 24"
               xmlns="http://www.w3.org/2000/svg"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 5l7 7-7 7"
+              />
             </svg>
           </button>
         </div>
@@ -156,7 +169,8 @@ interface Props {
 const CVSection: React.FC<Props> = ({ initialTemplates }) => {
   const { language } = useLanguage();
   const [cvTemplates] = useState<CVTemplate[]>(initialTemplates);
-  const [selectedTemplateForPreview, setSelectedTemplateForPreview] = useState<CVTemplate | null>(null);
+  const [selectedTemplateForPreview, setSelectedTemplateForPreview] =
+    useState<CVTemplate | null>(null);
 
   const handlePreviewClick = (template: CVTemplate) => {
     setSelectedTemplateForPreview(template);
@@ -183,7 +197,9 @@ const CVSection: React.FC<Props> = ({ initialTemplates }) => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          {language === "en" ? "Explore Our CV Templates" : "Khám phá mẫu CV của chúng tôi"}
+          {language === "en"
+            ? "Explore Our CV Templates"
+            : "Khám phá mẫu CV của chúng tôi"}
         </motion.h2>
 
         <motion.div

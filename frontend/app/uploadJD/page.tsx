@@ -109,7 +109,7 @@ function UploadJDContent() {
 
     try {
       // Retrieve CL text from localStorage
-      const clText = localStorage.getItem("clText");
+      const clText = localStorage.getItem("coverLetterData");
       if (!clText) {
         throw new Error("Không tìm thấy nội dung Cover Letter. Vui lòng thử lại từ bước trước.");
       }

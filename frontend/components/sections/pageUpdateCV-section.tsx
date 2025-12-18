@@ -629,8 +629,21 @@ const PageUpdateCVContent = () => {
       } else {
         notify.error(t.alerts.translateError);
       }
-    } catch (error) {
-      notify.error(t.alerts.translateError);
+    } catch (error: any) {
+      const message: string =
+        (error?.data && typeof error.data.message === "string"
+          ? error.data.message
+          : error?.message) || "";
+
+      if (message.includes("Not enough tokens")) {
+        notify.error(
+          language === "vi"
+            ? "Không đủ token AI. Vui lòng nạp thêm để tiếp tục sử dụng tính năng AI."
+            : "Not enough AI tokens. Please top up to continue using AI features."
+        );
+      } else {
+        notify.error(t.alerts.translateError);
+      }
     } finally {
       setIsTranslating(false);
     }
@@ -1083,9 +1096,9 @@ const PageUpdateCVContent = () => {
             >
               <FileDown size={20} /> {t.aside.download}
             </button>
-            <button className="w-full flex items-center gap-3 p-3 rounded-md text-slate-700 hover:bg-slate-100 font-medium">
+            {/* <button className="w-full flex items-center gap-3 p-3 rounded-md text-slate-700 hover:bg-slate-100 font-medium">
               <Printer size={20} /> {t.aside.print}
-            </button>
+            </button> */}
             <button
               className="w-full flex items-center gap-3 p-3 rounded-md text-slate-700 hover:bg-slate-100 font-medium"
               onClick={() => setShowTranslateModal(true)}

@@ -97,7 +97,8 @@ const CardCVTemplate: React.FC<CardCVTemplateProps> = ({
       );
     }
 
-    const containerWidth = 250;
+    // Giảm kích thước preview một chút để tránh bị cắt chữ
+    const containerWidth = 260;
     const templateOriginalWidth = 794;
     const scaleFactor = containerWidth / templateOriginalWidth;
 
@@ -106,7 +107,7 @@ const CardCVTemplate: React.FC<CardCVTemplateProps> = ({
         style={{
           position: "absolute",
           top: 0,
-          left: "2.4%",
+          left: "4%",
           width: `${templateOriginalWidth}px`,
           height: `${templateOriginalWidth * (297 / 210)}px`,
           transformOrigin: "top left",
