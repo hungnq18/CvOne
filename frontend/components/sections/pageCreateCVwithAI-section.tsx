@@ -138,10 +138,6 @@ const translations = {
   },
 };
 
-interface DecodedToken {
-  sub: string;
-  role: string;
-}
 
 function CreateCVwithAI() {
   const { language } = useLanguage();
@@ -249,8 +245,100 @@ function CreateCVwithAI() {
     );
   };
 
+  // Validate email - chấp nhận mọi domain hợp lệ (gmail.com, edu.vn, fpt.edu.vn, etc.)
+  const isValidEmail = (email: string): boolean => {
+    if (!email || !email.trim()) return false;
+    // Regex chấp nhận mọi domain hợp lệ: local@domain.tld hoặc local@subdomain.domain.tld
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    return emailRegex.test(email.trim());
+  };
+
+  // Validate phone
+  // - Không có dấu +: phải đúng 10 chữ số
+  // - Có dấu + (mã quốc gia): coi mã quốc gia là 1 phần; phần còn lại phải có đúng 9 chữ số
+  //   => Số chữ số sau dấu + có thể là 10..12 (mã quốc gia 1..3 chữ số + 9 chữ số còn lại)
+  const isValidPhone = (phone: string): boolean => {
+    if (!phone || !phone.trim()) return true; // Phone không bắt buộc
+    const trimmed = phone.trim();
+
+    // Xóa khoảng trắng, gạch, chấm, ngoặc để kiểm tra
+    const cleaned = trimmed.replace(/[\s\-\.\(\)]/g, '');
+
+    if (cleaned.startsWith('+')) {
+      const digitsAfterPlus = cleaned.slice(1).replace(/\D/g, '');
+      // Hợp lệ nếu 10..12 chữ số (1..3 cho mã quốc gia + 9 còn lại)
+      return digitsAfterPlus.length >= 10 && digitsAfterPlus.length <= 12;
+    }
+
+    // Không có dấu +: yêu cầu đúng 10 chữ số
+    const digitsOnly = cleaned.replace(/\D/g, '');
+    return digitsOnly.length === 10;
+  };
+
+  const validateCurrentStep = (): boolean => {
+    const data = userData || {} as any;
+    
+    // Step 1: Personal Information
+    if (currentStep === 1) {
+      if (!data.firstName || !String(data.firstName).trim()) {
+        notify.error(language === "vi" ? "Vui lòng nhập Họ" : "Please enter your first name");
+        return false;
+      }
+      if (!data.lastName || !String(data.lastName).trim()) {
+        notify.error(language === "vi" ? "Vui lòng nhập Tên" : "Please enter your last name");
+        return false;
+      }
+      // Validate name length
+      if (String(data.firstName).length > 100 || String(data.lastName).length > 100) {
+        notify.error(language === "vi" ? "Họ và Tên không được vượt quá 100 ký tự" : "First and last name must not exceed 100 characters");
+        return false;
+      }
+    }
+    
+    // Step 2: Contact Information
+    if (currentStep === 2) {
+      if (!data.email || !String(data.email).trim()) {
+        notify.error(language === "vi" ? "Vui lòng nhập Email" : "Please enter your email");
+        return false;
+      }
+      if (!isValidEmail(String(data.email))) {
+        notify.error(language === "vi" ? "Email không hợp lệ. Vui lòng nhập đúng định dạng email" : "Invalid email address. Please enter a valid email format");
+        return false;
+      }
+      // Phone không bắt buộc nhưng nếu có thì phải tuân theo quy tắc:
+      // - Không có dấu +: đúng 10 chữ số
+      // - Có dấu +: mã quốc gia được tính như "1 phần", phần còn lại phải có đúng 9 chữ số
+      if (data.phone && String(data.phone).trim()) {
+        const phoneStr = String(data.phone).trim();
+        if (!isValidPhone(phoneStr)) {
+          notify.error(
+            language === "vi"
+              ? "Số điện thoại không hợp lệ. Quy tắc: không có dấu + thì phải đúng 10 chữ số; có dấu + thì mã quốc gia tính là 1 phần và phần còn lại phải có đúng 9 chữ số. Ví dụ: +84 912 345 678 hoặc 0912345678"
+              : "Invalid phone number. Rules: without '+', must be exactly 10 digits; with '+', country code counts as 1 part and the remaining must be exactly 9 digits. Examples: +84 912 345 678 or 0912345678"
+          );
+          return false;
+        }
+      }
+    }
+    
+    // Step 3: Job Information - không bắt buộc
+    
+    // Step 4: Skills - không bắt buộc
+    
+    // Step 5: Experience - không bắt buộc
+    
+    // Step 6: Education - không bắt buộc
+    
+    // Step 7: Summary - không bắt buộc
+    
+    return true;
+  };
+
   const handleNextStep = async () => {
-    if (currentStep < steps.length) setCurrentStep(currentStep + 1);
+    if (currentStep < steps.length) {
+      if (!validateCurrentStep()) return;
+      setCurrentStep(currentStep + 1);
+    }
   };
 
   const handlePrevStep = () => {

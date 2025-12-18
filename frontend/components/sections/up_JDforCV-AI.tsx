@@ -21,6 +21,8 @@ const translations = {
       alerts: {
         emptyDescription: "Please enter a job description before analyzing.",
         analysisError: "An error occurred during analysis. Please try again.",
+        tokenError:
+          "Not enough AI tokens. Please top up to continue using AI features.",
       },
       results: {
         title: "📋 Job Analysis Result",
@@ -64,6 +66,8 @@ const translations = {
       alerts: {
         emptyDescription: "Vui lòng nhập mô tả công việc trước khi phân tích.",
         analysisError: "Có lỗi xảy ra khi phân tích. Vui lòng thử lại.",
+        tokenError:
+          "Không đủ token AI. Vui lòng nạp thêm để tiếp tục sử dụng tính năng AI.",
       },
       results: {
         title: "📋 Kết Quả Phân Tích Công Việc",
@@ -232,11 +236,20 @@ const UpJdStep: React.FC<UpJdStepProps> = () => {
     try {
       const result = await analyzeJD(jobDescription);
       setJobAnalysis(result);
-      const formattedResult = formatAnalysisResult(result, t.results);
+      const formattedResult = formatAnalysisResult(result.analyzedJob, t.results);
       setAnalysisResult(formattedResult);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error analyzing job description:", error);
-      setAnalysisError(t.alerts.analysisError);
+      const message: string =
+        (error?.data && typeof error.data.message === "string"
+          ? error.data.message
+          : error?.message) || "";
+
+      if (message.includes("Not enough tokens")) {
+        setAnalysisError(t.alerts.tokenError);
+      } else {
+        setAnalysisError(t.alerts.analysisError);
+      }
     } finally {
       setIsAnalyzing(false);
     }

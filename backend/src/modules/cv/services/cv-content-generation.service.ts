@@ -1,6 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { OpenaiApiService } from "./openai-api.service";
 import { AiUsageLogService } from "src/modules/ai-usage-log/ai-usage-log.service";
+import { OpenaiApiService } from "./openai-api.service";
 
 @Injectable()
 export class CvContentGenerationService {
@@ -240,13 +240,25 @@ Requirements:
    * Generate multiple skills section options with ratings using OpenAI
    */
   async generateSkillsSection(
-    jobAnalysis: any,
+    jobAnalysis: any = {},
     userSkills?: Array<{ name: string; rating: number }>
   ): Promise<{
     skillsOptions: Array<Array<{ name: string; rating: number }>>;
     total_tokens: number;
   }> {
     try {
+      const safeAnalysis = jobAnalysis || {};
+      const requiredSkills: string[] = Array.isArray(safeAnalysis.requiredSkills)
+        ? safeAnalysis.requiredSkills
+        : [];
+      const technologies: string[] = Array.isArray(safeAnalysis.technologies)
+        ? safeAnalysis.technologies
+        : [];
+      const softSkills: string[] = Array.isArray(safeAnalysis.softSkills)
+        ? safeAnalysis.softSkills
+        : [];
+      const experienceLevel: string = safeAnalysis.experienceLevel || "Not specified";
+
       const existingSkills =
         userSkills?.map((s) => s.name).join(", ") || "None";
 
@@ -254,9 +266,9 @@ Requirements:
 Generate 3 different skills section options for a CV based on the job analysis and existing user skills.
 
 Job Analysis:
-- Required Skills: ${jobAnalysis.requiredSkills?.join(", ") || "Not specified"}
-- Technologies: ${jobAnalysis.technologies?.join(", ") || "Not specified"}
-- Experience Level: ${jobAnalysis.experienceLevel || "Not specified"}
+- Required Skills: ${requiredSkills.join(", ") || "Not specified"}
+- Technologies: ${technologies.join(", ") || "Not specified"}
+- Experience Level: ${experienceLevel}
 
 Existing User Skills: ${existingSkills}
 
@@ -325,29 +337,47 @@ Do not include any explanation or markdown, only valid JSON.
           .trim();
       }
       const skillsLists = JSON.parse(cleanResponse);
-      // Filter to only include skills from job description
+
+      // Danh sách skill hợp lệ rút ra từ JD
       const validSkills = [
-        ...(jobAnalysis.requiredSkills || []),
-        ...(jobAnalysis.technologies || []),
-        ...(jobAnalysis.softSkills || []),
-      ].map((s) => s.toLowerCase());
-      function filterSkills(list) {
-        // Filter and reassign rating if found in userSkills
-        return list
-          .filter((skillObj) =>
-            validSkills.includes(skillObj.name.toLowerCase())
-          )
-          .map((skillObj) => {
-            if (userSkills) {
-              const found = userSkills.find(
-                (s) => s.name.toLowerCase() === skillObj.name.toLowerCase()
-              );
-              if (found) {
-                return { ...skillObj, rating: found.rating };
-              }
+        ...requiredSkills,
+        ...technologies,
+        ...softSkills,
+      ]
+        .filter(Boolean)
+        .map((s) => s.toLowerCase());
+
+      function filterSkills(list: Array<{ name: string; rating: number }>) {
+        if (!Array.isArray(list)) return [];
+
+        // Nếu không có validSkills, trả nguyên list từ OpenAI
+        if (validSkills.length === 0) {
+          return list;
+        }
+
+        // Lọc theo JD
+        const filtered = list.filter((skillObj) =>
+          validSkills.includes((skillObj.name || "").toLowerCase())
+        );
+
+        // Nếu lọc xong rỗng => fallback dùng lại list gốc
+        const baseList =
+          filtered.length > 0
+            ? filtered
+            : list;
+
+        // Gán lại rating nếu user có sẵn kỹ năng
+        return baseList.map((skillObj) => {
+          if (userSkills) {
+            const found = userSkills.find(
+              (s) => s.name.toLowerCase() === (skillObj.name || "").toLowerCase()
+            );
+            if (found) {
+              return { ...skillObj, rating: found.rating };
             }
-            return skillObj;
-          });
+          }
+          return skillObj;
+        });
       }
       if (Array.isArray(skillsLists) && skillsLists.length === 3) {
         return {

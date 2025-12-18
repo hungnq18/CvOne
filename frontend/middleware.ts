@@ -1,5 +1,5 @@
-import { type NextRequest, NextResponse } from "next/server";
 import { jwtDecode } from "jwt-decode";
+import { type NextRequest, NextResponse } from "next/server";
 
 const roleBasedPaths: { [key: string]: string[] } = {
   "/admin": ["admin"],
@@ -18,13 +18,13 @@ const roleBasedPaths: { [key: string]: string[] } = {
   "/marketing/voucher": ["mkt"],
   "/marketing/feedback": ["mkt"],
 
-  "/userDashboard": ["user"],
-  "/myDocuments": ["user"],
-  "/myJobs": ["user"],
-  "/uploadCV-overlay": ["user"],
-  "/uploadJD": ["user"],
-  "/user/apply": ["user"],
-  "/user/applyOption": ["user"],
+  "/userDashboard": ["user", "hr"],
+  "/myDocuments": ["user", "hr"],
+  "/myJobs": ["user", "hr"],
+  "/uploadCV-overlay": ["user", "hr"],
+  "/uploadJD": ["user", "hr"],
+  "/user/apply": ["user", "hr"],
+  "/user/applyOption": ["user", "hr"],
   "/user/profile": ["user", "admin", "hr"],
   "/work-history": ["user"],
   "/work-style": ["user"],

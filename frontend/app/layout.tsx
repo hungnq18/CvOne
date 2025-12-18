@@ -62,10 +62,10 @@ export default function RootLayout({
                       <ConditionalLayout role={role}>
                         {children}
                       </ConditionalLayout>
-                      <IconChatAndNotification /> {/* use */}
+                      <IconChatAndNotification />
                       <Toaster /> {/* For all toast notifications (shadcn) */}
                     </CVProvider>
-                  </SocketProvider>{" "}
+                  </SocketProvider>
                   {/* use */}
                 </ThemeProvider>
               </EmailVerificationProvider>

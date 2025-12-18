@@ -172,6 +172,12 @@ export default function AiInterviewPage() {
   }, []);
 
   const loadStats = async () => {
+    // Yêu cầu đăng nhập trước khi gọi backend
+    if (!requireLogin()) {
+      setIsLoadingStats(false);
+      return;
+    }
+
     try {
       const response = await aiInterviewApi.getInterviewHistory();
       if (response.success && response.data) {

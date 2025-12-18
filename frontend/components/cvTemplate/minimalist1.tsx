@@ -434,12 +434,26 @@ const CVTemplateInspired: React.FC<CVTemplateProps> = ({
               dragHandleProps={dragHandleProps}
               isDragging={isDragging}
             >
-              <h1 className="pt-12 pr-6 pl-6 text-4xl lg:text-5xl font-bold text-gray-900 uppercase break-words">
-                {userData.firstName} {userData.lastName}
-              </h1>
-              <h2 className="pb-6 pr-6 pl-6 text-xl lg:text-2xl text-gray-600 mt-2 break-words">
-                {userData.professional || t.defaultProfessional}
-              </h2>
+              {/* Giảm font một chút khi xuất PDF để tránh tràn / cắt chữ */}
+              {isPdfMode ? (
+                <>
+                  <h1 className="pt-10 pr-6 pl-6 text-4xl font-bold text-gray-900 uppercase break-words">
+                    {userData.firstName} {userData.lastName}
+                  </h1>
+                  <h2 className="pb-4 pr-6 pl-6 text-lg text-gray-600 mt-2 break-words">
+                    {userData.professional || t.defaultProfessional}
+                  </h2>
+                </>
+              ) : (
+                <>
+                  <h1 className="pt-12 pr-6 pl-6 text-4xl lg:text-5xl font-bold text-gray-900 uppercase break-words">
+                    {userData.firstName} {userData.lastName}
+                  </h1>
+                  <h2 className="pb-6 pr-6 pl-6 text-xl lg:text-2xl text-gray-600 mt-2 break-words">
+                    {userData.professional || t.defaultProfessional}
+                  </h2>
+                </>
+              )}
             </HoverableWrapper>
           </div>
         );
@@ -783,9 +797,13 @@ const CVTemplateInspired: React.FC<CVTemplateProps> = ({
 
   // --- PDF VIEW ---
   if (isPdfMode) {
+    // Cố định kích thước đúng tỷ lệ A4 để xuất PDF ổn định hơn
     return (
-      <div className="bg-white font-sans text-gray-800 flex flex-row min-h-screen">
-        <div className="w-[65%] px-4 pt-4"> 
+      <div
+        className="bg-white font-sans text-gray-800 flex flex-row"
+        style={{ width: 794, height: 794 * (297 / 210) }}
+      >
+        <div className="w-[65%] px-4 pt-4">
           <div className="flex items-center gap-6 mb-12">
             {headerSections.map(id => (
               <div key={id}>{renderSection(id, undefined, false, 1)}</div>

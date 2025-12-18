@@ -1,12 +1,10 @@
 import { analyzeJD, suggestSkills, suggestSummary } from "@/api/cvapi";
+import { notify } from "@/lib/notify";
 import { useCV } from "@/providers/cv-provider";
 import { useLanguage } from "@/providers/global_provider";
 import { Check, Edit, PlusCircle, Trash2, Wand2, X } from "lucide-react";
-import { ChangeEvent, FC, useEffect, useState } from "react";
-import { notify } from "@/lib/notify";
+import { ChangeEvent, FC, useState } from "react";
 
-// --- COMPONENT NÚT AI DÙNG CHUNG (ĐỂ ĐỒNG BỘ THIẾT KẾ) ---
-// Component này tạo ra nút bấm có hiệu ứng shimmer gradient đẹp mắt
 const AIButton: FC<{ onClick: () => void; isLoading: boolean; text: string; disabled?: boolean }> = ({
   onClick,
   isLoading,
@@ -57,10 +55,8 @@ const AIButton: FC<{ onClick: () => void; isLoading: boolean; text: string; disa
 
 
 
-// --- ĐỐI TƯỢNG TRANSLATIONS CHO TOÀN BỘ FILE ---
 const translations = {
   en: {
-    // ... (giữ nguyên infoForm và contactForm)
     infoForm: {
       uploadErrorPreset:
         "Image upload failed. Please check the preset configuration.",
@@ -72,12 +68,20 @@ const translations = {
       firstNameLabel: "First Name",
       lastNameLabel: "Last Name",
       professionLabel: "Title / Job Position",
+      firstNameRequired: "First name is required",
+      lastNameRequired: "Last name is required",
+      nameTooLong: "Name must not exceed 100 characters",
+      invalidName: "Name contains invalid characters",
     },
     contactForm: {
       title: "Contact Information",
       emailLabel: "Email",
       phoneLabel: "Phone Number",
       addressLabel: "Address (City)",
+      emailRequired: "Email is required",
+      invalidEmail: "Please enter a valid email address",
+      invalidPhone: "Invalid phone number format",
+      phoneFormat: "Example: +84 912 345 678 or 0912345678",
     },
     summaryForm: {
       aiSuggestions: "AI Suggestions",
@@ -86,7 +90,7 @@ const translations = {
       tooltipAdd: "Add to career objective",
       title: "About Me and Career Objective",
       placeholder: "Introduce yourself and your career goals",
-      writeWithAI: "Write with AI", // Thêm key mới
+      writeWithAI: "Write with AI",
     },
     experienceForm: {
       deleteConfirm: "Are you sure you want to delete this item?",
@@ -94,6 +98,10 @@ const translations = {
       validationError: "Please fill in Position and Company Name.",
       positionLabel: "Position",
       companyLabel: "Company",
+      positionRequired: "Position is required",
+      companyRequired: "Company name is required",
+      dateInvalid: "Invalid date format. Please use YYYY-MM format",
+      endDateBeforeStart: "End date must be after start date",
       startDateLabel: "Start Date",
       startDatePlaceholder: "YYYY-MM",
       endDateLabel: "End Date",
@@ -108,7 +116,6 @@ const translations = {
       addExperienceButton: "Add Experience",
     },
     educationForm: {
-      // ... (giữ nguyên educationForm)
       deleteConfirm: "Are you sure you want to delete this item?",
       institutionLabel: "Institution",
       majorLabel: "Major",
@@ -119,6 +126,11 @@ const translations = {
       saveButton: "Save",
       addButton: "Add",
       addEducationButton: "Add Education",
+      institutionRequired: "Institution is required",
+      majorRequired: "Major is required",
+      degreeRequired: "Degree is required",
+      dateInvalid: "Invalid date format. Please use YYYY-MM format",
+      endDateBeforeStart: "End date must be after start date",
     },
     skillsForm: {
       aiSuggestionsTitle: "AI Skill Suggestions",
@@ -129,12 +141,11 @@ const translations = {
       yourSkillsTitle: "Your Skills",
       placeholder: "Add a new skill",
       addButton: "Add",
-      writeWithAI: "Suggest Skills with AI", // Thêm key mới
-      noSuggestions: "No suggestions found yet. Try using AI.", // Thêm key mới
+      writeWithAI: "Suggest Skills with AI",
+      noSuggestions: "No suggestions found yet. Try using AI.",
     },
   },
   vi: {
-     // ... (giữ nguyên infoForm và contactForm)
     infoForm: {
       uploadErrorPreset:
         "Tải ảnh lên thất bại. Vui lòng kiểm tra lại cấu hình preset.",
@@ -146,12 +157,20 @@ const translations = {
       firstNameLabel: "Họ",
       lastNameLabel: "Tên",
       professionLabel: "Chức danh / Vị trí công việc",
+      firstNameRequired: "Họ là bắt buộc",
+      lastNameRequired: "Tên là bắt buộc",
+      nameTooLong: "Tên không được vượt quá 100 ký tự",
+      invalidName: "Tên chứa ký tự không hợp lệ",
     },
     contactForm: {
       title: "Thông tin liên hệ",
       emailLabel: "Email",
       phoneLabel: "Số điện thoại",
-      addressLabel: "Địa chỉ (Thành phố, Quốc gia)",
+      addressLabel: "Địa chỉ (Thành phố)",
+      emailRequired: "Email là bắt buộc",
+      invalidEmail: "Vui lòng nhập địa chỉ email hợp lệ",
+      invalidPhone: "Định dạng số điện thoại không hợp lệ",
+      phoneFormat: "Ví dụ: +84 912 345 678 hoặc 0912345678",
     },
     summaryForm: {
       aiSuggestions: "Gợi ý từ AI",
@@ -160,7 +179,7 @@ const translations = {
       tooltipAdd: "Thêm vào mục tiêu sự nghiệp",
       title: "Giới thiệu bản thân và mục tiêu nghề nghiệp",
       placeholder: "Giới thiệu bản thân và mục tiêu nghề nghiệp",
-      writeWithAI: "Viết bằng AI", // Thêm key mới
+      writeWithAI: "Viết bằng AI",
     },
     experienceForm: {
       deleteConfirm: "Bạn có chắc muốn xóa mục này?",
@@ -168,6 +187,10 @@ const translations = {
       validationError: "Vui lòng điền Chức vụ và Tên công ty.",
       positionLabel: "Chức vụ",
       companyLabel: "Công ty",
+      positionRequired: "Chức vụ là bắt buộc",
+      companyRequired: "Tên công ty là bắt buộc",
+      dateInvalid: "Định dạng ngày không hợp lệ. Vui lòng sử dụng định dạng YYYY-MM",
+      endDateBeforeStart: "Ngày kết thúc phải sau ngày bắt đầu",
       startDateLabel: "Ngày bắt đầu",
       startDatePlaceholder: "YYYY-MM",
       endDateLabel: "Ngày kết thúc",
@@ -182,7 +205,6 @@ const translations = {
       addExperienceButton: "Thêm Kinh Nghiệp",
     },
     educationForm: {
-      // ... (giữ nguyên educationForm)
       deleteConfirm: "Bạn có chắc muốn xóa mục này?",
       institutionLabel: "Trường/Học viện",
       majorLabel: "Chuyên ngành",
@@ -193,6 +215,11 @@ const translations = {
       saveButton: "Lưu",
       addButton: "Thêm",
       addEducationButton: "Thêm Học Vấn",
+      institutionRequired: "Trường/Học viện là bắt buộc",
+      majorRequired: "Chuyên ngành là bắt buộc",
+      degreeRequired: "Bằng cấp là bắt buộc",
+      dateInvalid: "Định dạng ngày không hợp lệ. Vui lòng sử dụng định dạng YYYY-MM",
+      endDateBeforeStart: "Ngày kết thúc phải sau ngày bắt đầu",
     },
     skillsForm: {
       aiSuggestionsTitle: "Gợi ý kỹ năng từ AI",
@@ -203,8 +230,8 @@ const translations = {
       yourSkillsTitle: "Kỹ năng của bạn",
       placeholder: "Thêm kỹ năng mới",
       addButton: "Thêm",
-      writeWithAI: "Gợi ý kỹ năng bằng AI", // Thêm key mới
-      noSuggestions: "Chưa có gợi ý nào. Hãy thử dùng AI.", // Thêm key mới
+      writeWithAI: "Gợi ý kỹ năng bằng AI",
+      noSuggestions: "Chưa có gợi ý nào. Hãy thử dùng AI.",
     },
   },
 };
@@ -221,7 +248,8 @@ export const InfoForm: FC<FormProps> = ({ data, onUpdate }) => {
   const [isUploading, setIsUploading] = useState(false);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    onUpdate({ ...data, [e.target.id]: e.target.value });
+    const { id, value } = e.target;
+    onUpdate({ ...data, [id]: value });
   };
 
   const handleAvatarUpload = async (e: ChangeEvent<HTMLInputElement>) => {
@@ -353,7 +381,14 @@ export const ContactForm: FC<FormProps> = ({ data, onUpdate }) => {
   const t = translations[language].contactForm;
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    onUpdate({ ...data, [e.target.id]: e.target.value });
+    const { id, value } = e.target;
+    onUpdate({ ...data, [id]: value });
+  };
+
+  const handlePhoneChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    const filtered = value.replace(/[^0-9\+\s\-\.\(\)]/g, '');
+    onUpdate({ ...data, phone: filtered });
   };
   
   return (
@@ -386,7 +421,8 @@ export const ContactForm: FC<FormProps> = ({ data, onUpdate }) => {
             type="tel"
             id="phone"
             value={data?.phone || ""}
-            onChange={handleChange}
+            onChange={handlePhoneChange}
+            placeholder={t.phoneFormat}
             className="w-full pl-12 pr-4 py-3 border border-slate-200 rounded-xl text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white"
           />
         </div>
@@ -412,30 +448,62 @@ export const ContactForm: FC<FormProps> = ({ data, onUpdate }) => {
   );
 };
 
-// --- SỬA SummaryForm ---
 export const SummaryForm: FC<FormProps> = ({ data, onUpdate }) => {
   const { language } = useLanguage();
   const t = translations[language].summaryForm;
 
   const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
-  // Thêm state để kiểm tra xem đã từng gọi AI chưa
   const [hasTriggeredAI, setHasTriggeredAI] = useState(false);
 
-  // ĐÃ XÓA useEffect tự động gọi API
-
-  // Hàm xử lý khi bấm nút AI
   const handleTriggerAI = async () => {
     setLoading(true);
-    setHasTriggeredAI(true); // Đánh dấu là đã gọi
+    setHasTriggeredAI(true);
     try {
       const jobAnalysis = data?.jobAnalysis || {};
       const res = await suggestSummary({}, jobAnalysis);
-      if (res && Array.isArray(res.summaries)) {
-        setAiSuggestions(res.summaries);
+      console.log("suggestSummary raw res:", res);
+
+      const rawSummaries: any =
+        (res as any)?.summaries ??
+        (res as any)?.data?.summaries ??
+        (res as any)?.data?.data?.summaries;
+      console.log("suggestSummary extracted summaries:", rawSummaries);
+
+      if (Array.isArray(rawSummaries) && rawSummaries.length > 0) {
+        const texts = rawSummaries
+          .map((item: any) =>
+            typeof item === "string" ? item : item?.summary
+          )
+          .filter(
+            (v: any) => typeof v === "string" && v.trim().length > 0
+          );
+        console.log("suggestSummary final texts:", texts);
+        setAiSuggestions(texts);
+      } else {
+        console.log("suggestSummary no summaries found, fallback to []");
+        setAiSuggestions([]);
       }
-    } catch (err) {
+    } catch (error: any) {
       setAiSuggestions([]);
+      const message: string =
+        (error?.data && typeof error.data.message === "string"
+          ? error.data.message
+          : error?.message) || "";
+
+      if (message.includes("Not enough tokens")) {
+        notify.error(
+          language === "vi"
+            ? "Không đủ token AI. Vui lòng nạp thêm để tiếp tục sử dụng tính năng AI."
+            : "Not enough AI tokens. Please top up to continue using AI features."
+        );
+      } else {
+        notify.error(
+          language === "vi"
+            ? "Không thể lấy gợi ý AI. Vui lòng thử lại."
+            : "Failed to get AI suggestions. Please try again."
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -458,7 +526,6 @@ export const SummaryForm: FC<FormProps> = ({ data, onUpdate }) => {
         </div>
         
         <div className="flex flex-col gap-4">
-          {/* Logic hiển thị: Nút bấm -> Loading -> Kết quả */}
           {!hasTriggeredAI && !loading ? (
             <div className="flex justify-start py-4">
                <AIButton onClick={handleTriggerAI} isLoading={loading} text={t.writeWithAI} />
@@ -494,7 +561,6 @@ export const SummaryForm: FC<FormProps> = ({ data, onUpdate }) => {
               );
             })
           )}
-           {/* Hiển thị nút "Thử lại" nếu đã gọi rồi nhưng muốn gọi lại */}
            {hasTriggeredAI && !loading && aiSuggestions.length > 0 && (
              <div className="flex justify-center mt-2">
                <button onClick={handleTriggerAI} className="text-sm text-blue-600 hover:underline flex items-center gap-1">
@@ -529,7 +595,6 @@ export const SummaryForm: FC<FormProps> = ({ data, onUpdate }) => {
   );
 };
 
-// --- SỬA ExperienceForm ---
 export const ExperienceForm: FC<FormProps> = ({ data, onUpdate }) => {
   const { language } = useLanguage();
   const t = translations[language].experienceForm;
@@ -582,22 +647,60 @@ export const ExperienceForm: FC<FormProps> = ({ data, onUpdate }) => {
     setLoadingAI(true);
     try {
       const { rewriteWorkDescription } = await import("@/api/cvapi");
-      // Giả sử ngôn ngữ hiện tại là target language cho việc rewrite
       const res = await rewriteWorkDescription(currentItem.description, language);
-      const rewritten = res?.rewritten || res;
+      const rewritten = res?.rewritten.workDescription || res;
+      // console.log("rewritten: ", rewritten)
       setCurrentItem({ ...currentItem, description: rewritten });
-    } catch (err) {
-      notify.error(t.aiRewriteError);
+    } catch (error: any) {
+      const message: string =
+        (error?.data && typeof error.data.message === "string"
+          ? error.data.message
+          : error?.message) || "";
+
+      if (message.includes("Not enough tokens")) {
+        notify.error(
+          language === "vi"
+            ? "Không đủ token AI. Vui lòng nạp thêm để tiếp tục sử dụng tính năng AI."
+            : "Not enough AI tokens. Please top up to continue using AI features."
+        );
+      } else {
+        notify.error(t.aiRewriteError);
+      }
     } finally {
       setLoadingAI(false);
     }
   };
 
   const handleFormSubmit = () => {
-    if (!currentItem.title || !currentItem.company) {
-      notify.error(t.validationError);
+    if (!currentItem.title || !currentItem.title.trim()) {
+      notify.error(t.positionRequired);
       return;
     }
+    if (!currentItem.company || !currentItem.company.trim()) {
+      notify.error(t.companyRequired);
+      return;
+    }
+    
+    // Validate date format if provided
+    if (currentItem.startDate && !/^\d{4}-\d{2}$/.test(currentItem.startDate)) {
+      notify.error(t.dateInvalid);
+      return;
+    }
+    if (currentItem.endDate && currentItem.endDate !== "Present" && !/^\d{4}-\d{2}$/.test(currentItem.endDate)) {
+      notify.error(t.dateInvalid);
+      return;
+    }
+    
+    // Validate end date is after start date
+    if (currentItem.startDate && currentItem.endDate && currentItem.endDate !== "Present") {
+      const start = new Date(currentItem.startDate + "-01");
+      const end = new Date(currentItem.endDate + "-01");
+      if (end < start) {
+        notify.error(t.endDateBeforeStart);
+        return;
+      }
+    }
+    
     let newExperiences = [...experiences];
     if (editingIndex !== null) {
       newExperiences[editingIndex] = currentItem;
@@ -607,6 +710,7 @@ export const ExperienceForm: FC<FormProps> = ({ data, onUpdate }) => {
     updateParent(newExperiences);
     setIsEditing(false);
     setCurrentItem(null);
+    notify.success(language === "vi" ? "Đã lưu kinh nghiệm làm việc" : "Work experience saved");
   };
 
   return isEditing ? (
@@ -666,7 +770,6 @@ export const ExperienceForm: FC<FormProps> = ({ data, onUpdate }) => {
       <div>
         <div className="flex justify-between items-center mb-2">
           <label className="block text-sm font-medium text-gray-700">{t.descriptionLabel}</label>
-          {/* Sử dụng Component AIButton mới để đồng bộ thiết kế */}
           <div title={t.aiRewriteTooltip}>
              <AIButton 
                 onClick={handleAIRewrite} 
@@ -732,7 +835,6 @@ export const ExperienceForm: FC<FormProps> = ({ data, onUpdate }) => {
   );
 };
 
-// --- GIỮ NGUYÊN EducationForm ---
 export const EducationForm: FC<FormProps> = ({ data, onUpdate }) => {
   const { language } = useLanguage();
   const t = translations[language].educationForm;
@@ -778,6 +880,39 @@ export const EducationForm: FC<FormProps> = ({ data, onUpdate }) => {
   };
 
   const handleFormSubmit = () => {
+    if (!currentItem.institution || !currentItem.institution.trim()) {
+      notify.error(t.institutionRequired);
+      return;
+    }
+    if (!currentItem.major || !currentItem.major.trim()) {
+      notify.error(t.majorRequired);
+      return;
+    }
+    if (!currentItem.degree || !currentItem.degree.trim()) {
+      notify.error(t.degreeRequired);
+      return;
+    }
+    
+    // Validate date format if provided
+    if (currentItem.startDate && !/^\d{4}-\d{2}$/.test(currentItem.startDate)) {
+      notify.error(t.dateInvalid);
+      return;
+    }
+    if (currentItem.endDate && !/^\d{4}-\d{2}$/.test(currentItem.endDate)) {
+      notify.error(t.dateInvalid);
+      return;
+    }
+    
+    // Validate end date is after start date
+    if (currentItem.startDate && currentItem.endDate) {
+      const start = new Date(currentItem.startDate + "-01");
+      const end = new Date(currentItem.endDate + "-01");
+      if (end < start) {
+        notify.error(t.endDateBeforeStart);
+        return;
+      }
+    }
+    
     let newEducations = [...educations];
     if (editingIndex !== null) {
       newEducations[editingIndex] = currentItem;
@@ -787,6 +922,7 @@ export const EducationForm: FC<FormProps> = ({ data, onUpdate }) => {
     updateParent(newEducations);
     setIsEditing(false);
     setCurrentItem(null);
+    notify.success(language === "vi" ? "Đã lưu học vấn" : "Education saved");
   };
 
   return isEditing ? (
@@ -905,60 +1041,103 @@ export const EducationForm: FC<FormProps> = ({ data, onUpdate }) => {
   );
 };
 
-// --- SỬA SkillsForm ---
 export const SkillsForm: FC<FormProps> = ({ data, onUpdate }) => {
   const { language } = useLanguage();
   const t = translations[language].skillsForm;
 
   const { jobDescription, jobAnalysis, setJobAnalysis } = useCV();
-  const [skills, setSkills] = useState(data?.skills || []);
+  const [skills, setSkills] = useState<Array<{ name: string }>>([]);
   const [newSkill, setNewSkill] = useState("");
   const [aiSkillSuggestions, setAiSkillSuggestions] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [analyzingJD, setAnalyzingJD] = useState(false);
-  // Thêm state để kiểm tra xem đã từng gọi AI chưa
   const [hasTriggeredAI, setHasTriggeredAI] = useState(false);
 
-  // ĐÃ XÓA useEffect tự động gọi API
-
-  // Hàm xử lý khi bấm nút AI
   const handleTriggerAI = async () => {
     setHasTriggeredAI(true);
-    setAiSkillSuggestions([]); // Reset gợi ý cũ
+    setAiSkillSuggestions([]);
+    // Nếu chưa có jobAnalysis nhưng cũng không có JD thì không thể gọi AI
+    if (!jobAnalysis && !jobDescription) {
+      notify.error(
+        language === "vi"
+          ? "Vui lòng nhập mô tả công việc (JD) trước khi dùng gợi ý kỹ năng AI."
+          : "Please enter a job description (JD) before using AI skill suggestions."
+      );
+      return;
+    }
 
-    // 1. Phân tích JD nếu chưa có và jobDescription tồn tại
     if (!jobAnalysis && jobDescription) {
       setAnalyzingJD(true);
       try {
         const result = await analyzeJD(jobDescription);
-        setJobAnalysis(result);
-        // Sau khi có jobAnalysis thì gọi tiếp suggestSkills
-        await fetchSuggestions(result);
+        console.log("result: ", result)
+        // result từ API có dạng { analyzedJob, total_tokens }
+        const analyzedJob = (result as any)?.analyzedJob ?? result;
+        setJobAnalysis(analyzedJob);
+        // Gửi đúng object jobAnalysis cho API suggestSkills
+        await fetchSuggestions(analyzedJob);
       } catch (err) {
         console.error("Error analyzing JD:", err);
         setAnalyzingJD(false);
       }
-    } 
-    // 2. Nếu đã có jobAnalysis hoặc không có JD để phân tích, gọi thẳng suggestSkills
-    else {
-      await fetchSuggestions(jobAnalysis || {});
+    } else if (jobAnalysis) {
+      // Đã có sẵn jobAnalysis thì dùng luôn, không gửi object rỗng
+      await fetchSuggestions(jobAnalysis);
     }
   };
 
   const fetchSuggestions = async (analysisData: any) => {
-    setAnalyzingJD(false); // Đảm bảo tắt loading JD
+    setAnalyzingJD(false);
     setLoading(true);
     try {
+      console.log("analysisData: ", analysisData)
       const res = await suggestSkills(analysisData);
-      if (res && Array.isArray(res.skillsOptions) && res.skillsOptions.length > 0) {
-        const firstList = res.skillsOptions[0];
-        if (Array.isArray(firstList)) {
-          setAiSkillSuggestions(firstList.map((s: any) => s.name));
-        }
+      console.log("res suggest skill:" , res)
+      if (!res) {
+        setAiSkillSuggestions([]);
+        return;
       }
-    } catch (err) {
-      console.error("Error fetching skills:", err);
+      const rawOptions: any =
+        (res as any).skillsOptions?.skillsOptions ?? (res as any).skillsOptions;
+
+      if (Array.isArray(rawOptions) && rawOptions.length > 0) {
+        const firstNonEmpty =
+          rawOptions.find((list: any) => Array.isArray(list) && list.length > 0) ||
+          rawOptions[0];
+
+        if (Array.isArray(firstNonEmpty)) {
+          const names = firstNonEmpty
+            .map((s: any) => (typeof s === "string" ? s : s?.name))
+            .filter((v: any) => typeof v === "string" && v.trim().length > 0);
+          setAiSkillSuggestions(names);
+        } else {
+          setAiSkillSuggestions([]);
+        }
+      } else {
+        setAiSkillSuggestions([]);
+      }
+    } catch (error: any) {
+      console.error("Error fetching skills:", error);
       setAiSkillSuggestions([]);
+
+      const message: string =
+        (error?.data && typeof error.data.message === "string"
+          ? error.data.message
+          : error?.message) || "";
+
+      if (message.includes("Not enough tokens")) {
+        notify.error(
+          language === "vi"
+            ? "Không đủ token AI. Vui lòng nạp thêm để tiếp tục sử dụng tính năng AI."
+            : "Not enough AI tokens. Please top up to continue using AI features."
+        );
+      } else {
+        notify.error(
+          language === "vi"
+            ? "Không thể lấy gợi ý kỹ năng từ AI. Vui lòng thử lại."
+            : "Failed to get skill suggestions from AI. Please try again."
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -966,12 +1145,23 @@ export const SkillsForm: FC<FormProps> = ({ data, onUpdate }) => {
 
   const addSkill = (skillName?: string) => {
     const name = (skillName ?? newSkill).trim();
-    if (name && !skills.find((s: any) => s.name === name)) {
+    if (!name) {
+      notify.error(language === "vi" ? "Vui lòng nhập tên kỹ năng" : "Please enter a skill name");
+      return;
+    }
+    if (name.length > 50) {
+      notify.error(language === "vi" ? "Tên kỹ năng không được quá 50 ký tự" : "Skill name must not exceed 50 characters");
+      return;
+    }
+    if (skills.find((s: any) => s.name.toLowerCase() === name.toLowerCase())) {
+      notify.error(language === "vi" ? "Kỹ năng này đã tồn tại" : "This skill already exists");
+      return;
+    }
       const updated = [...skills, { name }];
       setSkills(updated);
       onUpdate({ ...data, skills: updated });
       if (!skillName) setNewSkill("");
-    }
+    notify.success(language === "vi" ? "Đã thêm kỹ năng" : "Skill added");
   };
 
   const removeSkill = (indexToRemove: number) => {
@@ -999,7 +1189,6 @@ export const SkillsForm: FC<FormProps> = ({ data, onUpdate }) => {
         <div className="font-semibold text-gray-700 mb-2">{t.aiSuggestionsTitle}</div>
         
         <div className="flex flex-col gap-3 mb-4">
-           {/* Logic hiển thị: Nút bấm -> Loading -> Kết quả */}
            {!hasTriggeredAI && !isLoadingAny ? (
              <div className="flex justify-start py-4">
                 <AIButton onClick={handleTriggerAI} isLoading={isLoadingAny} text={t.writeWithAI} />
@@ -1013,7 +1202,7 @@ export const SkillsForm: FC<FormProps> = ({ data, onUpdate }) => {
               {aiSkillSuggestions.length === 0 ? (
                 <div className="text-gray-500 italic">{t.noSuggestions}</div>
               ) : (
-                aiSkillSuggestions.map((skill, idx) => {
+                aiSkillSuggestions.map((skill) => {
                   const isSelected = skills.some((s: any) => s.name === skill);
                   return (
                     <button key={skill} type="button" className={`flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium border transition-colors w-full text-left ${isSelected ? "bg-blue-400 text-white border-blue-400 hover:bg-blue-500" : "bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-200"}`} onClick={() => handleToggleAISkill(skill)} title={isSelected ? t.tooltipRemove : t.tooltipAdd}>
@@ -1023,7 +1212,6 @@ export const SkillsForm: FC<FormProps> = ({ data, onUpdate }) => {
                   );
                 })
               )}
-               {/* Nút thử lại */}
                {hasTriggeredAI && !isLoadingAny && (
                 <div className="flex justify-center mt-2">
                   <button onClick={handleTriggerAI} className="text-sm text-blue-600 hover:underline flex items-center gap-1">
@@ -1076,7 +1264,6 @@ export const SkillsForm: FC<FormProps> = ({ data, onUpdate }) => {
   );
 };
 
-// --- GIỮ NGUYÊN Step Component ---
 export const Step: FC<{ step: { id: number; name: string }; currentStep: number; isLastStep: boolean; }> = ({ step, currentStep, isLastStep }) => {
   const status = currentStep === step.id ? "active" : currentStep > step.id ? "complete" : "upcoming";
   return (

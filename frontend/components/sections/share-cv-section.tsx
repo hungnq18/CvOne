@@ -5,6 +5,8 @@ import { useEffect, useRef, useState } from "react"
 import { FileDown, Loader2 } from "lucide-react"
 import { useLanguage } from "@/providers/global_provider"
 import { templateComponentMap } from "@/components/cvTemplate/index"
+import { notify } from "@/lib/notify"
+import { getDefaultSectionPositions } from "../cvTemplate/defaultSectionPositions"
 
 interface CVShareSectionProps {
   userData?: any
@@ -21,6 +23,8 @@ const translations = {
     subtitle: "Your professional profile, ready to share",
     loadingTemplate: "Loading Template...",
     templateComponentNotFound: (title: string) => `Component for "${title}" not found.`,
+    pdfCreateEnvError: "Cannot create environment to export PDF.",
+    pdfCreateError: "An error occurred while exporting the PDF file.",
   },
   vi: {
     downloadCV: "Tải về CV",
@@ -28,6 +32,8 @@ const translations = {
     subtitle: "Hồ sơ chuyên nghiệp của bạn, sẵn sàng chia sẻ",
     loadingTemplate: "Đang tải Mẫu...",
     templateComponentNotFound: (title: string) => `Không tìm thấy component cho "${title}".`,
+    pdfCreateEnvError: "Không thể tạo môi trường để xuất PDF.",
+    pdfCreateError: "Đã có lỗi xảy ra khi xuất file PDF.",
   },
 }
 
@@ -56,14 +62,107 @@ export const CVShareSection: React.FC<CVShareSectionProps> = ({
     return () => ro.disconnect()
   }, [])
 
-  const handleDownload = async () => {
-    if (onDownloadPDF) {
-      setIsDownloading(true)
-      try {
-        await onDownloadPDF()
-      } finally {
-        setIsDownloading(false)
+  const renderCVForPDF = () => {
+    if (!currentTemplate || !userData) return null
+    const TemplateComponent = templateComponentMap?.[currentTemplate.title]
+    if (!TemplateComponent) return null
+
+    const sectionPositions =
+      currentTemplate.data?.sectionPositions ||
+      getDefaultSectionPositions(currentTemplate.title)
+
+    const componentData = {
+      ...currentTemplate.data,
+      userData: userData,
+      sectionPositions,
+    }
+
+    return (
+      <div>
+        <TemplateComponent
+          data={componentData}
+          isPdfMode={true}
+          language={language}
+        />
+      </div>
+    )
+  }
+
+  const handleDownloadPDF = async () => {
+    const iframe = document.createElement("iframe")
+    iframe.style.position = "fixed"
+    iframe.style.width = "794px"
+    iframe.style.height = "1123px"
+    iframe.style.left = "-9999px"
+    document.body.appendChild(iframe)
+
+    const iframeDoc = iframe.contentWindow?.document
+    if (!iframeDoc) {
+      notify.error(t.pdfCreateEnvError)
+      document.body.removeChild(iframe)
+      return
+    }
+
+    const head = iframeDoc.head
+    document
+      .querySelectorAll('style, link[rel="stylesheet"]')
+      .forEach((node) => {
+        head.appendChild(node.cloneNode(true))
+      })
+
+    const mountNode = iframeDoc.createElement("div")
+    iframeDoc.body.appendChild(mountNode)
+
+    let root: any = null
+
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 300))
+
+      const { createRoot } = await import("react-dom/client")
+      root = createRoot(mountNode)
+      root.render(renderCVForPDF())
+
+      await new Promise((resolve) => setTimeout(resolve, 500))
+
+      const html2canvas = (await import("html2canvas")).default
+      const jsPDF = (await import("jspdf")).default
+
+      const canvas = await html2canvas(iframe.contentWindow.document.body, {
+        scale: 2,
+        useCORS: true,
+        onclone: (clonedDoc) => {
+            const elements = clonedDoc.querySelectorAll('.tracking-wider')
+            elements.forEach((el) => {
+                (el as HTMLElement).style.letterSpacing = 'normal'
+            })
+        }
+      })
+
+      const pdf = new jsPDF('p', 'mm', 'a4')
+      const pdfWidth = pdf.internal.pageSize.getWidth()
+      const imgHeight = (canvas.height * pdfWidth) / canvas.width
+
+      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, pdfWidth, imgHeight)
+      pdf.save(`${cvTitle || "cv"}.pdf`)
+    } catch (error) {
+      console.error(t.pdfCreateError, error)
+      notify.error(t.pdfCreateError)
+    } finally {
+      if (root) {
+        root.unmount()
       }
+      if (document.body.contains(iframe)) {
+        document.body.removeChild(iframe)
+      }
+    }
+  }
+
+  const handleDownload = async () => {
+    setIsDownloading(true)
+    try {
+      await handleDownloadPDF()
+    } finally {
+      setIsDownloading(false)
     }
   }
 
@@ -85,9 +184,14 @@ export const CVShareSection: React.FC<CVShareSectionProps> = ({
       )
     }
 
+    const sectionPositions =
+      currentTemplate.data?.sectionPositions ||
+      getDefaultSectionPositions(currentTemplate.title)
+
     const componentData = {
       ...currentTemplate.data,
       userData: userData,
+      sectionPositions,
     }
 
     const templateOriginalWidth = 794
@@ -107,7 +211,11 @@ export const CVShareSection: React.FC<CVShareSectionProps> = ({
               transformOrigin: "top left",
             }}
           >
-            <TemplateComponent data={componentData} />
+            <TemplateComponent
+              data={componentData}
+              isPdfMode={true}
+              language={language}
+            />
           </div>
         </div>
       </div>

@@ -319,12 +319,20 @@ export class CvController {
   @UseInterceptors(AiUsageInterceptor)
   @Post("suggest/skills")
   async suggestSkills(
-    @Body("jobAnalysis") jobAnalysis: any,
-    @Body("userSkills") userSkills?: Array<{ name: string; rating: number }>
+    @Body() body: any
   ) {
+    const rawJobAnalysis = body?.jobAnalysis ?? body?.analyzedJob ?? body ?? {};
+    const normalizedJobAnalysis =
+      rawJobAnalysis?.analyzedJob ?? rawJobAnalysis ?? {};
+
+    const userSkills: Array<{ name: string; rating: number }> | undefined =
+      Array.isArray(body?.userSkills) && body.userSkills.length > 0
+        ? body.userSkills
+        : undefined;
+
     const skillsOptions =
       await this.cvContentGenerationService.generateSkillsSection(
-        jobAnalysis,
+        normalizedJobAnalysis,
         userSkills
       );
 
