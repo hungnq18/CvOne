@@ -1,5 +1,5 @@
-import { type NextRequest, NextResponse } from "next/server";
 import { jwtDecode } from "jwt-decode";
+import { type NextRequest, NextResponse } from "next/server";
 
 const roleBasedPaths: { [key: string]: string[] } = {
   "/admin": ["admin"],
@@ -36,6 +36,7 @@ const roleBasedPaths: { [key: string]: string[] } = {
   "/customize": ["user"],
   "/createCV-AIManual": ["user"],
   "/createCV-AI": ["user"],
+  "/ai-interview": ["user"],
   "/createCLTemplate": ["user"],
   "/createCV": ["user"],
   "/chooseOption": ["user"],
