@@ -60,6 +60,8 @@ const translations: {
       invalidEmail: "Please enter a valid email address!",
       invalidPhone: "Phone number must be 10 digits and start with 0!",
       passwordMismatch: "Passwords do not match!",
+      passwordTooShort: "Password must be at least 6 characters",
+      passwordTooLong: "Password must not exceed 25 characters",
       registerSuccess: "Registration successful!",
       registerFailed: "Registration failed",
       checkEmail: "Please check your email for verification",
@@ -102,6 +104,8 @@ const translations: {
       requiredFields: "Please fill in all required fields!",
       invalidEmail: "Please enter a valid email address!",
       passwordMismatch: "Passwords do not match!",
+      passwordTooShort: "Password must be at least 6 characters",
+      passwordTooLong: "Password must not exceed 25 characters",
       registerSuccess: "Registration successful!",
       registerFailed: "Registration failed",
       checkEmail: "Please check your email for verification",
@@ -136,6 +140,8 @@ const translations: {
       invalidEmail: "Vui lòng nhập địa chỉ email hợp lệ!",
       invalidPhone: "Số điện thoại phải có 10 số và bắt đầu bằng số 0!",
       passwordMismatch: "Mật khẩu xác nhận không khớp!",
+      passwordTooShort: "Mật khẩu phải có ít nhất 6 ký tự",
+      passwordTooLong: "Mật khẩu không được quá 25 ký tự",
       registerSuccess: "Đăng ký thành công!",
       registerFailed: "Đăng ký thất bại",
       checkEmail: "Vui lòng kiểm tra email của bạn để xác nhận",
@@ -177,6 +183,8 @@ const translations: {
       requiredFields: "Vui lòng nhập đầy đủ thông tin bắt buộc!",
       invalidEmail: "Vui lòng nhập địa chỉ email hợp lệ!",
       passwordMismatch: "Mật khẩu xác nhận không khớp!",
+      passwordTooShort: "Mật khẩu phải có ít nhất 6 ký tự",
+      passwordTooLong: "Mật khẩu không được quá 25 ký tự",
       registerSuccess: "Đăng ký thành công!",
       registerFailed: "Đăng ký thất bại",
       checkEmail: "Vui lòng kiểm tra email của bạn để xác nhận",
@@ -268,10 +276,8 @@ export function useRegisterForm(formType: "user" | "hr" = "user") {
       terms,
     } = formData;
 
-    // Validate Email Format (Nâng cao)
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
     const disposableDomains = [
-      // Một số ví dụ, chèn thêm nếu cần
       '10minutemail.com', 'mailinator.com', 'tempmail.net', 'guerrillamail.com', 'dispostable.com',
     ];
 
@@ -281,14 +287,12 @@ export function useRegisterForm(formType: "user" | "hr" = "user") {
       return;
     }
 
-    // Nếu hệ thống chỉ cho phép email nội bộ (domain công ty), tùy chỉnh lại domain này
     if (formType === 'hr' && email && !email.endsWith('@yourcompany.com')) {
       setMessage('Chỉ được dùng email công ty: @yourcompany.com');
       setIsLoading(false);
       return;
     }
 
-    // Chặn email tạm/disposable
     const emailDomain = email.split('@')[1]?.toLowerCase();
     if (emailDomain && disposableDomains.some((d) => emailDomain.endsWith(d))) {
       setMessage('Không sử dụng email tạm thời!');
@@ -296,20 +300,28 @@ export function useRegisterForm(formType: "user" | "hr" = "user") {
       return;
     }
 
-    // Kiểm tra async email đã tồn tại (API đã có/tự viết tuỳ backend).
     try {
-      // Hàm checkEmailExists nhận email, trả về true nếu tồn tại
       if (await checkEmailExists(email)) {
         setMessage('Email này đã được đăng ký!');
         setIsLoading(false);
         return;
       }
     } catch (err) {
-      // Cho phép tiếp tục khi hệ thống không thể kiểm tra được
       console.warn('Không thể kiểm tra email tồn tại:', err);
     }
 
-    // Validate Password Match
+    // Validate Password Strength
+    if (password.length < 6) {
+      setMessage(t.passwordTooShort);
+      setIsLoading(false);
+      return;
+    }
+    
+    if (password.length > 25) {
+      setMessage(t.passwordTooLong);
+      setIsLoading(false);
+      return;
+    }
     if (password !== confirmPassword) {
       setMessage(t.passwordMismatch);
       setIsLoading(false);
@@ -317,7 +329,6 @@ export function useRegisterForm(formType: "user" | "hr" = "user") {
     }
 
     if (formType === "user") {
-      // Validate Required Fields for User
       if (
         !email ||
         !first_name ||
@@ -331,16 +342,12 @@ export function useRegisterForm(formType: "user" | "hr" = "user") {
       }
 
       try {
-        // 1. Gọi API đăng ký
         await register(first_name, email, password, last_name);
-        // 2. Chuyển tới trang verify-email, truyền sẵn email để hiển thị nhưng không tự gửi
         router.push(`/verify-email?email=${encodeURIComponent(email)}`);
       } catch (error) {
         console.error("Registration error:", error);
-        // Hiển thị lỗi (Ví dụ: Email đã tồn tại)
         setMessage(error instanceof Error ? error.message : t.registerFailed);
       } finally {
-        // Dù thành công hay thất bại thì cũng tắt loading
         setIsLoading(false);
       }
     } else if (formType === "hr") {
@@ -378,7 +385,6 @@ export function useRegisterForm(formType: "user" | "hr" = "user") {
         setIsLoading(false);
         return;
       }
-      // Validate mã số thuế (vatRegistrationNumber) phải là số, không âm, tối đa 14 chữ số
       if (!/^\d{1,14}$/.test(vatRegistrationNumber.trim()) || vatRegistrationNumber.trim().startsWith("-")) {
         showErrorToast(t.invalidVatNumber);
         setIsLoading(false);
@@ -392,7 +398,6 @@ export function useRegisterForm(formType: "user" | "hr" = "user") {
       }
 
       try {
-        // Gọi API đăng ký HR
         await registerHR({
           email,
           password,
@@ -409,7 +414,7 @@ export function useRegisterForm(formType: "user" | "hr" = "user") {
         });
 
         showSuccessToast(t.registerSuccess, t.checkEmail);
-        setMessage(""); // Không cần hiển thị message phía dưới
+        setMessage("");
         setIsSuccess(true);
 
         router.push("/login");
