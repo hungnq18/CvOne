@@ -14,7 +14,11 @@ import {
 import { InjectModel } from "@nestjs/mongoose";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { Model, Types } from "mongoose";
+import { UseAiFeature } from "src/common/decorators/ai-feature.decorator";
+import { AiTokenGuard } from "src/common/guards/ai-token.guard";
+import { AiUsageInterceptor } from "src/common/interceptors/ai-usage.interceptor";
 import { User } from "../../common/decorators/user.decorator";
+import { AiFeature } from "../ai-usage-log/schemas/ai-usage-log.schema";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { CvTemplate } from "../cv-template/schemas/cv-template.schema";
 import { User as UserSchema } from "../users/schemas/user.schema";
@@ -26,10 +30,6 @@ import { CvContentGenerationService } from "./services/cv-content-generation.ser
 import { CvUploadService } from "./services/cv-upload.service";
 import { JobAnalysisService } from "./services/job-analysis.service";
 import { OpenAiService } from "./services/openai.service";
-import { AiTokenGuard } from "src/common/guards/ai-token.guard";
-import { AiUsageInterceptor } from "src/common/interceptors/ai-usage.interceptor";
-import { AiFeature } from "../ai-usage-log/schemas/ai-usage-log.schema";
-import { UseAiFeature } from "src/common/decorators/ai-feature.decorator";
 /**
  * Controller for handling CV (Curriculum Vitae) related requests
  * Most endpoints require authentication using JWT
@@ -54,7 +54,10 @@ export class CvController {
    * @returns Analysis results and suggestions
    * @requires Authentication
    */
-  @UseGuards(JwtAuthGuard)
+
+  @UseGuards(JwtAuthGuard, AiTokenGuard)
+  @UseAiFeature(AiFeature.UPLOAD_CV_AI)
+  @UseInterceptors(AiUsageInterceptor)
   @Post("upload-and-analyze")
   @UseInterceptors(
     FileInterceptor("cvFile", {
@@ -73,6 +76,7 @@ export class CvController {
   async uploadAndAnalyzeCv(
     @UploadedFile() file: any,
     @Body("jobDescription") jobDescription: string,
+
     @Body("additionalRequirements") additionalRequirements: string,
     @User("_id") userId: string
   ) {
@@ -328,10 +332,7 @@ export class CvController {
         userSkills
       );
 
-    return {
-      skillsOptions: skillsOptions,
-      total_tokens: skillsOptions.total_tokens,
-    };
+    return skillsOptions;
   }
 
   /**

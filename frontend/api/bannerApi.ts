@@ -1,4 +1,4 @@
-import { fetchWithAuth } from "./apiClient";
+import { fetchWithAuth, fetchWithoutAuth } from "./apiClient";
 import { API_ENDPOINTS } from "./apiConfig";
 
 export interface Banner {
@@ -22,11 +22,11 @@ export const getAllBanners = async (): Promise<Banner[]> => {
 };
 
 /**
- * Get active banners for end users
+ * Get active banners for end users (public API - no authentication required)
  * @returns Promise with array of active banner data
  */
 export const getBannersForUser = async (): Promise<Banner[]> => {
-  const response = await fetchWithAuth(API_ENDPOINTS.BANNER.FOR_USER);
+  const response = await fetchWithoutAuth(API_ENDPOINTS.BANNER.FOR_USER);
   return response as Banner[];
 };
 

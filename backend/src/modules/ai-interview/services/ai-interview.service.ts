@@ -211,7 +211,11 @@ export class AiInterviewService {
     jobTitle?: string,
     companyName?: string,
     language: string = 'vi-VN'
-  ): Promise<{ questions: InterviewQuestion[]; difficulty: 'easy' | 'medium' | 'hard' }> {
+  ): Promise<{
+    questions: InterviewQuestion[];
+    difficulty: 'easy' | 'medium' | 'hard';
+    total_tokens: number;
+  }> {
     // Bước 1: Check pool trước (không tốn token)
     const existingPool = await this.findExistingPool(jobDescription, numberOfQuestions);
     
@@ -235,7 +239,7 @@ export class AiInterviewService {
       }));
 
       this.logger.log(`✅ Using cached questions from pool (difficulty: ${difficulty}, saved ${pool.usageCount} tokens)`);
-      return { questions, difficulty };
+      return { questions, difficulty, total_tokens: 0 };
     }
 
     // Bước 2: Không có pool - phải generate mới (tốn token)
@@ -262,7 +266,7 @@ export class AiInterviewService {
         expectedAnswer: q.expectedAnswer
       }));
       
-      return { questions, difficulty: foundDifficulty };
+      return { questions, difficulty: foundDifficulty, total_tokens: 0 };
     }
     
     // Generate questions (tốn token)
@@ -288,7 +292,7 @@ export class AiInterviewService {
             jobTitle,
             companyName,
             difficulty,
-            questions: questions.map(q => ({
+            questions: questions.questions.map(q => ({
               id: q.id,
               question: q.question,
               category: q.category,
@@ -307,8 +311,8 @@ export class AiInterviewService {
         }
       );
 
-      this.logger.log(`💾 Saved ${questions.length} questions to pool (difficulty: ${difficulty})`);
-      return { questions, difficulty };
+      this.logger.log(`💾 Saved ${questions.questions.length} questions to pool (difficulty: ${difficulty})`);
+      return { questions: questions.questions, difficulty, total_tokens: questions.total_tokens };
     } catch (error) {
       // Nếu vẫn bị duplicate (race condition), load pool đã có
       if (error.code === 11000) {
@@ -332,7 +336,7 @@ export class AiInterviewService {
             expectedAnswer: q.expectedAnswer
           }));
           
-          return { questions: existingQuestions, difficulty };
+          return { questions: existingQuestions, difficulty, total_tokens: 0 };
         }
       }
       throw error;
@@ -413,14 +417,22 @@ QUAN TRỌNG: Chỉ trả về JSON, không có text giải thích thêm. Format
     numberOfQuestions: number = 10,
     jobTitle?: string,
     companyName?: string
-  ): Promise<AiInterviewSession> {
+  ): Promise<{ session: AiInterviewSession; total_tokens: number }> {
     try {
       // Detect language from job description (AI first, fallback heuristic)
-      const detectedLanguage = await detectLanguageSmart(jobDescription, this.openaiApiService, this.logger);
+      const detectedLanguageResult = await detectLanguageSmart(jobDescription, this.openaiApiService, this.logger);
+      const detectedLanguage =
+        typeof detectedLanguageResult === 'string'
+          ? detectedLanguageResult
+          : detectedLanguageResult.language || 'vi-VN';
+      const languageTokens =
+        typeof detectedLanguageResult === 'string'
+          ? 0
+          : detectedLanguageResult.total_tokens || 0;
       this.logger.log(`Detected language: ${detectedLanguage} from job description`);
 
       // Lấy câu hỏi từ pool hoặc generate mới (tự động check pool trước)
-      const { questions, difficulty } = await this.getOrGenerateQuestions(
+      const { questions, difficulty, total_tokens } = await this.getOrGenerateQuestions(
         jobDescription,
         numberOfQuestions,
         jobTitle,
@@ -447,7 +459,7 @@ QUAN TRỌNG: Chỉ trả về JSON, không có text giải thích thêm. Format
       await session.save();
       this.logger.log(`Created interview session ${session._id} for user ${userId} with difficulty: ${difficulty}, language: ${detectedLanguage} (${questions.length} questions)`);
       
-      return session;
+      return { session, total_tokens: total_tokens + languageTokens };
     } catch (error) {
       this.logger.error(`Error creating interview session: ${error.message}`, error.stack);
       throw new Error('Failed to create interview session');
@@ -467,7 +479,11 @@ QUAN TRỌNG: Chỉ trả về JSON, không có text giải thích thêm. Format
   ): Promise<InterviewQuestionPool> {
     try {
       // Detect language from job description (AI first, fallback heuristic)
-      const detectedLanguage = await detectLanguageSmart(jobDescription, this.openaiApiService, this.logger);
+      const detectedLanguageResult = await detectLanguageSmart(jobDescription, this.openaiApiService, this.logger);
+      const detectedLanguage =
+        typeof detectedLanguageResult === 'string'
+          ? detectedLanguageResult
+          : detectedLanguageResult.language || 'vi-VN';
       this.logger.log(`Pre-generating questions with detected language: ${detectedLanguage}`);
       
       // Check xem đã có pool chưa
@@ -500,7 +516,7 @@ QUAN TRỌNG: Chỉ trả về JSON, không có text giải thích thêm. Format
             jobTitle,
             companyName,
             difficulty: finalDifficulty,
-            questions: questions.map(q => ({
+            questions: questions.questions.map(q => ({
               id: q.id,
               question: q.question,
               category: q.category,
@@ -519,7 +535,7 @@ QUAN TRỌNG: Chỉ trả về JSON, không có text giải thích thêm. Format
         }
       );
 
-      this.logger.log(`Pre-generated ${questions.length} questions for pool (difficulty: ${finalDifficulty})`);
+      this.logger.log(`Pre-generated ${questions.questions.length} questions for pool (difficulty: ${finalDifficulty})`);
       return pool;
     } catch (error) {
       this.logger.error(`Error pre-generating questions: ${error.message}`, error.stack);
@@ -535,7 +551,7 @@ QUAN TRỌNG: Chỉ trả về JSON, không có text giải thích thêm. Format
     numberOfQuestions: number = 10,
     difficulty: 'easy' | 'medium' | 'hard',
     language: string = 'vi-VN'
-  ): Promise<InterviewQuestion[]> {
+  ): Promise<{ questions: InterviewQuestion[], total_tokens: number }> {
     try {
       // Phân tích job description để hiểu yêu cầu
       const jobAnalysis = await this.jobAnalysisService.analyzeJobDescription(jobDescription);
@@ -810,7 +826,7 @@ IMPORTANTE: Devuelva solo JSON, sin texto explicativo adicional. Formato:
       }));
 
       this.logger.log(`Generated ${questions.length} interview questions with difficulty: ${difficulty}`);
-      return questions;
+      return { questions: questions, total_tokens: completion.usage?.total_tokens || 0 };
 
     } catch (error) {
       this.logger.error(`Error generating interview questions: ${error.message}`, error.stack);

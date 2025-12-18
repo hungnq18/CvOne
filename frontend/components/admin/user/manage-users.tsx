@@ -15,9 +15,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { getAllUsers, deleteUser, updateUserProfile } from "@/api/userApi"
 import { createAccountByAdmin, updateUserRole } from "@/api/authApi"
 import { User as UserType } from "@/types/auth"
-import { toast } from "react-hot-toast"
-import { MoreHorizontal } from "lucide-react"
+import { MoreHorizontal, ChevronDown, Eye, EyeOff } from "lucide-react"
 import { useLanguage } from "@/providers/global_provider"
+import { Country, District, getCountries, getDistrictsByProvinceCode, getProvinces, Province } from "@/api/locationApi"
+import { showErrorToast, showSuccessToast } from "@/utils/popUpUtils"
 
 interface PopulatedAccount {
   _id: string;
@@ -36,10 +37,18 @@ const initialFormData = {
   email: "",
   password: "",
   role: "user",
-  phone: "",
+  countryCode: "+84",
   city: "",
-  country: "",
+  district: "",
 }
+
+// Danh sách 1 số disposable mail domain (demo, có thể mở rộng)
+const DISPOSABLE_DOMAINS = [
+  'mailinator.com', '10minutemail.com', 'guerrillamail.com', 'dispostable.com', 'trashmail.com',
+  'yopmail.com', 'temp-mail.org', 'maildrop.cc', 'fakeinbox.com', 'getnada.com', 'gmail.co'
+];
+// Chỉnh lại domain công ty ở đây nếu cần
+const INTERNAL_EMAIL_DOMAIN = ''; // vd '@yourcompany.com' hoặc để '' => cho phép tất cả
 
 export function ManageUsers() {
   const { t } = useLanguage()
@@ -51,11 +60,52 @@ export function ManageUsers() {
   const [formData, setFormData] = useState(initialFormData)
   const [isEditMode, setIsEditMode] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
+  const [provinces, setProvinces] = useState<Province[]>([])
+  const [districts, setDistricts] = useState<District[]>([])
+  const [countries, setCountries] = useState<Country[]>([])
+  const [selectedProvinceCode, setSelectedProvinceCode] = useState<number | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
   const pageSize = 5
 
   useEffect(() => {
     fetchUsers()
+    loadLocationData()
   }, [])
+
+  // Load districts when province changes
+  useEffect(() => {
+    const loadDistricts = async () => {
+      if (selectedProvinceCode) {
+        try {
+          const districtsData = await getDistrictsByProvinceCode(selectedProvinceCode)
+          setDistricts(districtsData)
+        } catch (error) {
+          console.error("Error loading districts:", error)
+        }
+      } else {
+        setDistricts([])
+      }
+    }
+
+    loadDistricts()
+  }, [selectedProvinceCode])
+
+  const loadLocationData = async () => {
+    setLoading(true)
+    try {
+      const [provincesData, countriesData] = await Promise.all([
+        getProvinces(),
+        getCountries(),
+      ])
+      setProvinces(provincesData)
+      setCountries(countriesData)
+    } catch (error) {
+      console.error("Error loading location data:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const fetchUsers = async () => {
     try {
@@ -63,24 +113,111 @@ export function ManageUsers() {
       setUsers(usersData)
     } catch (error) {
       console.error("Failed to fetch users:", error)
-      toast.error(t.admin.manageUser.messages.fetchError)
+      showErrorToast("Error", t.admin.manageUser.messages.fetchError)
     }
   }
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }))
+    if (field === "city") {
+      const selectedProvince = provinces.find((p) => p.name === value)
+      setSelectedProvinceCode(selectedProvince ? selectedProvince.code : null)
+      setFormData((prev) => ({ ...prev, [field]: value, district: "" }))
+    } else {
+      setFormData((prev) => ({ ...prev, [field]: value }))
+    }
+  }
+
+  const validateForm = (): boolean => {
+    if (!formData.email.trim()) {
+      showErrorToast("Validation Error", "Email is required")
+      return false
+    }
+    if (formData.email.length > 20) {
+      showErrorToast("Validation Error", "Email tối đa 20 ký tự")
+      return false
+    }
+
+    // Kiểm tra định dạng email
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
+    if (!emailRegex.test(formData.email.trim())) {
+      showErrorToast("Validation Error", "Email không đúng định dạng chuẩn")
+      return false
+    }
+
+    // Check domain công ty (nếu có cấu hình)
+    if (INTERNAL_EMAIL_DOMAIN && !formData.email.trim().endsWith(INTERNAL_EMAIL_DOMAIN)) {
+      showErrorToast("Validation Error", `Email bắt buộc thuộc domain ${INTERNAL_EMAIL_DOMAIN}`)
+      return false
+    }
+
+    // Check disposable
+    const emailDomain = formData.email.split('@')[1]?.toLowerCase() || '';
+    if (DISPOSABLE_DOMAINS.some(domain => emailDomain.endsWith(domain))) {
+      showErrorToast("Validation Error", "Không được dùng email tạm thời/disposable trong hệ thống")
+      return false
+    }
+
+    // Check trùng email (tạm thời bằng users đã fetch)
+    // Nếu đang tạo mới, kiểm tra mọi tài khoản đã có
+    if (!isEditMode) {
+      const lowerEmail = formData.email.trim().toLowerCase();
+      if (users.some((user) => user.account_id && user.account_id.email.toLowerCase() === lowerEmail)) {
+        showErrorToast("Validation Error", "Email đã tồn tại trong hệ thống")
+        return false
+      }
+    }
+
+    // Validate first_name và last_name
+    if (formData.first_name && formData.first_name.length > 10) {
+      showErrorToast("Validation Error", "First name tối đa 10 ký tự")
+      return false
+    }
+    if (formData.last_name && formData.last_name.length > 10) {
+      showErrorToast("Validation Error", "Last name tối đa 10 ký tự")
+      return false
+    }
+
+    if (!isEditMode) {
+      if (!formData.password.trim()) {
+        showErrorToast("Validation Error", "Password is required")
+        return false
+      }
+
+      // Password validation: 1 uppercase, 1 special char, 1 number
+      const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_\-+\[\]{};:'",.<>\/?\\|`~]).{8,}$/
+      if (!passwordRegex.test(formData.password)) {
+        showErrorToast(
+          "Invalid Password",
+          "Password must contain at least 1 uppercase letter, 1 number, and 1 special character"
+        )
+        return false
+      }
+    }
+
+    return true
   }
 
   const handleOpenCreateDialog = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     setIsEditMode(false)
     setFormData(initialFormData)
+    setShowPassword(false)
     setIsFormOpen(true)
   }
 
   const handleOpenEditDialog = (user: PopulatedUser) => {
     setIsEditMode(true)
     setSelectedUser(user)
+
+    // Set province code if city exists
+    const userCity = user.city || ""
+    if (userCity && provinces.length > 0) {
+      const selectedProvince = provinces.find((p) => p.name === userCity)
+      if (selectedProvince) {
+        setSelectedProvinceCode(selectedProvince.code)
+      }
+    }
+
     setFormData({
       _id: user._id,
       first_name: user.first_name,
@@ -88,23 +225,25 @@ export function ManageUsers() {
       email: user.account_id?.email ?? "",
       password: "", // Password is not edited here
       role: user.account_id?.role ?? "user",
-      phone: user.phone || "",
+      countryCode: (user as any).countryCode || "+84",
       city: user.city || "",
-      country: user.country || "",
+      district: (user as any).district || "",
     })
     setIsFormOpen(true)
   }
 
   const handleSaveUser = async () => {
+    if (!validateForm()) return
+
     try {
       if (isEditMode && selectedUser) {
         // Update user
         const updatedData = {
           first_name: formData.first_name,
           last_name: formData.last_name,
-          phone: formData.phone,
+          countryCode: formData.countryCode,
           city: formData.city,
-          country: formData.country,
+          district: formData.district,
         }
         await updateUserProfile(selectedUser._id, updatedData as any)
 
@@ -112,7 +251,7 @@ export function ManageUsers() {
         await updateUserRole(selectedUser.account_id._id, formData.role)
       }
 
-        toast.success(t.admin.manageUser.messages.updateSuccess)
+        showSuccessToast("Success", t.admin.manageUser.messages.updateSuccess)
       } else {
         // Create user
         const newAccountData = {
@@ -121,18 +260,19 @@ export function ManageUsers() {
           first_name: formData.first_name,
           last_name: formData.last_name,
           role: formData.role,
-          phone: formData.phone,
+          countryCode: formData.countryCode,
           city: formData.city,
-          country: formData.country,
+          district: formData.district,
         }
         await createAccountByAdmin(newAccountData)
-        toast.success(t.admin.manageUser.messages.createSuccess)
+        showSuccessToast("Success", t.admin.manageUser.messages.createSuccess)
       }
       fetchUsers()
       setIsFormOpen(false)
+      setShowPassword(false)
     } catch (error) {
       console.error("Failed to save user:", error)
-      toast.error(t.admin.manageUser.messages.saveError)
+      showErrorToast("Error", t.admin.manageUser.messages.saveError)
     }
   }
 
@@ -140,11 +280,11 @@ export function ManageUsers() {
     if (!selectedUser) return
     try {
       await deleteUser(selectedUser._id)
-      toast.success(t.admin.manageUser.messages.deleteSuccess)
+      showSuccessToast("Success", t.admin.manageUser.messages.deleteSuccess)
       fetchUsers()
     } catch (error) {
       console.error("Failed to delete user:", error)
-      toast.error(t.admin.manageUser.messages.deleteError)
+      showErrorToast("Error", t.admin.manageUser.messages.deleteError)
     } finally {
       setIsDeleteDialogOpen(false)
       setSelectedUser(null)
@@ -224,7 +364,7 @@ export function ManageUsers() {
                   <TableHead>{t.admin.manageUser.table.role}</TableHead>
                   <TableHead>{t.admin.manageUser.table.email}</TableHead>
                   <TableHead>{t.admin.manageUser.table.city}</TableHead>
-                  <TableHead>{t.admin.manageUser.table.country}</TableHead>
+                  <TableHead>{t.admin.manageUser.table.district}</TableHead>
                   <TableHead className="text-right">{t.admin.manageUser.table.actions}</TableHead>
                 </TableRow>
               </TableHeader>
@@ -255,7 +395,7 @@ export function ManageUsers() {
                       {user.account_id.email}
                     </TableCell>
                     <TableCell>{user.city}</TableCell>
-                    <TableCell>{user.country}</TableCell>
+                    <TableCell>{user.district}</TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -335,51 +475,94 @@ export function ManageUsers() {
             <div className="grid grid-cols-2 gap-4">
                 <div>
                     <Label htmlFor="first_name">{t.admin.manageUser.dialog.firstName}</Label>
-                    <Input id="first_name" value={formData.first_name} onChange={(e) => handleInputChange("first_name", e.target.value)} />
+                    <Input id="first_name" value={formData.first_name} onChange={(e) => handleInputChange("first_name", e.target.value)} maxLength={10} />
                 </div>
                 <div>
                     <Label htmlFor="last_name">{t.admin.manageUser.dialog.lastName}</Label>
-                    <Input id="last_name" value={formData.last_name} onChange={(e) => handleInputChange("last_name", e.target.value)} />
+                    <Input id="last_name" value={formData.last_name} onChange={(e) => handleInputChange("last_name", e.target.value)} maxLength={10} />
                 </div>
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="email">{t.admin.manageUser.dialog.email}</Label>
-              <Input id="email" type="email" value={formData.email} disabled={isEditMode} onChange={(e) => handleInputChange("email", e.target.value)} autoComplete="off" />
+              <Label htmlFor="email">{t.admin.manageUser.dialog.email} <span className="text-red-500">*</span></Label>
+              <Input id="email" required type="email" value={formData.email} disabled={isEditMode} onChange={(e) => handleInputChange("email", e.target.value)} autoComplete="off" maxLength={20} />
             </div>
             {!isEditMode && (
               <div className="grid gap-2">
-                <Label htmlFor="password">{t.admin.manageUser.dialog.password}</Label>
-                <Input id="password" type="password" value={formData.password} onChange={(e) => handleInputChange("password", e.target.value)} autoComplete="new-password" />
+                <Label htmlFor="password">{t.admin.manageUser.dialog.password} <span className="text-red-500">*</span></Label>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    required
+                    type={showPassword ? "text" : "password"}
+                    value={formData.password}
+                    onChange={(e) => handleInputChange("password", e.target.value)}
+                    autoComplete="new-password"
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
               </div>
             )}
-            <div className="grid grid-cols-2 gap-4">
-                <div>
-                    <Label htmlFor="phone">{t.admin.manageUser.dialog.phone}</Label>
-                    <Input id="phone" value={formData.phone} onChange={(e) => handleInputChange("phone", e.target.value)} />
-                </div>
-                <div>
-                    <Label htmlFor="role">{t.admin.manageUser.dialog.role}</Label>
-                    <Select value={formData.role} onValueChange={(value) => handleInputChange("role", value)}>
-                        <SelectTrigger>
-                            <SelectValue placeholder={t.admin.manageUser.dialog.selectRole} />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="user">User</SelectItem>
-                            <SelectItem value="admin">Admin</SelectItem>
-                            <SelectItem value="hr">HR</SelectItem>
-                            <SelectItem value="mkt">Marketing</SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="role">{t.admin.manageUser.dialog.role} <span className="text-red-500">*</span></Label>
+                <Select value={formData.role} onValueChange={(value) => handleInputChange("role", value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={t.admin.manageUser.dialog.selectRole} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="user">User</SelectItem>
+                    <SelectItem value="admin">Admin</SelectItem>
+                    <SelectItem value="hr">HR</SelectItem>
+                    <SelectItem value="mkt">Marketing</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
              <div className="grid grid-cols-2 gap-4">
                 <div>
                     <Label htmlFor="city">{t.admin.manageUser.dialog.city}</Label>
-                    <Input id="city" value={formData.city} onChange={(e) => handleInputChange("city", e.target.value)} />
+                    <Select
+                      value={formData.city}
+                      onValueChange={(value) => handleInputChange("city", value)}
+                      disabled={loading}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={loading ? "Loading..." : "Select city/province"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {provinces.map((province) => (
+                          <SelectItem key={province.code} value={province.name}>
+                            {province.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                 </div>
                 <div>
-                    <Label htmlFor="country">{t.admin.manageUser.dialog.country}</Label>
-                    <Input id="country" value={formData.country} onChange={(e) => handleInputChange("country", e.target.value)} />
+                    <Label htmlFor="district">{t.admin.manageUser.dialog.district}</Label>
+                    <Select
+                      value={formData.district}
+                      onValueChange={(value) => handleInputChange("district", value)}
+                      disabled={loading || !selectedProvinceCode}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={!selectedProvinceCode ? "Select city first" : loading ? "Loading..." : "Select district"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {districts.map((district) => (
+                          <SelectItem key={district.code} value={district.name}>
+                            {district.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                 </div>
             </div>
           </div>

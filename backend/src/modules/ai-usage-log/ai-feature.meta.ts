@@ -64,4 +64,8 @@ export const AI_FEATURE_META: Record<AiFeature, AiFeatureMetaConfig> = {
     avgTokens: 500,
     description: "Tạo CV bằng AI",
   },
+  [AiFeature.UPLOAD_CV_AI]: {
+    avgTokens: 1000,
+    description: "Upload CV bằng AI",
+  },
 };

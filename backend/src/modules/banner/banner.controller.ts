@@ -50,7 +50,6 @@ export class BannerController {
     return this.bannerService.deleteBanner(id);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Get("for-user")
   getBannerActive() {
     return this.bannerService.getBannerActive();
