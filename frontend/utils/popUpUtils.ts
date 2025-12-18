@@ -5,6 +5,7 @@ export const showSuccessToast = (title: string, description?: string) => {
     title,
     description,
     variant: "success",
+    duration: 10000,
   });
 };
 
@@ -13,6 +14,7 @@ export const showErrorToast = (title: string, description?: string) => {
     title,
     description,
     variant: "destructive",
+    duration: 10000,
   });
 };
 
@@ -21,5 +23,6 @@ export const showInfoToast = (title: string, description?: string) => {
     title,
     description,
     variant: "info",
+    duration: 10000,
   });
 };
