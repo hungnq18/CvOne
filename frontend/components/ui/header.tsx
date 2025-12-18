@@ -479,7 +479,7 @@ export function Header() {
             href: "/user/profile",
           },
           {
-            name: language === "en" ? "wallet" : "ví của tôi",
+            name: language === "en" ? "Wallet" : "Ví của tôi",
             href: "/user/wallet",
           }
         ],
@@ -536,7 +536,7 @@ export function Header() {
             href: "/user/profile",
           },
           {
-            name: language === "en" ? "wallet" : "ví của tôi",
+            name: language === "en" ? "Wallet" : "Ví của tôi",
             href: "/user/wallet",
           }
         ],

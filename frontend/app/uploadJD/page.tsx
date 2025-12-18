@@ -12,6 +12,7 @@ import { Document, pdfjs } from "react-pdf";
 import "react-pdf/dist/esm/Page/AnnotationLayer.css";
 import "react-pdf/dist/esm/Page/TextLayer.css";
 import { toast } from "react-hot-toast";
+import { showErrorToast } from "../../utils/popUpUtils";
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
@@ -29,6 +30,8 @@ const uploadJDTranslations = {
     success: "JD uploaded successfully!",
     enterText: "Enter Job Description",
     placeholder: "Paste the job description here...",
+    notEnoughTokensTitle: "Error: Not enough tokens",
+    notEnoughTokensDesc: "You don't have enough tokens to use this feature. Please top up more tokens to continue.",
   },
   vi: {
     title: "Tải lên mô tả công việc",
@@ -44,6 +47,8 @@ const uploadJDTranslations = {
     success: "Tải JD thành công!",
     enterText: "Nhập mô tả công việc",
     placeholder: "Dán nội dung mô tả công việc vào đây...",
+    notEnoughTokensTitle: "Lỗi: Không đủ Tokens",
+    notEnoughTokensDesc: "Bạn không đủ tokens để sử dụng tính năng này. Vui lòng nạp thêm tokens để tiếp tục.",
   },
 };
 
@@ -166,7 +171,12 @@ function UploadJDContent() {
 
     } catch (error: any) {
       console.error("Error during JD/CL processing:", error);
-      toast.error(error.message || "Đã có lỗi xảy ra. Vui lòng thử lại.");
+      if (error.message.includes("Not enough tokens")) {
+        showErrorToast(t.notEnoughTokensTitle, t.notEnoughTokensDesc);
+        router.push("/user/wallet");
+      } else {
+        toast.error(error.message || "Đã có lỗi xảy ra. Vui lòng thử lại.");
+      }
     } finally {
       setIsUploading(false);
     }
