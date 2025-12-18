@@ -47,6 +47,8 @@ const translations = {
       "Email not verified. Please check your email and verify your account before logging in.",
     emailRequired: "Email is required",
     passwordRequired: "Password is required",
+    invalidEmailFormat: "Please enter a valid email address",
+    passwordTooShort: "Password must be at least 6 characters",
     loading: "Loading...",
     networkError: "Network error. Please check your connection.",
     or: "OR LOGIN WITH",
@@ -76,6 +78,8 @@ const translations = {
       "Email chưa được xác thực. Vui lòng kiểm tra email và xác thực tài khoản trước khi đăng nhập.",
     emailRequired: "Email là bắt buộc",
     passwordRequired: "Mật khẩu là bắt buộc",
+    invalidEmailFormat: "Vui lòng nhập địa chỉ email hợp lệ",
+    passwordTooShort: "Mật khẩu phải có ít nhất 6 ký tự",
     loading: "Đang tải...",
     networkError: "Lỗi kết nối. Vui lòng kiểm tra kết nối của bạn.",
     or: "HOẶC ĐĂNG NHẬP BẰNG",
@@ -104,10 +108,25 @@ export function useLoginForm(allowedRoles?: string[]) {
       setError(t.emailRequired);
       return false;
     }
+    
+    // Validate email format
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
+    if (!emailRegex.test(formData.email.trim())) {
+      setError(t.invalidEmailFormat || "Email không hợp lệ");
+      return false;
+    }
+    
     if (!formData.password) {
       setError(t.passwordRequired);
       return false;
     }
+    
+    // Validate password length (minimum 6 characters)
+    if (formData.password.length < 6) {
+      setError(t.passwordTooShort || "Mật khẩu phải có ít nhất 6 ký tự");
+      return false;
+    }
+    
     return true;
   };
 
@@ -132,15 +151,12 @@ export function useLoginForm(allowedRoles?: string[]) {
 
       const { access_token } = response.data;
 
-      // Decode token để lấy role
       const decoded: DecodedToken = jwtDecode(access_token);
 
-      // Check allowed roles
       if (allowedRoles && allowedRoles.length > 0 && !allowedRoles.includes(decoded.role)) {
         throw new Error("UNAUTHORIZED_ROLE");
       }
 
-      // Lưu token vào cookie
       document.cookie = `token=${access_token}; path=/; max-age=3600; SameSite=Lax; Secure`;
 
       const params = new URLSearchParams(window.location.search);
@@ -158,7 +174,6 @@ export function useLoginForm(allowedRoles?: string[]) {
       }
       await refreshUser();
 
-      // Emit custom events để trigger re-render của icon components
       window.dispatchEvent(new CustomEvent("loginSuccess"));
       window.dispatchEvent(new CustomEvent("authChange"));
 
@@ -166,8 +181,6 @@ export function useLoginForm(allowedRoles?: string[]) {
         title: t.loginSuccess,
         description: `Welcome back, ${formData.email}!`,
       });
-
-      // Lấy redirect từ URL nếu có
     } catch (err: any) {
       let msg = t.networkError;
 
@@ -185,7 +198,6 @@ export function useLoginForm(allowedRoles?: string[]) {
 
         if (isUnverified) {
           msg = t.emailNotVerified;
-          // Điều hướng sang verify-email, truyền sẵn email để người dùng gửi lại
           router.push(`/verify-email?email=${encodeURIComponent(formData.email)}`);
         } else {
           msg = t.invalidCredentials;
