@@ -130,9 +130,8 @@ const ConversationItem = memo(
     if (otherUser) {
       if (typeof otherUser === "object") {
         if (otherUser.first_name) {
-          displayName = `${otherUser.first_name} ${
-            otherUser.last_name || ""
-          }`.trim();
+          displayName = `${otherUser.first_name} ${otherUser.last_name || ""
+            }`.trim();
         } else if (otherUser._id) {
           // Có _id nhưng không có first_name - có thể chưa được populate
           // console.warn("⚠️ otherUser has _id but no first_name:", otherUser);
@@ -165,9 +164,8 @@ const ConversationItem = memo(
     // Helper để lấy avatar initials
     const getAvatarInitials = (user: any): string => {
       if (user && typeof user === "object" && user.first_name) {
-        return `${(user.first_name || "U")[0]}${
-          (user.last_name || "U")[0]
-        }`.toUpperCase();
+        return `${(user.first_name || "U")[0]}${(user.last_name || "U")[0]
+          }`.toUpperCase();
       }
       return "U";
     };
@@ -175,9 +173,8 @@ const ConversationItem = memo(
     return (
       <div
         onClick={() => onSelect(conv._id)}
-        className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors hover:bg-muted/50 ${
-          isSelected ? "bg-muted" : ""
-        }`}
+        className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors hover:bg-muted/50 ${isSelected ? "bg-muted" : ""
+          }`}
       >
         <div className="relative">
           <Avatar

@@ -1,26 +1,42 @@
 "use client";
 
-import React from "react";
+import React, { useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { useSocket } from "@/providers/SocketProvider";
 
 const IconChatAndNotification: React.FC = () => {
   const pathname = usePathname();
+  const router = useRouter();
   const { user } = useAuth();
 
-  // 🔥 Lấy realtime từ SocketProvider
+  // Lấy realtime từ SocketProvider
   const { unreadCount, unreadNotifications } = useSocket();
 
-  if (!user || pathname === "/chat" || pathname === "/notifications")
+  console.log("🎯 IconChatAndNotification rendered - unreadCount:", unreadCount, "unreadNotifications:", unreadNotifications);
+
+  // 🟢 Icon chỉ navigate - KHÔNG emit / KHÔNG set flag
+  // NotificationCenterClient mount sẽ handle emit + flag
+  const handleNotificationClick = useCallback(() => {
+    router.push("/notifications");
+  }, [router]);
+
+  // ✅ FIX: Hide icon on chat page, hide badges on notification/chat pages
+  const isOnNotifications = pathname === "/notifications";
+  const isOnChat = pathname === "/chat";
+  const shouldHideIcon = isOnChat;
+  const shouldHideBadges = isOnNotifications || isOnChat;
+
+  if (!user || shouldHideIcon)
     return null;
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-3">
+    <div className={`fixed bottom-6 right-6 z-50 flex flex-col gap-3`}>
       {/* NOTIFICATIONS */}
-      <Link
-        href="/notifications"
+      <button
+        onClick={handleNotificationClick}
         className="group relative flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-purple-600 shadow-lg hover:from-purple-600 hover:to-purple-700 transition-all duration-300 transform hover:scale-105"
       >
         <svg
@@ -37,12 +53,12 @@ const IconChatAndNotification: React.FC = () => {
             d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0"
           />
         </svg>
-        {unreadNotifications > 0 && (
+        {!shouldHideBadges && unreadNotifications > 0 && (
           <div className="absolute -top-1 -right-1 min-w-[1.2em] h-5 px-1 bg-red-500 text-white text-xs rounded-full flex items-center justify-center animate-pulse">
             {unreadNotifications > 99 ? "99+" : unreadNotifications}
           </div>
         )}
-      </Link>
+      </button>
 
       {/* CHAT ICON */}
       <Link
@@ -64,7 +80,7 @@ const IconChatAndNotification: React.FC = () => {
           />
         </svg>
 
-        {unreadCount > 0 && (
+        {!shouldHideBadges && unreadCount > 0 && (
           <div className="absolute -top-1 -right-1 min-w-[1.2em] h-5 px-1 bg-red-500 text-white text-xs rounded-full flex items-center justify-center animate-pulse">
             {unreadCount > 99 ? "99+" : unreadCount}
           </div>

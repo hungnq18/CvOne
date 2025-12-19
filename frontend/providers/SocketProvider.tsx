@@ -7,29 +7,43 @@ import React, {
   useState,
   useEffect,
   useRef,
+  useMemo,
 } from "react";
 import { useAuth } from "@/hooks/use-auth";
+import { usePathname } from "next/navigation";
 import io, { Socket } from "socket.io-client";
 import { Conversation, Message, getUserConversations } from "@/api/apiChat";
 
 /* ===================== TYPES ===================== */
 
+
 interface SocketContextType {
   unreadCount: number;
+  unreadNotifications: number;
   conversations: any[];
   messages: Record<string, Message[]>;
+  notifications: any[];
   markConversationAsRead: (conversationId: string) => void;
   joinConversation: (conversationId: string) => void;
+  sendMessage: (data: any) => void;
   setConversations: React.Dispatch<React.SetStateAction<any[]>>;
   setMessages: React.Dispatch<React.SetStateAction<Record<string, Message[]>>>;
+  setNotifications: React.Dispatch<React.SetStateAction<any[]>>;
   socket: Socket | null;
   createConversation: (
     participants: string[],
     cb?: (conversation: any) => void
   ) => void;
   selectedConversationId: string | null;
-
   setSelectedConversationId: (id: string | null) => void;
+
+  // 🧠 ATTENTION TRACKING
+  activeConversationId: string | null;
+  setActiveConversationId: (id: string | null) => void;
+
+  // 🔥 NOTIFICATION PAGE TRACKING
+  isViewingNotifications: boolean;
+  setIsViewingNotifications: (value: boolean) => void;
 }
 
 const SocketContext = createContext<SocketContextType | undefined>(undefined);
@@ -38,16 +52,73 @@ const SocketContext = createContext<SocketContextType | undefined>(undefined);
 
 export function SocketProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
+  const pathname = usePathname();
   const socketRef = useRef<Socket | null>(null);
 
   const [conversations, setConversations] = useState<any[]>([]);
   const [messages, setMessages] = useState<Record<string, Message[]>>({});
-  const [unreadCount, setUnreadCount] = useState(0);
+  const [notifications, setNotifications] = useState<any[]>([]); // 🔥 Source of truth
   const [selectedConversationId, setSelectedConversationId] = useState<
     string | null
   >(null);
 
+  // 🧠 ATTENTION TRACKING (BẮT BUỘC)
+  const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
+  const [isTabActive, setIsTabActive] = useState(true);
+  const [isViewingNotifications, setIsViewingNotifications] = useState(false);
+
+  // ✅ DERIVE unreadCount từ conversations array - TỰ ĐỘNG UPDATE (GIỐNG NOTIFICATION)
+  const unreadCount = useMemo(() => {
+    return conversations.reduce((sum, c) => {
+      const item = c.unreadCount?.find((u: any) => u.userId === user?._id);
+      return sum + (item?.count || 0);
+    }, 0);
+  }, [conversations, user?._id]);
+
+  // ✅ DERIVE unreadNotifications từ notifications array - TỰ ĐỘNG UPDATE
+  const unreadNotifications = useMemo(
+    () => notifications.filter((n) => !n.isRead).length,
+    [notifications]
+  );
+
+  // 🧠 REFS để tránh stale closure (closure variables)
+  const activeConversationRef = useRef(activeConversationId);
+  const isTabActiveRef = useRef(isTabActive);
+  const isViewingNotificationsRef = useRef(isViewingNotifications);
+
+  // 🔥 AUTO-SET isViewingNotifications based on route (BẮT BUỘC)
+  // ✅ Không phụ thuộc vào component mount/unmount
+  useEffect(() => {
+    const isViewing = pathname === "/notifications";
+    setIsViewingNotifications(isViewing);
+    console.log("🔥 Route changed - isViewingNotifications:", isViewing, "pathname:", pathname);
+  }, [pathname]);
+
+  // 🧠 Listen for tab visibility change
+  useEffect(() => {
+    const handleVisibility = () => {
+      setIsTabActive(document.visibilityState === "visible");
+      console.log("📍 Tab visibility:", document.visibilityState === "visible" ? "ACTIVE" : "HIDDEN");
+    }
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => document.removeEventListener("visibilitychange", handleVisibility);
+  }, []);
+
+  // 🧠 Update refs whenever state changes
+  useEffect(() => {
+    activeConversationRef.current = activeConversationId;
+  }, [activeConversationId]);
+
+  useEffect(() => {
+    isTabActiveRef.current = isTabActive;
+  }, [isTabActive]);
+
+  useEffect(() => {
+    isViewingNotificationsRef.current = isViewingNotifications;
+  }, [isViewingNotifications]);
+
   /* ========== CONNECT SOCKET (ONCE PER USER) ========== */
+  // KHÔNG disconnect socket khi user không đổi id - chỉ setup 1 lần
   useEffect(() => {
     if (!user) return;
 
@@ -66,10 +137,7 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
       });
     }
 
-    return () => {
-      socketRef.current?.disconnect();
-      socketRef.current = null;
-    };
+    // KHÔNG cleanup - giữ connection sống
   }, [user]);
 
   const loadConversations = useCallback(async () => {
@@ -77,7 +145,7 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
 
     const conv = await getUserConversations(user._id);
     setConversations(conv);
-    setUnreadCount(calcUnread(conv, user._id));
+    // ✅ unreadCount tự động tính từ useMemo - KHÔNG cần setUnreadCount
   }, [user]);
 
   /* ========== LOAD CONVERSATIONS INIT ========== */
@@ -85,6 +153,32 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
     if (!user) return;
     loadConversations();
   }, [user, loadConversations]);
+
+  /* 🔥 AUTO MARK READ WHEN USER OPENS CONVERSATION ========== */
+  // ✅ BẮT BUỘC: Emit readConversation khi user chọn conversation
+  // Nếu không → unread sẽ không reset cho đến khi có message mới
+  useEffect(() => {
+    if (!activeConversationId || !user) return;
+
+    console.log("🔥 User opened conversation:", activeConversationId, "- emit readConversation");
+    socketRef.current?.emit("readConversation", {
+      conversationId: activeConversationId,
+      userId: user._id,
+    });
+  }, [activeConversationId, user]);
+
+  /* 🔥 AUTO MARK ALL NOTIFICATIONS READ WHEN VIEWING PAGE ========== */
+  // ✅ BẮT BUỘC: Emit mark all read khi user vào notification page
+  // 📌 Chuẩn hóa event name: notification:read:all
+  // 🔥 QUAN TRỌNG: Emit NGAY KHI isViewingNotifications = true (không chờ notifications load)
+  useEffect(() => {
+    if (!isViewingNotifications || !user) return;
+
+    console.log("🔥 Mark all notifications read - emit notification:read:all immediately");
+    socketRef.current?.emit("notification:read:all", {
+      userId: user._id,
+    });
+  }, [isViewingNotifications, user]);
 
   /* ========== SOCKET EVENTS ========== */
   useEffect(() => {
@@ -94,28 +188,164 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
 
     /* ---- NEW MESSAGE ---- */
     socket.on("newMessage", (msg: Message) => {
-      if (msg.receiverId !== user._id) return;
+      console.log("💬 New message received:", msg);
 
+      // 🔥 FIX: Ensure sender object exists for avatar rendering
+      // Nếu server chỉ gửi senderId, ta cần populate sender from DB
+      if (!msg.sender && msg.senderId) {
+        console.warn("⚠️ Message missing sender object, fetching from DB...");
+        // Nếu cần, có thể gọi API để fetch sender info
+        // Tạm thời: tạo placeholder sender để tránh crash
+        msg.sender = {
+          _id: typeof msg.senderId === "object" ? (msg.senderId as any)._id : msg.senderId,
+          first_name: "User",
+          last_name: "",
+          email: "",
+          phone: "",
+          avatar: "",
+          role: "user",
+          createdAt: new Date().toISOString(),
+        } as any;
+      }
+
+      // Cập nhật messages - dành cho CẢ sender và receiver
+      setMessages((prev) => {
+        const convId = msg.conversationId as string;
+        const prevMessages = prev[convId] || [];
+
+        // Tránh duplicate
+        if (prevMessages.some((m) => m._id === msg._id)) return prev;
+
+        return {
+          ...prev,
+          [convId]: [...prevMessages, msg],
+        };
+      });
+
+      // 🧠 ATTENTION TRACKING - dùng refs để tránh stale closure
+      const isReceiver = msg.receiverId === user._id;
+      const isReading = msg.conversationId === activeConversationRef.current && isTabActiveRef.current;
+
+      console.log("🧠 Attention check:", {
+        isReceiver,
+        isReading,
+        activeConversation: activeConversationId,
+        msgConversation: msg.conversationId,
+        tabActive: isTabActive,
+      });
+
+      // 🔥 AUTO MARK READ nếu user đang đọc
+      if (isReceiver && isReading) {
+        console.log("✅ Auto marking conversation as read:", msg.conversationId);
+        socketRef.current?.emit("readConversation", {
+          conversationId: msg.conversationId,
+          userId: user._id,
+        });
+      }
+
+      // Cập nhật conversations - lastMessage và unread count
       setConversations((prev) => {
         const updated = prev.map((c) =>
           c._id === msg.conversationId
             ? {
-                ...c,
-                lastMessage: msg,
-                unreadCount: c.unreadCount?.map((u: any) =>
-                  u.userId === user._id ? { ...u, count: u.count + 1 } : u
-                ),
-              }
+              ...c,
+              lastMessage: msg,
+              unreadCount:
+                isReceiver && !isReading
+                  ? c.unreadCount?.map((u: any) =>
+                    u.userId === user._id ? { ...u, count: u.count + 1 } : u
+                  )
+                  : c.unreadCount,
+            }
             : c
         );
-        setUnreadCount(calcUnread(updated, user._id));
+        // ✅ unreadCount tự động tính từ useMemo - KHÔNG cần setUnreadCount
+        console.log("💬 Conversations updated, unreadCount will auto-recalculate");
         return updated;
       });
 
-      setMessages((prev) => ({
-        ...prev,
-        [msg.conversationId]: [...(prev[msg.conversationId] || []), msg],
-      }));
+      // 🧠 Show browser notification nếu user không đang đọc
+      if (isReceiver && !isReading) {
+        const senderName = msg.sender?.first_name || "Someone";
+        if (Notification.permission === "granted") {
+          new Notification(`Message from ${senderName}`, {
+            body: msg.content,
+            icon: "/favicon.ico",
+          });
+        }
+      }
+    });
+
+    /* ---- NOTIFICATIONS ---- */
+    // Listen for full notifications list (emitted after joinNotificationRoom)
+    socket.on("notifications", (list: any[]) => {
+      try {
+        console.log("📬 Notifications list received:", list?.length, "items");
+        setNotifications(Array.isArray(list) ? list : []);
+      } catch (err) {
+        console.error("❌ Error loading notifications:", err);
+        setNotifications([]);
+      }
+    });
+
+    // 🔥 Mark ALL notifications as read (multi-tab sync)
+    // ✅ CHỈ update notifications array - unreadNotifications tự động recalculate
+    // 📌 Chuẩn hóa event name: notification:read:all
+    socket.on("notification:read:all", ({ userId }: { userId: string }) => {
+      if (userId !== user._id) return;
+
+      console.log("📬 All notifications marked as read (broadcast from server)");
+      setNotifications((prev) =>
+        prev.map((n) => ({ ...n, isRead: true }))
+      );
+    });
+
+    // New notification arrives
+    // ✅ CHỈ add vào notifications array - unreadNotifications tự động increase
+    // 🔥 FIX: ADD VỚI isRead state, KHÔNG emit notification:read:one
+    // 📌 notification:read:all sẽ xử lý sync cho tất cả
+    socket.on("notification:new", (notif: any) => {
+      console.log("🔔 New notification arrived:", notif);
+
+      // ✅ ADD NOTIFICATION VÀO STATE
+      setNotifications((prev) => {
+        // Tránh duplicate
+        if (prev.some((n) => n._id === notif._id)) {
+          console.log("⚠️ Notification already exists, skip");
+          return prev;
+        }
+
+        // 🔥 NẾU ĐANG XEM NOTIFICATION PAGE → ADD VỚI isRead: true
+        // ❌ KHÔNG emit read:one - notification:read:all đã xử lý
+        return [
+          {
+            ...notif,
+            isRead: isViewingNotificationsRef.current,
+          },
+          ...prev,
+        ];
+      });
+
+      // Show browser notification nếu tab không active
+      if (Notification.permission === "granted" && !isTabActiveRef.current) {
+        new Notification(notif.title || "New Notification", {
+          body: notif.message || notif.content || "",
+          icon: "/favicon.ico",
+        });
+      }
+    });
+
+    // Notification marked as read (server broadcast after notification:read:one emit)
+    // ✅ CHỈ update isRead flag - unreadNotifications tự động recalculate
+    socket.on("notification:read:one", (data: any) => {
+      if (!data || !data.notificationId) return;
+
+      console.log("✅ Notification marked as read (broadcast from server):", data.notificationId);
+      setNotifications((prev) =>
+        prev.map((n) =>
+          n._id === data.notificationId ? { ...n, isRead: true } : n
+        )
+      );
     });
 
     /* ---- LOAD MESSAGES ---- */
@@ -131,7 +361,7 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
 
     /* ---- NEW CONVERSATION ---- */
     socket.on("conversation:new", (conversation: any) => {
-      console.log("🔥 NEW CONVERSATION:", conversation);
+      console.log(" NEW CONVERSATION:", conversation);
 
       setConversations((prev) => {
         const exists = prev.some((c) => c._id === conversation._id);
@@ -139,7 +369,7 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
         return [conversation, ...prev];
       });
 
-      // 👉 Nếu user đang ở ChatPage mà chưa chọn conversation
+      // Nếu user đang ở ChatPage mà chưa chọn conversation
       if (!selectedConversationId) {
         setSelectedConversationId(conversation._id);
         joinConversation(conversation._id);
@@ -163,23 +393,31 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
           const updated = prev.map((c) =>
             c._id === conversationId
               ? {
-                  ...c,
-                  unreadCount: c.unreadCount?.map((u: any) =>
-                    u.userId === user._id ? { ...u, count: 0 } : u
-                  ),
-                }
+                ...c,
+                unreadCount: c.unreadCount?.map((u: any) =>
+                  u.userId === user._id ? { ...u, count: 0 } : u
+                ),
+              }
               : c
           );
-          setUnreadCount(calcUnread(updated, user._id));
+          // ✅ unreadCount tự động tính từ useMemo - KHÔNG cần setUnreadCount
+          console.log("✅ Conversation marked as read, unreadCount will auto-recalculate");
           return updated;
         });
       }
     );
 
     return () => {
-      socket.off();
+      socket.off("newMessage");
+      socket.off("notifications");
+      socket.off("notification:new");
+      socket.off("notification:read:all");
+      socket.off("notification:read:one");
+      socket.off("conversation:messages");
+      socket.off("conversation:new");
+      socket.off("unreadReset");
     };
-  }, [user, selectedConversationId]);
+  }, [user]);
 
   /* ========== ACTIONS ========== */
 
@@ -189,30 +427,35 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
 
   const markConversationAsRead = useCallback(
     (conversationId: string) => {
-      if (!user || !socketRef.current) return;
+      if (!user) return;
 
       setConversations((prev) => {
         const updated = prev.map((c) =>
           c._id === conversationId
             ? {
-                ...c,
-                unreadCount: c.unreadCount?.map((u: any) =>
-                  u.userId === user._id ? { ...u, count: 0 } : u
-                ),
-              }
+              ...c,
+              unreadCount: c.unreadCount?.map((u: any) =>
+                u.userId === user._id ? { ...u, count: 0 } : u
+              ),
+            }
             : c
         );
-        setUnreadCount(calcUnread(updated, user._id));
+        // ✅ unreadCount tự động tính từ useMemo - KHÔNG cần setUnreadCount
         return updated;
       });
 
-      socketRef.current.emit("readConversation", {
-        conversationId,
-        userId: user._id,
-      });
+      // 🔥 emit readConversation là ở auto useEffect, KHÔNG emit ở đây
+      // 📌 Tránh emit 2 lần cùng 1 event
     },
     [user]
   );
+
+  // Thêm sendMessage action
+  const sendMessage = useCallback((data: any) => {
+    if (socketRef.current) {
+      socketRef.current.emit("sendMessage", data);
+    }
+  }, []);
 
   const createConversation = useCallback(
     (participants: string[], cb?: (conversation: any) => void) => {
@@ -220,7 +463,7 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
         "conversation:create",
         { participants },
         async (conversation: any) => {
-          // 🔥 reload toàn bộ conversations mới nhất
+          // reload toàn bộ conversations mới nhất
           await loadConversations();
 
           cb?.(conversation);
@@ -230,22 +473,47 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
     [loadConversations]
   );
 
+  //  Wrap value in useMemo to prevent unnecessary re-renders of context consumers
+  const value = React.useMemo(
+    () => ({
+      unreadCount,
+      unreadNotifications, // ✅ Derived from notifications, tự động recalculate
+      conversations,
+      messages,
+      notifications,
+      markConversationAsRead,
+      joinConversation,
+      sendMessage,
+      setConversations,
+      setMessages,
+      setNotifications,
+      socket: socketRef.current,
+      createConversation,
+      selectedConversationId,
+      setSelectedConversationId,
+      activeConversationId,
+      setActiveConversationId,
+      isViewingNotifications,
+      setIsViewingNotifications,
+    }),
+    [
+      unreadCount,
+      unreadNotifications, // Already includes notifications in dependency via useMemo
+      conversations,
+      messages,
+      notifications,
+      markConversationAsRead,
+      joinConversation,
+      sendMessage,
+      createConversation,
+      activeConversationId,
+      selectedConversationId,
+      isViewingNotifications,
+    ]
+  );
+
   return (
-    <SocketContext.Provider
-      value={{
-        unreadCount,
-        conversations,
-        messages,
-        markConversationAsRead,
-        joinConversation,
-        setConversations,
-        setMessages,
-        socket: socketRef.current,
-        createConversation,
-        selectedConversationId,
-        setSelectedConversationId,
-      }}
-    >
+    <SocketContext.Provider value={value}>
       {children}
     </SocketContext.Provider>
   );
