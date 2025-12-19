@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { getUserIdFromToken } from "@/api/userApi";
-import { Message } from "@/api/apiChat";
+import { Message, getMessages } from "@/api/apiChat";
 import ChatSidebar from "@/components/chatAndNotification/ChatSidebar";
 import VirtualizedMessages from "@/components/chatAndNotification/VirtualizedMessages";
 import ChatInput from "@/components/chatAndNotification/ChatInput";
@@ -41,8 +41,10 @@ function ChatPage() {
   // ----- SOCKET NEW MESSAGE HANDLER -----
   const handleNewMessage = useCallback(
     (message: Message) => {
+      const convId = message.conversationId as string;
+
+      // Update messages
       setMessages((prev) => {
-        const convId = message.conversationId as string;
         const prevMessages = prev[convId] || [];
 
         if (prevMessages.some((m) => m._id === message._id)) return prev;
@@ -53,20 +55,49 @@ function ChatPage() {
         };
       });
 
+      // Update conversations - lastMessage và move to top
+      setConversations((prev) => {
+        return prev
+          .map((conv) => {
+            if (conv._id === convId) {
+              return {
+                ...conv,
+                lastMessage: {
+                  _id: message._id,
+                  content: message.content,
+                  senderId: message.senderId,
+                  createdAt: message.createdAt,
+                  sender: message.sender,
+                },
+              };
+            }
+            return conv;
+          })
+          .sort((a, b) => {
+            const aTime = a.lastMessage?.createdAt
+              ? new Date(a.lastMessage.createdAt).getTime()
+              : 0;
+            const bTime = b.lastMessage?.createdAt
+              ? new Date(b.lastMessage.createdAt).getTime()
+              : 0;
+            return bTime - aTime;
+          });
+      });
+
       setShouldScroll(true);
     },
-    [setMessages]
+    [setMessages, setConversations]
   );
 
   const handleConversationUpdate = useCallback((msg: any) => {
     // Khi lastMessage update → scroll
     setShouldScroll(true);
-  }, []);
+  }, []) as any;
 
   const handleMessageError = useCallback((error: any) => {
     console.error("Message error:", error);
     alert("Gửi tin nhắn thất bại!");
-  }, []);
+  }, []) as any;
 
   useEffect(() => {
     if (!conversationId) return;
@@ -89,6 +120,27 @@ function ChatPage() {
     setUserId(getUserIdFromToken());
   }, []);
 
+  // Fetch messages when conversation selected or reloaded
+  useEffect(() => {
+    if (!selectedConversationId) return;
+
+    async function loadMessages() {
+      try {
+        const data = await getMessages(selectedConversationId as any);
+        setMessages((prev) => ({
+          ...prev,
+          [selectedConversationId as any]: data,
+        }));
+        setShouldScroll(true);
+      } catch (err) {
+        console.error("Failed to load messages:", err);
+      }
+    }
+
+    loadMessages();
+    joinConversation(selectedConversationId as any);
+  }, [selectedConversationId, setMessages, joinConversation]);
+
   const handleSend = useCallback(() => {
     if (!content.trim() || !userId || !selectedConversationId) return;
 
@@ -106,13 +158,12 @@ function ChatPage() {
   const handleSelectConversation = useCallback(
     (conversationId: string) => {
       setSelectedConversationId(conversationId);
-
-      // Reset unread
-
       markConversationAsRead(conversationId);
     },
-    [setSelectedConversationId, markConversationAsRead, setConversations]
+    [setSelectedConversationId, markConversationAsRead]
   );
+
+
 
   // Scroll to bottom when conversation changes
   useEffect(() => {
@@ -131,9 +182,9 @@ function ChatPage() {
     if (!selectedConversationDetail?.participants || !userId)
       return "Người dùng";
 
-    const other = selectedConversationDetail.participants.find(
+    const other = (selectedConversationDetail.participants as any[]).find(
       (p: any) => normalizeId(p) !== normalizeId(userId)
-    );
+    ) as any;
 
     if (other?.first_name) {
       return `${other.first_name} ${other.last_name || ""}`;
@@ -141,6 +192,9 @@ function ChatPage() {
 
     return "Người dùng";
   }, [selectedConversationDetail, userId]);
+
+
+
 
   return (
     <div className="flex h-[calc(100vh-64px)] bg-background mt-[64px]">
