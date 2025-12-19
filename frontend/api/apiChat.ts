@@ -30,6 +30,7 @@ export interface Conversation {
   currentUser?: User;
 }
 
+
 /**
  * Normalize ID từ object hoặc string - Xử lý đúng ObjectId từ MongoDB
  */

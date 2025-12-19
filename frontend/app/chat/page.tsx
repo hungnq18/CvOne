@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { getUserIdFromToken } from "@/api/userApi";
-import { Message } from "@/api/apiChat";
+import { Message, getMessages } from "@/api/apiChat";
 import ChatSidebar from "@/components/chatAndNotification/ChatSidebar";
 import VirtualizedMessages from "@/components/chatAndNotification/VirtualizedMessages";
 import ChatInput from "@/components/chatAndNotification/ChatInput";
@@ -10,12 +10,14 @@ import { useSocket } from "@/providers/SocketProvider";
 import { useChatData } from "@/hooks/useChatData";
 import { useChatSocket } from "@/hooks/useChatSocket";
 import { normalizeId } from "@/utils/normalizeId";
+import { userCache } from "@/utils/userCache";
 import React, { memo } from "react";
 import { useSearchParams } from "next/navigation";
 
 function ChatPage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [content, setContent] = useState("");
+  const [otherUserData, setOtherUserData] = useState<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const previousConversationIdRef = useRef<string | null>(null);
   const searchParams = useSearchParams();
@@ -34,15 +36,17 @@ function ChatPage() {
 
     selectedConversationDetail,
     messages,
-  } = useChatData();
+  } = useChatData(selectedConversationId);
   const currentMessages = messages[selectedConversationId || ""] || [];
   const [shouldScroll, setShouldScroll] = useState(false);
 
   // ----- SOCKET NEW MESSAGE HANDLER -----
   const handleNewMessage = useCallback(
     (message: Message) => {
+      const convId = message.conversationId as string;
+
+      // Update messages
       setMessages((prev) => {
-        const convId = message.conversationId as string;
         const prevMessages = prev[convId] || [];
 
         if (prevMessages.some((m) => m._id === message._id)) return prev;
@@ -53,20 +57,49 @@ function ChatPage() {
         };
       });
 
+      // Update conversations - lastMessage và move to top
+      setConversations((prev) => {
+        return prev
+          .map((conv) => {
+            if (conv._id === convId) {
+              return {
+                ...conv,
+                lastMessage: {
+                  _id: message._id,
+                  content: message.content,
+                  senderId: message.senderId,
+                  createdAt: message.createdAt,
+                  sender: message.sender,
+                },
+              };
+            }
+            return conv;
+          })
+          .sort((a, b) => {
+            const aTime = a.lastMessage?.createdAt
+              ? new Date(a.lastMessage.createdAt).getTime()
+              : 0;
+            const bTime = b.lastMessage?.createdAt
+              ? new Date(b.lastMessage.createdAt).getTime()
+              : 0;
+            return bTime - aTime;
+          });
+      });
+
       setShouldScroll(true);
     },
-    [setMessages]
+    [setMessages, setConversations]
   );
 
   const handleConversationUpdate = useCallback((msg: any) => {
     // Khi lastMessage update → scroll
     setShouldScroll(true);
-  }, []);
+  }, []) as any;
 
   const handleMessageError = useCallback((error: any) => {
     console.error("Message error:", error);
     alert("Gửi tin nhắn thất bại!");
-  }, []);
+  }, []) as any;
 
   useEffect(() => {
     if (!conversationId) return;
@@ -74,7 +107,7 @@ function ChatPage() {
     setSelectedConversationId(conversationId);
     joinConversation(conversationId);
     markConversationAsRead(conversationId);
-  }, [conversationId]);
+  }, [conversationId, setSelectedConversationId, joinConversation, markConversationAsRead]);
 
   const { emitMessage } = useChatSocket({
     selectedConversationId,
@@ -88,6 +121,27 @@ function ChatPage() {
   useEffect(() => {
     setUserId(getUserIdFromToken());
   }, []);
+
+  // Fetch messages when conversation selected or reloaded
+  useEffect(() => {
+    if (!selectedConversationId) return;
+
+    async function loadMessages() {
+      try {
+        const data = await getMessages(selectedConversationId as any);
+        setMessages((prev) => ({
+          ...prev,
+          [selectedConversationId as any]: data,
+        }));
+        setShouldScroll(true);
+      } catch (err) {
+        console.error("Failed to load messages:", err);
+      }
+    }
+
+    loadMessages();
+    joinConversation(selectedConversationId as any);
+  }, [selectedConversationId, setMessages, joinConversation]);
 
   const handleSend = useCallback(() => {
     if (!content.trim() || !userId || !selectedConversationId) return;
@@ -106,41 +160,73 @@ function ChatPage() {
   const handleSelectConversation = useCallback(
     (conversationId: string) => {
       setSelectedConversationId(conversationId);
-
-      // Reset unread
-
       markConversationAsRead(conversationId);
     },
-    [setSelectedConversationId, markConversationAsRead, setConversations]
+    [setSelectedConversationId, markConversationAsRead]
   );
 
-  // Scroll to bottom when conversation changes
+
+
+  // Fetch other user data khi selectedConversationDetail thay đổi
   useEffect(() => {
-    if (
-      selectedConversationId !== previousConversationIdRef.current &&
-      currentMessages.length > 0
-    ) {
-      const t = setTimeout(() => setShouldScroll(true), 120);
-      previousConversationIdRef.current = selectedConversationId;
-      return () => clearTimeout(t);
+    if (!selectedConversationDetail?.participants || !userId) {
+      setOtherUserData(null);
+      return;
     }
-    previousConversationIdRef.current = selectedConversationId;
-  }, [selectedConversationId, currentMessages.length]);
+
+    const normalizedUserId = normalizeId(userId);
+    const otherParticipantId = (selectedConversationDetail.participants as any[]).find(
+      (p: any) => {
+        const pid = normalizeId(p);
+        return pid && pid !== normalizedUserId;
+      }
+    );
+
+    if (!otherParticipantId) {
+      setOtherUserData(null);
+      return;
+    }
+
+    async function fetchUserData() {
+      try {
+        const normalizedId = normalizeId(otherParticipantId);
+        if (normalizedId) {
+          const userData = await userCache.getUserById(normalizedId);
+          setOtherUserData(userData);
+        }
+      } catch (err) {
+        console.error("Error fetching user data:", err);
+        setOtherUserData(null);
+      }
+    }
+
+    fetchUserData();
+  }, [selectedConversationDetail, userId]);
 
   const headerName = useMemo(() => {
     if (!selectedConversationDetail?.participants || !userId)
       return "Người dùng";
 
-    const other = selectedConversationDetail.participants.find(
-      (p: any) => normalizeId(p) !== normalizeId(userId)
-    );
+    const normalizedUserId = normalizeId(userId);
 
-    if (other?.first_name) {
-      return `${other.first_name} ${other.last_name || ""}`;
+    // Find other participant (not current user)
+    const otherParticipantId = (selectedConversationDetail.participants as any[]).find(
+      (p: any) => {
+        const pid = normalizeId(p);
+        return pid && pid !== normalizedUserId;
+      }
+    ) as any;
+
+    // If otherUserData already loaded, use it
+    if (otherUserData && otherUserData.first_name) {
+      return `${otherUserData.first_name} ${otherUserData.last_name || ""}`.trim();
     }
 
     return "Người dùng";
-  }, [selectedConversationDetail, userId]);
+  }, [selectedConversationDetail, userId, otherUserData]);
+
+
+
 
   return (
     <div className="flex h-[calc(100vh-64px)] bg-background mt-[64px]">

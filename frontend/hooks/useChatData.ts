@@ -20,6 +20,13 @@ export function useChatData(selectedConversationIdProp?: string | null) {
     lastMessage: any | null;
   } | null>(null);
 
+  // Sync selectedConversationIdProp từ prop
+  useEffect(() => {
+    if (selectedConversationIdProp) {
+      setSelectedConversationId(selectedConversationIdProp);
+    }
+  }, [selectedConversationIdProp]);
+
   // Cập nhật conversation detail
   useEffect(() => {
     if (!selectedConversationId) {
