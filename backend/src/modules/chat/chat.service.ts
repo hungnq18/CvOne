@@ -5,6 +5,7 @@ import { Message } from "./schemas/message.schema";
 import { Conversation } from "./schemas/conversation.schema";
 import { SendMessageDto } from "./dto/send-message.dto";
 import { UsersService } from "../users/users.service";
+import { CreateConversationDto } from "../conversation/dto/create-conversation.dto";
 
 @Injectable()
 export class ChatService {
@@ -91,5 +92,28 @@ export class ChatService {
 
     await conversation.save();
     return conversation;
+  }
+  async createConversation(dto: CreateConversationDto) {
+    const userIds = dto.participants.map((id) => new Types.ObjectId(id));
+
+    const existing = await this.convModel
+      .findOne({
+        participants: { $all: userIds, $size: 2 },
+      })
+      .populate("participants", "first_name last_name avatar role");
+
+    if (existing) {
+      return existing;
+    }
+
+    const conversation = await this.convModel.create({
+      participants: userIds,
+    });
+
+    const conv = await this.convModel
+      .findById(conversation._id)
+      .populate("participants", "first_name last_name avatar role");
+
+    return conv;
   }
 }

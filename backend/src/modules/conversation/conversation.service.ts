@@ -1,30 +1,46 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import {
+  Inject,
+  Injectable,
+  NotFoundException,
+  forwardRef,
+} from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model, Types } from "mongoose";
 import { Conversation } from "../chat/schemas/conversation.schema";
 import { CreateConversationDto } from "./dto/create-conversation.dto";
+import { ChatGateway } from "../chat/chat.gateway";
+import { ConversationEventsService } from "./conversation-events.service";
 
 @Injectable()
 export class ConversationService {
   constructor(
     @InjectModel(Conversation.name)
     private readonly convModel: Model<Conversation>,
-  ) { }
+    private readonly conversationEvents: ConversationEventsService
+  ) {}
 
   async createConversation(dto: CreateConversationDto) {
     const userIds = dto.participants.map((id) => new Types.ObjectId(id));
 
-    // Kiểm tra xem đã tồn tại cuộc trò chuyện giữa 2 người này chưa
-    const existing = await this.convModel.findOne({
-      participants: { $all: userIds, $size: 2 },
-    });
+    const existing = await this.convModel
+      .findOne({
+        participants: { $all: userIds, $size: 2 },
+      })
+      .populate("participants", "first_name last_name avatar role");
 
     if (existing) {
-      return existing; // hoặc throw new ConflictException('Conversation already exists');
+      return existing;
     }
 
-    const conversation = new this.convModel({ participants: userIds });
-    return conversation.save();
+    const conversation = await this.convModel.create({
+      participants: userIds,
+    });
+
+    const conv = await this.convModel
+      .findById(conversation._id)
+      .populate("participants", "first_name last_name avatar role");
+
+    return conv;
   }
 
   async getUserConversations(userId: string) {
@@ -94,7 +110,7 @@ export class ConversationService {
         $set: {
           "unreadCount.$.count": 0,
         },
-      },
+      }
     );
 
     return {

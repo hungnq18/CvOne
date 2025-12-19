@@ -11,19 +11,27 @@ import { useChatData } from "@/hooks/useChatData";
 import { useChatSocket } from "@/hooks/useChatSocket";
 import { normalizeId } from "@/utils/normalizeId";
 import React, { memo } from "react";
+import { useSearchParams } from "next/navigation";
 
 function ChatPage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [content, setContent] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const previousConversationIdRef = useRef<string | null>(null);
-
-  const { markConversationAsRead, setConversations, setMessages } = useSocket();
+  const searchParams = useSearchParams();
+  const conversationId = searchParams.get("conversationId");
+  const {
+    markConversationAsRead,
+    setConversations,
+    setMessages,
+    selectedConversationId,
+    setSelectedConversationId,
+    joinConversation,
+  } = useSocket();
 
   const {
     conversations,
-    selectedConversationId,
-    setSelectedConversationId,
+
     selectedConversationDetail,
     messages,
   } = useChatData();
@@ -59,6 +67,14 @@ function ChatPage() {
     console.error("Message error:", error);
     alert("Gửi tin nhắn thất bại!");
   }, []);
+
+  useEffect(() => {
+    if (!conversationId) return;
+
+    setSelectedConversationId(conversationId);
+    joinConversation(conversationId);
+    markConversationAsRead(conversationId);
+  }, [conversationId]);
 
   const { emitMessage } = useChatSocket({
     selectedConversationId,

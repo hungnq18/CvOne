@@ -6,6 +6,7 @@ import {
 } from "../chat/schemas/conversation.schema";
 import { ConversationService } from "./conversation.service";
 import { ConversationController } from "./conversation.controller";
+import { ConversationEventsService } from "./conversation-events.service";
 
 @Module({
   imports: [
@@ -14,7 +15,7 @@ import { ConversationController } from "./conversation.controller";
     ]),
   ],
   controllers: [ConversationController],
-  providers: [ConversationService],
-  exports: [ConversationService],
+  providers: [ConversationService, ConversationEventsService],
+  exports: [ConversationService, ConversationEventsService],
 })
 export class ConversationModule {}
