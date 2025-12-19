@@ -182,12 +182,24 @@ function ChatPage() {
     if (!selectedConversationDetail?.participants || !userId)
       return "Người dùng";
 
-    const other = (selectedConversationDetail.participants as any[]).find(
-      (p: any) => normalizeId(p) !== normalizeId(userId)
+    console.log("participants:", selectedConversationDetail.participants);
+
+    const normalizedUserId = normalizeId(userId);
+
+    // Find other participant (not current user)
+    const otherParticipant = (selectedConversationDetail.participants as any[]).find(
+      (p: any) => {
+        if (!p) return false;
+        const pid = normalizeId(p) || (typeof p === "object" && p._id ? normalizeId(p._id) : null);
+        return pid && pid !== normalizedUserId;
+      }
     ) as any;
 
-    if (other?.first_name) {
-      return `${other.first_name} ${other.last_name || ""}`;
+    if (!otherParticipant) return "Người dùng";
+
+    // Extract name from participant
+    if (typeof otherParticipant === "object" && otherParticipant.first_name) {
+      return `${otherParticipant.first_name} ${otherParticipant.last_name || ""}`.trim();
     }
 
     return "Người dùng";

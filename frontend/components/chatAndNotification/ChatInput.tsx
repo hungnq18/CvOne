@@ -20,7 +20,7 @@ function ChatInput({ content, onContentChange, onSend }: ChatInputProps) {
 
     return (
         <div className="bg-background border-t border-border sticky bottom-0 z-10 px-4 py-4">
-            <div className="flex items-center gap-3 max-w-3xl mx-auto">
+            <div className="flex items-center gap-3 w-full px-6">
                 <input
                     type="text"
                     value={content}
