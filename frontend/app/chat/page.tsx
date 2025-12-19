@@ -10,12 +10,14 @@ import { useSocket } from "@/providers/SocketProvider";
 import { useChatData } from "@/hooks/useChatData";
 import { useChatSocket } from "@/hooks/useChatSocket";
 import { normalizeId } from "@/utils/normalizeId";
+import { userCache } from "@/utils/userCache";
 import React, { memo } from "react";
 import { useSearchParams } from "next/navigation";
 
 function ChatPage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [content, setContent] = useState("");
+  const [otherUserData, setOtherUserData] = useState<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const previousConversationIdRef = useRef<string | null>(null);
   const searchParams = useSearchParams();
@@ -34,7 +36,7 @@ function ChatPage() {
 
     selectedConversationDetail,
     messages,
-  } = useChatData();
+  } = useChatData(selectedConversationId);
   const currentMessages = messages[selectedConversationId || ""] || [];
   const [shouldScroll, setShouldScroll] = useState(false);
 
@@ -105,7 +107,7 @@ function ChatPage() {
     setSelectedConversationId(conversationId);
     joinConversation(conversationId);
     markConversationAsRead(conversationId);
-  }, [conversationId]);
+  }, [conversationId, setSelectedConversationId, joinConversation, markConversationAsRead]);
 
   const { emitMessage } = useChatSocket({
     selectedConversationId,
@@ -165,45 +167,63 @@ function ChatPage() {
 
 
 
-  // Scroll to bottom when conversation changes
+  // Fetch other user data khi selectedConversationDetail thay đổi
   useEffect(() => {
-    if (
-      selectedConversationId !== previousConversationIdRef.current &&
-      currentMessages.length > 0
-    ) {
-      const t = setTimeout(() => setShouldScroll(true), 120);
-      previousConversationIdRef.current = selectedConversationId;
-      return () => clearTimeout(t);
+    if (!selectedConversationDetail?.participants || !userId) {
+      setOtherUserData(null);
+      return;
     }
-    previousConversationIdRef.current = selectedConversationId;
-  }, [selectedConversationId, currentMessages.length]);
+
+    const normalizedUserId = normalizeId(userId);
+    const otherParticipantId = (selectedConversationDetail.participants as any[]).find(
+      (p: any) => {
+        const pid = normalizeId(p);
+        return pid && pid !== normalizedUserId;
+      }
+    );
+
+    if (!otherParticipantId) {
+      setOtherUserData(null);
+      return;
+    }
+
+    async function fetchUserData() {
+      try {
+        const normalizedId = normalizeId(otherParticipantId);
+        if (normalizedId) {
+          const userData = await userCache.getUserById(normalizedId);
+          setOtherUserData(userData);
+        }
+      } catch (err) {
+        console.error("Error fetching user data:", err);
+        setOtherUserData(null);
+      }
+    }
+
+    fetchUserData();
+  }, [selectedConversationDetail, userId]);
 
   const headerName = useMemo(() => {
     if (!selectedConversationDetail?.participants || !userId)
       return "Người dùng";
 
-    console.log("participants:", selectedConversationDetail.participants);
-
     const normalizedUserId = normalizeId(userId);
 
     // Find other participant (not current user)
-    const otherParticipant = (selectedConversationDetail.participants as any[]).find(
+    const otherParticipantId = (selectedConversationDetail.participants as any[]).find(
       (p: any) => {
-        if (!p) return false;
-        const pid = normalizeId(p) || (typeof p === "object" && p._id ? normalizeId(p._id) : null);
+        const pid = normalizeId(p);
         return pid && pid !== normalizedUserId;
       }
     ) as any;
 
-    if (!otherParticipant) return "Người dùng";
-
-    // Extract name from participant
-    if (typeof otherParticipant === "object" && otherParticipant.first_name) {
-      return `${otherParticipant.first_name} ${otherParticipant.last_name || ""}`.trim();
+    // If otherUserData already loaded, use it
+    if (otherUserData && otherUserData.first_name) {
+      return `${otherUserData.first_name} ${otherUserData.last_name || ""}`.trim();
     }
 
     return "Người dùng";
-  }, [selectedConversationDetail, userId]);
+  }, [selectedConversationDetail, userId, otherUserData]);
 
 
 
