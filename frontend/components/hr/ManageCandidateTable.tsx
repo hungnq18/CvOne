@@ -463,10 +463,10 @@ const ManageCandidateTable = () => {
                     {app.updatedAt
                       ? new Date(app.updatedAt).toLocaleDateString()
                       : app.createdAt
-                      ? new Date(app.createdAt).toLocaleDateString()
-                      : app.submit_at
-                      ? new Date(app.submit_at).toLocaleDateString()
-                      : "-"}
+                        ? new Date(app.createdAt).toLocaleDateString()
+                        : app.submit_at
+                          ? new Date(app.submit_at).toLocaleDateString()
+                          : "-"}
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center space-x-2">
@@ -587,7 +587,7 @@ const ManageCandidateTable = () => {
               ) {
                 handleDownloadCL(
                   downloadModal.app?.coverletterId?._id ||
-                    downloadModal.app?.coverletter_id,
+                  downloadModal.app?.coverletter_id,
                   downloadModal.app?.coverletterUrl
                 );
               } else if (downloadModal.app?.clUrl) {

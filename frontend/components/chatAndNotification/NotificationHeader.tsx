@@ -38,13 +38,13 @@ const NotificationHeader: React.FC<NotificationHeaderProps> = ({ total, unread, 
                     </p>
                 </div>
             </div>
-            <div className="flex items-center gap-2">
+            {/* <div className="flex items-center gap-2">
                 {unread > 0 && (
                     <button onClick={handleMarkAllAsRead} className="flex items-center  px-3 py-2 rounded border bg-white hover:bg-gray-100 text-gray-700 text-sm font-medium">
                         <CheckCheck className="h-4 w-4" /> {t.markAllAsRead}
                     </button>
                 )}
-            </div>
+            </div> */}
         </div>
     </div>
 );
