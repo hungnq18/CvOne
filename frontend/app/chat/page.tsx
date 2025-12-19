@@ -8,7 +8,6 @@ import VirtualizedMessages from "@/components/chatAndNotification/VirtualizedMes
 import ChatInput from "@/components/chatAndNotification/ChatInput";
 import { useSocket } from "@/providers/SocketProvider";
 import { useChatData } from "@/hooks/useChatData";
-import { useChatSocket } from "@/hooks/useChatSocket";
 import { normalizeId } from "@/utils/normalizeId";
 import { userCache } from "@/utils/userCache";
 import React, { memo } from "react";
@@ -23,12 +22,14 @@ function ChatPage() {
   const searchParams = useSearchParams();
   const conversationId = searchParams.get("conversationId");
   const {
-    markConversationAsRead,
     setConversations,
     setMessages,
     selectedConversationId,
     setSelectedConversationId,
     joinConversation,
+    sendMessage,
+    setActiveConversationId,
+    markConversationAsRead, //Thêm để mark read khi mở conversation
   } = useSocket();
 
   const {
@@ -40,82 +41,25 @@ function ChatPage() {
   const currentMessages = messages[selectedConversationId || ""] || [];
   const [shouldScroll, setShouldScroll] = useState(false);
 
-  // ----- SOCKET NEW MESSAGE HANDLER -----
-  const handleNewMessage = useCallback(
-    (message: Message) => {
-      const convId = message.conversationId as string;
-
-      // Update messages
-      setMessages((prev) => {
-        const prevMessages = prev[convId] || [];
-
-        if (prevMessages.some((m) => m._id === message._id)) return prev;
-
-        return {
-          ...prev,
-          [convId]: [...prevMessages, message],
-        };
-      });
-
-      // Update conversations - lastMessage và move to top
-      setConversations((prev) => {
-        return prev
-          .map((conv) => {
-            if (conv._id === convId) {
-              return {
-                ...conv,
-                lastMessage: {
-                  _id: message._id,
-                  content: message.content,
-                  senderId: message.senderId,
-                  createdAt: message.createdAt,
-                  sender: message.sender,
-                },
-              };
-            }
-            return conv;
-          })
-          .sort((a, b) => {
-            const aTime = a.lastMessage?.createdAt
-              ? new Date(a.lastMessage.createdAt).getTime()
-              : 0;
-            const bTime = b.lastMessage?.createdAt
-              ? new Date(b.lastMessage.createdAt).getTime()
-              : 0;
-            return bTime - aTime;
-          });
-      });
-
-      setShouldScroll(true);
-    },
-    [setMessages, setConversations]
-  );
-
-  const handleConversationUpdate = useCallback((msg: any) => {
-    // Khi lastMessage update → scroll
-    setShouldScroll(true);
-  }, []) as any;
-
-  const handleMessageError = useCallback((error: any) => {
-    console.error("Message error:", error);
-    alert("Gửi tin nhắn thất bại!");
-  }, []) as any;
+  // useEffect để auto-scroll khi có message mới
+  useEffect(() => {
+    if (messagesEndRef.current && shouldScroll) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [currentMessages, shouldScroll]);
 
   useEffect(() => {
     if (!conversationId) return;
 
     setSelectedConversationId(conversationId);
+    setActiveConversationId(conversationId); // 🧠 SET ACTIVE - SocketProvider xử lý mark read
     joinConversation(conversationId);
-    markConversationAsRead(conversationId);
-  }, [conversationId, setSelectedConversationId, joinConversation, markConversationAsRead]);
-
-  const { emitMessage } = useChatSocket({
-    selectedConversationId,
-    userId,
-    onNewMessage: handleNewMessage,
-    onConversationUpdate: handleConversationUpdate,
-    onMessageError: handleMessageError,
-  });
+  }, [
+    conversationId,
+    setSelectedConversationId,
+    setActiveConversationId,
+    joinConversation,
+  ]);
 
   // Init user
   useEffect(() => {
@@ -125,6 +69,10 @@ function ChatPage() {
   // Fetch messages when conversation selected or reloaded
   useEffect(() => {
     if (!selectedConversationId) return;
+
+    // 🔥 Set active + mark as read khi mở conversation
+    setActiveConversationId(selectedConversationId);
+    markConversationAsRead(selectedConversationId);
 
     async function loadMessages() {
       try {
@@ -141,12 +89,19 @@ function ChatPage() {
 
     loadMessages();
     joinConversation(selectedConversationId as any);
-  }, [selectedConversationId, setMessages, joinConversation]);
+  }, [
+    selectedConversationId,
+    setMessages,
+    joinConversation,
+    setActiveConversationId,
+    markConversationAsRead,
+  ]);
 
   const handleSend = useCallback(() => {
     if (!content.trim() || !userId || !selectedConversationId) return;
 
-    emitMessage({
+    sendMessage({
+      // 🔥 Dùng sendMessage từ SocketProvider
       conversationId: selectedConversationId,
       senderId: userId,
       content,
@@ -154,18 +109,16 @@ function ChatPage() {
 
     setContent("");
     setShouldScroll(true);
-  }, [content, userId, selectedConversationId, emitMessage]);
+  }, [content, userId, selectedConversationId, sendMessage]);
 
   // Handle selecting a conversation
   const handleSelectConversation = useCallback(
     (conversationId: string) => {
       setSelectedConversationId(conversationId);
-      markConversationAsRead(conversationId);
+      setActiveConversationId(conversationId); // 🧠 SET ACTIVE - SocketProvider xử lý mark read
     },
-    [setSelectedConversationId, markConversationAsRead]
+    [setSelectedConversationId, setActiveConversationId]
   );
-
-
 
   // Fetch other user data khi selectedConversationDetail thay đổi
   useEffect(() => {
@@ -175,12 +128,12 @@ function ChatPage() {
     }
 
     const normalizedUserId = normalizeId(userId);
-    const otherParticipantId = (selectedConversationDetail.participants as any[]).find(
-      (p: any) => {
-        const pid = normalizeId(p);
-        return pid && pid !== normalizedUserId;
-      }
-    );
+    const otherParticipantId = (
+      selectedConversationDetail.participants as any[]
+    ).find((p: any) => {
+      const pid = normalizeId(p);
+      return pid && pid !== normalizedUserId;
+    });
 
     if (!otherParticipantId) {
       setOtherUserData(null);
@@ -210,23 +163,22 @@ function ChatPage() {
     const normalizedUserId = normalizeId(userId);
 
     // Find other participant (not current user)
-    const otherParticipantId = (selectedConversationDetail.participants as any[]).find(
-      (p: any) => {
-        const pid = normalizeId(p);
-        return pid && pid !== normalizedUserId;
-      }
-    ) as any;
+    const otherParticipantId = (
+      selectedConversationDetail.participants as any[]
+    ).find((p: any) => {
+      const pid = normalizeId(p);
+      return pid && pid !== normalizedUserId;
+    }) as any;
 
     // If otherUserData already loaded, use it
     if (otherUserData && otherUserData.first_name) {
-      return `${otherUserData.first_name} ${otherUserData.last_name || ""}`.trim();
+      return `${otherUserData.first_name} ${
+        otherUserData.last_name || ""
+      }`.trim();
     }
 
     return "Người dùng";
   }, [selectedConversationDetail, userId, otherUserData]);
-
-
-
 
   return (
     <div className="flex h-[calc(100vh-64px)] bg-background mt-[64px]">

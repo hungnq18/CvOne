@@ -96,24 +96,40 @@ export class ChatService {
   async createConversation(dto: CreateConversationDto) {
     const userIds = dto.participants.map((id) => new Types.ObjectId(id));
 
-    const existing = await this.convModel
+    if (userIds.length !== 2) {
+      throw new Error("Conversation must have exactly 2 participants");
+    }
+
+    let conversation = await this.convModel
       .findOne({
         participants: { $all: userIds, $size: 2 },
       })
       .populate("participants", "first_name last_name avatar role");
 
-    if (existing) {
-      return existing;
-    }
+    if (conversation) {
+      if (!conversation.unreadCount || conversation.unreadCount.length < 2) {
+        conversation.unreadCount = userIds.map((id) => ({
+          userId: id,
+          count: 0,
+        }));
+        await conversation.save();
+      }
 
-    const conversation = await this.convModel.create({
+      return conversation;
+    }
+    conversation = await this.convModel.create({
       participants: userIds,
+      unreadCount: userIds.map((id) => ({
+        userId: id,
+        count: 0,
+      })),
+      type: "user-to-hr",
     });
 
-    const conv = await this.convModel
+    const populated = await this.convModel
       .findById(conversation._id)
       .populate("participants", "first_name last_name avatar role");
 
-    return conv;
+    return populated;
   }
 }

@@ -15,8 +15,7 @@ import {
 
 export default function NotificationCenterClient() {
   const { user } = useAuth();
-  const { socket } = useSocket();
-  const [notifications, setNotifications] = useState<any[]>([]);
+  const { notifications, setNotifications, socket, setIsViewingNotifications, unreadNotifications } = useSocket(); // Dùng từ SocketProvider
   const [modalNotification, setModalNotification] = useState<any>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -46,46 +45,35 @@ export default function NotificationCenterClient() {
   const total = notifications.length;
   const unread = notifications.filter((n: any) => !n.isRead).length;
 
-  // ⭐ Khi user vào trang, emit joinNotificationRoom để lấy notifications
+  // 🔥 Set flag + emit when entering notification center
+  // ✅ CHỈNH SỬA: SocketProvider sẽ handle emit, không emit ở đây
   useEffect(() => {
     if (!socket || !user) return;
 
-    // Emit join để server gửi toàn bộ notifications
-    socket.emit("joinNotificationRoom", user._id);
+    // 🧠 TELL PROVIDER: User is viewing notifications
+    // SocketProvider sẽ tự động emit readConversation khi isViewingNotifications = true
+    setIsViewingNotifications(true);
 
-    // Lắng nghe toàn bộ notifications từ server
-    const handleNotifications = (list: any[]) => {
-      setNotifications(list);
-    };
+    console.log("📱 Entering notification center - flag set, SocketProvider will handle emit");
 
-    // Lắng nghe realtime notification mới
-    const handleNewNotification = (notif: any) => {
-      setNotifications((prev) => [notif, ...prev]);
-    };
-
-    // Lắng nghe cập nhật notification đã đọc
-    const handleNotificationMarkedAsRead = (updatedNotif: any) => {
-      setNotifications((prev) =>
-        prev.map((n) => (n._id === updatedNotif._id ? updatedNotif : n))
-      );
-    };
-
-    socket.on("notifications", handleNotifications);
-    socket.on("newNotification", handleNewNotification);
-    socket.on("notificationMarkedAsRead", handleNotificationMarkedAsRead);
-
+    // 🧠 CLEANUP: User left notification page
     return () => {
-      socket.off("notifications", handleNotifications);
-      socket.off("newNotification", handleNewNotification);
-      socket.off("notificationMarkedAsRead", handleNotificationMarkedAsRead);
+      setIsViewingNotifications(false);
     };
-  }, [socket, user]);
+  }, [socket, user, setIsViewingNotifications]);
 
   const handleMarkAllAsRead = async () => {
     try {
       await markAllNotificationsAsRead();
+
+      // 🔥 Emit socket event để broadcast cho tất cả tabs + devices
+      // 📌 Event name PHẢI khớp: notification:read:all
+      socket?.emit("notification:read:all", {
+        userId: user?._id,
+      });
+
       setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
-    } catch {}
+    } catch { }
   };
 
   const handleClearAll = () => {
@@ -100,10 +88,12 @@ export default function NotificationCenterClient() {
     if (!notif.isRead) {
       try {
         await markNotificationAsRead(notif._id);
-        setNotifications((prev) =>
-          prev.map((n) => (n._id === notif._id ? { ...n, isRead: true } : n))
-        );
-      } catch {}
+        // 🧠 Emit event name chuẩn: notification:read:one
+        socket?.emit("notification:read:one", {
+          notificationId: notif._id,
+          userId: user?._id,
+        });
+      } catch { }
     }
   };
 
@@ -148,7 +138,7 @@ export default function NotificationCenterClient() {
                       setNotifications((prev) =>
                         prev.filter((n) => n._id !== notif._id)
                       );
-                    } catch {}
+                    } catch { }
                   }}
                 />
               ))}

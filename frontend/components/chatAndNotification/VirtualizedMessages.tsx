@@ -1,5 +1,4 @@
 import { Message } from "@/api/apiChat";
-import { Avatar } from "@/components/ui/avatar";
 import React, {
   memo,
   useMemo,
@@ -17,16 +16,6 @@ interface VirtualizedMessagesProps {
   shouldScroll: boolean;
   onScrollComplete: () => void;
   conversationId?: string | null;
-}
-
-// Thêm hàm tạo màu nền từ tên user
-function getAvatarColor(name: string) {
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) {
-    hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  const color = `hsl(${hash % 360}, 70%, 60%)`;
-  return color;
 }
 
 const MessageItem = memo(
@@ -49,68 +38,34 @@ const MessageItem = memo(
     );
     const isOwnMessage = senderIdStr === normalizedUserId;
 
-    // Memoize avatar color và initials
-    const avatarColor = useMemo(() => {
-      if (
-        msg.sender &&
-        typeof msg.sender.first_name === "string" &&
-        typeof msg.sender.last_name === "string"
-      ) {
-        return getAvatarColor(msg.sender.first_name + msg.sender.last_name);
-      }
-      return "#888";
-    }, [msg.sender]);
-
-    const avatarInitials = useMemo(() => {
-      if (
-        msg.sender &&
-        typeof msg.sender.first_name === "string" &&
-        typeof msg.sender.last_name === "string"
-      ) {
-        return `${msg.sender.first_name[0]}${msg.sender.last_name[0]}`;
-      }
-      return "U";
-    }, [msg.sender]);
-
     const formattedTime = useMemo(() => {
       return msg.createdAt
         ? new Date(msg.createdAt).toLocaleTimeString("vi-VN", {
-            hour: "2-digit",
-            minute: "2-digit",
-          })
+          hour: "2-digit",
+          minute: "2-digit",
+        })
         : "";
     }, [msg.createdAt]);
 
     return (
       <div
-        className={`flex ${
-          isOwnMessage ? "justify-end" : "justify-start"
-        } mt-5`}
+        className={`flex ${isOwnMessage ? "justify-end" : "justify-start"
+          } mt-5`}
       >
         <div
-          className={`flex items-end gap-2 max-w-[70%] ${
-            isOwnMessage ? "flex-row-reverse" : "flex-row"
-          }`}
-        >
-          {!isOwnMessage && msg.sender && (
-            <Avatar className="h-8 w-8" style={{ background: avatarColor }}>
-              <span className="text-base text-white font-semibold flex items-center justify-center w-full h-full">
-                {avatarInitials}
-              </span>
-            </Avatar>
-          )}
-          <div
-            className={`rounded-2xl px-4 py-2 ${
-              isOwnMessage ? "bg-primary text-primary-foreground" : "bg-muted"
+          className={`flex items-end gap-2 max-w-[70%] ${isOwnMessage ? "flex-row-reverse" : "flex-row"
             }`}
+        >
+          <div
+            className={`rounded-2xl px-4 py-2 ${isOwnMessage ? "bg-primary text-primary-foreground" : "bg-muted"
+              }`}
           >
             <p className="text-sm break-words">{msg.content}</p>
             <p
-              className={`text-xs mt-1 ${
-                isOwnMessage
-                  ? "text-primary-foreground/70"
-                  : "text-muted-foreground"
-              }`}
+              className={`text-xs mt-1 ${isOwnMessage
+                ? "text-primary-foreground/70"
+                : "text-muted-foreground"
+                }`}
             >
               {formattedTime}
             </p>

@@ -55,6 +55,8 @@ const ConversationItem = memo(
       lastMessage: Message | null;
     } | null;
   }) => {
+    console.log("🚀 ConversationItem", conv);
+
     // Normalize userId để so sánh
     const normalizedUserId = userId ? String(userId) : null;
 
@@ -110,20 +112,23 @@ const ConversationItem = memo(
     }
 
     // Tìm số chưa đọc
-    let unread = 0;
-    if (Array.isArray(conv.unreadCount) && normalizedUserId) {
-      const entry = conv.unreadCount.find((u: any) => {
-        if (!u || !u.userId) return false;
+    const unread = useMemo(() => {
+      if (!normalizedUserId) return 0;
+      if (!Array.isArray(conv.unreadCount)) return 0;
+
+      const entry = conv.unreadCount.find((item: any) => {
+        if (!item?.userId) return false;
+
         const uid =
-          typeof u.userId === "object" && u.userId && u.userId._id
-            ? String(u.userId._id)
-            : String(u.userId);
+          typeof item.userId === "object" && item.userId._id
+            ? String(item.userId._id)
+            : String(item.userId);
+
         return uid === normalizedUserId;
       });
-      unread = entry?.count || 0;
-    } else if (typeof conv.unreadCount === "number") {
-      unread = conv.unreadCount;
-    }
+
+      return entry?.count ?? 0;
+    }, [conv.unreadCount, normalizedUserId]);
 
     // Lấy tên user - Kiểm tra kỹ hơn
     let displayName = "Unknown User";
