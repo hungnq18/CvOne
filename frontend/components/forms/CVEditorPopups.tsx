@@ -6,6 +6,8 @@ import { useLanguage } from "@/providers/global_provider";
 import { Edit, Loader2, PlusCircle, Trash2, X } from "lucide-react";
 import { ChangeEvent, FC, ReactNode, useRef, useState } from "react";
 import { notify } from "@/lib/notify";
+import { useRouter } from "next/navigation";
+import { toast } from "@/hooks/use-toast";
 
 const translations = {
   en: {
@@ -668,6 +670,7 @@ export const ExperiencePopup: FC<{
 }> = ({ onClose, initialData, onSave }) => {
   const { language } = useLanguage();
   const t = translations[language].experiencePopup;
+  const router = useRouter();
 
   const [experiences, setExperiences] = useState(initialData.workHistory || []);
   const [isEditing, setIsEditing] = useState(false);
@@ -706,38 +709,6 @@ export const ExperiencePopup: FC<{
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     setCurrentItem({ ...currentItem, [e.target.name]: e.target.value });
-  };
-
-  const handleAIRewrite = async () => {
-    if (!currentItem?.description) return;
-    setLoadingAI(true);
-    try {
-      const { rewriteWorkDescription } = await import("@/api/cvapi");
-      const res = await rewriteWorkDescription(currentItem.description, "vi");
-
-      const rewritten =
-        (res as any)?.rewritten?.workDescription ??
-        (res as any)?.rewritten ??
-        res;
-      setCurrentItem({ ...currentItem, description: rewritten });
-    } catch (error: any) {
-      const message: string =
-        (error?.data && typeof error.data.message === "string"
-          ? error.data.message
-          : error?.message) || "";
-
-      if (message.includes("Not enough tokens")) {
-        notify.error(
-          language === "vi"
-            ? "Không đủ token AI. Vui lòng nạp thêm để tiếp tục sử dụng tính năng AI."
-            : "Not enough AI tokens. Please top up to continue using AI features."
-        );
-      } else {
-        notify.error(t.aiRewriteError);
-      }
-    } finally {
-      setLoadingAI(false);
-    }
   };
 
   const handleFormSubmit = () => {

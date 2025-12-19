@@ -39,6 +39,7 @@ import { getDefaultSectionPositions } from "../cvTemplate/defaultSectionPosition
 import { notify } from "@/lib/notify";
 import { FeedbackPopup } from "@/components/modals/feedbackPopup";
 import { FeedbackSuccessPopup } from "@/components/modals/voucherPopup";
+import { toast } from "@/hooks/use-toast";
 
 // --- TRANSLATIONS ---
 const translations = {
@@ -900,6 +901,9 @@ const PageCreateCVAIContent = () => {
             ? "Không đủ token AI. Vui lòng nạp thêm để tiếp tục sử dụng tính năng AI."
             : "Not enough AI tokens. Please top up to continue using AI features."
         );
+        setTimeout(() => {
+          router.push("/user/wallet");
+        }, 1000);
       } else {
         notify.error(t.translateError);
       }

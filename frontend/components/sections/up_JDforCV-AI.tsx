@@ -4,6 +4,8 @@ import { analyzeJD } from "@/api/cvapi";
 import { useCV } from "@/providers/cv-provider";
 import { useLanguage } from "@/providers/global_provider";
 import { FC, ReactNode, useState } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "@/hooks/use-toast";
 
 // --- ĐỐI TƯỢNG TRANSLATIONS ---
 const translations = {
@@ -213,6 +215,7 @@ const formatAnalysisResult = (
 const UpJdStep: React.FC<UpJdStepProps> = () => {
   const { language } = useLanguage();
   const t = translations[language].jdAnalysis;
+  const router = useRouter();
 
   const { jobDescription, setJobDescription, setJobAnalysis } = useCV();
 
@@ -246,7 +249,16 @@ const UpJdStep: React.FC<UpJdStepProps> = () => {
           : error?.message) || "";
 
       if (message.includes("Not enough tokens")) {
-        setAnalysisError(t.alerts.tokenError);
+        toast({
+          title: "CVone",
+          description: language === "vi"
+            ? "Không đủ token AI. Vui lòng nạp thêm để tiếp tục sử dụng tính năng AI."
+            : "Not enough AI tokens. Please top up to continue using AI features.",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          router.push("/user/wallet");
+        }, 1000);
       } else {
         setAnalysisError(t.alerts.analysisError);
       }

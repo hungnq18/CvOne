@@ -17,6 +17,8 @@ import {
   X,
 } from "lucide-react";
 import { ChangeEvent, FC, ReactNode, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "@/hooks/use-toast";
 
 const translations = {
   en: {
@@ -702,6 +704,7 @@ export const TargetPopup: FC<{
 }> = ({ onClose, initialData, onSave }) => {
   const { language } = useLanguage();
   const t = translations[language].targetPopup;
+  const router = useRouter();
 
   const { jobAnalysis } = useCV();
   const [summary, setSummary] = useState(initialData.summary || "");
@@ -746,11 +749,16 @@ export const TargetPopup: FC<{
           : error?.message) || "";
 
       if (message.includes("Not enough tokens")) {
-        notify.error(
-          language === "vi"
+        toast({
+          title: "CVone",
+          description: language === "vi"
             ? "Không đủ token AI. Vui lòng nạp thêm để tiếp tục sử dụng tính năng AI."
-            : "Not enough AI tokens. Please top up to continue using AI features."
-        );
+            : "Not enough AI tokens. Please top up to continue using AI features.",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          router.push("/user/wallet");
+        }, 1000);
       } else {
         notify.error(
           language === "vi"
@@ -897,6 +905,7 @@ export const ExperiencePopup: FC<{
 }> = ({ onClose, initialData, onSave }) => {
   const { language } = useLanguage();
   const t = translations[language].experiencePopup;
+  const router = useRouter();
 
   const [experiences, setExperiences] = useState(initialData.workHistory || []);
   const [isEditing, setIsEditing] = useState(false);
@@ -955,11 +964,16 @@ export const ExperiencePopup: FC<{
           : error?.message) || "";
 
       if (message.includes("Not enough tokens")) {
-        notify.error(
-          language === "vi"
+        toast({
+          title: "CVone",
+          description: language === "vi"
             ? "Không đủ token AI. Vui lòng nạp thêm để tiếp tục sử dụng tính năng AI."
-            : "Not enough AI tokens. Please top up to continue using AI features."
-        );
+            : "Not enough AI tokens. Please top up to continue using AI features.",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          router.push("/user/wallet");
+        }, 1000);
       } else {
         notify.error(t.aiRewriteError);
       }
@@ -1431,6 +1445,7 @@ export const SkillsPopup: FC<{
 }> = ({ onClose, initialData, onSave }) => {
   const { language } = useLanguage();
   const t = translations[language].skillsPopup;
+  const router = useRouter();
 
   const [skills, setSkills] = useState(
     (initialData.skills || []).map((s: any) => ({
@@ -1498,11 +1513,16 @@ export const SkillsPopup: FC<{
           : error?.message) || "";
 
       if (message.includes("Not enough tokens")) {
-        notify.error(
-          language === "vi"
+        toast({
+          title: "CVone",
+          description: language === "vi"
             ? "Không đủ token AI. Vui lòng nạp thêm để tiếp tục sử dụng tính năng AI."
-            : "Not enough AI tokens. Please top up to continue using AI features."
-        );
+            : "Not enough AI tokens. Please top up to continue using AI features.",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          router.push("/user/wallet");
+        }, 1000);
       } else {
         notify.error(
           language === "vi"

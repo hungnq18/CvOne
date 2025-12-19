@@ -4,6 +4,8 @@ import { useCV } from "@/providers/cv-provider";
 import { useLanguage } from "@/providers/global_provider";
 import { Check, Edit, PlusCircle, Trash2, Wand2, X } from "lucide-react";
 import { ChangeEvent, FC, useState } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "@/hooks/use-toast";
 
 const AIButton: FC<{ onClick: () => void; isLoading: boolean; text: string; disabled?: boolean }> = ({
   onClick,
@@ -451,6 +453,7 @@ export const ContactForm: FC<FormProps> = ({ data, onUpdate }) => {
 export const SummaryForm: FC<FormProps> = ({ data, onUpdate }) => {
   const { language } = useLanguage();
   const t = translations[language].summaryForm;
+  const router = useRouter();
 
   const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
@@ -492,11 +495,16 @@ export const SummaryForm: FC<FormProps> = ({ data, onUpdate }) => {
           : error?.message) || "";
 
       if (message.includes("Not enough tokens")) {
-        notify.error(
-          language === "vi"
+        toast({
+          title: "CVone",
+          description: language === "vi"
             ? "Không đủ token AI. Vui lòng nạp thêm để tiếp tục sử dụng tính năng AI."
-            : "Not enough AI tokens. Please top up to continue using AI features."
-        );
+            : "Not enough AI tokens. Please top up to continue using AI features.",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          router.push("/user/wallet");
+        }, 1000);
       } else {
         notify.error(
           language === "vi"
@@ -598,6 +606,7 @@ export const SummaryForm: FC<FormProps> = ({ data, onUpdate }) => {
 export const ExperienceForm: FC<FormProps> = ({ data, onUpdate }) => {
   const { language } = useLanguage();
   const t = translations[language].experienceForm;
+  const router = useRouter();
 
   const [isEditing, setIsEditing] = useState(false);
   const [currentItem, setCurrentItem] = useState<any>(null);
@@ -658,11 +667,16 @@ export const ExperienceForm: FC<FormProps> = ({ data, onUpdate }) => {
           : error?.message) || "";
 
       if (message.includes("Not enough tokens")) {
-        notify.error(
-          language === "vi"
+        toast({
+          title: "CVone",
+          description: language === "vi"
             ? "Không đủ token AI. Vui lòng nạp thêm để tiếp tục sử dụng tính năng AI."
-            : "Not enough AI tokens. Please top up to continue using AI features."
-        );
+            : "Not enough AI tokens. Please top up to continue using AI features.",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          router.push("/user/wallet");
+        }, 1000);
       } else {
         notify.error(t.aiRewriteError);
       }
@@ -1044,6 +1058,7 @@ export const EducationForm: FC<FormProps> = ({ data, onUpdate }) => {
 export const SkillsForm: FC<FormProps> = ({ data, onUpdate }) => {
   const { language } = useLanguage();
   const t = translations[language].skillsForm;
+  const router = useRouter();
 
   const { jobDescription, jobAnalysis, setJobAnalysis } = useCV();
   const [skills, setSkills] = useState<Array<{ name: string }>>([]);
@@ -1076,9 +1091,26 @@ export const SkillsForm: FC<FormProps> = ({ data, onUpdate }) => {
         setJobAnalysis(analyzedJob);
         // Gửi đúng object jobAnalysis cho API suggestSkills
         await fetchSuggestions(analyzedJob);
-      } catch (err) {
+      } catch (err: any) {
         console.error("Error analyzing JD:", err);
         setAnalyzingJD(false);
+        const message: string =
+          (err?.data && typeof err.data.message === "string"
+            ? err.data.message
+            : err?.message) || "";
+
+        if (message.includes("Not enough tokens")) {
+          toast({
+            title: "CVone",
+            description: language === "vi"
+              ? "Không đủ token AI. Vui lòng nạp thêm để tiếp tục sử dụng tính năng AI."
+              : "Not enough AI tokens. Please top up to continue using AI features.",
+            variant: "destructive",
+          });
+          setTimeout(() => {
+            router.push("/user/wallet");
+          }, 1000);
+        }
       }
     } else if (jobAnalysis) {
       // Đã có sẵn jobAnalysis thì dùng luôn, không gửi object rỗng
@@ -1126,11 +1158,16 @@ export const SkillsForm: FC<FormProps> = ({ data, onUpdate }) => {
           : error?.message) || "";
 
       if (message.includes("Not enough tokens")) {
-        notify.error(
-          language === "vi"
+        toast({
+          title: "CVone",
+          description: language === "vi"
             ? "Không đủ token AI. Vui lòng nạp thêm để tiếp tục sử dụng tính năng AI."
-            : "Not enough AI tokens. Please top up to continue using AI features."
-        );
+            : "Not enough AI tokens. Please top up to continue using AI features.",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          router.push("/user/wallet");
+        }, 1000);
       } else {
         notify.error(
           language === "vi"

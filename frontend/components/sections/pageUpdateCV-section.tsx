@@ -641,6 +641,9 @@ const PageUpdateCVContent = () => {
             ? "Không đủ token AI. Vui lòng nạp thêm để tiếp tục sử dụng tính năng AI."
             : "Not enough AI tokens. Please top up to continue using AI features."
         );
+        setTimeout(() => {
+          router.push("/user/wallet");
+        }, 1000);
       } else {
         notify.error(t.alerts.translateError);
       }
