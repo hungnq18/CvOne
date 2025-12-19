@@ -4,6 +4,7 @@ import {
   SubscribeMessage,
   MessageBody,
   ConnectedSocket,
+  WsException,
 } from "@nestjs/websockets";
 import { Server, Socket } from "socket.io";
 import { ChatService } from "./chat.service";
@@ -11,6 +12,9 @@ import { SendMessageDto } from "./dto/send-message.dto";
 import { NotificationsGateway } from "../notifications/notifications.gateway";
 import { NotificationsService } from "../notifications/notifications.service";
 import { ConversationService } from "../conversation/conversation.service";
+import { Inject, forwardRef } from "@nestjs/common";
+import { ConversationEventsService } from "../conversation/conversation-events.service";
+import { CreateConversationDto } from "../conversation/dto/create-conversation.dto";
 
 @WebSocketGateway({
   cors: {
@@ -21,22 +25,11 @@ import { ConversationService } from "../conversation/conversation.service";
 })
 export class ChatGateway {
   @WebSocketServer() server: Server;
-
-  /*************  ✨ Windsurf Command ⭐  *************/
-  /**
-   * Constructor for the ChatGateway class.
-   *
-   * @param {ChatService} chatService - the service for handling chat business logic
-   * @param {NotificationsService} notificationsService - the service for handling notifications business logic
-   * @param {NotificationsGateway} notificationsGateway - the gateway for handling notifications business logic
-   * @param {ConversationService} convModel - the service for handling conversation business logic
-   */
-  /*******  7ec7eab5-ae12-4963-9e86-8267d45a50f4  *******/
   constructor(
     private readonly chatService: ChatService,
     private readonly notificationsService: NotificationsService,
     private readonly notificationsGateway: NotificationsGateway,
-    private readonly convModel: ConversationService
+    private readonly conversationEvents: ConversationEventsService
   ) {}
 
   @SubscribeMessage("sendMessage")
@@ -59,6 +52,15 @@ export class ChatGateway {
         error: error.message || "Failed to send message",
       });
     }
+  }
+  @SubscribeMessage("joinUser")
+  handleJoinUser(
+    @MessageBody() userId: string,
+    @ConnectedSocket() client: Socket
+  ) {
+    const room = `user:${userId}`;
+    client.join(room);
+    console.log("✅ User joined room:", room);
   }
 
   @SubscribeMessage("joinRoom")
@@ -121,5 +123,32 @@ export class ChatGateway {
 
     // Gửi thông báo realtime tới người dùng cụ thể
     this.notificationsGateway.sendNotificationToUser(data.userId, notification);
+  }
+  emitNewConversation(conversation: any) {
+    const participantIds = conversation.participants.map((p: any) =>
+      p._id.toString()
+    );
+
+    participantIds.forEach((userId: string) => {
+      this.server.to(userId).emit("conversation:new", conversation);
+    });
+  }
+  @SubscribeMessage("conversation:create")
+  async handleCreateConversation(
+    @MessageBody() data: CreateConversationDto,
+    @ConnectedSocket() socket: Socket
+  ) {
+    const conversation = await this.chatService.createConversation(data);
+
+    if (!conversation) {
+      throw new WsException("Create conversation failed");
+    }
+
+    conversation.participants.forEach((p: any) => {
+      const userId = p._id.toString();
+      this.server.to(`user:${userId}`).emit("conversation:new", conversation);
+    });
+
+    return conversation;
   }
 }

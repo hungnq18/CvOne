@@ -14,6 +14,7 @@ export enum AiFeature {
   SUGGESTION_WORKS_EXPERIENCE_CV_AI = "suggestionWorksExperienceCvAI",
   REWRITE_WORK_DESCRIPTION = "rewriteWorkDescription",
   SUGGESTION_TEMPLATES_AI = "suggestionTemplatesAI",
+  GENERATE_CV_AI = "generateCvAI",
   UPLOAD_CV_AI = "uploadCvAI",
 }
 
