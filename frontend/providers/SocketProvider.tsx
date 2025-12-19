@@ -16,7 +16,6 @@ import { Conversation, Message, getUserConversations } from "@/api/apiChat";
 
 /* ===================== TYPES ===================== */
 
-
 interface SocketContextType {
   unreadCount: number;
   unreadNotifications: number;
@@ -62,15 +61,25 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
     string | null
   >(null);
 
+  const normalizeId = (id: any) =>
+    typeof id === "object" && id?._id ? String(id._id) : String(id);
+
   // 🧠 ATTENTION TRACKING (BẮT BUỘC)
-  const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
+  const [activeConversationId, setActiveConversationId] = useState<
+    string | null
+  >(null);
   const [isTabActive, setIsTabActive] = useState(true);
   const [isViewingNotifications, setIsViewingNotifications] = useState(false);
 
   // ✅ DERIVE unreadCount từ conversations array - TỰ ĐỘNG UPDATE (GIỐNG NOTIFICATION)
   const unreadCount = useMemo(() => {
+    if (!user) return 0;
+    const myId = String(user._id);
+
     return conversations.reduce((sum, c) => {
-      const item = c.unreadCount?.find((u: any) => u.userId === user?._id);
+      const item = c.unreadCount?.find(
+        (u: any) => normalizeId(u.userId) === myId
+      );
       return sum + (item?.count || 0);
     }, 0);
   }, [conversations, user?._id]);
@@ -91,17 +100,26 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const isViewing = pathname === "/notifications";
     setIsViewingNotifications(isViewing);
-    console.log("🔥 Route changed - isViewingNotifications:", isViewing, "pathname:", pathname);
+    console.log(
+      "🔥 Route changed - isViewingNotifications:",
+      isViewing,
+      "pathname:",
+      pathname
+    );
   }, [pathname]);
 
   // 🧠 Listen for tab visibility change
   useEffect(() => {
     const handleVisibility = () => {
       setIsTabActive(document.visibilityState === "visible");
-      console.log("📍 Tab visibility:", document.visibilityState === "visible" ? "ACTIVE" : "HIDDEN");
-    }
+      console.log(
+        "📍 Tab visibility:",
+        document.visibilityState === "visible" ? "ACTIVE" : "HIDDEN"
+      );
+    };
     document.addEventListener("visibilitychange", handleVisibility);
-    return () => document.removeEventListener("visibilitychange", handleVisibility);
+    return () =>
+      document.removeEventListener("visibilitychange", handleVisibility);
   }, []);
 
   // 🧠 Update refs whenever state changes
@@ -160,11 +178,16 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!activeConversationId || !user) return;
 
-    console.log("🔥 User opened conversation:", activeConversationId, "- emit readConversation");
+    console.log(
+      "🔥 User opened conversation:",
+      activeConversationId,
+      "- emit readConversation"
+    );
     socketRef.current?.emit("readConversation", {
       conversationId: activeConversationId,
       userId: user._id,
     });
+    refreshConversations();
   }, [activeConversationId, user]);
 
   /* 🔥 AUTO MARK ALL NOTIFICATIONS READ WHEN VIEWING PAGE ========== */
@@ -174,7 +197,9 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!isViewingNotifications || !user) return;
 
-    console.log("🔥 Mark all notifications read - emit notification:read:all immediately");
+    console.log(
+      "🔥 Mark all notifications read - emit notification:read:all immediately"
+    );
     socketRef.current?.emit("notification:read:all", {
       userId: user._id,
     });
@@ -187,7 +212,7 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
     const socket = socketRef.current;
 
     /* ---- NEW MESSAGE ---- */
-    socket.on("newMessage", (msg: Message) => {
+    socket.on("newMessage", async (msg: Message) => {
       console.log("💬 New message received:", msg);
 
       // 🔥 FIX: Ensure sender object exists for avatar rendering
@@ -197,7 +222,10 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
         // Nếu cần, có thể gọi API để fetch sender info
         // Tạm thời: tạo placeholder sender để tránh crash
         msg.sender = {
-          _id: typeof msg.senderId === "object" ? (msg.senderId as any)._id : msg.senderId,
+          _id:
+            typeof msg.senderId === "object"
+              ? (msg.senderId as any)._id
+              : msg.senderId,
           first_name: "User",
           last_name: "",
           email: "",
@@ -222,58 +250,7 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
         };
       });
 
-      // 🧠 ATTENTION TRACKING - dùng refs để tránh stale closure
-      const isReceiver = msg.receiverId === user._id;
-      const isReading = msg.conversationId === activeConversationRef.current && isTabActiveRef.current;
-
-      console.log("🧠 Attention check:", {
-        isReceiver,
-        isReading,
-        activeConversation: activeConversationId,
-        msgConversation: msg.conversationId,
-        tabActive: isTabActive,
-      });
-
-      // 🔥 AUTO MARK READ nếu user đang đọc
-      if (isReceiver && isReading) {
-        console.log("✅ Auto marking conversation as read:", msg.conversationId);
-        socketRef.current?.emit("readConversation", {
-          conversationId: msg.conversationId,
-          userId: user._id,
-        });
-      }
-
-      // Cập nhật conversations - lastMessage và unread count
-      setConversations((prev) => {
-        const updated = prev.map((c) =>
-          c._id === msg.conversationId
-            ? {
-              ...c,
-              lastMessage: msg,
-              unreadCount:
-                isReceiver && !isReading
-                  ? c.unreadCount?.map((u: any) =>
-                    u.userId === user._id ? { ...u, count: u.count + 1 } : u
-                  )
-                  : c.unreadCount,
-            }
-            : c
-        );
-        // ✅ unreadCount tự động tính từ useMemo - KHÔNG cần setUnreadCount
-        console.log("💬 Conversations updated, unreadCount will auto-recalculate");
-        return updated;
-      });
-
-      // 🧠 Show browser notification nếu user không đang đọc
-      if (isReceiver && !isReading) {
-        const senderName = msg.sender?.first_name || "Someone";
-        if (Notification.permission === "granted") {
-          new Notification(`Message from ${senderName}`, {
-            body: msg.content,
-            icon: "/favicon.ico",
-          });
-        }
-      }
+      await refreshConversations();
     });
 
     /* ---- NOTIFICATIONS ---- */
@@ -294,10 +271,10 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
     socket.on("notification:read:all", ({ userId }: { userId: string }) => {
       if (userId !== user._id) return;
 
-      console.log("📬 All notifications marked as read (broadcast from server)");
-      setNotifications((prev) =>
-        prev.map((n) => ({ ...n, isRead: true }))
+      console.log(
+        "📬 All notifications marked as read (broadcast from server)"
       );
+      setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
     });
 
     // New notification arrives
@@ -340,7 +317,10 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
     socket.on("notification:read:one", (data: any) => {
       if (!data || !data.notificationId) return;
 
-      console.log("✅ Notification marked as read (broadcast from server):", data.notificationId);
+      console.log(
+        "✅ Notification marked as read (broadcast from server):",
+        data.notificationId
+      );
       setNotifications((prev) =>
         prev.map((n) =>
           n._id === data.notificationId ? { ...n, isRead: true } : n
@@ -393,15 +373,19 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
           const updated = prev.map((c) =>
             c._id === conversationId
               ? {
-                ...c,
-                unreadCount: c.unreadCount?.map((u: any) =>
-                  u.userId === user._id ? { ...u, count: 0 } : u
-                ),
-              }
+                  ...c,
+                  unreadCount: c.unreadCount?.map((u: any) =>
+                    normalizeId(u.userId) === String(user._id)
+                      ? { ...u, count: 0 }
+                      : u
+                  ),
+                }
               : c
           );
           // ✅ unreadCount tự động tính từ useMemo - KHÔNG cần setUnreadCount
-          console.log("✅ Conversation marked as read, unreadCount will auto-recalculate");
+          console.log(
+            "✅ Conversation marked as read, unreadCount will auto-recalculate"
+          );
           return updated;
         });
       }
@@ -433,11 +417,13 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
         const updated = prev.map((c) =>
           c._id === conversationId
             ? {
-              ...c,
-              unreadCount: c.unreadCount?.map((u: any) =>
-                u.userId === user._id ? { ...u, count: 0 } : u
-              ),
-            }
+                ...c,
+                unreadCount: c.unreadCount?.map((u: any) =>
+                  normalizeId(u.userId) === String(user._id)
+                    ? { ...u, count: 0 }
+                    : u
+                ),
+              }
             : c
         );
         // ✅ unreadCount tự động tính từ useMemo - KHÔNG cần setUnreadCount
@@ -472,6 +458,12 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
     },
     [loadConversations]
   );
+
+  const refreshConversations = useCallback(async () => {
+    if (!user) return;
+    const conv = await getUserConversations(user._id);
+    setConversations(conv);
+  }, [user]);
 
   //  Wrap value in useMemo to prevent unnecessary re-renders of context consumers
   const value = React.useMemo(
@@ -513,9 +505,7 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <SocketContext.Provider value={value}>
-      {children}
-    </SocketContext.Provider>
+    <SocketContext.Provider value={value}>{children}</SocketContext.Provider>
   );
 }
 

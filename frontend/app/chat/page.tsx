@@ -54,9 +54,12 @@ function ChatPage() {
     setSelectedConversationId(conversationId);
     setActiveConversationId(conversationId); // 🧠 SET ACTIVE - SocketProvider xử lý mark read
     joinConversation(conversationId);
-  }, [conversationId, setSelectedConversationId, setActiveConversationId, joinConversation]);
-
-
+  }, [
+    conversationId,
+    setSelectedConversationId,
+    setActiveConversationId,
+    joinConversation,
+  ]);
 
   // Init user
   useEffect(() => {
@@ -86,12 +89,19 @@ function ChatPage() {
 
     loadMessages();
     joinConversation(selectedConversationId as any);
-  }, [selectedConversationId, setMessages, joinConversation, setActiveConversationId, markConversationAsRead]);
+  }, [
+    selectedConversationId,
+    setMessages,
+    joinConversation,
+    setActiveConversationId,
+    markConversationAsRead,
+  ]);
 
   const handleSend = useCallback(() => {
     if (!content.trim() || !userId || !selectedConversationId) return;
 
-    sendMessage({ // 🔥 Dùng sendMessage từ SocketProvider
+    sendMessage({
+      // 🔥 Dùng sendMessage từ SocketProvider
       conversationId: selectedConversationId,
       senderId: userId,
       content,
@@ -110,8 +120,6 @@ function ChatPage() {
     [setSelectedConversationId, setActiveConversationId]
   );
 
-
-
   // Fetch other user data khi selectedConversationDetail thay đổi
   useEffect(() => {
     if (!selectedConversationDetail?.participants || !userId) {
@@ -120,12 +128,12 @@ function ChatPage() {
     }
 
     const normalizedUserId = normalizeId(userId);
-    const otherParticipantId = (selectedConversationDetail.participants as any[]).find(
-      (p: any) => {
-        const pid = normalizeId(p);
-        return pid && pid !== normalizedUserId;
-      }
-    );
+    const otherParticipantId = (
+      selectedConversationDetail.participants as any[]
+    ).find((p: any) => {
+      const pid = normalizeId(p);
+      return pid && pid !== normalizedUserId;
+    });
 
     if (!otherParticipantId) {
       setOtherUserData(null);
@@ -155,23 +163,22 @@ function ChatPage() {
     const normalizedUserId = normalizeId(userId);
 
     // Find other participant (not current user)
-    const otherParticipantId = (selectedConversationDetail.participants as any[]).find(
-      (p: any) => {
-        const pid = normalizeId(p);
-        return pid && pid !== normalizedUserId;
-      }
-    ) as any;
+    const otherParticipantId = (
+      selectedConversationDetail.participants as any[]
+    ).find((p: any) => {
+      const pid = normalizeId(p);
+      return pid && pid !== normalizedUserId;
+    }) as any;
 
     // If otherUserData already loaded, use it
     if (otherUserData && otherUserData.first_name) {
-      return `${otherUserData.first_name} ${otherUserData.last_name || ""}`.trim();
+      return `${otherUserData.first_name} ${
+        otherUserData.last_name || ""
+      }`.trim();
     }
 
     return "Người dùng";
   }, [selectedConversationDetail, userId, otherUserData]);
-
-
-
 
   return (
     <div className="flex h-[calc(100vh-64px)] bg-background mt-[64px]">

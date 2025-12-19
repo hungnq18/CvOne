@@ -55,6 +55,8 @@ const ConversationItem = memo(
       lastMessage: Message | null;
     } | null;
   }) => {
+    console.log("🚀 ConversationItem", conv);
+
     // Normalize userId để so sánh
     const normalizedUserId = userId ? String(userId) : null;
 
@@ -110,28 +112,32 @@ const ConversationItem = memo(
     }
 
     // Tìm số chưa đọc
-    let unread = 0;
-    if (Array.isArray(conv.unreadCount) && normalizedUserId) {
-      const entry = conv.unreadCount.find((u: any) => {
-        if (!u || !u.userId) return false;
+    const unread = useMemo(() => {
+      if (!normalizedUserId) return 0;
+      if (!Array.isArray(conv.unreadCount)) return 0;
+
+      const entry = conv.unreadCount.find((item: any) => {
+        if (!item?.userId) return false;
+
         const uid =
-          typeof u.userId === "object" && u.userId && u.userId._id
-            ? String(u.userId._id)
-            : String(u.userId);
+          typeof item.userId === "object" && item.userId._id
+            ? String(item.userId._id)
+            : String(item.userId);
+
         return uid === normalizedUserId;
       });
-      unread = entry?.count || 0;
-    } else if (typeof conv.unreadCount === "number") {
-      unread = conv.unreadCount;
-    }
+
+      return entry?.count ?? 0;
+    }, [conv.unreadCount, normalizedUserId]);
 
     // Lấy tên user - Kiểm tra kỹ hơn
     let displayName = "Unknown User";
     if (otherUser) {
       if (typeof otherUser === "object") {
         if (otherUser.first_name) {
-          displayName = `${otherUser.first_name} ${otherUser.last_name || ""
-            }`.trim();
+          displayName = `${otherUser.first_name} ${
+            otherUser.last_name || ""
+          }`.trim();
         } else if (otherUser._id) {
           // Có _id nhưng không có first_name - có thể chưa được populate
           // console.warn("⚠️ otherUser has _id but no first_name:", otherUser);
@@ -164,8 +170,9 @@ const ConversationItem = memo(
     // Helper để lấy avatar initials
     const getAvatarInitials = (user: any): string => {
       if (user && typeof user === "object" && user.first_name) {
-        return `${(user.first_name || "U")[0]}${(user.last_name || "U")[0]
-          }`.toUpperCase();
+        return `${(user.first_name || "U")[0]}${
+          (user.last_name || "U")[0]
+        }`.toUpperCase();
       }
       return "U";
     };
@@ -173,8 +180,9 @@ const ConversationItem = memo(
     return (
       <div
         onClick={() => onSelect(conv._id)}
-        className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors hover:bg-muted/50 ${isSelected ? "bg-muted" : ""
-          }`}
+        className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors hover:bg-muted/50 ${
+          isSelected ? "bg-muted" : ""
+        }`}
       >
         <div className="relative">
           <Avatar
