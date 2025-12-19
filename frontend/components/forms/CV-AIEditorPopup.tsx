@@ -20,6 +20,18 @@ import { ChangeEvent, FC, ReactNode, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "@/hooks/use-toast";
 
+const createMaxLengthHandler = (language: string) => (e: React.FormEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const target = e.target as HTMLInputElement | HTMLTextAreaElement;
+  const maxLength = target.maxLength;
+  if (maxLength > 0 && target.value.length >= maxLength) {
+    notify.error(
+      language === "vi"
+        ? `Đã đạt giới hạn tối đa ${maxLength} ký tự`
+        : `Maximum limit of ${maxLength} characters reached`
+    );
+  }
+};
+
 const translations = {
   en: {
     modal: {
@@ -419,9 +431,19 @@ export const InfoPopup: FC<{
 
   const [formData, setFormData] = useState(initialData);
   const [isUploading, setIsUploading] = useState(false);
+  const handleMaxLength = createMaxLengthHandler(language);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
+    const maxLength = e.target.maxLength;
+    if (maxLength > 0 && value.length > maxLength) {
+      notify.error(
+        language === "vi"
+          ? `Vượt quá số ký tự cho phép (tối đa ${maxLength} ký tự)`
+          : `Exceeds maximum allowed characters (max ${maxLength} characters)`
+      );
+      return;
+    }
     setFormData((prevData: any) => ({ ...prevData, [id]: value }));
   };
 
@@ -533,6 +555,7 @@ export const InfoPopup: FC<{
             id="firstName"
             value={formData.firstName || ""}
             onChange={handleChange}
+            onInput={handleMaxLength}
             maxLength={100}
             className="shadow-sm appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
@@ -549,6 +572,7 @@ export const InfoPopup: FC<{
             id="lastName"
             value={formData.lastName || ""}
             onChange={handleChange}
+            onInput={handleMaxLength}
             maxLength={100}
             className="shadow-sm appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
@@ -566,6 +590,7 @@ export const InfoPopup: FC<{
           id="professional"
           value={formData.professional || ""}
           onChange={handleChange}
+          onInput={handleMaxLength}
           maxLength={100}
           className="shadow-sm appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
@@ -583,9 +608,19 @@ export const ContactPopup: FC<{
   const t = translations[language].contactPopup;
 
   const [formData, setFormData] = useState(initialData);
+  const handleMaxLength = createMaxLengthHandler(language);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
+    const maxLength = e.target.maxLength;
+    if (maxLength > 0 && value.length > maxLength) {
+      notify.error(
+        language === "vi"
+          ? `Vượt quá số ký tự cho phép (tối đa ${maxLength} ký tự)`
+          : `Exceeds maximum allowed characters (max ${maxLength} characters)`
+      );
+      return;
+    }
     setFormData((prevData: any) => ({ ...prevData, [id]: value }));
   };
 
@@ -639,6 +674,7 @@ export const ContactPopup: FC<{
           id="email"
           value={formData.email || ""}
           onChange={handleChange}
+          onInput={handleMaxLength}
           maxLength={255}
           className="shadow-sm appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
@@ -655,6 +691,7 @@ export const ContactPopup: FC<{
           id="phone"
           value={formData.phone || ""}
           onChange={handleChange}
+          onInput={handleMaxLength}
           maxLength={20}
           className="shadow-sm appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
@@ -688,6 +725,7 @@ export const ContactPopup: FC<{
             id="country"
             value={formData.country || ""}
             onChange={handleChange}
+            onInput={handleMaxLength}
             maxLength={100}
             className="shadow-sm appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
@@ -711,6 +749,7 @@ export const TargetPopup: FC<{
   const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasLoadedAI, setHasLoadedAI] = useState(false);
+  const handleMaxLength = createMaxLengthHandler(language);
 
   const handleFetchAISuggestions = async () => {
     setLoading(true);
@@ -808,6 +847,7 @@ export const TargetPopup: FC<{
             id="summary"
             value={summary}
             onChange={(e) => setSummary(e.target.value)}
+            onInput={handleMaxLength}
             maxLength={2000}
             className="flex-1 mt-1 block w-[49%] px-4 py-3 border border-slate-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none transition-all"
             rows={12}
@@ -912,6 +952,7 @@ export const ExperiencePopup: FC<{
   const [currentItem, setCurrentItem] = useState<any>(null);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [loadingAI, setLoadingAI] = useState(false);
+  const handleMaxLength = createMaxLengthHandler(language);
 
   const handleAddNew = () => {
     setCurrentItem({
@@ -1055,6 +1096,7 @@ export const ExperiencePopup: FC<{
               name="title"
               value={currentItem.title}
               onChange={handleFormChange}
+              onInput={handleMaxLength}
               maxLength={100}
               className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm"
             />
@@ -1068,6 +1110,7 @@ export const ExperiencePopup: FC<{
               name="company"
               value={currentItem.company}
               onChange={handleFormChange}
+              onInput={handleMaxLength}
               maxLength={100}
               className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm"
             />
@@ -1109,6 +1152,7 @@ export const ExperiencePopup: FC<{
                 name="description"
                 value={currentItem.description}
                 onChange={handleFormChange}
+                onInput={handleMaxLength}
                 rows={4}
                 maxLength={2000}
                 className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
@@ -1213,6 +1257,7 @@ export const EducationPopup: FC<{
   const [isEditing, setIsEditing] = useState(false);
   const [currentItem, setCurrentItem] = useState<any>(null);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const handleMaxLength = createMaxLengthHandler(language);
 
   const handleAddNew = () => {
     setCurrentItem({
@@ -1325,6 +1370,7 @@ export const EducationPopup: FC<{
               name="institution"
               value={currentItem.institution}
               onChange={handleFormChange}
+              onInput={handleMaxLength}
               maxLength={200}
               className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm"
             />
@@ -1338,6 +1384,7 @@ export const EducationPopup: FC<{
               name="major"
               value={currentItem.major}
               onChange={handleFormChange}
+              onInput={handleMaxLength}
               maxLength={100}
               className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm"
             />
@@ -1351,6 +1398,7 @@ export const EducationPopup: FC<{
               name="degree"
               value={currentItem.degree}
               onChange={handleFormChange}
+              onInput={handleMaxLength}
               maxLength={100}
               className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm"
             />
@@ -1458,6 +1506,7 @@ export const SkillsPopup: FC<{
   const [loading, setLoading] = useState(false);
   const [hasLoadedAI, setHasLoadedAI] = useState(false);
   const { jobDescription, jobAnalysis, setJobAnalysis } = useCV();
+  const handleMaxLength = createMaxLengthHandler(language);
 
   const handleFetchAISuggestions = async () => {
     // Nếu chưa có jobAnalysis và cũng không có JD thì không thể gọi AI
@@ -1599,6 +1648,7 @@ export const SkillsPopup: FC<{
               type="text"
               value={newSkill}
               onChange={(e) => setNewSkill(e.target.value)}
+              onInput={handleMaxLength}
               onKeyDown={(e) => e.key === "Enter" && addSkill()}
               maxLength={50}
               className="flex-grow border border-slate-200 rounded-xl py-2.5 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"

@@ -60,8 +60,9 @@ const translations: {
       invalidEmail: "Please enter a valid email address!",
       invalidPhone: "Phone number must be 10 digits and start with 0!",
       passwordMismatch: "Passwords do not match!",
-      passwordTooShort: "Password must be at least 6 characters",
-      passwordTooLong: "Password must not exceed 25 characters",
+      passwordTooShort: "Password must be at least 8 characters",
+      passwordTooLong: "Password must not exceed 50 characters",
+      passwordComplexity: "Password must contain at least one number and one special character",
       registerSuccess: "Registration successful!",
       registerFailed: "Registration failed",
       checkEmail: "Please check your email for verification",
@@ -77,7 +78,7 @@ const translations: {
       emailLabel: "Email",
       emailPlaceholder: "Email",
       passwordLabel: "Password",
-      passwordPlaceholder: "Password (from 6 to 25 characters)",
+      passwordPlaceholder: "Password (from 8 to 50 characters)",
       confirmPasswordLabel: "Confirm Password",
       confirmPasswordPlaceholder: "Confirm your password",
       recruiterInfoTitle: "HR Information",
@@ -104,8 +105,9 @@ const translations: {
       requiredFields: "Please fill in all required fields!",
       invalidEmail: "Please enter a valid email address!",
       passwordMismatch: "Passwords do not match!",
-      passwordTooShort: "Password must be at least 6 characters",
-      passwordTooLong: "Password must not exceed 25 characters",
+      passwordTooShort: "Password must be at least 8 characters",
+      passwordTooLong: "Password must not exceed 50 characters",
+      passwordComplexity: "Password must contain at least one number and one special character",
       registerSuccess: "Registration successful!",
       registerFailed: "Registration failed",
       checkEmail: "Please check your email for verification",
@@ -140,8 +142,9 @@ const translations: {
       invalidEmail: "Vui lòng nhập địa chỉ email hợp lệ!",
       invalidPhone: "Số điện thoại phải có 10 số và bắt đầu bằng số 0!",
       passwordMismatch: "Mật khẩu xác nhận không khớp!",
-      passwordTooShort: "Mật khẩu phải có ít nhất 6 ký tự",
-      passwordTooLong: "Mật khẩu không được quá 25 ký tự",
+      passwordTooShort: "Mật khẩu phải có ít nhất 8 ký tự",
+      passwordTooLong: "Mật khẩu không được quá 50 ký tự",
+      passwordComplexity: "Mật khẩu phải có ít nhất một số và một ký tự đặc biệt",
       registerSuccess: "Đăng ký thành công!",
       registerFailed: "Đăng ký thất bại",
       checkEmail: "Vui lòng kiểm tra email của bạn để xác nhận",
@@ -156,7 +159,7 @@ const translations: {
       emailLabel: "Email",
       emailPlaceholder: "Email",
       passwordLabel: "Mật khẩu",
-      passwordPlaceholder: "Mật khẩu (từ 6 đến 25 ký tự)",
+      passwordPlaceholder: "Mật khẩu (từ 8 đến 50 ký tự)",
       confirmPasswordLabel: "Nhập lại mật khẩu",
       confirmPasswordPlaceholder: "Nhập lại mật khẩu",
       recruiterInfoTitle: "Thông tin nhà tuyển dụng",
@@ -183,8 +186,9 @@ const translations: {
       requiredFields: "Vui lòng nhập đầy đủ thông tin bắt buộc!",
       invalidEmail: "Vui lòng nhập địa chỉ email hợp lệ!",
       passwordMismatch: "Mật khẩu xác nhận không khớp!",
-      passwordTooShort: "Mật khẩu phải có ít nhất 6 ký tự",
-      passwordTooLong: "Mật khẩu không được quá 25 ký tự",
+      passwordTooShort: "Mật khẩu phải có ít nhất 8 ký tự",
+      passwordTooLong: "Mật khẩu không được quá 50 ký tự",
+      passwordComplexity: "Mật khẩu phải chứa ít nhất 1 số và 1 ký tự đặc biệt",
       registerSuccess: "Đăng ký thành công!",
       registerFailed: "Đăng ký thất bại",
       checkEmail: "Vui lòng kiểm tra email của bạn để xác nhận",
@@ -311,17 +315,26 @@ export function useRegisterForm(formType: "user" | "hr" = "user") {
     }
 
     // Validate Password Strength
-    if (password.length < 6) {
+    if (password.length < 8) {
       setMessage(t.passwordTooShort);
       setIsLoading(false);
       return;
     }
     
-    if (password.length > 25) {
+    if (password.length > 50) {
       setMessage(t.passwordTooLong);
       setIsLoading(false);
       return;
     }
+
+    const passwordComplexityRegex = /(?=.*[0-9])(?=.*[!@#$%^&*(),.?":{}|<>])/;
+    
+    if (!passwordComplexityRegex.test(password)) {
+      setMessage(t['passwordComplexity'] || "Mật khẩu phải chứa ít nhất 1 số và 1 ký tự đặc biệt");
+      setIsLoading(false);
+      return;
+    }
+    
     if (password !== confirmPassword) {
       setMessage(t.passwordMismatch);
       setIsLoading(false);

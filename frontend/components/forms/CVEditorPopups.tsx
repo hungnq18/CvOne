@@ -9,6 +9,18 @@ import { notify } from "@/lib/notify";
 import { useRouter } from "next/navigation";
 import { toast } from "@/hooks/use-toast";
 
+const createMaxLengthHandler = (language: string) => (e: React.FormEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const target = e.target as HTMLInputElement | HTMLTextAreaElement;
+  const maxLength = target.maxLength;
+  if (maxLength > 0 && target.value.length >= maxLength) {
+    notify.error(
+      language === "vi"
+        ? `Đã đạt giới hạn tối đa ${maxLength} ký tự`
+        : `Maximum limit of ${maxLength} characters reached`
+    );
+  }
+};
+
 const translations = {
   en: {
     modal: {
@@ -328,7 +340,28 @@ export const InfoPopup: FC<{
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
+    const maxLength = e.target.maxLength;
+    if (maxLength > 0 && value.length > maxLength) {
+      notify.error(
+        language === "vi"
+          ? `Vượt quá số ký tự cho phép (tối đa ${maxLength} ký tự)`
+          : `Exceeds maximum allowed characters (max ${maxLength} characters)`
+      );
+      return;
+    }
     setFormData((prevData: any) => ({ ...prevData, [id]: value }));
+  };
+
+  const handleInput = (e: React.FormEvent<HTMLInputElement>) => {
+    const target = e.target as HTMLInputElement;
+    const maxLength = target.maxLength;
+    if (maxLength > 0 && target.value.length >= maxLength) {
+      notify.error(
+        language === "vi"
+          ? `Đã đạt giới hạn tối đa ${maxLength} ký tự`
+          : `Maximum limit of ${maxLength} characters reached`
+      );
+    }
   };
 
   const handleAvatarUpload = async (e: ChangeEvent<HTMLInputElement>) => {
@@ -450,6 +483,7 @@ export const InfoPopup: FC<{
             id="firstName"
             value={formData.firstName || ""}
             onChange={handleChange}
+            onInput={handleInput}
             maxLength={100}
             className="w-full py-2.5 px-4 border border-slate-200 rounded-xl text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
           />
@@ -466,6 +500,7 @@ export const InfoPopup: FC<{
             id="lastName"
             value={formData.lastName || ""}
             onChange={handleChange}
+            onInput={handleInput}
             maxLength={100}
             className="w-full py-2.5 px-4 border border-slate-200 rounded-xl text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
           />
@@ -485,6 +520,7 @@ export const InfoPopup: FC<{
           id="professional"
           value={formData.professional || ""}
           onChange={handleChange}
+          onInput={handleInput}
           maxLength={100}
           className="w-full py-2.5 px-4 border border-slate-200 rounded-xl text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
         />
@@ -505,7 +541,28 @@ export const ContactPopup: FC<{
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
+    const maxLength = e.target.maxLength;
+    if (maxLength > 0 && value.length > maxLength) {
+      notify.error(
+        language === "vi"
+          ? `Vượt quá số ký tự cho phép (tối đa ${maxLength} ký tự)`
+          : `Exceeds maximum allowed characters (max ${maxLength} characters)`
+      );
+      return;
+    }
     setFormData((prevData: any) => ({ ...prevData, [id]: value }));
+  };
+
+  const handleInput = (e: React.FormEvent<HTMLInputElement>) => {
+    const target = e.target as HTMLInputElement;
+    const maxLength = target.maxLength;
+    if (maxLength > 0 && target.value.length >= maxLength) {
+      notify.error(
+        language === "vi"
+          ? `Đã đạt giới hạn tối đa ${maxLength} ký tự`
+          : `Maximum limit of ${maxLength} characters reached`
+      );
+    }
   };
 
   const validateForm = () => {
@@ -560,6 +617,7 @@ export const ContactPopup: FC<{
             id="email"
             value={formData.email || ""}
             onChange={handleChange}
+            onInput={handleInput}
             maxLength={255}
             className="w-full py-2.5 px-4 border border-slate-200 rounded-xl text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
           />
@@ -576,6 +634,7 @@ export const ContactPopup: FC<{
             id="phone"
             value={formData.phone || ""}
             onChange={handleChange}
+            onInput={handleInput}
             maxLength={20}
             className="w-full py-2.5 px-4 border border-slate-200 rounded-xl text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
           />
@@ -593,6 +652,7 @@ export const ContactPopup: FC<{
               id="city"
               value={formData.city || ""}
               onChange={handleChange}
+              onInput={handleInput}
               maxLength={100}
               className="w-full py-2.5 px-4 border border-slate-200 rounded-xl text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
             />
@@ -609,6 +669,7 @@ export const ContactPopup: FC<{
               id="country"
               value={formData.country || ""}
               onChange={handleChange}
+              onInput={handleInput}
               maxLength={100}
               className="w-full py-2.5 px-4 border border-slate-200 rounded-xl text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
             />
@@ -628,6 +689,18 @@ export const TargetPopup: FC<{
   const t = translations[language].targetPopup;
 
   const [summary, setSummary] = useState(initialData.summary || "");
+  
+  const handleTextareaInput = (e: React.FormEvent<HTMLTextAreaElement>) => {
+    const target = e.target as HTMLTextAreaElement;
+    const maxLength = target.maxLength;
+    if (maxLength > 0 && target.value.length >= maxLength) {
+      notify.error(
+        language === "vi"
+          ? `Đã đạt giới hạn tối đa ${maxLength} ký tự`
+          : `Maximum limit of ${maxLength} characters reached`
+      );
+    }
+  };
   
   const validateForm = () => {
     if (summary && summary.length > 2000) {
@@ -654,6 +727,7 @@ export const TargetPopup: FC<{
         id="summary"
         value={summary}
         onChange={(e) => setSummary(e.target.value)}
+        onInput={handleTextareaInput}
         maxLength={2000}
         className="shadow-sm appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"
         rows={8}
@@ -678,6 +752,7 @@ export const ExperiencePopup: FC<{
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [loadingAI, setLoadingAI] = useState(false);
   const [aiOutput, setAIOutput] = useState<string | null>(null);
+  const handleMaxLength = createMaxLengthHandler(language);
 
   const handleAddNew = () => {
     setCurrentItem({
@@ -787,6 +862,7 @@ export const ExperiencePopup: FC<{
               name="title"
               value={currentItem.title}
               onChange={handleFormChange}
+              onInput={handleMaxLength}
               maxLength={100}
               className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm"
             />
@@ -800,6 +876,7 @@ export const ExperiencePopup: FC<{
               name="company"
               value={currentItem.company}
               onChange={handleFormChange}
+              onInput={handleMaxLength}
               maxLength={100}
               className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm"
             />
@@ -841,6 +918,7 @@ export const ExperiencePopup: FC<{
                 name="description"
                 value={currentItem.description}
                 onChange={handleFormChange}
+                onInput={handleMaxLength}
                 rows={4}
                 maxLength={2000}
                 className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm"
@@ -937,6 +1015,7 @@ export const EducationPopup: FC<{
   const [isEditing, setIsEditing] = useState(false);
   const [currentItem, setCurrentItem] = useState<any>(null);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const handleMaxLength = createMaxLengthHandler(language);
 
   const handleAddNew = () => {
     setCurrentItem({
@@ -1049,6 +1128,7 @@ export const EducationPopup: FC<{
               name="institution"
               value={currentItem.institution}
               onChange={handleFormChange}
+              onInput={handleMaxLength}
               maxLength={200}
               className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm"
             />
@@ -1062,6 +1142,7 @@ export const EducationPopup: FC<{
               name="major"
               value={currentItem.major}
               onChange={handleFormChange}
+              onInput={handleMaxLength}
               maxLength={100}
               className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm"
             />
@@ -1075,6 +1156,7 @@ export const EducationPopup: FC<{
               name="degree"
               value={currentItem.degree}
               onChange={handleFormChange}
+              onInput={handleMaxLength}
               maxLength={100}
               className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm"
             />
@@ -1177,6 +1259,7 @@ export const SkillsPopup: FC<{
     }))
   );
   const [newSkill, setNewSkill] = useState("");
+  const handleMaxLength = createMaxLengthHandler(language);
 
   const addSkill = () => {
     if (!newSkill.trim()) {
@@ -1263,6 +1346,7 @@ export const SkillsPopup: FC<{
           type="text"
           value={newSkill}
           onChange={(e) => setNewSkill(e.target.value)}
+          onInput={handleMaxLength}
           onKeyDown={(e) => e.key === "Enter" && addSkill()}
           maxLength={50}
           className="flex-grow shadow-sm border rounded w-full py-2 px-3"
@@ -1294,6 +1378,7 @@ export const CertificationPopup: FC<{
       endDate: item?.endDate || "",
     }))
   );
+  const handleMaxLength = createMaxLengthHandler(language);
 
   const handleFieldChange = (
     index: number,
@@ -1373,6 +1458,7 @@ export const CertificationPopup: FC<{
                 onChange={(e) =>
                   handleFieldChange(index, "title", e.target.value)
                 }
+                onInput={handleMaxLength}
                 maxLength={200}
                 className="w-full border rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
@@ -1431,6 +1517,7 @@ export const AchievementPopup: FC<{
   const [achievements, setAchievements] = useState<string[]>([
     ...(initialData.achievement || []),
   ]);
+  const handleMaxLength = createMaxLengthHandler(language);
 
   const handleChange = (index: number, value: string) => {
     setAchievements((prev: string[]) =>
@@ -1472,6 +1559,7 @@ export const AchievementPopup: FC<{
               placeholder={t.placeholder}
               value={achievement}
               onChange={(e) => handleChange(index, e.target.value)}
+              onInput={handleMaxLength}
             />
             <button
               type="button"
@@ -1506,6 +1594,7 @@ export const HobbyPopup: FC<{
   const [hobbies, setHobbies] = useState<string[]>([
     ...(initialData.hobby || []),
   ]);
+  const handleMaxLength = createMaxLengthHandler(language);
 
   const handleChange = (index: number, value: string) => {
     setHobbies((prev: string[]) =>
@@ -1547,6 +1636,7 @@ export const HobbyPopup: FC<{
               placeholder={t.placeholder}
               value={hobby}
               onChange={(e) => handleChange(index, e.target.value)}
+              onInput={handleMaxLength}
             />
             <button
               type="button"
@@ -1577,6 +1667,7 @@ export const ProjectPopup: FC<{
 }> = ({ onClose, initialData, onSave }) => {
   const { language } = useLanguage();
   const t = translations[language].projectPopup;
+  const handleMaxLength = createMaxLengthHandler(language);
 
   const [projects, setProjects] = useState<ProjectItem[]>(() => {
     const rawProjects =
@@ -1727,6 +1818,7 @@ export const ProjectPopup: FC<{
                 onChange={(e) =>
                   handleFieldChange(index, "title", e.target.value)
                 }
+                onInput={handleMaxLength}
                 maxLength={200}
                 className="w-full border rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
@@ -1741,6 +1833,7 @@ export const ProjectPopup: FC<{
                 onChange={(e) =>
                   handleFieldChange(index, "summary", e.target.value)
                 }
+                onInput={handleMaxLength}
                 maxLength={2000}
                 className="w-full border rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
