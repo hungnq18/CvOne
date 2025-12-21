@@ -63,6 +63,13 @@ export default function ManageJobPage() {
     const [sortOption, setSortOption] = useState<string>('newest');
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
+    // Reset errors khi mở/đóng dialog hoặc chuyển mode Add <-> Edit
+    useEffect(() => {
+        if (isAddDialogOpen || isEditDialogOpen) {
+            setErrors({});
+        }
+    }, [isAddDialogOpen, isEditDialogOpen]);
+
     // Lấy dữ liệu thật từ API khi load trang
     useEffect(() => {
         async function fetchData() {
@@ -499,7 +506,7 @@ export default function ManageJobPage() {
                 }}
                 job={isEditDialogOpen && selectedJob ? selectedJob : newJob}
                 onChange={(job) => isEditDialogOpen ? setSelectedJob(job as Job) : setNewJob(job)}
-                onSave={isEditDialogOpen ? () => { } : () => { }}
+                onSave={isEditDialogOpen ? handleEditJob : handleAddJob}
                 isEdit={isEditDialogOpen}
                 errors={errors}
             />

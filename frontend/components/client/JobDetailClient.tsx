@@ -14,6 +14,7 @@ import {
     getLocalJobById,
     saveJob,
 } from '@/api/jobApi';
+import { getUserIdFromToken } from '@/api/userApi';
 import { useCV } from '@/providers/cv-provider';
 import { useLanguage } from '@/providers/global_provider';
 import { uploadFileToCloudinary } from '@/utils/uploadCloudinary/upload';
@@ -84,7 +85,9 @@ const translations = {
         fastApply: 'Ứng tuyển nhanh',
         submitSuccess: 'Nộp đơn thành công!',
         submitError: 'Có lỗi xảy ra khi nộp đơn. Vui lòng thử lại.',
+        saveExists: 'Công việc này đã Lưu rồi.',
         uploadError: 'Lỗi tải file lên Cloudinary. Vui lòng thử lại.',
+        cannotApplyOwnJob: 'Bạn không thể ứng tuyển cho công việc do chính mình tạo!',
     },
     en: {
         backToJobs: 'Back to Jobs',
@@ -128,7 +131,9 @@ const translations = {
         fastApply: 'Fast Apply',
         submitSuccess: 'Application submitted successfully!',
         submitError: 'An error occurred while submitting the application. Please try again.',
+        saveExists: 'This job already exists.',
         uploadError: 'Error uploading file to Cloudinary. Please try again.',
+        cannotApplyOwnJob: 'You cannot apply for a job that you created!',
     },
 };
 
@@ -172,6 +177,14 @@ export default function JobDetailClient({ id }: JobDetailClientProps) {
             .split('; ')
             .find((row) => row.startsWith('token='))
             ?.split('=')[1];
+    };
+
+    // Check if current user is the job creator
+    const isJobCreator = () => {
+        if (!job) return false;
+        const currentUserId = getUserIdFromToken();
+        const jobCreatorId = job.user_id || (job as any).userId;
+        return currentUserId && jobCreatorId && currentUserId === jobCreatorId;
     };
 
     // Fetch job + related jobs on mount / id change
@@ -272,13 +285,17 @@ export default function JobDetailClient({ id }: JobDetailClientProps) {
             message.success(t.saveSuccess);
         } catch (err) {
             console.error(err);
-            message.error(t.submitError);
+            message.error(t.saveExists);
         } finally {
             setSaving(false);
         }
     };
 
     const handleApplyFast = () => {
+        if (isJobCreator()) {
+            message.error(t.cannotApplyOwnJob);
+            return;
+        }
         const token = getToken();
         if (!token) {
             message.error(t.youNeedToLogin);
@@ -289,6 +306,10 @@ export default function JobDetailClient({ id }: JobDetailClientProps) {
     };
 
     const handleApply = () => {
+        if (isJobCreator()) {
+            message.error(t.cannotApplyOwnJob);
+            return;
+        }
         const token = getToken();
         if (!token) {
             message.error(t.youNeedToLogin);
@@ -299,6 +320,10 @@ export default function JobDetailClient({ id }: JobDetailClientProps) {
     };
 
     const handleApplyDetail = () => {
+        if (isJobCreator()) {
+            message.error(t.cannotApplyOwnJob);
+            return;
+        }
         const jdString =
             `description: ${job?.description || ''}\n` +
             `role: ${job?.role || ''}\n` +
