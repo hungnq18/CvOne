@@ -129,13 +129,8 @@ export default function ManageApplyJobClient() {
 
     const handleDownloadCoverLetter = async (clId?: string, clUrl?: string) => {
         if (clUrl) {
-            // Tải file trực tiếp từ link
-            const link = document.createElement('a');
-            link.href = clUrl;
-            link.download = '';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            // Mở file trong tab mới thay vì tải về
+            window.open(clUrl, "_blank");
             return;
         }
         if (!clId) return;
