@@ -7,12 +7,12 @@ import { ChangeEvent, FC, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "@/hooks/use-toast";
 
-const AIButton: FC<{ onClick: () => void; isLoading: boolean; text: string; disabled?: boolean }> = ({
-  onClick,
-  isLoading,
-  text,
-  disabled,
-}) => {
+const AIButton: FC<{
+  onClick: () => void;
+  isLoading: boolean;
+  text: string;
+  disabled?: boolean;
+}> = ({ onClick, isLoading, text, disabled }) => {
   return (
     <button
       type="button"
@@ -26,36 +26,58 @@ const AIButton: FC<{ onClick: () => void; isLoading: boolean; text: string; disa
         shadow-lg shadow-indigo-500/30
         overflow-hidden
         transition-all duration-300
-        ${disabled || isLoading 
-          ? "opacity-60 cursor-not-allowed" 
-          : "hover:shadow-xl hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98]"
+        ${
+          disabled || isLoading
+            ? "opacity-60 cursor-not-allowed"
+            : "hover:shadow-xl hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98]"
         }
       `}
     >
       {/* Shimmer effect */}
       <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-      
+
       {/* Sparkle icon container */}
-      <span className={`relative flex items-center justify-center w-5 h-5 ${isLoading ? "animate-spin" : ""}`}>
+      <span
+        className={`relative flex items-center justify-center w-5 h-5 ${
+          isLoading ? "animate-spin" : ""
+        }`}
+      >
         {isLoading ? (
           <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none">
-            <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeDasharray="32" strokeDashoffset="32" className="opacity-30" />
-            <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeDasharray="32" strokeDashoffset="24" />
+            <circle
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeDasharray="32"
+              strokeDashoffset="32"
+              className="opacity-30"
+            />
+            <circle
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeDasharray="32"
+              strokeDashoffset="24"
+            />
           </svg>
         ) : (
           <Wand2 className="w-5 h-5 group-hover:rotate-12 transition-transform duration-300" />
         )}
       </span>
-      
+
       <span className="relative">{isLoading ? "Đang xử lý..." : text}</span>
-      
+
       {/* Glow effect on hover */}
       <span className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-r from-violet-400/10 via-indigo-400/10 to-blue-400/10" />
     </button>
   );
 };
-
-
 
 const translations = {
   en: {
@@ -191,7 +213,8 @@ const translations = {
       companyLabel: "Công ty",
       positionRequired: "Chức vụ là bắt buộc",
       companyRequired: "Tên công ty là bắt buộc",
-      dateInvalid: "Định dạng ngày không hợp lệ. Vui lòng sử dụng định dạng YYYY-MM",
+      dateInvalid:
+        "Định dạng ngày không hợp lệ. Vui lòng sử dụng định dạng YYYY-MM",
       endDateBeforeStart: "Ngày kết thúc phải sau ngày bắt đầu",
       startDateLabel: "Ngày bắt đầu",
       startDatePlaceholder: "YYYY-MM",
@@ -220,7 +243,8 @@ const translations = {
       institutionRequired: "Trường/Học viện là bắt buộc",
       majorRequired: "Chuyên ngành là bắt buộc",
       degreeRequired: "Bằng cấp là bắt buộc",
-      dateInvalid: "Định dạng ngày không hợp lệ. Vui lòng sử dụng định dạng YYYY-MM",
+      dateInvalid:
+        "Định dạng ngày không hợp lệ. Vui lòng sử dụng định dạng YYYY-MM",
       endDateBeforeStart: "Ngày kết thúc phải sau ngày bắt đầu",
     },
     skillsForm: {
@@ -278,7 +302,9 @@ export const InfoForm: FC<FormProps> = ({ data, onUpdate }) => {
       onUpdate({ ...data, avatar: responseData.secure_url });
     } catch (error) {
       console.error(error);
-      notify.error(error instanceof Error ? error.message : t.uploadErrorGeneral);
+      notify.error(
+        error instanceof Error ? error.message : t.uploadErrorGeneral
+      );
     } finally {
       setIsUploading(false);
     }
@@ -322,12 +348,25 @@ export const InfoForm: FC<FormProps> = ({ data, onUpdate }) => {
             {isUploading ? (
               <>
                 <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                  <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" opacity="0.3"/>
-                  <path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                    fill="none"
+                    opacity="0.3"
+                  />
+                  <path
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                  />
                 </svg>
                 {t.uploading}
               </>
-            ) : t.chooseImage}
+            ) : (
+              t.chooseImage
+            )}
           </button>
         </div>
       </div>
@@ -335,7 +374,10 @@ export const InfoForm: FC<FormProps> = ({ data, onUpdate }) => {
       {/* Name Fields */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label htmlFor="firstName" className="block text-sm font-semibold text-slate-700 mb-2">
+          <label
+            htmlFor="firstName"
+            className="block text-sm font-semibold text-slate-700 mb-2"
+          >
             {t.firstNameLabel}
           </label>
           <input
@@ -347,7 +389,10 @@ export const InfoForm: FC<FormProps> = ({ data, onUpdate }) => {
           />
         </div>
         <div>
-          <label htmlFor="lastName" className="block text-sm font-semibold text-slate-700 mb-2">
+          <label
+            htmlFor="lastName"
+            className="block text-sm font-semibold text-slate-700 mb-2"
+          >
             {t.lastNameLabel}
           </label>
           <input
@@ -362,7 +407,10 @@ export const InfoForm: FC<FormProps> = ({ data, onUpdate }) => {
 
       {/* Profession Field */}
       <div>
-        <label htmlFor="professional" className="block text-sm font-semibold text-slate-700 mb-2">
+        <label
+          htmlFor="professional"
+          className="block text-sm font-semibold text-slate-700 mb-2"
+        >
           {t.professionLabel}
         </label>
         <input
@@ -389,19 +437,24 @@ export const ContactForm: FC<FormProps> = ({ data, onUpdate }) => {
 
   const handlePhoneChange = (e: ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    const filtered = value.replace(/[^0-9\+\s\-\.\(\)]/g, '');
+    const filtered = value.replace(/[^0-9\+\s\-\.\(\)]/g, "");
     onUpdate({ ...data, phone: filtered });
   };
-  
+
   return (
     <div className="space-y-5">
       {/* Email */}
       <div className="relative">
-        <label htmlFor="email" className="block text-sm font-semibold text-slate-700 mb-2">
+        <label
+          htmlFor="email"
+          className="block text-sm font-semibold text-slate-700 mb-2"
+        >
           {t.emailLabel}
         </label>
         <div className="relative">
-          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">📧</span>
+          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
+            📧
+          </span>
           <input
             type="email"
             id="email"
@@ -411,14 +464,19 @@ export const ContactForm: FC<FormProps> = ({ data, onUpdate }) => {
           />
         </div>
       </div>
-      
+
       {/* Phone */}
       <div className="relative">
-        <label htmlFor="phone" className="block text-sm font-semibold text-slate-700 mb-2">
+        <label
+          htmlFor="phone"
+          className="block text-sm font-semibold text-slate-700 mb-2"
+        >
           {t.phoneLabel}
         </label>
         <div className="relative">
-          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">📱</span>
+          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
+            📱
+          </span>
           <input
             type="tel"
             id="phone"
@@ -429,14 +487,19 @@ export const ContactForm: FC<FormProps> = ({ data, onUpdate }) => {
           />
         </div>
       </div>
-      
+
       {/* Address */}
       <div className="relative">
-        <label htmlFor="city" className="block text-sm font-semibold text-slate-700 mb-2">
+        <label
+          htmlFor="city"
+          className="block text-sm font-semibold text-slate-700 mb-2"
+        >
           {t.addressLabel}
         </label>
         <div className="relative">
-          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">📍</span>
+          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
+            📍
+          </span>
           <input
             type="text"
             id="city"
@@ -465,26 +528,18 @@ export const SummaryForm: FC<FormProps> = ({ data, onUpdate }) => {
     try {
       const jobAnalysis = data?.jobAnalysis || {};
       const res = await suggestSummary({}, jobAnalysis);
-      console.log("suggestSummary raw res:", res);
 
       const rawSummaries: any =
         (res as any)?.summaries ??
         (res as any)?.data?.summaries ??
         (res as any)?.data?.data?.summaries;
-      console.log("suggestSummary extracted summaries:", rawSummaries);
 
       if (Array.isArray(rawSummaries) && rawSummaries.length > 0) {
         const texts = rawSummaries
-          .map((item: any) =>
-            typeof item === "string" ? item : item?.summary
-          )
-          .filter(
-            (v: any) => typeof v === "string" && v.trim().length > 0
-          );
-        console.log("suggestSummary final texts:", texts);
+          .map((item: any) => (typeof item === "string" ? item : item?.summary))
+          .filter((v: any) => typeof v === "string" && v.trim().length > 0);
         setAiSuggestions(texts);
       } else {
-        console.log("suggestSummary no summaries found, fallback to []");
         setAiSuggestions([]);
       }
     } catch (error: any) {
@@ -497,9 +552,10 @@ export const SummaryForm: FC<FormProps> = ({ data, onUpdate }) => {
       if (message.includes("Not enough tokens")) {
         toast({
           title: "CVone",
-          description: language === "vi"
-            ? "Không đủ token AI. Vui lòng nạp thêm để tiếp tục sử dụng tính năng AI."
-            : "Not enough AI tokens. Please top up to continue using AI features.",
+          description:
+            language === "vi"
+              ? "Không đủ token AI. Vui lòng nạp thêm để tiếp tục sử dụng tính năng AI."
+              : "Not enough AI tokens. Please top up to continue using AI features.",
           variant: "destructive",
         });
         setTimeout(() => {
@@ -532,11 +588,15 @@ export const SummaryForm: FC<FormProps> = ({ data, onUpdate }) => {
         <div className="font-semibold text-gray-700 mb-2 flex justify-between items-center">
           {t.aiSuggestions}
         </div>
-        
+
         <div className="flex flex-col gap-4">
           {!hasTriggeredAI && !loading ? (
             <div className="flex justify-start py-4">
-               <AIButton onClick={handleTriggerAI} isLoading={loading} text={t.writeWithAI} />
+              <AIButton
+                onClick={handleTriggerAI}
+                isLoading={loading}
+                text={t.writeWithAI}
+              />
             </div>
           ) : loading ? (
             <div className="text-blue-500 py-2">{t.loadingSuggestions}</div>
@@ -569,13 +629,16 @@ export const SummaryForm: FC<FormProps> = ({ data, onUpdate }) => {
               );
             })
           )}
-           {hasTriggeredAI && !loading && aiSuggestions.length > 0 && (
-             <div className="flex justify-center mt-2">
-               <button onClick={handleTriggerAI} className="text-sm text-blue-600 hover:underline flex items-center gap-1">
-                 <Wand2 size={14}/> Thử lại với AI
-               </button>
-             </div>
-           )}
+          {hasTriggeredAI && !loading && aiSuggestions.length > 0 && (
+            <div className="flex justify-center mt-2">
+              <button
+                onClick={handleTriggerAI}
+                className="text-sm text-blue-600 hover:underline flex items-center gap-1"
+              >
+                <Wand2 size={14} /> Thử lại với AI
+              </button>
+            </div>
+          )}
         </div>
       </div>
       <div className="w-full md:w-1/2 flex flex-col">
@@ -656,9 +719,11 @@ export const ExperienceForm: FC<FormProps> = ({ data, onUpdate }) => {
     setLoadingAI(true);
     try {
       const { rewriteWorkDescription } = await import("@/api/cvapi");
-      const res = await rewriteWorkDescription(currentItem.description, language);
+      const res = await rewriteWorkDescription(
+        currentItem.description,
+        language
+      );
       const rewritten = res?.rewritten.workDescription || res;
-      // console.log("rewritten: ", rewritten)
       setCurrentItem({ ...currentItem, description: rewritten });
     } catch (error: any) {
       const message: string =
@@ -669,9 +734,10 @@ export const ExperienceForm: FC<FormProps> = ({ data, onUpdate }) => {
       if (message.includes("Not enough tokens")) {
         toast({
           title: "CVone",
-          description: language === "vi"
-            ? "Không đủ token AI. Vui lòng nạp thêm để tiếp tục sử dụng tính năng AI."
-            : "Not enough AI tokens. Please top up to continue using AI features.",
+          description:
+            language === "vi"
+              ? "Không đủ token AI. Vui lòng nạp thêm để tiếp tục sử dụng tính năng AI."
+              : "Not enough AI tokens. Please top up to continue using AI features.",
           variant: "destructive",
         });
         setTimeout(() => {
@@ -694,19 +760,27 @@ export const ExperienceForm: FC<FormProps> = ({ data, onUpdate }) => {
       notify.error(t.companyRequired);
       return;
     }
-    
+
     // Validate date format if provided
     if (currentItem.startDate && !/^\d{4}-\d{2}$/.test(currentItem.startDate)) {
       notify.error(t.dateInvalid);
       return;
     }
-    if (currentItem.endDate && currentItem.endDate !== "Present" && !/^\d{4}-\d{2}$/.test(currentItem.endDate)) {
+    if (
+      currentItem.endDate &&
+      currentItem.endDate !== "Present" &&
+      !/^\d{4}-\d{2}$/.test(currentItem.endDate)
+    ) {
       notify.error(t.dateInvalid);
       return;
     }
-    
+
     // Validate end date is after start date
-    if (currentItem.startDate && currentItem.endDate && currentItem.endDate !== "Present") {
+    if (
+      currentItem.startDate &&
+      currentItem.endDate &&
+      currentItem.endDate !== "Present"
+    ) {
       const start = new Date(currentItem.startDate + "-01");
       const end = new Date(currentItem.endDate + "-01");
       if (end < start) {
@@ -714,7 +788,7 @@ export const ExperienceForm: FC<FormProps> = ({ data, onUpdate }) => {
         return;
       }
     }
-    
+
     let newExperiences = [...experiences];
     if (editingIndex !== null) {
       newExperiences[editingIndex] = currentItem;
@@ -724,7 +798,11 @@ export const ExperienceForm: FC<FormProps> = ({ data, onUpdate }) => {
     updateParent(newExperiences);
     setIsEditing(false);
     setCurrentItem(null);
-    notify.success(language === "vi" ? "Đã lưu kinh nghiệm làm việc" : "Work experience saved");
+    notify.success(
+      language === "vi"
+        ? "Đã lưu kinh nghiệm làm việc"
+        : "Work experience saved"
+    );
   };
 
   return isEditing ? (
@@ -783,18 +861,26 @@ export const ExperienceForm: FC<FormProps> = ({ data, onUpdate }) => {
       </div>
       <div>
         <div className="flex justify-between items-center mb-2">
-          <label className="block text-sm font-medium text-gray-700">{t.descriptionLabel}</label>
+          <label className="block text-sm font-medium text-gray-700">
+            {t.descriptionLabel}
+          </label>
           <div title={t.aiRewriteTooltip}>
-             <AIButton 
-                onClick={handleAIRewrite} 
-                isLoading={loadingAI} 
-                text={t.aiRewriteButton} 
-                disabled={!currentItem?.description}
-             />
+            <AIButton
+              onClick={handleAIRewrite}
+              isLoading={loadingAI}
+              text={t.aiRewriteButton}
+              disabled={!currentItem?.description}
+            />
           </div>
         </div>
         <div className="relative">
-          <textarea name="description" value={currentItem.description} onChange={handleFormChange} rows={6} className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"></textarea>
+          <textarea
+            name="description"
+            value={currentItem.description}
+            onChange={handleFormChange}
+            rows={6}
+            className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+          ></textarea>
         </div>
       </div>
       <div className="flex justify-end gap-2 mt-4">
@@ -906,7 +992,7 @@ export const EducationForm: FC<FormProps> = ({ data, onUpdate }) => {
       notify.error(t.degreeRequired);
       return;
     }
-    
+
     // Validate date format if provided
     if (currentItem.startDate && !/^\d{4}-\d{2}$/.test(currentItem.startDate)) {
       notify.error(t.dateInvalid);
@@ -916,7 +1002,7 @@ export const EducationForm: FC<FormProps> = ({ data, onUpdate }) => {
       notify.error(t.dateInvalid);
       return;
     }
-    
+
     // Validate end date is after start date
     if (currentItem.startDate && currentItem.endDate) {
       const start = new Date(currentItem.startDate + "-01");
@@ -926,7 +1012,7 @@ export const EducationForm: FC<FormProps> = ({ data, onUpdate }) => {
         return;
       }
     }
-    
+
     let newEducations = [...educations];
     if (editingIndex !== null) {
       newEducations[editingIndex] = currentItem;
@@ -1085,7 +1171,6 @@ export const SkillsForm: FC<FormProps> = ({ data, onUpdate }) => {
       setAnalyzingJD(true);
       try {
         const result = await analyzeJD(jobDescription);
-        console.log("result: ", result)
         // result từ API có dạng { analyzedJob, total_tokens }
         const analyzedJob = (result as any)?.analyzedJob ?? result;
         setJobAnalysis(analyzedJob);
@@ -1102,9 +1187,10 @@ export const SkillsForm: FC<FormProps> = ({ data, onUpdate }) => {
         if (message.includes("Not enough tokens")) {
           toast({
             title: "CVone",
-            description: language === "vi"
-              ? "Không đủ token AI. Vui lòng nạp thêm để tiếp tục sử dụng tính năng AI."
-              : "Not enough AI tokens. Please top up to continue using AI features.",
+            description:
+              language === "vi"
+                ? "Không đủ token AI. Vui lòng nạp thêm để tiếp tục sử dụng tính năng AI."
+                : "Not enough AI tokens. Please top up to continue using AI features.",
             variant: "destructive",
           });
           setTimeout(() => {
@@ -1122,9 +1208,7 @@ export const SkillsForm: FC<FormProps> = ({ data, onUpdate }) => {
     setAnalyzingJD(false);
     setLoading(true);
     try {
-      console.log("analysisData: ", analysisData)
       const res = await suggestSkills(analysisData);
-      console.log("res suggest skill:" , res)
       if (!res) {
         setAiSkillSuggestions([]);
         return;
@@ -1134,8 +1218,9 @@ export const SkillsForm: FC<FormProps> = ({ data, onUpdate }) => {
 
       if (Array.isArray(rawOptions) && rawOptions.length > 0) {
         const firstNonEmpty =
-          rawOptions.find((list: any) => Array.isArray(list) && list.length > 0) ||
-          rawOptions[0];
+          rawOptions.find(
+            (list: any) => Array.isArray(list) && list.length > 0
+          ) || rawOptions[0];
 
         if (Array.isArray(firstNonEmpty)) {
           const names = firstNonEmpty
@@ -1160,9 +1245,10 @@ export const SkillsForm: FC<FormProps> = ({ data, onUpdate }) => {
       if (message.includes("Not enough tokens")) {
         toast({
           title: "CVone",
-          description: language === "vi"
-            ? "Không đủ token AI. Vui lòng nạp thêm để tiếp tục sử dụng tính năng AI."
-            : "Not enough AI tokens. Please top up to continue using AI features.",
+          description:
+            language === "vi"
+              ? "Không đủ token AI. Vui lòng nạp thêm để tiếp tục sử dụng tính năng AI."
+              : "Not enough AI tokens. Please top up to continue using AI features.",
           variant: "destructive",
         });
         setTimeout(() => {
@@ -1183,21 +1269,33 @@ export const SkillsForm: FC<FormProps> = ({ data, onUpdate }) => {
   const addSkill = (skillName?: string) => {
     const name = (skillName ?? newSkill).trim();
     if (!name) {
-      notify.error(language === "vi" ? "Vui lòng nhập tên kỹ năng" : "Please enter a skill name");
+      notify.error(
+        language === "vi"
+          ? "Vui lòng nhập tên kỹ năng"
+          : "Please enter a skill name"
+      );
       return;
     }
     if (name.length > 50) {
-      notify.error(language === "vi" ? "Tên kỹ năng không được quá 50 ký tự" : "Skill name must not exceed 50 characters");
+      notify.error(
+        language === "vi"
+          ? "Tên kỹ năng không được quá 50 ký tự"
+          : "Skill name must not exceed 50 characters"
+      );
       return;
     }
     if (skills.find((s: any) => s.name.toLowerCase() === name.toLowerCase())) {
-      notify.error(language === "vi" ? "Kỹ năng này đã tồn tại" : "This skill already exists");
+      notify.error(
+        language === "vi"
+          ? "Kỹ năng này đã tồn tại"
+          : "This skill already exists"
+      );
       return;
     }
-      const updated = [...skills, { name }];
-      setSkills(updated);
-      onUpdate({ ...data, skills: updated });
-      if (!skillName) setNewSkill("");
+    const updated = [...skills, { name }];
+    setSkills(updated);
+    onUpdate({ ...data, skills: updated });
+    if (!skillName) setNewSkill("");
     notify.success(language === "vi" ? "Đã thêm kỹ năng" : "Skill added");
   };
 
@@ -1223,18 +1321,24 @@ export const SkillsForm: FC<FormProps> = ({ data, onUpdate }) => {
   return (
     <div className="w-full flex flex-col md:flex-row gap-8">
       <div className="w-full md:w-1/2">
-        <div className="font-semibold text-gray-700 mb-2">{t.aiSuggestionsTitle}</div>
-        
+        <div className="font-semibold text-gray-700 mb-2">
+          {t.aiSuggestionsTitle}
+        </div>
+
         <div className="flex flex-col gap-3 mb-4">
-           {!hasTriggeredAI && !isLoadingAny ? (
-             <div className="flex justify-start py-4">
-                <AIButton onClick={handleTriggerAI} isLoading={isLoadingAny} text={t.writeWithAI} />
-             </div>
-           ) : isLoadingAny ? (
-             <div className="text-blue-500 py-2">
-               {analyzingJD ? t.jdAnalysisLoading : t.skillsLoading}
-             </div>
-           ) : (
+          {!hasTriggeredAI && !isLoadingAny ? (
+            <div className="flex justify-start py-4">
+              <AIButton
+                onClick={handleTriggerAI}
+                isLoading={isLoadingAny}
+                text={t.writeWithAI}
+              />
+            </div>
+          ) : isLoadingAny ? (
+            <div className="text-blue-500 py-2">
+              {analyzingJD ? t.jdAnalysisLoading : t.skillsLoading}
+            </div>
+          ) : (
             <>
               {aiSkillSuggestions.length === 0 ? (
                 <div className="text-gray-500 italic">{t.noSuggestions}</div>
@@ -1242,17 +1346,32 @@ export const SkillsForm: FC<FormProps> = ({ data, onUpdate }) => {
                 aiSkillSuggestions.map((skill) => {
                   const isSelected = skills.some((s: any) => s.name === skill);
                   return (
-                    <button key={skill} type="button" className={`flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium border transition-colors w-full text-left ${isSelected ? "bg-blue-400 text-white border-blue-400 hover:bg-blue-500" : "bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-200"}`} onClick={() => handleToggleAISkill(skill)} title={isSelected ? t.tooltipRemove : t.tooltipAdd}>
-                      <span className="inline-block w-6 h-6 flex items-center justify-center rounded-full bg-blue-800 text-white font-bold mr-2">{isSelected ? "-" : "+"}</span>
+                    <button
+                      key={skill}
+                      type="button"
+                      className={`flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium border transition-colors w-full text-left ${
+                        isSelected
+                          ? "bg-blue-400 text-white border-blue-400 hover:bg-blue-500"
+                          : "bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-200"
+                      }`}
+                      onClick={() => handleToggleAISkill(skill)}
+                      title={isSelected ? t.tooltipRemove : t.tooltipAdd}
+                    >
+                      <span className="inline-block w-6 h-6 flex items-center justify-center rounded-full bg-blue-800 text-white font-bold mr-2">
+                        {isSelected ? "-" : "+"}
+                      </span>
                       <span className="flex-1 ">{skill}</span>
                     </button>
                   );
                 })
               )}
-               {hasTriggeredAI && !isLoadingAny && (
+              {hasTriggeredAI && !isLoadingAny && (
                 <div className="flex justify-center mt-2">
-                  <button onClick={handleTriggerAI} className="text-sm text-blue-600 hover:underline flex items-center gap-1">
-                    <Wand2 size={14}/> Thử lại với AI
+                  <button
+                    onClick={handleTriggerAI}
+                    className="text-sm text-blue-600 hover:underline flex items-center gap-1"
+                  >
+                    <Wand2 size={14} /> Thử lại với AI
                   </button>
                 </div>
               )}
@@ -1301,8 +1420,17 @@ export const SkillsForm: FC<FormProps> = ({ data, onUpdate }) => {
   );
 };
 
-export const Step: FC<{ step: { id: number; name: string }; currentStep: number; isLastStep: boolean; }> = ({ step, currentStep, isLastStep }) => {
-  const status = currentStep === step.id ? "active" : currentStep > step.id ? "complete" : "upcoming";
+export const Step: FC<{
+  step: { id: number; name: string };
+  currentStep: number;
+  isLastStep: boolean;
+}> = ({ step, currentStep, isLastStep }) => {
+  const status =
+    currentStep === step.id
+      ? "active"
+      : currentStep > step.id
+      ? "complete"
+      : "upcoming";
   return (
     <>
       <div className="flex items-center gap-x-3">

@@ -15,10 +15,14 @@ import { Types } from "mongoose";
 import { CreateNotificationDto } from "./dto/create-notification.dto";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { User } from "src/common/decorators/user.decorator";
+import { NotificationsGateway } from "./notifications.gateway";
 
 @Controller("notifications")
 export class NotificationsController {
-  constructor(private readonly notificationsService: NotificationsService) {}
+  constructor(
+    private readonly notificationsService: NotificationsService,
+    private readonly notificationGateway: NotificationsGateway
+  ) {}
 
   @UseGuards(JwtAuthGuard)
   @Post()
@@ -28,7 +32,7 @@ export class NotificationsController {
   ) {
     const { title, message, type, link, jobId, recipient } = body;
     const recipientId = recipient || req.user.user._id;
-    return this.notificationsService.createNotification(
+    const notification = await this.notificationsService.createNotification(
       {
         title,
         message,
@@ -38,6 +42,11 @@ export class NotificationsController {
       },
       recipientId
     );
+    this.notificationGateway.emitNewNotification(
+      notification.recipient.toString(),
+      notification
+    );
+    return notification;
   }
 
   // Lấy danh sách thông báo của 1 người dùng

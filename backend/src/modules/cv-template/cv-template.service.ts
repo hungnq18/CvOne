@@ -30,29 +30,30 @@ export class CvTemplateService {
   }
 
   async getSuggestTemplateCv(
-    jobDescription: string
-  ): Promise<{ cvTemplates: CvTemplate[]; total_tokens: number }> {
-    const tags = await this.cvTemplateModel.distinct("tags").exec();
+    jobDescription: string,
+    templateId: string
+  ): Promise<{ cvTemplates: CvTemplate | null; total_tokens: number }> {
+    const templates = await this.cvTemplateModel
+      .find({}, { title: 1, tags: 1, _id: 0 })
+      .lean()
+      .exec();
+    const userUseTemplate = await this.cvTemplateModel
+      .findById(templateId, { title: 1, tags: 1, _id: 0 })
+      .exec();
 
-    const suggestTags = await this.cvTemplateAiService.suggestTagsByAi(
+    const suggestTemplate = await this.cvTemplateAiService.suggestTemplateByAi(
       jobDescription,
-      tags
+      templates,
+      userUseTemplate
     );
 
-    if (suggestTags && suggestTags.tags.length > 0) {
-      const templates = await this.cvTemplateModel
-        .find({
-          tags: { $in: suggestTags.tags }, // chỉ cần 1 tag match là được
-        })
-        .lean()
-        .exec();
-
-      return { cvTemplates: templates, total_tokens: suggestTags.total_tokens };
-    }
+    const template = await this.cvTemplateModel
+      .findOne({ title: suggestTemplate.title })
+      .exec();
 
     return {
-      cvTemplates: await this.cvTemplateModel.find().exec(),
-      total_tokens: suggestTags.total_tokens,
+      cvTemplates: template,
+      total_tokens: suggestTemplate.total_tokens,
     };
   }
 }

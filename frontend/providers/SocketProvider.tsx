@@ -13,6 +13,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { usePathname } from "next/navigation";
 import io, { Socket } from "socket.io-client";
 import { Conversation, Message, getUserConversations } from "@/api/apiChat";
+import { getNotifications } from "@/api/apiNotification";
 
 /* ===================== TYPES ===================== */
 
@@ -43,6 +44,7 @@ interface SocketContextType {
   // 🔥 NOTIFICATION PAGE TRACKING
   isViewingNotifications: boolean;
   setIsViewingNotifications: (value: boolean) => void;
+  sendRealtimeNotification: (data: any) => void;
 }
 
 const SocketContext = createContext<SocketContextType | undefined>(undefined);
@@ -60,7 +62,6 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
   const [selectedConversationId, setSelectedConversationId] = useState<
     string | null
   >(null);
-
   const normalizeId = (id: any) =>
     typeof id === "object" && id?._id ? String(id._id) : String(id);
 
@@ -100,22 +101,12 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const isViewing = pathname === "/notifications";
     setIsViewingNotifications(isViewing);
-    console.log(
-      "🔥 Route changed - isViewingNotifications:",
-      isViewing,
-      "pathname:",
-      pathname
-    );
   }, [pathname]);
 
   // 🧠 Listen for tab visibility change
   useEffect(() => {
     const handleVisibility = () => {
       setIsTabActive(document.visibilityState === "visible");
-      console.log(
-        "📍 Tab visibility:",
-        document.visibilityState === "visible" ? "ACTIVE" : "HIDDEN"
-      );
     };
     document.addEventListener("visibilitychange", handleVisibility);
     return () =>
@@ -146,16 +137,13 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
         withCredentials: true,
       });
 
-      socketRef.current.on("connect", () => {
-        console.log("✅ socket connected", socketRef.current?.id);
-        console.log("➡️ emit join with userId:", user._id);
+      // ✅ LISTEN TRƯỚC
 
+      socketRef.current.on("connect", () => {
         socketRef.current?.emit("joinUser", user._id);
-        socketRef.current?.emit("joinNotificationRoom", user._id);
+        socketRef.current?.emit("notification:join", user._id);
       });
     }
-
-    // KHÔNG cleanup - giữ connection sống
   }, [user]);
 
   const loadConversations = useCallback(async () => {
@@ -178,11 +166,6 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!activeConversationId || !user) return;
 
-    console.log(
-      "🔥 User opened conversation:",
-      activeConversationId,
-      "- emit readConversation"
-    );
     socketRef.current?.emit("readConversation", {
       conversationId: activeConversationId,
       userId: user._id,
@@ -190,31 +173,22 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
     refreshConversations();
   }, [activeConversationId, user]);
 
-  /* 🔥 AUTO MARK ALL NOTIFICATIONS READ WHEN VIEWING PAGE ========== */
-  // ✅ BẮT BUỘC: Emit mark all read khi user vào notification page
-  // 📌 Chuẩn hóa event name: notification:read:all
-  // 🔥 QUAN TRỌNG: Emit NGAY KHI isViewingNotifications = true (không chờ notifications load)
-  useEffect(() => {
-    if (!isViewingNotifications || !user) return;
-
-    console.log(
-      "🔥 Mark all notifications read - emit notification:read:all immediately"
-    );
-    socketRef.current?.emit("notification:read:all", {
-      userId: user._id,
-    });
-  }, [isViewingNotifications, user]);
-
   /* ========== SOCKET EVENTS ========== */
   useEffect(() => {
     if (!socketRef.current || !user) return;
 
     const socket = socketRef.current;
 
+    socket.on("notification:init", (list) => {
+      setNotifications(list);
+    });
+
+    socket.on("notification:new", (notification) => {
+      setNotifications((prev) => [notification, ...prev]);
+    });
+
     /* ---- NEW MESSAGE ---- */
     socket.on("newMessage", async (msg: Message) => {
-      console.log("💬 New message received:", msg);
-
       // 🔥 FIX: Ensure sender object exists for avatar rendering
       // Nếu server chỉ gửi senderId, ta cần populate sender from DB
       if (!msg.sender && msg.senderId) {
@@ -253,81 +227,6 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
       await refreshConversations();
     });
 
-    /* ---- NOTIFICATIONS ---- */
-    // Listen for full notifications list (emitted after joinNotificationRoom)
-    socket.on("notifications", (list: any[]) => {
-      try {
-        console.log("📬 Notifications list received:", list?.length, "items");
-        setNotifications(Array.isArray(list) ? list : []);
-      } catch (err) {
-        console.error("❌ Error loading notifications:", err);
-        setNotifications([]);
-      }
-    });
-
-    // 🔥 Mark ALL notifications as read (multi-tab sync)
-    // ✅ CHỈ update notifications array - unreadNotifications tự động recalculate
-    // 📌 Chuẩn hóa event name: notification:read:all
-    socket.on("notification:read:all", ({ userId }: { userId: string }) => {
-      if (userId !== user._id) return;
-
-      console.log(
-        "📬 All notifications marked as read (broadcast from server)"
-      );
-      setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
-    });
-
-    // New notification arrives
-    // ✅ CHỈ add vào notifications array - unreadNotifications tự động increase
-    // 🔥 FIX: ADD VỚI isRead state, KHÔNG emit notification:read:one
-    // 📌 notification:read:all sẽ xử lý sync cho tất cả
-    socket.on("notification:new", (notif: any) => {
-      console.log("🔔 New notification arrived:", notif);
-
-      // ✅ ADD NOTIFICATION VÀO STATE
-      setNotifications((prev) => {
-        // Tránh duplicate
-        if (prev.some((n) => n._id === notif._id)) {
-          console.log("⚠️ Notification already exists, skip");
-          return prev;
-        }
-
-        // 🔥 NẾU ĐANG XEM NOTIFICATION PAGE → ADD VỚI isRead: true
-        // ❌ KHÔNG emit read:one - notification:read:all đã xử lý
-        return [
-          {
-            ...notif,
-            isRead: isViewingNotificationsRef.current,
-          },
-          ...prev,
-        ];
-      });
-
-      // Show browser notification nếu tab không active
-      if (Notification.permission === "granted" && !isTabActiveRef.current) {
-        new Notification(notif.title || "New Notification", {
-          body: notif.message || notif.content || "",
-          icon: "/favicon.ico",
-        });
-      }
-    });
-
-    // Notification marked as read (server broadcast after notification:read:one emit)
-    // ✅ CHỈ update isRead flag - unreadNotifications tự động recalculate
-    socket.on("notification:read:one", (data: any) => {
-      if (!data || !data.notificationId) return;
-
-      console.log(
-        "✅ Notification marked as read (broadcast from server):",
-        data.notificationId
-      );
-      setNotifications((prev) =>
-        prev.map((n) =>
-          n._id === data.notificationId ? { ...n, isRead: true } : n
-        )
-      );
-    });
-
     /* ---- LOAD MESSAGES ---- */
     socket.on(
       "conversation:messages",
@@ -339,10 +238,24 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
       }
     );
 
+    socket.on("notifications", (list: any[]) => {
+      try {
+        setNotifications(Array.isArray(list) ? list : []);
+      } catch (err) {
+        console.error("❌ Error loading notifications:", err);
+        setNotifications([]);
+      }
+    });
+
+    socket.on("newNotification", (notification: any) => {
+      setNotifications((prev) => {
+        if (prev.some((n) => n._id === notification._id)) return prev;
+        return [notification, ...prev];
+      });
+    });
+
     /* ---- NEW CONVERSATION ---- */
     socket.on("conversation:new", (conversation: any) => {
-      console.log(" NEW CONVERSATION:", conversation);
-
       setConversations((prev) => {
         const exists = prev.some((c) => c._id === conversation._id);
         if (exists) return prev;
@@ -383,9 +296,7 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
               : c
           );
           // ✅ unreadCount tự động tính từ useMemo - KHÔNG cần setUnreadCount
-          console.log(
-            "✅ Conversation marked as read, unreadCount will auto-recalculate"
-          );
+
           return updated;
         });
       }
@@ -393,13 +304,13 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
 
     return () => {
       socket.off("newMessage");
-      socket.off("notifications");
-      socket.off("notification:new");
-      socket.off("notification:read:all");
-      socket.off("notification:read:one");
       socket.off("conversation:messages");
       socket.off("conversation:new");
       socket.off("unreadReset");
+      socket.off("newNotification");
+      socket.off("notifications");
+      socket.off("notifications:init");
+      socket.off("notification:new");
     };
   }, [user]);
 
@@ -408,6 +319,22 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
   const joinConversation = useCallback((conversationId: string) => {
     socketRef.current?.emit("joinRoom", conversationId);
   }, []);
+
+  const sendRealtimeNotification = useCallback(
+    (data: {
+      userId: string;
+      title: string;
+      message: string;
+      type: string;
+      link?: string;
+      jobId: string;
+    }) => {
+      socketRef.current?.emit("sendRealtimeNotification", data);
+    },
+    []
+  );
+
+  /* ========== LOAD CONVERSATIONS INIT ========== */
 
   const markConversationAsRead = useCallback(
     (conversationId: string) => {
@@ -487,6 +414,7 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
       setActiveConversationId,
       isViewingNotifications,
       setIsViewingNotifications,
+      sendRealtimeNotification,
     }),
     [
       unreadCount,
@@ -501,6 +429,7 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
       activeConversationId,
       selectedConversationId,
       isViewingNotifications,
+      sendRealtimeNotification,
     ]
   );
 

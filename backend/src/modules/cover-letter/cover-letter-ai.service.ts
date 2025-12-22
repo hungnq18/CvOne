@@ -208,7 +208,6 @@ export class CoverLetterAiService {
         completion_tokens: 0,
         total_tokens: 0,
       };
-      console.log("Usage cover letter:", usage);
       return {
         templateId,
         title: "Extracted from PDF",
@@ -293,7 +292,6 @@ Return only the **final cover letter text** — no JSON, no markdown, no explana
       completion_tokens: 0,
       total_tokens: 0,
     };
-    console.log("Usage:", usage);
 
     return {
       templateId,

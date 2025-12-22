@@ -15,8 +15,6 @@ const IconChatAndNotification: React.FC = () => {
   // Lấy realtime từ SocketProvider
   const { unreadCount, unreadNotifications } = useSocket();
 
-  console.log("🎯 IconChatAndNotification rendered - unreadCount:", unreadCount, "unreadNotifications:", unreadNotifications);
-
   // 🟢 Icon chỉ navigate - KHÔNG emit / KHÔNG set flag
   // NotificationCenterClient mount sẽ handle emit + flag
   const handleNotificationClick = useCallback(() => {
@@ -29,8 +27,7 @@ const IconChatAndNotification: React.FC = () => {
   const shouldHideIcon = isOnChat;
   const shouldHideBadges = isOnNotifications || isOnChat;
 
-  if (!user || shouldHideIcon)
-    return null;
+  if (!user || shouldHideIcon) return null;
 
   return (
     <div className={`fixed bottom-6 right-6 z-50 flex flex-col gap-3`}>

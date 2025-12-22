@@ -55,8 +55,6 @@ const ConversationItem = memo(
       lastMessage: Message | null;
     } | null;
   }) => {
-    console.log("🚀 ConversationItem", conv);
-
     // Normalize userId để so sánh
     const normalizedUserId = userId ? String(userId) : null;
 
