@@ -442,11 +442,11 @@ export async function translateCV(
 export async function suggestTemplateByAI(
   infoUser: any,
   jobDescription: string,
-  tags?: string[]
+  templateId?: string,
 ) {
   return fetchWithAuth(API_ENDPOINTS.CV.SUGGEST_TEMPLATE, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ infoUser, jobDescription, tags }),
+    body: JSON.stringify({ infoUser, jobDescription,templateId}),
   });
 }

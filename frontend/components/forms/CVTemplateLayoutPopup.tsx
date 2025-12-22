@@ -41,7 +41,6 @@ const LAYOUT_CONFIGS: Record<string, PlaceConfig[]> = {
     { id: 3, label: "Nội dung (Dưới Header)", gridClass: "col-span-8 h-full", colorTheme: "green", direction: "col" },
   ],
   "The Modern": [
-    { id: 1, label: "Hero Section", gridClass: "col-span-12 h-fit", colorTheme: "indigo", direction: "col" },
     { id: 2, label: "Thanh Thông Tin", gridClass: "col-span-12 h-fit", colorTheme: "slate", direction: "col" },
     { id: 3, label: "Nội dung chính", gridClass: "col-span-12 h-full", colorTheme: "blue", direction: "col" },
   ],
