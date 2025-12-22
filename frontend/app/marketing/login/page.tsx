@@ -90,12 +90,6 @@ export default function MarketingLoginPage() {
           >
             {isLoading ? t.loading : t.loginButton}
           </button>
-
-          <div className="text-center mt-4">
-            <Link href="/fogetPassword" className="text-sm text-blue-600 hover:underline">
-              {t.fogetPassword}
-            </Link>
-          </div>
         </form>
       </div>
     </div>
