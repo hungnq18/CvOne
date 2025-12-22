@@ -940,8 +940,7 @@ const PageCreateCVAIContent = () => {
   
       const result = await suggestTemplateByAI(
         userData || {},
-        jobDescription || "",
-        currentTemplate?._id
+        currentTemplate?._id || ""
       );
   
       // console.log("Kết quả thô từ AI:", result);
