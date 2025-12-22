@@ -30,7 +30,6 @@ const JobTable: React.FC<JobTableProps> = ({
   const router = useRouter();
 
   const handleDelete = async (jobId: string) => {
-    console.log("Deleting saved-job with id:", jobId);
     if (!jobId) return;
     try {
       await unSaveJob(jobId);
@@ -43,7 +42,6 @@ const JobTable: React.FC<JobTableProps> = ({
 
   const handleArchive = (jobId: string) => {
     // TODO: Implement archive functionality
-    console.log("Archive job:", jobId);
   };
 
   const handleView = (jobId: string) => {

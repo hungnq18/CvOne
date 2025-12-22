@@ -14,78 +14,82 @@ export class CvTemplateAiService {
     private readonly logService: AiUsageLogService
   ) {}
 
-  async suggestTagsByAi(
+  async suggestTemplateByAi(
     jobDescription: string,
-    tags: any
+    templates: any,
+    userUseTemplate: any
   ): Promise<{
-    tags: string[];
+    title: string | null;
     total_tokens: number;
   }> {
     const prompt = `
-Tags: ${tags.join(", ")}
+Cover letter templates:
+${JSON.stringify(templates, null, 2)}
+
+User is currently using this template (DO NOT select it):
+${JSON.stringify(userUseTemplate)}
 
 Job description:
 ${jobDescription}
 `;
+
+    const systemPrompt = `
+  You are an AI that selects the BEST cover letter template.
+  
+  Input:
+  - A list of templates (each has title and tags)
+  - A job description
+  - One template that the user is currently using
+  
+  Rules:
+  - Analyze the job description’s tone, professionalism, and creativity.
+  - Evaluate templates using BOTH title and tags.
+  - DO NOT select the template that matches the user's current template.
+  - Select EXACTLY ONE best-matching template.
+  
+  Output (STRICT):
+  - Return ONLY valid JSON
+  - Format: { "title": "<template title>" }
+  - No explanations, no extra text, no arrays
+  `;
 
     const completion = await this.openaiApiService
       .getOpenAI()
       .chat.completions.create({
         model: "gpt-4o",
         messages: [
-          {
-            role: "system",
-            content: `
-            You are a tag recommender AI.
-Task:
-- Given a list of tags and a job description, return all tags from the list that best match the job’s tone, domain, or focus.
-- Always choose at least one tag, even if unsure.
-- Use only tags from the provided list (no new ones).
-- Output strictly a JSON array of strings, e.g. ["creative","professional"].
-        `,
-          },
-
-          {
-            role: "user",
-            content: prompt,
-          },
+          { role: "system", content: systemPrompt },
+          { role: "user", content: prompt },
         ],
+        temperature: 0, // 🔥 QUAN TRỌNG: giảm randomness
       });
 
-    const suggestion = completion.choices[0].message.content?.trim();
+    const raw = completion.choices[0].message.content?.trim() || "";
 
-    let tagsResult: string[];
+    let title: string | null = null;
 
     try {
-      let cleaned = suggestion?.trim() || "";
-
-      cleaned = cleaned
-        .replace(/```(json)?/gi, "")
+      const cleaned = raw
+        .replace(/```json/gi, "")
         .replace(/```/g, "")
         .trim();
 
-      cleaned = cleaned.replace(/\n/g, "").trim();
+      const parsed = JSON.parse(cleaned);
 
-      if (cleaned.startsWith("[") && cleaned.endsWith("]")) {
-        tagsResult = JSON.parse(cleaned);
-      } else if (cleaned.startsWith('"') && cleaned.endsWith('"')) {
-        tagsResult = [JSON.parse(cleaned)];
-      } else {
-        tagsResult = cleaned ? [cleaned] : [];
+      if (parsed && typeof parsed.title === "string") {
+        title = parsed.title;
       }
-    } catch (err) {
-      tagsResult = [];
+    } catch (error) {
+      console.error("❌ AI template parse failed:", raw);
+      title = null;
     }
 
-    const usage = completion.usage || {
-      prompt_tokens: 0,
-      completion_tokens: 0,
+    const usage = completion.usage ?? {
       total_tokens: 0,
     };
-    console.log(usage);
 
     return {
-      tags: tagsResult,
+      title,
       total_tokens: usage.total_tokens,
     };
   }

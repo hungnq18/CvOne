@@ -51,7 +51,13 @@ export class ClTemplateController {
   @UseAiFeature(AiFeature.SUGGESTION_TEMPLATES_AI)
   @UseInterceptors(AiUsageInterceptor)
   @Get("suggest-template/ai")
-  async getSuggestTemplateCv(@Body("jobDescription") jobDescription: string) {
-    return this.clTemplateService.getSuggestTemplateCl(jobDescription);
+  async getSuggestTemplateCv(
+    @Body("jobDescription") jobDescription: string,
+    @Body("templateId") templateId: string
+  ) {
+    return this.clTemplateService.getSuggestTemplateCl(
+      jobDescription,
+      templateId
+    );
   }
 }

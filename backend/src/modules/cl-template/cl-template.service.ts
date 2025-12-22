@@ -34,29 +34,30 @@ export class ClTemplateService {
   }
 
   async getSuggestTemplateCl(
-    jobDescription: string
-  ): Promise<{ clTemplates: ClTemplate[]; total_tokens: number }> {
+    jobDescription: string,
+    templateId: string
+  ): Promise<{ clTemplates: ClTemplate | null; total_tokens: number }> {
     const tags = await this.clTemplateModel.distinct("tags").exec();
-
-    const suggestTags = await this.cvTemplateAiService.suggestTagsByAi(
+    const templates = await this.clTemplateModel
+      .find({}, { title: 1, tags: 1, _id: 0 })
+      .lean()
+      .exec();
+    const userUseTemplate = await this.clTemplateModel
+      .findById(templateId, { title: 1, tags: 1, _id: 0 })
+      .exec();
+    const suggestTemplate = await this.cvTemplateAiService.suggestTemplateByAi(
       jobDescription,
-      tags
+      templates,
+      userUseTemplate
     );
 
-    if (suggestTags && suggestTags.tags.length > 0) {
-      const templates = await this.clTemplateModel
-        .find({
-          tags: { $in: suggestTags.tags }, // chỉ cần 1 tag match là được
-        })
-        .lean()
-        .exec();
-
-      return { clTemplates: templates, total_tokens: suggestTags.total_tokens };
-    }
+    const template = await this.clTemplateModel
+      .findOne({ title: suggestTemplate.title })
+      .exec();
 
     return {
-      clTemplates: await this.clTemplateModel.find().exec(),
-      total_tokens: suggestTags.total_tokens,
+      clTemplates: template,
+      total_tokens: suggestTemplate.total_tokens,
     };
   }
 }

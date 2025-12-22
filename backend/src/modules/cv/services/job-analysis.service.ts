@@ -102,7 +102,6 @@ export class JobAnalysisService {
         completion_tokens: 0,
         total_tokens: 0,
       };
-      console.log("Usage analysis:", usage);
       this.logger.log("Job description analysis completed successfully");
       return { analyzedJob: analysis, total_tokens: usage.total_tokens };
     } catch (error) {

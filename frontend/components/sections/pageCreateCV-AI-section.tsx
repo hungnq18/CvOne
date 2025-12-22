@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
@@ -261,21 +260,29 @@ const PageCreateCVAIContent = () => {
             if (templateData) {
               hasLoadedRef.current = idFromUrl; // Đánh dấu đã load
               loadTemplate(templateData);
-              
+
               // Reset sectionPositions về default khi load template mới (không phải CV đã lưu)
-              const defaultPositions = getDefaultSectionPositions(templateData.title);
+              const defaultPositions = getDefaultSectionPositions(
+                templateData.title
+              );
               updateSectionPositions(templateData._id, defaultPositions);
-              
+
               if (
                 (!userData || Object.keys(userData).length === 0) &&
                 templateData.data?.userData
               ) {
-                updateUserData({ ...templateData.data.userData, sectionPositions: defaultPositions });
+                updateUserData({
+                  ...templateData.data.userData,
+                  sectionPositions: defaultPositions,
+                });
               } else if (userData) {
                 // Nếu đã có userData, vẫn reset sectionPositions về default để tránh vỡ giao diện
-                updateUserData({ ...userData, sectionPositions: defaultPositions });
+                updateUserData({
+                  ...userData,
+                  sectionPositions: defaultPositions,
+                });
               }
-              
+
               if (templateData.data?.uiTexts) {
                 setCvUiTexts(templateData.data.uiTexts);
               }
@@ -744,7 +751,7 @@ const PageCreateCVAIContent = () => {
     const containerWidth = 700;
     const templateOriginalWidth = 794;
     const scaleFactor = containerWidth / templateOriginalWidth;
-    
+
     return (
       <div
         className="w-full origin-top pb-8"
@@ -852,8 +859,7 @@ const PageCreateCVAIContent = () => {
         translatedData?.data?.data?.content?.userData ??
         translatedData?.data?.content?.userData;
       const nextUiTexts =
-        translatedData?.data?.data?.uiTexts ??
-        translatedData?.data?.uiTexts;
+        translatedData?.data?.data?.uiTexts ?? translatedData?.data?.uiTexts;
 
       if (nextUserData) {
         updateUserData(nextUserData);
@@ -866,7 +872,6 @@ const PageCreateCVAIContent = () => {
             ...(currentUiTexts || {}), // Giữ lại các field cũ (nếu có)
             ...nextUiTexts, // Cập nhật các field mới từ API
           };
-          console.log("[handleTranslateCV] Merged uiTexts:", mergedUiTexts);
           setCvUiTexts(mergedUiTexts);
         } else if (currentUiTexts) {
           // Nếu API không trả về uiTexts, giữ nguyên currentUiTexts
@@ -923,7 +928,6 @@ const PageCreateCVAIContent = () => {
         userData || {},
         jobDescription || ""
       );
-      console.log("AI suggestTemplate raw result:", result);
 
       // Response mới: { cvTemplates: [ ... ], total_tokens: number }
       // Nhưng vẫn phòng khi backend bọc thêm data / đổi field nhẹ.
@@ -1073,11 +1077,12 @@ const PageCreateCVAIContent = () => {
                             onError={(e) => {
                               // Fallback khi image lỗi (đặc biệt cho Cốc Cốc)
                               const target = e.target as HTMLImageElement;
-                              target.style.display = 'none';
+                              target.style.display = "none";
                               const parent = target.parentElement;
                               if (parent) {
-                                const fallback = document.createElement('div');
-                                fallback.className = 'w-full h-full flex items-center justify-center bg-gray-200';
+                                const fallback = document.createElement("div");
+                                fallback.className =
+                                  "w-full h-full flex items-center justify-center bg-gray-200";
                                 fallback.innerHTML = `<span class="text-gray-400 text-xs text-center px-2">${item.title}</span>`;
                                 parent.appendChild(fallback);
                               }
@@ -1193,9 +1198,7 @@ const PageCreateCVAIContent = () => {
         </aside>
 
         <div className="flex-grow bg-slate-100 p-8 flex justify-center items-start overflow-y-auto">
-          <div className="w-full max-w-[750px]">
-            {renderCVPreview()}
-          </div>
+          <div className="w-full max-w-[750px]">{renderCVPreview()}</div>
         </div>
 
         <aside className="w-72 bg-white p-6 border-l border-slate-200 overflow-y-auto">
@@ -1348,10 +1351,18 @@ const PageCreateCVAIContent = () => {
                       onClick={async () => {
                         setShowSuggestModal(false);
                         // Reset sectionPositions về default trước khi navigate
-                        const defaultPositions = getDefaultSectionPositions(suggestedTemplate!.title);
-                        updateSectionPositions(suggestedTemplate!._id, defaultPositions);
+                        const defaultPositions = getDefaultSectionPositions(
+                          suggestedTemplate!.title
+                        );
+                        updateSectionPositions(
+                          suggestedTemplate!._id,
+                          defaultPositions
+                        );
                         if (userData) {
-                          updateUserData({ ...userData, sectionPositions: defaultPositions });
+                          updateUserData({
+                            ...userData,
+                            sectionPositions: defaultPositions,
+                          });
                         }
                         router.push(
                           `/createCV-AIManual?id=${suggestedTemplate!._id}`

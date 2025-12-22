@@ -234,6 +234,7 @@ export class AccountsService {
           company_district,
           vatRegistrationNumber,
         });
+        await this.creditService.createCredit(createdUser._id);
 
         // Send verification email (same flow as user register)
         const verificationToken = crypto.randomBytes(32).toString("hex");
@@ -293,28 +294,13 @@ export class AccountsService {
   }
 
   async verifyEmail(token: string) {
-    console.log("Verifying email with token:", token);
-
     // Tìm account với token
     const account = await this.accountModel.findOne({
       emailVerificationToken: token,
     });
 
-    console.log(
-      "Found account:",
-      account
-        ? {
-            id: account._id,
-            email: account.email,
-            isVerified: account.isEmailVerified,
-            tokenExpires: account.emailVerificationTokenExpires,
-          }
-        : "no account found"
-    );
-
     // Nếu không tìm thấy account hoặc token không khớp
     if (!account) {
-      console.log("No account found with this token");
       return {
         success: false,
         message: "Invalid verification token",
@@ -326,10 +312,6 @@ export class AccountsService {
       !account.emailVerificationTokenExpires ||
       account.emailVerificationTokenExpires < new Date()
     ) {
-      console.log("Token is expired:", {
-        tokenExpires: account.emailVerificationTokenExpires,
-        currentTime: new Date(),
-      });
       return {
         success: false,
         message: "Verification token has expired",
@@ -341,11 +323,6 @@ export class AccountsService {
     account.emailVerificationToken = null;
     account.emailVerificationTokenExpires = null;
     await account.save();
-
-    console.log("Account verified successfully:", {
-      id: account._id,
-      email: account.email,
-    });
 
     return {
       success: true,

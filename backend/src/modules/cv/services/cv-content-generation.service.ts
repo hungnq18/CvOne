@@ -78,7 +78,6 @@ Do not include any explanation or markdown, only valid JSON.
         completion_tokens: 0,
         total_tokens: 0,
       };
-      console.log("Usage summary:", usage);
       // Remove markdown if present
       let cleanResponse = response.trim();
       if (cleanResponse.startsWith("```json")) {
@@ -194,7 +193,6 @@ Requirements:
         completion_tokens: 0,
         total_tokens: 0,
       };
-      console.log("Usage summary:", usage);
 
       const response = completion.choices[0]?.message?.content;
       if (!response) {
@@ -243,7 +241,9 @@ Requirements:
   }> {
     try {
       const safeAnalysis = jobAnalysis || {};
-      const requiredSkills: string[] = Array.isArray(safeAnalysis.requiredSkills)
+      const requiredSkills: string[] = Array.isArray(
+        safeAnalysis.requiredSkills
+      )
         ? safeAnalysis.requiredSkills
         : [];
       const technologies: string[] = Array.isArray(safeAnalysis.technologies)
@@ -252,7 +252,8 @@ Requirements:
       const softSkills: string[] = Array.isArray(safeAnalysis.softSkills)
         ? safeAnalysis.softSkills
         : [];
-      const experienceLevel: string = safeAnalysis.experienceLevel || "Not specified";
+      const experienceLevel: string =
+        safeAnalysis.experienceLevel || "Not specified";
 
       const existingSkills =
         userSkills?.map((s) => s.name).join(", ") || "None";
@@ -317,7 +318,6 @@ Do not include any explanation or markdown, only valid JSON.
         completion_tokens: 0,
         total_tokens: 0,
       };
-      console.log("Usage skills :", usage);
       // Remove markdown if present
       let cleanResponse = response.trim();
       if (cleanResponse.startsWith("```json")) {
@@ -334,11 +334,7 @@ Do not include any explanation or markdown, only valid JSON.
       const skillsLists = JSON.parse(cleanResponse);
 
       // Danh sách skill hợp lệ rút ra từ JD
-      const validSkills = [
-        ...requiredSkills,
-        ...technologies,
-        ...softSkills,
-      ]
+      const validSkills = [...requiredSkills, ...technologies, ...softSkills]
         .filter(Boolean)
         .map((s) => s.toLowerCase());
 
@@ -356,16 +352,14 @@ Do not include any explanation or markdown, only valid JSON.
         );
 
         // Nếu lọc xong rỗng => fallback dùng lại list gốc
-        const baseList =
-          filtered.length > 0
-            ? filtered
-            : list;
+        const baseList = filtered.length > 0 ? filtered : list;
 
         // Gán lại rating nếu user có sẵn kỹ năng
         return baseList.map((skillObj) => {
           if (userSkills) {
             const found = userSkills.find(
-              (s) => s.name.toLowerCase() === (skillObj.name || "").toLowerCase()
+              (s) =>
+                s.name.toLowerCase() === (skillObj.name || "").toLowerCase()
             );
             if (found) {
               return { ...skillObj, rating: found.rating };
@@ -442,7 +436,6 @@ Do not include any explanation or markdown, only valid JSON.
       ...(jobAnalysis?.technologies || []),
     ];
     const uniqueSkills = [...new Set(allSkills)];
-    console.log("uniqueSkills", uniqueSkills);
 
     return uniqueSkills.slice(0, 8).map((skill) => ({
       name: skill.charAt(0).toUpperCase() + skill.slice(1),
@@ -627,10 +620,6 @@ Clear, natural phrasing - no awkward machine translations
       const uiTextTokens = uiTextResponse.usage?.total_tokens ?? 0;
 
       const totalTokens = contentTokens + uiTextTokens;
-
-      console.log("Content Tokens:", contentTokens);
-      console.log("UI Tokens:", uiTextTokens);
-      console.log("Total Tokens:", totalTokens);
 
       // ======= Xử lý phần uiTexts =======
       let uiTranslated = uiTextResponse.choices[0]?.message?.content?.trim();

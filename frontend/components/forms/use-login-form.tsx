@@ -108,25 +108,25 @@ export function useLoginForm(allowedRoles?: string[]) {
       setError(t.emailRequired);
       return false;
     }
-    
+
     // Validate email format
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
     if (!emailRegex.test(formData.email.trim())) {
       setError(t.invalidEmailFormat || "Email không hợp lệ");
       return false;
     }
-    
+
     if (!formData.password) {
       setError(t.passwordRequired);
       return false;
     }
-    
+
     // Validate password length (minimum 6 characters)
     if (formData.password.length < 6) {
       setError(t.passwordTooShort || "Mật khẩu phải có ít nhất 6 ký tự");
       return false;
     }
-    
+
     return true;
   };
 
@@ -153,7 +153,11 @@ export function useLoginForm(allowedRoles?: string[]) {
 
       const decoded: DecodedToken = jwtDecode(access_token);
 
-      if (allowedRoles && allowedRoles.length > 0 && !allowedRoles.includes(decoded.role)) {
+      if (
+        allowedRoles &&
+        allowedRoles.length > 0 &&
+        !allowedRoles.includes(decoded.role)
+      ) {
         throw new Error("UNAUTHORIZED_ROLE");
       }
 
@@ -198,7 +202,9 @@ export function useLoginForm(allowedRoles?: string[]) {
 
         if (isUnverified) {
           msg = t.emailNotVerified;
-          router.push(`/verify-email?email=${encodeURIComponent(formData.email)}`);
+          router.push(
+            `/verify-email?email=${encodeURIComponent(formData.email)}`
+          );
         } else {
           msg = t.invalidCredentials;
         }
@@ -213,12 +219,10 @@ export function useLoginForm(allowedRoles?: string[]) {
 
   const handleGoogleLogin = () => {
     // Placeholder for Google login logic
-    console.log("Login with Google");
   };
 
   const handleFacebookLogin = () => {
     // Placeholder for Facebook login logic
-    console.log("Login with Facebook");
   };
 
   return {

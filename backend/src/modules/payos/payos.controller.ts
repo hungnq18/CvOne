@@ -29,7 +29,6 @@ export class PayosController {
     }
 
     // ✅ Tại đây bạn xử lý đơn hàng sau thanh toán thành công
-    console.log("✅ Payment success:", body);
 
     return { status: "ok" };
   }

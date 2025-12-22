@@ -153,7 +153,6 @@ Return only valid JSON without any additional text.
         completion_tokens: 0,
         total_tokens: 0,
       };
-      console.log("Usage:", usage);
 
       this.logger.log("CV content analysis completed successfully");
       return analysis;
@@ -224,7 +223,6 @@ Return only the rewritten description, no explanation, no markdown.
         completion_tokens: 0,
         total_tokens: 0,
       };
-      console.log("Usage summary:", usage);
       // Remove markdown if present
       let cleanResponse = response.trim();
       if (cleanResponse.startsWith("```")) {

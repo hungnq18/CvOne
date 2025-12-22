@@ -58,7 +58,6 @@ export class VietnameseContentService {
         completion_tokens: 0,
         total_tokens: 0,
       };
-      console.log("Usage summary:", usage);
       const response = completion.choices[0]?.message?.content;
       if (!response) {
         throw new Error("No response from OpenAI");

@@ -42,8 +42,14 @@ export class CvTemplateController {
   @UseAiFeature(AiFeature.SUGGESTION_TEMPLATES_AI)
   @UseInterceptors(AiUsageInterceptor)
   @Post("suggest")
-  async getSuggestTemplateCv(@Body("jobDescription") jobDescription: string) {
-    return this.cvTemplateService.getSuggestTemplateCv(jobDescription);
+  async getSuggestTemplateCv(
+    @Body("jobDescription") jobDescription: string,
+    @Body("templateId") templateId: string
+  ) {
+    return this.cvTemplateService.getSuggestTemplateCv(
+      jobDescription,
+      templateId
+    );
   }
 
   @Public()
