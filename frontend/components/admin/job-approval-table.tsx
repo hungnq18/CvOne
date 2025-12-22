@@ -14,8 +14,8 @@ import {
 } from "@/components/ui/table"
 import { getPendingJobsForAdmin, approveJobByAdmin, Job } from "@/api/jobApi"
 import { format } from "date-fns"
-import { toast } from "react-hot-toast"
 import { useLanguage } from "@/providers/global_provider"
+import { showErrorToast, showSuccessToast } from "@/utils/popUpUtils"
 
 export function JobApprovalTable() {
   const { t } = useLanguage()
@@ -34,7 +34,7 @@ export function JobApprovalTable() {
       setPage(res.page || pageNumber)
     } catch (error) {
       console.error("Failed to fetch pending jobs:", error)
-      toast.error(t.admin.jobApproval.messages.loadError)
+      showErrorToast(t.admin.jobApproval.messages.loadError)
     } finally {
       setLoading(false)
     }
@@ -47,11 +47,11 @@ export function JobApprovalTable() {
   const handleApprove = async (jobId: string) => {
     try {
       await approveJobByAdmin(jobId)
-      toast.success(t.admin.jobApproval.messages.approveSuccess)
+      showSuccessToast(t.admin.jobApproval.messages.approveSuccess)
       fetchJobs(page)
     } catch (error) {
       console.error("Failed to approve job:", error)
-      toast.error(t.admin.jobApproval.messages.approveError)
+      showErrorToast(t.admin.jobApproval.messages.approveError)
     }
   }
 

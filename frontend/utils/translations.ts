@@ -274,6 +274,10 @@ export const translations = {
         desc: "View all token purchase orders created in the system.",
         refresh: "Refresh",
         orders: "Orders",
+        filter: {
+          label: "Filter status",
+          all: "All status",
+        },
         table: {
           orderCode: "Order Code",
           user: "User",
@@ -890,6 +894,10 @@ export const translations = {
         desc: "Xem tất cả các đơn hàng mua token trong hệ thống.",
         refresh: "Làm mới",
         orders: "Đơn hàng",
+        filter: {
+          label: "Lọc trạng thái",
+          all: "Tất cả trạng thái",
+        },
         table: {
           orderCode: "Mã đơn",
           user: "Người dùng",
