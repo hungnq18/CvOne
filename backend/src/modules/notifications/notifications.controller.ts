@@ -31,7 +31,13 @@ export class NotificationsController {
     @Request() req
   ) {
     const { title, message, type, link, jobId, recipient } = body;
-    const recipientId = recipient || req.user.user._id;
+    // Ưu tiên recipient được truyền từ client, nếu không có thì dùng user hiện tại
+    let recipientId = recipient || req.user.user._id;
+
+    // Nếu recipientId không phải ObjectId hợp lệ thì fallback về user hiện tại
+    if (!Types.ObjectId.isValid(recipientId)) {
+      recipientId = req.user.user._id;
+    }
     const notification = await this.notificationsService.createNotification(
       {
         title,
