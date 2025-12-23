@@ -108,3 +108,27 @@ export async function resetPassword(token: string, newPassword: string) {
     body: JSON.stringify({ token, newPassword }),
   });
 }
+
+/**
+ * Đăng nhập với Facebook
+ * @param token - Facebook access token từ Facebook SDK
+ * @returns AuthResponse chứa access_token
+ */
+export async function loginWithFacebook(token: string): Promise<AuthResponse> {
+  return fetchWithAuth(API_ENDPOINTS.AUTH.LOGIN_FACEBOOK, {
+    method: "POST",
+    body: JSON.stringify({ token }),
+  });
+}
+
+/**
+ * Đăng nhập với Google
+ * @param token - Google ID token từ Google Identity Services
+ * @returns AuthResponse chứa access_token
+ */
+export async function loginWithGoogle(token: string): Promise<AuthResponse> {
+  return fetchWithAuth(API_ENDPOINTS.AUTH.LOGIN_GOOGLE, {
+    method: "POST",
+    body: JSON.stringify({ token }),
+  });
+}
