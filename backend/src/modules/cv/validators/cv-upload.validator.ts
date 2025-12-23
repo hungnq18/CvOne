@@ -161,6 +161,11 @@ export class CvUploadValidator {
       }
     }
 
+    // Debug: log extracted CV text to inspect what content is actually read
+    console.log('==== Extracted CV Text Start ====');
+    console.log(cvText);
+    console.log('==== Extracted CV Text End ====');
+
     return cvText;
   }
 

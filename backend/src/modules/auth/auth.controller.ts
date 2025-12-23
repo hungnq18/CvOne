@@ -15,6 +15,7 @@ import { Public } from "./decorators/public.decorator";
 import { ChangePasswordDto } from "./dto/change-password.dto";
 import { ForgotPasswordDto } from "./dto/forgot-password.dto";
 import { ResetPasswordDto } from "./dto/reset-password.dto";
+import { SocialLoginDto } from "./dto/social-login.dto";
 import { JwtAuthGuard } from "./guards/jwt-auth.guard";
 import { RolesGuard } from "./guards/roles.guard";
 
@@ -39,6 +40,18 @@ export class AuthController {
   @Post("login") //login
   async login(@Body() loginDto: LoginDto) {
     return this.authService.login(loginDto);
+  }
+
+  @Public()
+  @Post("login/google")
+  async loginGoogle(@Body() body: SocialLoginDto) {
+    return this.authService.loginWithGoogle(body);
+  }
+
+  @Public()
+  @Post("login/facebook")
+  async loginFacebook(@Body() body: SocialLoginDto) {
+    return this.authService.loginWithFacebook(body);
   }
 
   // Example of a protected route with role-based access

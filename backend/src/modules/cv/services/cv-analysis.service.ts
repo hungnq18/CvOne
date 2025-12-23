@@ -1,6 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { OpenaiApiService } from "./openai-api.service";
 import { AiUsageLogService } from "src/modules/ai-usage-log/ai-usage-log.service";
+import { OpenaiApiService } from "./openai-api.service";
 
 @Injectable()
 export class CvAnalysisService {
@@ -13,6 +13,12 @@ export class CvAnalysisService {
 
   /**
    * Analyze CV content using OpenAI
+   * @param cvText - The text content of the CV to analyze
+   * @returns A promise that resolves to the analyzed CV content
+   * @throws An error if the CV content cannot be analyzed
+   * @throws An error if the OpenAI API returns no response
+   * @throws An error if the CV content is not valid JSON
+   * @throws An error if the CV content is not valid JSON
    */
   async analyzeCvContent(cvText: string): Promise<{
     userData: {
@@ -41,6 +47,28 @@ export class CvAnalysisService {
         degree: string;
         institution: string;
       }>;
+      careerObjective?: string;
+      Project?: Array<{
+        title: string;
+        summary: string;
+        startDate?: Date;
+        endDate?: Date;
+        tags?: string[];
+      }>;
+      certification?: Array<{
+        title: string;
+        startDate?: Date;
+        endDate?: Date;
+      }>;
+      achievement?: string[];
+      hobby?: string[];
+      sectionPositions?: Record<
+        string,
+        {
+          place?: number;
+          order?: number;
+        }
+      >;
     };
     mapping?: Record<
       string,
@@ -54,7 +82,7 @@ Analyze the following CV content and extract structured information in JSON form
 CV Content:
 ${cvText}
 
-Please provide a detailed analysis in the following JSON structure:
+Please provide a detailed analysis in the following JSON structure (follow the schema exactly, including optional fields):
 {
   "userData": {
     "firstName": "First Name",
@@ -90,7 +118,36 @@ Please provide a detailed analysis in the following JSON structure:
         "degree": "Degree Name",
         "institution": "Institution Name"
       }
-    ]
+    ],
+    "careerObjective": "Career objective / objective section extracted from CV (if available, otherwise use summary or leave empty string)",
+    "Project": [
+      {
+        "title": "Project Name",
+        "summary": "Short project description including responsibilities, tech stack and achievements",
+        "startDate": "YYYY-MM-DD or null if unknown",
+        "endDate": "YYYY-MM-DD or null or \"Present\" if ongoing",
+        "tags": ["tag1", "tag2", "technology1", "technology2"]
+      }
+    ],
+    "certification": [
+      {
+        "title": "Certification name",
+        "startDate": "YYYY-MM-DD or null if unknown",
+        "endDate": "YYYY-MM-DD or null if unknown"
+      }
+    ],
+    "achievement": [
+      "Achievement 1 with concrete impact and, if possible, metrics",
+      "Achievement 2"
+    ],
+    "hobby": [
+      "Hobby 1",
+      "Hobby 2"
+    ],
+    "sectionPositions": {
+      "summary": { "place": 0, "order": 0 },
+      "skills": { "place": 0, "order": 1 }
+    }
   },
   "mapping": {
     // mapping các trường chính (nếu xác định được):
@@ -104,7 +161,13 @@ Focus on:
 - Identify all skills mentioned with appropriate ratings (1-5)
 - Parse work experience with dates and descriptions
 - Extract education details with proper structure
-- Ensure all dates are in YYYY-MM-DD format
+- Extract careerObjective from objective/summary sections if present
+- Extract all projects from PROJECT / PROJECTS / PERSONAL PROJECTS sections into the Project array, including technologies and responsibilities
+- Extract certifications from certification/license sections into the certification array
+- Extract notable achievements and awards into the achievement array
+- Extract hobbies/interests into the hobby array
+- If section order/layout is clear, fill sectionPositions; otherwise you can leave it as an empty object
+- Ensure all dates are in YYYY-MM-DD format where possible
 - Set empty string for avatar if not found
 - Nếu có thể, hãy dự đoán vị trí (page, x, y, width, height) của các trường chính trong CV (mapping), nếu không xác định được thì để trống object mapping.
 
