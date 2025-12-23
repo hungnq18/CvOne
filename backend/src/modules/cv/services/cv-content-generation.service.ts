@@ -12,6 +12,39 @@ export class CvContentGenerationService {
   ) {}
 
   /**
+   * Auto-detect language from text or job analysis
+   */
+  private detectLanguage(text?: string, jobAnalysis?: any): "vi" | "en" {
+    // Check text first if provided
+    if (text && text.trim().length > 0) {
+      const vietnameseChars = /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđĐ]/i;
+      const vietnameseWords = /\b(và|với|trong|cho|của|được|là|một|các|này|đó|nào|khi|nếu|để|về|theo|từ|sẽ|đã|đang|việc|dự án|hệ thống|ứng dụng|phần mềm|phát triển|thiết kế|quản lý|kinh nghiệm|kỹ năng|công ty|chức vụ)\b/i;
+      if (vietnameseChars.test(text) || vietnameseWords.test(text)) {
+        return "vi";
+      }
+    }
+
+    // Check job analysis fields
+    if (jobAnalysis) {
+      const checkText = [
+        ...(jobAnalysis.keyResponsibilities || []),
+        ...(jobAnalysis.cvSuggestions || []),
+        jobAnalysis.additionalRequirements || "",
+      ].join(" ");
+
+      if (checkText) {
+        const vietnameseChars = /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđĐ]/i;
+        const vietnameseWords = /\b(và|với|trong|cho|của|được|là|một|các|này|đó|nào|khi|nếu|để|về|theo|từ|sẽ|đã|đang|việc|dự án|hệ thống|ứng dụng|phần mềm|phát triển|thiết kế|quản lý|kinh nghiệm|kỹ năng|công ty|chức vụ)\b/i;
+        if (vietnameseChars.test(checkText) || vietnameseWords.test(checkText)) {
+          return "vi";
+        }
+      }
+    }
+
+    return "en";
+  }
+
+  /**
    * Generate multiple professional summaries using OpenAI
    */
   async generateProfessionalSummary(
@@ -20,38 +53,96 @@ export class CvContentGenerationService {
     additionalRequirements?: string
   ): Promise<{ professional: string[]; total_tokens: number }> {
     try {
-      const prompt = `
-Generate 3 different compelling professional summaries for a CV based on the following information:
+      // Auto-detect language from job analysis
+      const detectedLanguage = this.detectLanguage(additionalRequirements, jobAnalysis);
+      const isVietnamese = detectedLanguage === "vi";
+      
+      const keyResponsibilities = (jobAnalysis?.keyResponsibilities || []).slice(0, 5).join("; ") || "Not specified";
+      const softSkills = (jobAnalysis?.softSkills || []).join(", ") || "Not specified";
+      
+      const prompt = isVietnamese ? `
+Viết 3 đoạn Professional Summary khác nhau bằng tiếng Việt cho CV dựa trên thông tin chi tiết sau:
+
+Thông tin người dùng:
+- Tên: ${userProfile.first_name} ${userProfile.last_name}
+- Địa điểm: ${userProfile.city || "Không xác định"}, ${userProfile.country || "Không xác định"}
+
+Chi tiết phân tích JD:
+- Kỹ năng kỹ thuật yêu cầu: ${(jobAnalysis?.requiredSkills || []).join(", ") || "Không xác định"}
+- Công nghệ & Tools: ${(jobAnalysis?.technologies || []).join(", ") || "Không xác định"}
+- Cấp độ kinh nghiệm yêu cầu: ${jobAnalysis?.experienceLevel || "Không xác định"}
+- Ngành: ${jobAnalysis?.industry || "Không xác định"}
+- Trách nhiệm chính: ${keyResponsibilities}
+- Kỹ năng mềm: ${softSkills}
+
+Yêu cầu bổ sung: ${additionalRequirements || "Không có"}
+
+YÊU CẦU CHI TIẾT cho mỗi summary:
+1. Câu đầu: Bắt đầu bằng job title/role cụ thể (VD: "Kỹ sư phần mềm Backend" không phải "chuyên gia") và đề cập 2-3 công nghệ cốt lõi từ job analysis
+2. Câu thứ hai: Nhấn mạnh trách nhiệm cụ thể từ keyResponsibilities phù hợp với công việc, đề cập kỹ năng mềm nếu có
+3. Câu thứ ba (tùy chọn): Thể hiện giá trị với thành tựu cụ thể hoặc lĩnh vực chuyên môn phù hợp với yêu cầu công việc
+4. Sử dụng động từ: phát triển, triển khai, tối ưu, thiết kế, xây dựng, tạo, quản lý
+5. Bao gồm công nghệ cụ thể: Đề cập công nghệ thực tế từ job analysis (VD: "Node.js, PostgreSQL, Docker" không phải "công nghệ hiện đại")
+6. Phù hợp cấp độ kinh nghiệm: Cho ${jobAnalysis?.experienceLevel || "mid-level"}, sử dụng ngôn ngữ phù hợp (junior = "với kinh nghiệm trong", senior = "chuyên gia trong", "nhiều năm kinh nghiệm")
+7. Độ dài: Đúng 2-3 câu, tổng 40-60 từ
+8. Cụ thể: Tránh cụm từ chung chung như "đam mê công nghệ" hoặc "làm việc nhóm" trừ khi kỹ năng mềm được đề cập trong job analysis
+
+Cấu trúc ví dụ:
+- Tùy chọn 1: Tập trung vào chuyên môn kỹ thuật và công nghệ cụ thể
+- Tùy chọn 2: Tập trung vào trách nhiệm và thành tựu
+- Tùy chọn 3: Tập trung vào kỹ năng mềm và hợp tác (chỉ nếu được đề cập trong job analysis)
+
+Chỉ trả về mảng JSON gồm 3 summaries, ví dụ:
+[
+  "Summary 1 với công nghệ và trách nhiệm cụ thể...",
+  "Summary 2 với trọng tâm khác...",
+  "Summary 3 với cách tiếp cận thay thế..."
+]
+Không bao gồm giải thích hoặc markdown, chỉ JSON hợp lệ.
+` : `
+Generate 3 different compelling professional summaries for a CV based on the following detailed information:
 
 User Profile:
 - Name: ${userProfile.first_name} ${userProfile.last_name}
-- City: ${userProfile.city || "Not specified"}
-- Country: ${userProfile.country || "Not specified"}
+- Location: ${userProfile.city || "Not specified"}, ${userProfile.country || "Not specified"}
 
-Job Analysis:
-- Required Skills: ${(jobAnalysis?.requiredSkills || []).join(", ") || "Not specified"}
-- Experience Level: ${jobAnalysis?.experienceLevel || "Not specified"}
+Job Analysis Details:
+- Required Technical Skills: ${(jobAnalysis?.requiredSkills || []).join(", ") || "Not specified"}
+- Technologies & Tools: ${(jobAnalysis?.technologies || []).join(", ") || "Not specified"}
+- Experience Level Required: ${jobAnalysis?.experienceLevel || "Not specified"}
 - Industry: ${jobAnalysis?.industry || "Not specified"}
-- Technologies: ${(jobAnalysis?.technologies || []).join(", ") || "Not specified"}
+- Key Responsibilities: ${keyResponsibilities}
+- Soft Skills: ${softSkills}
 
 Additional Requirements: ${additionalRequirements || "None"}
 
-Create 3 professional summaries that:
-1. Highlight relevant skills and experience
-2. Match the job requirements
-3. Show enthusiasm and potential
-4. Are 2-3 sentences long
-5. Use professional language
-6. Focus on value proposition
+DETAILED Requirements for each summary:
+1. First sentence: Start with specific job title/role (e.g., "Senior Backend Developer" not "professional") and mention 2-3 core technologies from the job analysis
+2. Second sentence: Highlight specific responsibilities from keyResponsibilities that match the job, mention relevant soft skills if applicable
+3. Third sentence (optional): Show value proposition with specific achievements or expertise areas that align with the job requirements
+4. Use action verbs: developed, implemented, optimized, designed, built, created, managed
+5. Include specific technologies: Mention actual technologies from the job analysis (e.g., "Node.js, PostgreSQL, Docker" not "modern technologies")
+6. Match experience level: For ${jobAnalysis?.experienceLevel || "mid-level"} level, use appropriate language (junior = "with experience in", senior = "expert in", "extensive experience")
+7. Length: Exactly 2-3 sentences, 40-60 words total
+8. Be specific: Avoid generic phrases like "passionate about technology" or "team player" unless soft skills are mentioned in job analysis
+
+Example structure:
+- Option 1: Focus on technical expertise and specific technologies
+- Option 2: Focus on responsibilities and achievements
+- Option 3: Focus on soft skills and collaboration (only if mentioned in job analysis)
 
 Return only a JSON array of 3 summaries, e.g.:
 [
-  "Summary 1...",
-  "Summary 2...",
-  "Summary 3..."
+  "Summary 1 with specific technologies and responsibilities...",
+  "Summary 2 with different focus...",
+  "Summary 3 with alternative approach..."
 ]
 Do not include any explanation or markdown, only valid JSON.
 `;
+
+      const systemMessage = isVietnamese
+        ? "Bạn là chuyên gia viết CV chuyên nghiệp. Mỗi summary phải bao gồm công nghệ, trách nhiệm và thành tựu cụ thể từ job analysis. Tránh cụm từ chung chung. Luôn trả về mảng JSON gồm đúng 3 summaries khác nhau với các trọng tâm đa dạng."
+        : "You are a professional CV writer specializing in creating specific, detailed professional summaries. Each summary must include specific technologies, responsibilities, and achievements from the job analysis. Avoid generic phrases. Always return a JSON array of exactly 3 different summaries with varied focus areas.";
 
       const openai = this.openaiApiService.getOpenAI();
       const completion = await openai.chat.completions.create({
@@ -59,8 +150,7 @@ Do not include any explanation or markdown, only valid JSON.
         messages: [
           {
             role: "system",
-            content:
-              "You are a professional CV writer. Create compelling and relevant professional summaries. Always return a JSON array of 3 summaries.",
+            content: systemMessage,
           },
           {
             role: "user",
@@ -96,22 +186,13 @@ Do not include any explanation or markdown, only valid JSON.
         return { professional: summaries, total_tokens: usage.total_tokens };
       }
 
-      // fallback: wrap single summary in array
-      return {
-        professional: [cleanResponse],
-        total_tokens: usage.total_tokens,
-      };
+      throw new Error("Invalid response format: expected array of 3 summaries");
     } catch (error) {
       this.logger.error(
         `Error generating professional summary: ${error.message}`,
         error.stack
       );
-      // fallback: return 3 copies of fallback summary
-      const fallback = this.generateFallbackSummary(
-        userProfile,
-        jobAnalysis || {}
-      );
-      return { professional: [fallback, fallback, fallback], total_tokens: 0 };
+      throw error;
     }
   }
 
@@ -132,6 +213,10 @@ Do not include any explanation or markdown, only valid JSON.
     total_tokens: number;
   }> {
     try {
+      // Auto-detect language from job analysis
+      const detectedLanguage = this.detectLanguage(undefined, jobAnalysis);
+      const isVietnamese = detectedLanguage === "vi";
+      
       const years =
         experienceLevel === "senior"
           ? 5
@@ -143,35 +228,118 @@ Do not include any explanation or markdown, only valid JSON.
       );
       const endDate = new Date();
 
-      const prompt = `
-Generate a realistic and accurate work experience entry in JSON format based strictly on the provided job analysis.
+      const keyResponsibilities = (jobAnalysis.keyResponsibilities || []).slice(0, 5).join("; ") || "Not specified";
+      const softSkills = (jobAnalysis.softSkills || []).join(", ") || "Not specified";
+      
+      const prompt = isVietnamese ? `
+Tạo một mục kinh nghiệm làm việc thực tế và chính xác ở định dạng JSON dựa CHẶT CHẼ trên phân tích JD chi tiết được cung cấp.
 
-Job Analysis:
-- Required Skills: ${jobAnalysis.requiredSkills?.join(", ") || "Not specified"}
+Chi tiết phân tích JD:
+- Kỹ năng kỹ thuật yêu cầu: ${jobAnalysis.requiredSkills?.join(", ") || "Không xác định"}
+- Công nghệ & Tools: ${jobAnalysis.technologies?.join(", ") || "Không xác định"}
+- Cấp độ kinh nghiệm: ${experienceLevel}
+- Ngành: ${jobAnalysis.industry || "công nghệ"}
+- Trách nhiệm chính từ JD: ${keyResponsibilities}
+- Kỹ năng mềm: ${softSkills}
+
+Thời gian kinh nghiệm: ${years} năm (cấp độ ${experienceLevel})
+
+Cấu trúc JSON đầu ra:
+{
+  "title": "Chức danh cụ thể phù hợp với cấp độ kinh nghiệm",
+  "company": "Tên công ty thực tế (không chung chung như 'Công ty Công nghệ')",
+  "startDate": "YYYY-MM-DD",
+  "endDate": "YYYY-MM-DD",
+  "description": "2-3 câu với trách nhiệm cụ thể, công nghệ sử dụng, và thành tựu có thể đo lường"
+}
+
+YÊU CẦU CHI TIẾT:
+1. Chức danh: Phải cụ thể và phù hợp với cấp độ kinh nghiệm:
+   - Junior: "Lập trình viên", "Nhà phát triển"
+   - Mid-level: "Kỹ sư phần mềm", "Lập trình viên"
+   - Senior: "Kỹ sư phần mềm cao cấp", "Trưởng nhóm"
+   Bao gồm công nghệ chính nếu liên quan (VD: "Kỹ sư Backend cao cấp (Node.js)")
+
+2. Tên công ty: Tạo tên công ty thực tế dựa trên ngành:
+   - Công nghệ: Sử dụng tên như "TechCorp Solutions", "Digital Innovations", "Cloud Systems"
+   - Tài chính: "Nhóm Dịch vụ Tài chính", "Công ty Giải pháp Đầu tư"
+   - Y tế: "HealthTech Solutions", "Hệ thống Y tế"
+   - Tránh: "Công ty", "Công ty Công nghệ", "ABC Corp"
+
+3. Mô tả (2-3 câu, 50-70 từ):
+   - Câu 1: Liệt kê 2-3 trách nhiệm cụ thể từ keyResponsibilities, đề cập công nghệ chính từ job analysis
+   - Câu 2: Mô tả thành tựu cụ thể với số liệu/tác động (VD: "cải thiện hiệu suất 30%", "giảm lỗi 25%", "xử lý 10,000+ yêu cầu/ngày")
+   - Câu 3 (tùy chọn): Đề cập hợp tác hoặc kỹ năng mềm nếu liên quan đến job analysis
+   
+4. Phải bao gồm:
+   - Ít nhất 3 công nghệ cụ thể từ job analysis (không phải thuật ngữ chung chung)
+   - Ít nhất 2 trách nhiệm từ keyResponsibilities
+   - Ít nhất 1 thành tựu có thể đo lường với số/phần trăm
+   - Động từ: phát triển, triển khai, tối ưu, thiết kế, xây dựng, tạo, quản lý, cải thiện, giảm, tăng
+
+5. KHÔNG bao gồm:
+   - Trách nhiệm chung chung không có trong job analysis
+   - Công nghệ không được đề cập trong job analysis
+   - Thành tựu mơ hồ không có số liệu
+
+Chỉ trả về JSON hợp lệ, không có văn bản hoặc markdown bổ sung.
+` : `
+Generate a realistic and accurate work experience entry in JSON format based STRICTLY on the provided detailed job analysis.
+
+Job Analysis Details:
+- Required Technical Skills: ${jobAnalysis.requiredSkills?.join(", ") || "Not specified"}
+- Technologies & Tools: ${jobAnalysis.technologies?.join(", ") || "Not specified"}
 - Experience Level: ${experienceLevel}
-- Technologies: ${jobAnalysis.technologies?.join(", ") || "Not specified"}
 - Industry: ${jobAnalysis.industry || "technology"}
+- Key Responsibilities from JD: ${keyResponsibilities}
+- Soft Skills: ${softSkills}
 
-Experience Duration: ${years} year(s)
+Experience Duration: ${years} year(s) (${experienceLevel} level)
 
 Output JSON structure:
 {
-  "title": "Job Title",
-  "company": "Company Name",
+  "title": "Specific Job Title matching experience level",
+  "company": "Realistic Company Name (not generic like 'Tech Company')",
   "startDate": "YYYY-MM-DD",
   "endDate": "YYYY-MM-DD",
-  "description": "2–3 sentences describing responsibilities, applied technologies, and measurable achievements"
+  "description": "2-3 sentences with specific responsibilities, technologies used, and measurable achievements"
 }
 
-Requirements:
-- Job title must reflect the experience level and focus.
-- Company name must be realistic and not generic placeholders.
-- Description must incorporate required skills, technologies, and responsibilities from the job analysis without adding unrelated information.
-- Include at least one measurable achievement.
-- Use clear business-professional language and action verbs.
-- Return only valid JSON with no additional text.
+DETAILED Requirements:
+1. Job Title: Must be specific and match experience level:
+   - Junior: "Junior [Role]" or "[Role]"
+   - Mid-level: "[Role]" or "Mid-level [Role]"
+   - Senior: "Senior [Role]" or "Lead [Role]"
+   Include primary technology if relevant (e.g., "Senior Backend Developer (Node.js)")
 
+2. Company Name: Create a realistic company name based on industry:
+   - Technology: Use names like "TechCorp Solutions", "Digital Innovations Ltd", "Cloud Systems Inc"
+   - Finance: "Financial Services Group", "Investment Solutions Co"
+   - Healthcare: "HealthTech Solutions", "Medical Systems Inc"
+   - Avoid: "Company", "Tech Company", "ABC Corp"
+
+3. Description (2-3 sentences, 50-70 words):
+   - Sentence 1: List 2-3 specific responsibilities from keyResponsibilities, mention primary technologies from job analysis
+   - Sentence 2: Describe specific achievements with metrics/impact (e.g., "improved performance by 30%", "reduced errors by 25%", "handled 10,000+ requests/day")
+   - Sentence 3 (optional): Mention collaboration or soft skills if relevant to job analysis
+   
+4. Must include:
+   - At least 3 specific technologies from the job analysis (not generic terms)
+   - At least 2 responsibilities from keyResponsibilities
+   - At least 1 measurable achievement with numbers/percentages
+   - Action verbs: developed, implemented, optimized, designed, built, created, managed, improved, reduced, increased
+
+5. Do NOT include:
+   - Generic responsibilities not in job analysis
+   - Technologies not mentioned in job analysis
+   - Vague achievements without metrics
+
+Return only valid JSON with no additional text or markdown.
 `;
+
+      const systemMessage = isVietnamese
+        ? "Bạn là chuyên gia viết CV chuyên nghiệp. Mỗi mục kinh nghiệm phải bao gồm công nghệ chính xác, trách nhiệm cụ thể từ job analysis, và thành tựu có thể đo lường với số liệu. Tránh mô tả chung chung. Luôn trả về JSON hợp lệ."
+        : "You are a professional CV writer specializing in creating detailed, specific work experience entries. Each entry must include exact technologies, specific responsibilities from the job analysis, and measurable achievements with numbers. Avoid generic descriptions. Always return valid JSON only.";
 
       const openai = this.openaiApiService.getOpenAI();
       const completion = await openai.chat.completions.create({
@@ -179,8 +347,7 @@ Requirements:
         messages: [
           {
             role: "system",
-            content:
-              "You are a professional CV writer. Create realistic and compelling work experience entries.",
+            content: systemMessage,
           },
           {
             role: "user",
@@ -211,21 +378,7 @@ Requirements:
         `Error generating work experience: ${error.message}`,
         error.stack
       );
-
-      // Check if it's a quota exceeded error
-      if (error.message.includes("429") || error.message.includes("quota")) {
-        this.logger.warn(
-          "OpenAI quota exceeded, using fallback work experience"
-        );
-      }
-
-      return {
-        experience: this.generateFallbackWorkExperience(
-          jobAnalysis || {},
-          experienceLevel
-        ),
-        total_tokens: 0,
-      };
+      throw error;
     }
   }
 
@@ -259,14 +412,15 @@ Requirements:
         userSkills?.map((s) => s.name).join(", ") || "None";
 
       const prompt = `
-Generate 3 different skills section options for a CV based on the job analysis and existing user skills.
+Generate 3 different skills section options for a CV based STRICTLY on the job analysis and existing user skills.
 
-Job Analysis:
-- Required Skills: ${requiredSkills.join(", ") || "Not specified"}
-- Technologies: ${technologies.join(", ") || "Not specified"}
+Job Analysis Details:
+- Required Technical Skills: ${requiredSkills.join(", ") || "Not specified"}
+- Technologies & Tools: ${technologies.join(", ") || "Not specified"}
+- Soft Skills: ${softSkills.join(", ") || "Not specified"}
 - Experience Level: ${experienceLevel}
 
-Existing User Skills: ${existingSkills}
+Existing User Skills: ${existingSkills || "None"}
 
 Each option should be a skills list in JSON format with ratings (1-5):
 [
@@ -276,19 +430,53 @@ Each option should be a skills list in JSON format with ratings (1-5):
   }
 ]
 
-Requirements:
-- Each option should include both required skills and technologies from job analysis
-- Add relevant soft skills (communication, teamwork, leadership, etc.)
-- Rate skills appropriately for the experience level
-- Include 8-12 skills per option
-- Use proper capitalization for skill names
-- Ratings: 1=Beginner, 2=Elementary, 3=Intermediate, 4=Advanced, 5=Expert
+DETAILED STRICT Requirements:
+1. Skills Selection:
+   - ONLY include skills EXACTLY as mentioned in job analysis (requiredSkills, technologies, softSkills)
+   - DO NOT add any skills NOT in the job analysis
+   - DO NOT add generic soft skills (communication, teamwork) unless explicitly mentioned in job analysis
+   - Include 6-12 skills per option (prioritize required skills first, then technologies, then soft skills if available)
+
+2. Skill Names:
+   - Use exact names from job analysis (case-sensitive)
+   - Maintain proper capitalization (e.g., "JavaScript" not "javascript", "Node.js" not "nodejs")
+   - For technologies, use standard names (e.g., "React" not "ReactJS", "PostgreSQL" not "Postgres")
+
+3. Rating Guidelines (based on ${experienceLevel} level):
+   - Junior (0-2 years):
+     * Core required skills: 3-4 (Intermediate to Advanced)
+     * Technologies: 2-3 (Elementary to Intermediate)
+     * Soft skills: 3-4 (if mentioned)
+   
+   - Mid-level (3-5 years):
+     * Core required skills: 4-5 (Advanced to Expert)
+     * Technologies: 3-4 (Intermediate to Advanced)
+     * Soft skills: 4 (if mentioned)
+   
+   - Senior (5+ years):
+     * Core required skills: 4-5 (Advanced to Expert)
+     * Technologies: 4-5 (Advanced to Expert)
+     * Soft skills: 4-5 (if mentioned)
+
+4. Rating Scale:
+   - 1 = Beginner: Basic understanding, minimal experience
+   - 2 = Elementary: Some experience, can work with guidance
+   - 3 = Intermediate: Comfortable, can work independently
+   - 4 = Advanced: Strong expertise, can mentor others
+   - 5 = Expert: Deep knowledge, industry leader level
+
+5. Option Variations:
+   - Option 1: Focus on core required skills + primary technologies (8-10 skills)
+   - Option 2: Include all required skills + technologies + soft skills if available (10-12 skills)
+   - Option 3: Balanced mix with emphasis on most important skills (8-10 skills)
+
+6. If user has existing skills, prioritize those skills but still only from job analysis
 
 Return only a JSON array of 3 skills lists, e.g.:
 [
-  [ { "name": "Skill 1", "rating": 4 }, ... ],
-  [ { "name": "Skill 1", "rating": 4 }, ... ],
-  [ { "name": "Skill 1", "rating": 4 }, ... ]
+  [ { "name": "JavaScript", "rating": 4 }, { "name": "Node.js", "rating": 4 }, ... ],
+  [ { "name": "JavaScript", "rating": 5 }, { "name": "React", "rating": 4 }, ... ],
+  [ { "name": "TypeScript", "rating": 4 }, { "name": "PostgreSQL", "rating": 4 }, ... ]
 ]
 Do not include any explanation or markdown, only valid JSON.
 `;
@@ -300,7 +488,7 @@ Do not include any explanation or markdown, only valid JSON.
           {
             role: "system",
             content:
-              "You are a professional CV writer. Create relevant skills sections with appropriate ratings. Always return a JSON array of 3 skills lists.",
+              "You are a professional CV writer specializing in creating precise skills sections. You must ONLY include skills exactly as mentioned in the job analysis. Rate skills appropriately based on experience level (junior=2-3, mid=3-4, senior=4-5). Use exact skill names with proper capitalization. Never add skills outside the job analysis. Always return a JSON array of exactly 3 different skills lists with varied focus.",
           },
           {
             role: "user",
@@ -341,21 +529,18 @@ Do not include any explanation or markdown, only valid JSON.
       function filterSkills(list: Array<{ name: string; rating: number }>) {
         if (!Array.isArray(list)) return [];
 
-        // Nếu không có validSkills, trả nguyên list từ OpenAI
+        // Nếu không có validSkills từ JD, trả về mảng rỗng
         if (validSkills.length === 0) {
-          return list;
+          return [];
         }
 
-        // Lọc theo JD
+        // Lọc theo JD - chỉ giữ lại skills khớp với JD
         const filtered = list.filter((skillObj) =>
           validSkills.includes((skillObj.name || "").toLowerCase())
         );
 
-        // Nếu lọc xong rỗng => fallback dùng lại list gốc
-        const baseList = filtered.length > 0 ? filtered : list;
-
         // Gán lại rating nếu user có sẵn kỹ năng
-        return baseList.map((skillObj) => {
+        return filtered.map((skillObj) => {
           if (userSkills) {
             const found = userSkills.find(
               (s) =>
@@ -375,72 +560,14 @@ Do not include any explanation or markdown, only valid JSON.
         };
       }
 
-      // fallback: wrap single list in array
-      return {
-        skillsOptions: [filterSkills(skillsLists)],
-        total_tokens: usage.total_tokens,
-      };
+      throw new Error("Invalid response format: expected array of 3 skills lists");
     } catch (error) {
       this.logger.error(
         `Error generating skills section: ${error.message}`,
         error.stack
       );
-      // fallback: return 3 copies of fallback skills
-      const fallback = this.generateFallbackSkills(jobAnalysis || {});
-      return { skillsOptions: [fallback, fallback, fallback], total_tokens: 0 };
+      throw error;
     }
-  }
-
-  // Fallback methods for when OpenAI is not available
-  private generateFallbackSummary(userProfile: any, jobAnalysis: any): string {
-    const experienceLevel = jobAnalysis?.experienceLevel || "professional";
-    const skills =
-      jobAnalysis?.requiredSkills?.slice(0, 3).join(", ") ||
-      "software development";
-
-    return `Experienced ${experienceLevel} professional with expertise in ${skills}.
-    Passionate about delivering high-quality solutions and collaborating with cross-functional teams.
-    Strong problem-solving skills and commitment to continuous learning and professional development.`;
-  }
-
-  private generateFallbackWorkExperience(
-    jobAnalysis: any,
-    experienceLevel: string
-  ): Array<any> {
-    const years =
-      experienceLevel === "senior"
-        ? 5
-        : experienceLevel === "mid-level"
-          ? 3
-          : 1;
-    const startDate = new Date(Date.now() - years * 365 * 24 * 60 * 60 * 1000);
-    const endDate = new Date();
-
-    return [
-      {
-        title: `${experienceLevel.charAt(0).toUpperCase() + experienceLevel.slice(1)} Developer`,
-        company: "Previous Company",
-        startDate: startDate.toISOString().split("T")[0],
-        endDate: endDate.toISOString().split("T")[0],
-        description: `Developed and maintained applications using ${jobAnalysis.technologies?.slice(0, 3).join(", ") || "modern technologies"}.
-      Collaborated with cross-functional teams to deliver high-quality software solutions.`,
-      },
-    ];
-  }
-
-  private generateFallbackSkills(
-    jobAnalysis: any
-  ): Array<{ name: string; rating: number }> {
-    const allSkills = [
-      ...(jobAnalysis?.requiredSkills || []),
-      ...(jobAnalysis?.technologies || []),
-    ];
-    const uniqueSkills = [...new Set(allSkills)];
-
-    return uniqueSkills.slice(0, 8).map((skill) => ({
-      name: skill.charAt(0).toUpperCase() + skill.slice(1),
-      rating: Math.floor(Math.random() * 3) + 3,
-    }));
   }
   /**
    * Generate CV content based on user profile and job analysis
@@ -450,7 +577,7 @@ Do not include any explanation or markdown, only valid JSON.
     jobAnalysis: any,
     additionalRequirements?: string
   ): Promise<any> {
-    // Generate professional summary using OpenAI
+      // Generate professional summary using OpenAI
     const summary = await this.generateProfessionalSummary(
       user,
       jobAnalysis,
@@ -632,21 +759,13 @@ Clear, natural phrasing - no awkward machine translations
         .replace(/```$/, "")
         .trim();
 
-      // Tránh lỗi nếu OpenAI trả ra string JSON hoặc text
+      // Parse UI texts translation
       let translatedUiTexts: Record<string, string> = {};
-      try {
-        const parsed = JSON.parse(uiTranslated);
-        if (typeof parsed === "object" && !Array.isArray(parsed)) {
-          translatedUiTexts = parsed;
-        } else {
-          this.logger.warn(
-            "UI Texts translation is not object, fallback to empty object"
-          );
-        }
-      } catch {
-        this.logger.warn(
-          "Invalid JSON returned for uiTexts, fallback to empty object"
-        );
+      const parsed = JSON.parse(uiTranslated);
+      if (typeof parsed === "object" && !Array.isArray(parsed)) {
+        translatedUiTexts = parsed;
+      } else {
+        throw new Error("UI Texts translation is not a valid object");
       }
 
       return {

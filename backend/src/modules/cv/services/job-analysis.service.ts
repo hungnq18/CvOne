@@ -1,6 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { OpenaiApiService } from "./openai-api.service";
 import { AiUsageLogService } from "src/modules/ai-usage-log/ai-usage-log.service";
+import { OpenaiApiService } from "./openai-api.service";
 
 @Injectable()
 export class JobAnalysisService {
@@ -24,6 +24,7 @@ export class JobAnalysisService {
       softSkills: string[];
       education: string;
       certifications: string[];
+      cvSuggestions?: string[];
     };
     total_tokens: number;
   }> {
@@ -97,6 +98,11 @@ export class JobAnalysisService {
 
       // Parse JSON response
       const analysis = JSON.parse(cleanResponse);
+      
+      // Generate specific CV suggestions based on analysis
+      const cvSuggestions = await this.generateCvSuggestions(analysis);
+      analysis.cvSuggestions = cvSuggestions;
+      
       const usage = completion.usage || {
         prompt_tokens: 0,
         completion_tokens: 0,
@@ -109,43 +115,117 @@ export class JobAnalysisService {
         `Error analyzing job description: ${error.message}`,
         error.stack
       );
-
-      // Check if it's a quota exceeded error
-      if (error.message.includes("429") || error.message.includes("quota")) {
-        this.logger.warn("OpenAI quota exceeded, using fallback analysis");
-        return {
-          analyzedJob: this.fallbackAnalysis(jobDescription),
-          total_tokens: 0,
-        };
-      }
-
-      // Fallback to basic analysis if OpenAI fails
-      return {
-        analyzedJob: this.fallbackAnalysis(jobDescription),
-        total_tokens: 0,
-      };
+      throw error;
     }
   }
 
   /**
-   * Fallback analysis when OpenAI is not available
+   * Generate specific CV suggestions based on job analysis
    */
-  private fallbackAnalysis(jobDescription: string) {
-    const lowerDescription = jobDescription.toLowerCase();
+  private async generateCvSuggestions(analysis: any): Promise<string[]> {
+    try {
+      const requiredSkills = analysis.requiredSkills || [];
+      const technologies = analysis.technologies || [];
+      const keyResponsibilities = analysis.keyResponsibilities || [];
+      const softSkills = analysis.softSkills || [];
+      const experienceLevel = analysis.experienceLevel || "mid-level";
+      const industry = analysis.industry || "technology";
+      const education = analysis.education || "";
 
-    return {
-      requiredSkills: ["Problem Solving", "Communication", "Teamwork"],
-      experienceLevel: lowerDescription.includes("senior")
-        ? "senior"
-        : lowerDescription.includes("junior")
-          ? "junior"
-          : "mid-level",
-      keyResponsibilities: ["Development", "Collaboration"],
-      industry: "technology",
-      technologies: ["JavaScript", "React", "Node.js"],
-      softSkills: ["Communication", "Teamwork"],
-      education: "Bachelor's",
-      certifications: [],
-    };
+      // Validate we have enough data
+      if (requiredSkills.length === 0 && technologies.length === 0) {
+        this.logger.warn("Insufficient data for CV suggestions generation");
+        return [];
+      }
+
+      // Build concrete examples from actual data
+      const skillsList = requiredSkills.slice(0, 10).join(", ");
+      const topSkills = requiredSkills.slice(0, 4).join(", ");
+      const techList = technologies.slice(0, 8).join(", ");
+      const topTechs = technologies.slice(0, 5).join(", ");
+      const primaryResp = keyResponsibilities[0] || "";
+      const secondaryResp = keyResponsibilities[1] || "";
+      const softSkillsText = softSkills.slice(0, 3).join(", ");
+
+      const prompt = `You are a CV expert. Generate 6-7 SPECIFIC, DETAILED CV suggestions based on this job analysis.
+
+JOB ANALYSIS DATA:
+- Experience Level: ${experienceLevel}
+- Industry: ${industry}
+- Required Skills: ${skillsList || "None specified"}
+- Technologies: ${techList || "None specified"}
+- Key Responsibilities:
+${keyResponsibilities.map((r: string, i: number) => `${i + 1}. ${r}`).join("\n")}
+- Soft Skills: ${softSkillsText || "None specified"}
+- Education: ${education || "Not specified"}
+
+CRITICAL INSTRUCTIONS:
+1. You MUST use EXACT skill/technology names from the data above - NO generic terms
+2. Each suggestion must be 80-120 words and include 4-6 EXACT skill/technology names
+3. Include specific examples with actual technologies and responsibilities from the data
+4. NEVER use phrases like "relevant skills", "modern technologies", "various tools"
+5. Use the EXACT names provided in the job analysis
+
+Generate suggestions covering:
+1. Skills section - list EXACT skills: ${topSkills}
+2. Work experience with responsibilities - reference: "${primaryResp.substring(0, 100)}"
+3. Technologies in work descriptions - mention: ${topTechs}
+4. Professional summary - include: ${topSkills} and ${topTechs}
+5. Quantifiable achievements with metrics
+${softSkillsText ? `6. Soft skills demonstration - mention: ${softSkillsText}` : "6. Industry-specific experience"}
+${education ? `7. Education highlights - mention: ${education}` : "7. Additional relevant experience"}
+
+Return ONLY a JSON array of strings. Each string is one detailed suggestion (80-120 words) with EXACT skill/technology names from the data above.`;
+
+      const openai = this.openaiApiService.getOpenAI();
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o",
+        temperature: 0.3, // Lower temperature for more consistent, specific output
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are a professional CV advisor. You MUST use EXACT skill and technology names from the provided job analysis. NEVER use generic terms like 'relevant skills', 'modern technologies', or 'various tools'. Each suggestion must be detailed (80-120 words) and include 4-6 EXACT skill/technology names from the job analysis. Always return valid JSON array only.",
+          },
+          {
+            role: "user",
+            content: prompt,
+          },
+        ],
+      });
+
+      const response = completion.choices[0]?.message?.content;
+      if (!response) {
+        throw new Error("No response from OpenAI for CV suggestions");
+      }
+
+      // Clean markdown if present
+      let cleanResponse = response.trim();
+      if (cleanResponse.startsWith("```json")) {
+        cleanResponse = cleanResponse
+          .replace(/^```json/, "")
+          .replace(/```$/, "")
+          .trim();
+      } else if (cleanResponse.startsWith("```")) {
+        cleanResponse = cleanResponse
+          .replace(/^```/, "")
+          .replace(/```$/, "")
+          .trim();
+      }
+
+      const suggestions = JSON.parse(cleanResponse);
+      if (Array.isArray(suggestions) && suggestions.length > 0) {
+        return suggestions;
+      }
+
+      throw new Error("Invalid suggestions format");
+    } catch (error) {
+      this.logger.error(
+        `Error generating CV suggestions: ${error.message}`,
+        error.stack
+      );
+      // Return empty array if suggestions generation fails - no fallback
+      return [];
+    }
   }
 }

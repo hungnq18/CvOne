@@ -30,6 +30,7 @@ import { EncryptionService } from "./services/encryption.service";
 import { JobAnalysisService } from "./services/job-analysis.service";
 import { OpenaiApiService } from "./services/openai-api.service";
 import { OpenAiService } from "./services/openai.service";
+import { PdfOcrService } from "./services/pdf-ocr.service";
 import { VietnameseContentService } from "./services/vietnamese-content.service";
 import { AiCoreModule } from "../AiCore/ai-core.module";
 
@@ -61,6 +62,7 @@ import { AiCoreModule } from "../AiCore/ai-core.module";
     CvCacheService,
     AiOptimizationService,
     AiInterviewService,
+    PdfOcrService,
   ],
   exports: [
     CvService,

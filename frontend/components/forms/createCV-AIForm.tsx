@@ -517,6 +517,7 @@ export const SummaryForm: FC<FormProps> = ({ data, onUpdate }) => {
   const { language } = useLanguage();
   const t = translations[language].summaryForm;
   const router = useRouter();
+  const { jobAnalysis: jobAnalysisFromProvider } = useCV();
 
   const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
@@ -526,7 +527,8 @@ export const SummaryForm: FC<FormProps> = ({ data, onUpdate }) => {
     setLoading(true);
     setHasTriggeredAI(true);
     try {
-      const jobAnalysis = data?.jobAnalysis || {};
+      // Use jobAnalysis from CV provider (has cvSuggestions) instead of form data
+      const jobAnalysis = jobAnalysisFromProvider || data?.jobAnalysis || {};
       const res = await suggestSummary({}, jobAnalysis);
 
       const rawSummaries: any =
@@ -610,7 +612,7 @@ export const SummaryForm: FC<FormProps> = ({ data, onUpdate }) => {
                 >
                   <button
                     type="button"
-                    className={`flex items-center justify-center w-9 h-9 rounded-full text-xl font-bold mt-1 focus:outline-none transition-colors ${
+                    className={`flex items-center justify-center w-9 h-9 rounded-full text-xl font-bold mt-1 focus:outline-none transition-colors flex-shrink-0 ${ // Thêm flex-shrink-0 để nút không bị méo
                       isSelected
                         ? "bg-blue-500 text-white hover:bg-blue-600"
                         : "bg-blue-900 text-white hover:bg-blue-700"
@@ -620,8 +622,9 @@ export const SummaryForm: FC<FormProps> = ({ data, onUpdate }) => {
                   >
                     {isSelected ? "-" : "+"}
                   </button>
-                  <div className="flex-1 text-[15px] leading-snug">
-                    <div className="text-gray-800 break-words whitespace-pre-line break-all">
+                  <div className="flex-1 text-[15px] leading-snug min-w-0"> {/* Thêm min-w-0 để tránh lỗi flex con tràn cha */}
+                    {/* SỬA TẠI ĐÂY: Xóa 'break-all', chỉ giữ 'break-words' và 'whitespace-pre-line' */}
+                    <div className="text-gray-800 break-words whitespace-pre-line">
                       {item}
                     </div>
                   </div>
@@ -1349,7 +1352,8 @@ export const SkillsForm: FC<FormProps> = ({ data, onUpdate }) => {
                     <button
                       key={skill}
                       type="button"
-                      className={`flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium border transition-colors w-full text-left ${
+                      // SỬA: Thêm 'h-auto min-h-[40px] whitespace-normal break-words' để text dài tự xuống dòng
+                      className={`flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium border transition-colors w-full text-left h-auto min-h-[40px] whitespace-normal break-words ${
                         isSelected
                           ? "bg-blue-400 text-white border-blue-400 hover:bg-blue-500"
                           : "bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-200"
@@ -1357,10 +1361,10 @@ export const SkillsForm: FC<FormProps> = ({ data, onUpdate }) => {
                       onClick={() => handleToggleAISkill(skill)}
                       title={isSelected ? t.tooltipRemove : t.tooltipAdd}
                     >
-                      <span className="inline-block w-6 h-6 flex items-center justify-center rounded-full bg-blue-800 text-white font-bold mr-2">
+                      <span className="inline-block w-6 h-6 flex items-center justify-center rounded-full bg-blue-800 text-white font-bold mr-2 flex-shrink-0">
                         {isSelected ? "-" : "+"}
                       </span>
-                      <span className="flex-1 ">{skill}</span>
+                      <span className="flex-1">{skill}</span>
                     </button>
                   );
                 })

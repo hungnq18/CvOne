@@ -5,12 +5,12 @@ import {
   uploadAndAnalyzeCV,
   uploadJDPdfAndAnalyze,
 } from "@/api/cvapi";
+import { notify } from "@/lib/notify";
 import { useCV } from "@/providers/cv-provider";
 import { useLanguage } from "@/providers/global_provider";
 import { ArrowLeft, ArrowRight, Wand2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FC, ReactNode, useState } from "react";
-import { notify } from "@/lib/notify";
 
 // --- ĐỐI TƯỢNG TRANSLATIONS (KHÔNG ĐỔI) ---
 const translations = {
@@ -196,14 +196,20 @@ const formatAnalysisResult = (
           result.experienceLevel as keyof typeof t_results.levelMap
         ] || result.experienceLevel
       : null;
-    const suggestions = [
-      t_results.suggestionFocusSkills,
-      t_results.suggestionFocusExperience(
-        result.experienceLevel || t_results.defaultLevel
-      ),
-      t_results.suggestionResponsibilities,
-      t_results.suggestionSoftSkills,
-    ];
+    
+    // Use AI-generated suggestions from backend, fallback to default if empty
+    const hasBackendSuggestions = result.cvSuggestions && result.cvSuggestions.length > 0;
+    
+    const suggestions = hasBackendSuggestions
+      ? result.cvSuggestions
+      : [
+          t_results.suggestionFocusSkills,
+          t_results.suggestionFocusExperience(
+            result.experienceLevel || t_results.defaultLevel
+          ),
+          t_results.suggestionResponsibilities,
+          t_results.suggestionSoftSkills,
+        ];
 
     return (
       <div className="space-y-4">
@@ -387,7 +393,11 @@ export default function JobDescriptionPage() {
     setAnalysisResult(null);
     try {
       const result = await analyzeJD(jobDescription);
-      const formattedResult = formatAnalysisResult(result, t.analysisResults);
+      
+      // Backend returns { analyzedJob: {...}, total_tokens: ... }
+      const analysisData = result?.analyzedJob || result;
+      
+      const formattedResult = formatAnalysisResult(analysisData, t.analysisResults);
       setAnalysisResult(formattedResult);
     } catch (error) {
       console.error("Error analyzing job description:", error);
@@ -413,7 +423,10 @@ export default function JobDescriptionPage() {
     setAnalysisResult(null);
     try {
       const result = await uploadJDPdfAndAnalyze(jdFile);
-      const analysisData = result?.analysis || result;
+      
+      // Backend returns { analyzedJob: {...}, total_tokens: ... } from analyzeJobDescription
+      // Also may include text field if extracted
+      const analysisData = result?.analyzedJob || result?.analysis || result;
       const extractedText = result?.text || "";
 
       if (extractedText) {

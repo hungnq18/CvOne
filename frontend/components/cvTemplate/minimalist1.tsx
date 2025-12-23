@@ -198,7 +198,7 @@ const HoverableWrapper: React.FC<HoverableWrapperProps> = ({
 const renderDescription = (desc: string) => {
   if (!desc) return null;
   const lines = desc
-    .split(".")
+    .split(". ")
     .map((line) => line.trim())
     .filter((line) => line.length > 0);
   return (

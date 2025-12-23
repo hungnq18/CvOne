@@ -1,11 +1,11 @@
 "use client";
 
 import { analyzeJD } from "@/api/cvapi";
+import { toast } from "@/hooks/use-toast";
 import { useCV } from "@/providers/cv-provider";
 import { useLanguage } from "@/providers/global_provider";
-import { FC, ReactNode, useState } from "react";
 import { useRouter } from "next/navigation";
-import { toast } from "@/hooks/use-toast";
+import { FC, ReactNode, useState } from "react";
 
 // --- ĐỐI TƯỢNG TRANSLATIONS ---
 const translations = {
@@ -146,14 +146,9 @@ const formatAnalysisResult = (
           result.experienceLevel as keyof typeof t_results.levelMap
         ] || result.experienceLevel
       : null;
-    const suggestions = [
-      t_results.suggestionFocusSkills,
-      t_results.suggestionFocusExperience(
-        result.experienceLevel || t_results.defaultLevel
-      ),
-      t_results.suggestionResponsibilities,
-      t_results.suggestionSoftSkills,
-    ];
+    
+    // Use AI-generated suggestions from backend
+    const suggestions = result.cvSuggestions || [];
 
     return (
       <div className="space-y-4">
@@ -197,9 +192,11 @@ const formatAnalysisResult = (
             <AnalysisList items={result.certifications} />
           </AnalysisSection>
         )}
-        <AnalysisSection icon="💡" title={t_results.suggestionsTitle}>
-          <AnalysisList items={suggestions} />
-        </AnalysisSection>
+        {suggestions.length > 0 && (
+          <AnalysisSection icon="💡" title={t_results.suggestionsTitle}>
+            <AnalysisList items={suggestions} />
+          </AnalysisSection>
+        )}
       </div>
     );
   } catch (error) {
@@ -238,8 +235,15 @@ const UpJdStep: React.FC<UpJdStepProps> = () => {
 
     try {
       const result = await analyzeJD(jobDescription);
-      setJobAnalysis(result);
-      const formattedResult = formatAnalysisResult(result.analyzedJob, t.results);
+      
+      // Backend returns { analyzedJob: {...}, total_tokens: ... }
+      // Extract analyzedJob and save it
+      const analyzedJob = result?.analyzedJob || result;
+      
+      // Save only analyzedJob, not the whole response
+      setJobAnalysis(analyzedJob);
+      
+      const formattedResult = formatAnalysisResult(analyzedJob, t.results);
       setAnalysisResult(formattedResult);
     } catch (error: any) {
       console.error("Error analyzing job description:", error);

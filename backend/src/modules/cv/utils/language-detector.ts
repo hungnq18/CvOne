@@ -62,7 +62,7 @@ export function heuristicDetectLanguage(text: string): string {
 }
 
 /**
- * AI-powered language detection with OpenAI (fallback to heuristic on error)
+ * AI-powered language detection with OpenAI
  */
 export async function detectLanguageSmart(
   text: string,
@@ -91,12 +91,11 @@ If uncertain, choose the closest. Text: """${safeText.substring(0, 3000)}"""`;
     const parsed = JSON.parse(content);
     const code = parsed?.languageCode;
     if (code && ALLOWED_CODES.includes(code)) {
-      return code;
+      return { language: code, total_tokens: completion.usage?.total_tokens || 0 };
     }
-    return { language: code, total_tokens: completion.usage?.total_tokens || 0 };
+    throw new Error(`Invalid language code returned: ${code}`);
   } catch (err: any) {
-    logger?.warn?.(`AI language detect failed, fallback heuristic: ${err.message}`);
+    logger?.error?.(`AI language detect failed: ${err.message}`);
+    throw err;
   }
-
-  return { language: heuristicDetectLanguage(safeText), total_tokens: 0 };
 } 

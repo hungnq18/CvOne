@@ -930,7 +930,7 @@ export const ExperiencePopup: FC<{
                 <div className="font-semibold mb-1 text-blue-700">
                   {t.aiSuggestion}
                 </div>
-                <div className="whitespace-pre-line text-gray-800 text-sm">
+                <div className="whitespace-pre-line text-gray-800 text-sm break-words">
                   {aiOutput}
                 </div>
                 <button
