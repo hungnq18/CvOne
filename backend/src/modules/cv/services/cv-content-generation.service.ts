@@ -599,6 +599,13 @@ Do not include any explanation or markdown, only valid JSON.
     const normalizedSummary =
       Array.isArray(summary) && summary.length > 0 ? summary[0] : summary;
 
+    // Lấy các dữ liệu bổ sung nếu user đã có sẵn (FE có thể gửi kèm)
+    const projects = user?.Project || user?.projects || [];
+    const certifications = user?.certification || user?.certifications || [];
+    const achievements = user?.achievement || user?.achievements || [];
+    const hobbies = user?.hobby || user?.hobbies || [];
+    const sectionPositions = user?.sectionPositions || {};
+
     return {
       userData: {
         firstName: user.first_name || "",
@@ -615,11 +622,11 @@ Do not include any explanation or markdown, only valid JSON.
         workHistory: workHistory[0] || workHistory, // Take first work experience if array
         education: [education],
         careerObjective: normalizedSummary,
-        Project: [],
-        certification: [],
-        achievement: [],
-        hobby: [],
-        sectionPositions: {},
+        Project: projects,
+        certification: certifications,
+        achievement: achievements,
+        hobby: hobbies,
+        sectionPositions,
       },
       total_tokens:
         summary.total_tokens + skills.total_tokens + workHistory.total_tokens,

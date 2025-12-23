@@ -86,7 +86,7 @@ export function HeroSection() {
           >
             <div className="relative rounded-lg shadow-xl overflow-hidden">
               <Image
-                src="https://cv.timviec.com.vn/images/cv/ccv-online-41.jpg"
+                src="https://i.postimg.cc/jSb18xzN/Thiet-ke-chua-co-ten.png"
                 alt="Home Image"
                 width={1000}
                 height={500}
