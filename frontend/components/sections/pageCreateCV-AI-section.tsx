@@ -360,6 +360,9 @@ const PageCreateCVAIContent = () => {
                   { ...finalPositions }, 
                   templateData.title
                 );
+                
+                // 1. Gán vị trí mới cho Key của Sidebar (ví dụ: "Project")
+                // Để Sidebar nhận diện được và hiển thị dấu trừ (-)
                 finalPositions[sidebarId] = {
                    place,
                    order

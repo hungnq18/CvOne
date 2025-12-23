@@ -61,14 +61,14 @@ const translations = {
 // --- PORTAL COMPONENT ---
 const DragPortal = ({ children }: { children: React.ReactNode }) => {
   const [mounted, setMounted] = useState(false);
-  
+
   useEffect(() => {
     setMounted(true);
     return () => setMounted(false);
   }, []);
 
   if (!mounted) return null;
-  
+
   return createPortal(children, document.body);
 };
 
@@ -131,13 +131,12 @@ const HoverableWrapper: React.FC<HoverableWrapperProps> = ({
 
   return (
     <div
-      className={`relative group cursor-pointer transition-all duration-300 ease-in-out ${hoverClass} ${
-        isDragging ? "z-50 shadow-2xl ring-4 ring-blue-400 opacity-100 bg-white scale-[1.02]" : ""
-      }`}
+      className={`relative group cursor-pointer transition-all duration-300 ease-in-out ${hoverClass} ${isDragging ? "z-50 shadow-2xl ring-4 ring-blue-400 opacity-100 bg-white scale-[1.02]" : ""
+        }`}
       onClick={() => onClick?.(sectionId)}
     >
-       {/* --- DRAG HANDLE --- */}
-       {!isPdfMode && dragHandleProps && (
+      {/* --- DRAG HANDLE --- */}
+      {!isPdfMode && dragHandleProps && (
         <div
           {...dragHandleProps}
           className="absolute -left-4 top-1/2 -translate-y-1/2 -translate-x-full 
@@ -147,7 +146,7 @@ const HoverableWrapper: React.FC<HoverableWrapperProps> = ({
                      cursor-grab active:cursor-grabbing 
                      opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110 z-[100]"
           title="Kéo để sắp xếp vị trí"
-          onClick={(e) => e.stopPropagation()} 
+          onClick={(e) => e.stopPropagation()}
         >
           <GripVertical size={18} strokeWidth={2.5} />
         </div>
@@ -204,9 +203,8 @@ const Section: React.FC<SectionProps> = ({
         isDragging={isDragging}
       >
         <div
-          className={`bg-card rounded-xl shadow-md border-2 border-border elegant-hover relative overflow-hidden ${
-            isPdfMode ? "p-6" : "p-8"
-          }`}
+          className={`bg-card rounded-xl shadow-md border-2 border-border elegant-hover relative overflow-hidden ${isPdfMode ? "p-6" : "p-8"
+            }`}
         >
           <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-primary/5 to-transparent rounded-bl-full"></div>
 
@@ -214,9 +212,8 @@ const Section: React.FC<SectionProps> = ({
             <div className="flex items-center gap-3 mb-2">
               <div className="w-1.5 h-8 bg-gradient-to-b from-primary to-accent rounded-full"></div>
               <h2
-                className={`font-serif font-semibold text-foreground tracking-tight break-words ${
-                  isPdfMode ? "text-lg" : "text-xl"
-                }`}
+                className={`font-serif font-semibold text-foreground tracking-tight break-words ${isPdfMode ? "text-lg" : "text-xl"
+                  }`}
               >
                 {title}
               </h2>
@@ -297,11 +294,11 @@ const Modern2: React.FC<Modern2Props> = ({
   // Vì Template này chỉ có 1 cột (đang render thẳng tuột), nên ta gom hết vào 1 Droppable duy nhất (id="1")
   // Hoặc nếu logic của bạn chia cột thì phải chia Droppable tương ứng.
   // Dựa trên code cũ, template này render từ trên xuống dưới -> 1 cột.
-  
+
   // QUAN TRỌNG: Chỉ lấy các sections có place > 0 (place = 0 nghĩa là ẩn/không hiển thị)
   // Và chỉ lấy các sections thực sự được hỗ trợ trong template này
   const supportedSections = ["info", "contact", "summary", "education", "experience", "skills", "certification", "achievement", "hobby", "Project"];
-  
+
   const sections = Object.entries(sectionPositions)
     .filter(([key, pos]) => {
       const posA = pos as SectionPosition;
@@ -315,34 +312,34 @@ const Modern2: React.FC<Modern2Props> = ({
     })
     .map(([key]) => key);
 
-    const handleDragEnd = (result: DropResult) => {
-      if (!result.destination) {
-        notify.error(dragWarningMessage);
-        return;
-      }
-      if (!onLayoutChange) return;
-  
-      const { source, destination } = result;
-  
-      // Nếu thả về chỗ cũ thì không làm gì
-      if (source.index === destination.index) return;
-      const currentPlaceSlots = sections.map(key => sectionPositions[key].place);
-  
-      // 2. Logic Reorder mảng Key (như cũ)
-      const newSections = Array.from(sections);
-      const [moved] = newSections.splice(source.index, 1);
-      newSections.splice(destination.index, 0, moved);
-      const newPositions = { ...sectionPositions };
-      
-      newSections.forEach((key, index) => {
-        newPositions[key] = { 
-            place: currentPlaceSlots[index], // Lấy place từ mảng slots đã lưu ở bước 1
-            order: index // Order tăng dần theo danh sách hiển thị là được
-        }; 
-      });
-  
-      onLayoutChange(newPositions);
-    };
+  const handleDragEnd = (result: DropResult) => {
+    if (!result.destination) {
+      notify.error(dragWarningMessage);
+      return;
+    }
+    if (!onLayoutChange) return;
+
+    const { source, destination } = result;
+
+    // Nếu thả về chỗ cũ thì không làm gì
+    if (source.index === destination.index) return;
+    const currentPlaceSlots = sections.map(key => sectionPositions[key].place);
+
+    // 2. Logic Reorder mảng Key (như cũ)
+    const newSections = Array.from(sections);
+    const [moved] = newSections.splice(source.index, 1);
+    newSections.splice(destination.index, 0, moved);
+    const newPositions = { ...sectionPositions };
+
+    newSections.forEach((key, index) => {
+      newPositions[key] = {
+        place: currentPlaceSlots[index], // Lấy place từ mảng slots đã lưu ở bước 1
+        order: index // Order tăng dần theo danh sách hiển thị là được
+      };
+    });
+
+    onLayoutChange(newPositions);
+  };
 
   const styles = `
     .professional-card {
@@ -376,9 +373,9 @@ const Modern2: React.FC<Modern2Props> = ({
                     <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-white shadow-lg relative">
                       {isPdfMode ? (
                         <div
-                          style={{ 
-                            width: '100%', 
-                            height: '100%', 
+                          style={{
+                            width: '100%',
+                            height: '100%',
                             backgroundImage: `url(${userData.avatar || "/professional-woman-portrait.png"})`,
                             backgroundSize: 'cover',
                             backgroundPosition: 'center',
@@ -469,146 +466,146 @@ const Modern2: React.FC<Modern2Props> = ({
       // --- SUMMARY ---
       case "summary":
         return userData.summary && (
-            <Section
-              key="summary"
-              title={t.careerObjectiveLabel}
-              sectionId={sectionMap.summary}
-              onSectionClick={onSectionClick}
-              isPdfMode={isPdfMode}
-              dragHandleProps={dragHandleProps}
-              isDragging={isDragging}
-            >
-              <div className="professional-card bg-white p-6 border-l-4 border-blue-600">
-                <p className="text-slate-700 leading-relaxed text-pretty">
-                  {userData.summary}
-                </p>
-              </div>
-            </Section>
+          <Section
+            key="summary"
+            title={t.careerObjectiveLabel}
+            sectionId={sectionMap.summary}
+            onSectionClick={onSectionClick}
+            isPdfMode={isPdfMode}
+            dragHandleProps={dragHandleProps}
+            isDragging={isDragging}
+          >
+            <div className="professional-card bg-white p-6 border-l-4 border-blue-600">
+              <p className="text-slate-700 leading-relaxed text-pretty">
+                {userData.summary}
+              </p>
+            </div>
+          </Section>
         );
 
       // --- EDUCATION ---
       case "education":
         return userData.education?.length > 0 && (
-            <Section
-              key="education"
-              title={t.educationLabel}
-              sectionId={sectionMap.education}
-              onSectionClick={onSectionClick}
-              isPdfMode={isPdfMode}
-              dragHandleProps={dragHandleProps}
-              isDragging={isDragging}
-            >
-              <div className="space-y-6">
-                {userData.education.map((edu: any, i: number) => (
-                  <div key={i} className="professional-card bg-slate-50 p-6 border-l-4 border-blue-500">
-                    <div className="flex justify-between items-start mb-3">
-                      <div className="flex-1">
-                        <h3 className="text-lg font-bold text-slate-800 mb-1">{edu.degree}</h3>
-                        <p className="text-blue-700 font-semibold">{edu.institution}</p>
-                      </div>
-                      <span className="text-sm text-slate-600 bg-white px-4 py-1.5 rounded border border-slate-300 shrink-0 ml-4 font-medium">
-                        {edu.startDate?.slice(0, 4)} - {edu.endDate?.slice(0, 4)}
-                      </span>
+          <Section
+            key="education"
+            title={t.educationLabel}
+            sectionId={sectionMap.education}
+            onSectionClick={onSectionClick}
+            isPdfMode={isPdfMode}
+            dragHandleProps={dragHandleProps}
+            isDragging={isDragging}
+          >
+            <div className="space-y-6">
+              {userData.education.map((edu: any, i: number) => (
+                <div key={i} className="professional-card bg-slate-50 p-6 border-l-4 border-blue-500">
+                  <div className="flex justify-between items-start mb-3">
+                    <div className="flex-1">
+                      <h3 className="text-lg font-bold text-slate-800 mb-1">{edu.degree}</h3>
+                      <p className="text-blue-700 font-semibold">{edu.institution}</p>
                     </div>
-                    {edu.major && (
-                      <p className="text-sm text-slate-600 mt-2">
-                        <span className="font-semibold">{t.major}</span> {edu.major}
-                      </p>
-                    )}
+                    <span className="text-sm text-slate-600 bg-white px-4 py-1.5 rounded border border-slate-300 shrink-0 ml-4 font-medium">
+                      {edu.startDate?.slice(0, 4)} - {edu.endDate?.slice(0, 4)}
+                    </span>
                   </div>
-                ))}
-              </div>
-            </Section>
+                  {edu.major && (
+                    <p className="text-sm text-slate-600 mt-2">
+                      <span className="font-semibold">{t.major}</span> {edu.major}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </Section>
         );
 
       // --- EXPERIENCE ---
       case "experience":
         return userData.workHistory?.length > 0 && (
-            <Section
-              key="experience"
-              title={t.experienceLabel}
-              sectionId={sectionMap.experience}
-              onSectionClick={onSectionClick}
-              isPdfMode={isPdfMode}
-              dragHandleProps={dragHandleProps}
-              isDragging={isDragging}
-            >
-              <div className="space-y-4">
-                {userData.workHistory.map((job: any, i: number) => (
-                  <div key={i} className="professional-card bg-slate-50 p-4 border-l-4 border-slate-700">
-                    <div className="flex justify-between items-start mb-2">
-                      <div className="flex-1">
-                        <h3 className="text-base font-bold text-slate-800 mb-1">{job.title}</h3>
-                        <p className="text-blue-700 font-semibold">{job.company}</p>
-                      </div>
-                      <span className="text-sm text-slate-600 bg-white px-4 py-1.5 rounded border border-slate-300 shrink-0 ml-4 font-medium">
-                        {job.startDate?.slice(5, 7)}/{job.startDate?.slice(0, 4)} -{" "}
-                        {job.isCurrent || job.endDate === "Present" || job.endDate === "Hiện tại"
-                          ? t.present
-                          : `${job.endDate?.slice(5, 7)}/${job.endDate?.slice(0, 4)}`}
-                      </span>
+          <Section
+            key="experience"
+            title={t.experienceLabel}
+            sectionId={sectionMap.experience}
+            onSectionClick={onSectionClick}
+            isPdfMode={isPdfMode}
+            dragHandleProps={dragHandleProps}
+            isDragging={isDragging}
+          >
+            <div className="space-y-4">
+              {userData.workHistory.map((job: any, i: number) => (
+                <div key={i} className="professional-card bg-slate-50 p-4 border-l-4 border-slate-700">
+                  <div className="flex justify-between items-start mb-2">
+                    <div className="flex-1">
+                      <h3 className="text-base font-bold text-slate-800 mb-1">{job.title}</h3>
+                      <p className="text-blue-700 font-semibold">{job.company}</p>
                     </div>
-                    <div className="mt-3">
-                      {renderDescription(job.description)}
-                    </div>
+                    <span className="text-sm text-slate-600 bg-white px-4 py-1.5 rounded border border-slate-300 shrink-0 ml-4 font-medium">
+                      {job.startDate?.slice(5, 7)}/{job.startDate?.slice(0, 4)} -{" "}
+                      {job.isCurrent || job.endDate === "Present" || job.endDate === "Hiện tại"
+                        ? t.present
+                        : `${job.endDate?.slice(5, 7)}/${job.endDate?.slice(0, 4)}`}
+                    </span>
                   </div>
-                ))}
-              </div>
-            </Section>
+                  <div className="mt-3">
+                    {renderDescription(job.description)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Section>
         );
 
       // --- SKILLS ---
       case "skills":
         return userData.skills?.length > 0 && (
-            <Section
-              key="skills"
-              title={t.skillsLabel}
-              sectionId={sectionMap.skills}
-              onSectionClick={onSectionClick}
-              isPdfMode={isPdfMode}
-              dragHandleProps={dragHandleProps}
-              isDragging={isDragging}
-            >
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 items-stretch">
-                {userData.skills.map((skill: any, i: number) => {
-                  const ratingRaw = Number(skill.rating);
-                  const hasRating = !isNaN(ratingRaw) && ratingRaw > 0;
-                  const rating = hasRating
-                    ? Math.max(0, Math.min(5, ratingRaw))
-                    : 0;
-                  const width = `${(rating / 5) * 100}%`;
+          <Section
+            key="skills"
+            title={t.skillsLabel}
+            sectionId={sectionMap.skills}
+            onSectionClick={onSectionClick}
+            isPdfMode={isPdfMode}
+            dragHandleProps={dragHandleProps}
+            isDragging={isDragging}
+          >
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 items-stretch">
+              {userData.skills.map((skill: any, i: number) => {
+                const ratingRaw = Number(skill.rating);
+                const hasRating = !isNaN(ratingRaw) && ratingRaw > 0;
+                const rating = hasRating
+                  ? Math.max(0, Math.min(5, ratingRaw))
+                  : 0;
+                const width = `${(rating / 5) * 100}%`;
 
-                  if (!hasRating) {
-                    return (
-                      <div key={i} className="group flex flex-col justify-between min-h-[40px]">
-                        <span className="text-base font-semibold text-slate-900 break-words">
-                          {skill.name}
-                        </span>
-                      </div>
-                    );
-                  }
-
+                if (!hasRating) {
                   return (
                     <div key={i} className="group flex flex-col justify-between min-h-[40px]">
-                      <div className="flex items-center justify-between gap-3 mb-2">
-                        <span className="text-base font-semibold text-slate-800 transition-colors group-hover:text-blue-600">
-                          {skill.name}
-                        </span>
-                        <span className="bg-gray-100 px-3 py-1 rounded-full text-slate-700 text-xs font-semibold flex-shrink-0">
-                          {rating}/5
-                        </span>
-                      </div>
-                      <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-black rounded-full transition-all duration-300 group-hover:bg-gray-800 group-hover:shadow-lg group-hover:shadow-gray-500/50"
-                          style={{ width }}
-                        />
-                      </div>
+                      <span className="text-base font-semibold text-slate-900 break-words">
+                        {skill.name}
+                      </span>
                     </div>
                   );
-                })}
-              </div>
-            </Section>
+                }
+
+                return (
+                  <div key={i} className="group flex flex-col justify-between min-h-[40px]">
+                    <div className="flex items-center justify-between gap-3 mb-2">
+                      <span className="text-base font-semibold text-slate-800 transition-colors group-hover:text-blue-600">
+                        {skill.name}
+                      </span>
+                      <span className="bg-gray-100 px-3 py-1 rounded-full text-slate-700 text-xs font-semibold flex-shrink-0">
+                        {rating}/5
+                      </span>
+                    </div>
+                    <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-black rounded-full transition-all duration-300 group-hover:bg-gray-800 group-hover:shadow-lg group-hover:shadow-gray-500/50"
+                        style={{ width }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </Section>
         );
 
       case "certification":
@@ -702,20 +699,19 @@ const Modern2: React.FC<Modern2Props> = ({
                   <h3 className="text-lg font-bold text-slate-800 mb-1 break-words">
                     {project.title || project["title "]}
                   </h3>
+
                   {project.startDate && (
                     <span className="text-sm text-slate-600 whitespace-nowrap">
-                      {new Date(project.startDate).toLocaleDateString("vi-VN", {
-                        month: "2-digit",
-                        year: "numeric",
-                      })}
+                      {/* Hiển thị trực tiếp string startDate */}
+                      {project.startDate}
+
+                      {/* Nếu có endDate thì hiển thị, nếu không thì hiển thị t.present (Hiện tại) */}
                       {project.endDate
-                        ? ` - ${new Date(project.endDate).toLocaleDateString("vi-VN", {
-                            month: "2-digit",
-                            year: "numeric",
-                          })}`
+                        ? ` - ${project.endDate}`
                         : ` - ${t.present}`}
                     </span>
                   )}
+
                   {project.summary && (
                     <ul className="text-sm text-slate-700 mt-2 break-words whitespace-pre-line list-disc pl-6 space-y-1">
                       {String(project.summary)
@@ -754,7 +750,7 @@ const Modern2: React.FC<Modern2Props> = ({
               } : {})
             }}
           >
-             {renderSectionContent(id, provided.dragHandleProps, snapshot.isDragging)}
+            {renderSectionContent(id, provided.dragHandleProps, snapshot.isDragging)}
           </div>
         );
 
@@ -792,13 +788,13 @@ const Modern2: React.FC<Modern2Props> = ({
         */}
         <Droppable droppableId="1">
           {(provided) => (
-            <div 
-              ref={provided.innerRef} 
+            <div
+              ref={provided.innerRef}
               {...provided.droppableProps}
               className="max-w-4xl mx-auto bg-white shadow-sm min-h-screen pb-8"
             >
               {sections.map((id, index) => (
-                 <DraggableItem key={id} id={id} index={index} />
+                <DraggableItem key={id} id={id} index={index} />
               ))}
               {provided.placeholder}
             </div>

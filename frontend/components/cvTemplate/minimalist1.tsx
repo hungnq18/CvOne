@@ -139,8 +139,8 @@ const HoverableWrapper: React.FC<HoverableWrapperProps> = ({
 
   return (
     <div className={finalClassName} onClick={() => onClick?.(sectionId)}>
-       {/* --- DRAG HANDLE --- */}
-       {!isPdfMode && dragHandleProps && (
+      {/* --- DRAG HANDLE --- */}
+      {!isPdfMode && dragHandleProps && (
         <div
           {...dragHandleProps}
           className="absolute -left-3 top-1/2 -translate-y-1/2 -translate-x-full 
@@ -154,7 +154,7 @@ const HoverableWrapper: React.FC<HoverableWrapperProps> = ({
             left: isAvatar ? '0px' : undefined,
             transform: isAvatar ? 'translate(-120%, -50%)' : undefined
           }}
-          onClick={(e) => e.stopPropagation()} 
+          onClick={(e) => e.stopPropagation()}
         >
           <GripVertical size={18} strokeWidth={2.5} />
         </div>
@@ -164,27 +164,26 @@ const HoverableWrapper: React.FC<HoverableWrapperProps> = ({
       {showBorder && !isPdfMode && (
         <>
           <div
-            className={`absolute inset-0 border-4 border-[#8BAAFC] opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none ${
-              isAvatar ? "rounded-full" : "rounded-lg"
-            }`}
+            className={`absolute inset-0 border-4 border-[#8BAAFC] opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none ${isAvatar ? "rounded-full" : "rounded-lg"
+              }`}
           ></div>
           <div
             className="absolute bg-[#8BAAFC] text-white text-sm font-bold tracking-wide px-3 py-1 opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none"
             style={
               isAvatar
                 ? {
-                    top: "-2px",
-                    left: "-15%",
-                    borderRadius: "4px 10px 4px 10px",
-                    marginTop: "-6%",
-                  }
+                  top: "-2px",
+                  left: "-15%",
+                  borderRadius: "4px 10px 4px 10px",
+                  marginTop: "-6%",
+                }
                 : {
-                    top: "0",
-                    left: "1%",
-                    transform: "translateY(-50%)",
-                    borderRadius: "4px 10px 0 0",
-                    marginTop: "-2%",
-                  }
+                  top: "0",
+                  left: "1%",
+                  transform: "translateY(-50%)",
+                  borderRadius: "4px 10px 0 0",
+                  marginTop: "-2%",
+                }
             }
           >
             {label}
@@ -223,7 +222,7 @@ const SectionWrapper: React.FC<SectionWrapperProps> = ({
 }) => {
   // Logic style: Nếu ở Sidebar (place 2) thì padding nhỏ hơn
   const paddingClass = place === 2 ? "p-3" : "p-4";
-  
+
   return (
     <div className="mb-8 w-full">
       <HoverableWrapper
@@ -257,7 +256,7 @@ const CVTemplateInspired: React.FC<CVTemplateProps> = ({
 }) => {
   const lang = language || "en";
   const defaultT = translations[lang as "en" | "vi"];
-  
+
   const t = {
     ...defaultT,
     ...(cvUiTexts && {
@@ -275,7 +274,7 @@ const CVTemplateInspired: React.FC<CVTemplateProps> = ({
       projectLabel: cvUiTexts.project || defaultT.projectLabel,
       avatarLabel: cvUiTexts.avatar || defaultT.avatarLabel,
       fullNameAndTitleLabel: cvUiTexts.fullNameAndTitle || defaultT.fullNameAndTitleLabel,
-      
+
       phone: cvUiTexts.phone || defaultT.phone,
       email: cvUiTexts.email || defaultT.email,
       address: cvUiTexts.address || defaultT.address,
@@ -309,7 +308,7 @@ const CVTemplateInspired: React.FC<CVTemplateProps> = ({
   type SectionPosition = { place: number; order: number };
 
   const supportedSections = ["avatar", "info", "contact", "summary", "skills", "experience", "education", "certification", "achievement", "hobby", "Project"];
-  
+
   // Helper filter sections
   const getSectionsByPlace = (placeId: number) => Object.entries(sectionPositions)
     .filter(([key, pos]) => {
@@ -335,13 +334,13 @@ const CVTemplateInspired: React.FC<CVTemplateProps> = ({
 
     const sourcePlace = parseInt(source.droppableId);
     const destPlace = parseInt(destination.droppableId);
-    
+
     // CHẶN: Không cho phép kéo thả sang place khác
     if (sourcePlace !== destPlace) {
       notify.error(dragWarningMessage);
       return;
     }
-    
+
     const newPositions = { ...sectionPositions };
 
     const getKeys = (place: number) => Object.entries(newPositions)
@@ -356,8 +355,8 @@ const CVTemplateInspired: React.FC<CVTemplateProps> = ({
     const [moved] = destKeys.splice(source.index, 1);
     destKeys.splice(destination.index, 0, moved);
 
-    destKeys.forEach((key, index) => { 
-      newPositions[key] = { place: destPlace, order: index }; 
+    destKeys.forEach((key, index) => {
+      newPositions[key] = { place: destPlace, order: index };
     });
 
     onLayoutChange(newPositions);
@@ -398,9 +397,9 @@ const CVTemplateInspired: React.FC<CVTemplateProps> = ({
               <div className="w-full h-full rounded-full overflow-hidden border-4 border-white/80 relative">
                 {isPdfMode ? (
                   <div
-                    style={{ 
-                      width: '100%', 
-                      height: '100%', 
+                    style={{
+                      width: '100%',
+                      height: '100%',
                       backgroundImage: `url(${userData.avatar || "/avatar-female.png"})`,
                       backgroundSize: 'cover',
                       backgroundPosition: 'center',
@@ -733,16 +732,13 @@ const CVTemplateInspired: React.FC<CVTemplateProps> = ({
                   {project.title || project["title "]}
                 </h3>
                 {project.startDate && (
-                  <span className="text-base italic text-gray-600 whitespace-nowrap block mb-1">
-                    {new Date(project.startDate).toLocaleDateString("vi-VN", {
-                      month: "2-digit",
-                      year: "numeric",
-                    })}
+                  <span className="text-sm text-slate-600 whitespace-nowrap">
+                    {/* Hiển thị trực tiếp string startDate */}
+                    {project.startDate}
+
+                    {/* Nếu có endDate thì hiển thị, nếu không thì hiển thị t.present (Hiện tại) */}
                     {project.endDate
-                      ? ` - ${new Date(project.endDate).toLocaleDateString("vi-VN", {
-                          month: "2-digit",
-                          year: "numeric",
-                        })}`
+                      ? ` - ${project.endDate}`
                       : ` - ${t.present}`}
                   </span>
                 )}
@@ -783,7 +779,7 @@ const CVTemplateInspired: React.FC<CVTemplateProps> = ({
               } : {})
             }}
           >
-             {renderSection(id, provided.dragHandleProps, snapshot.isDragging, place)}
+            {renderSection(id, provided.dragHandleProps, snapshot.isDragging, place)}
           </div>
         );
 
@@ -809,12 +805,12 @@ const CVTemplateInspired: React.FC<CVTemplateProps> = ({
               <div key={id}>{renderSection(id, undefined, false, 1)}</div>
             ))}
           </div>
-  
+
           {mainSections.map(id => (
             <div key={id}>{renderSection(id, undefined, false, 3)}</div>
           ))}
         </div>
-  
+
         <div className="w-[35%] bg-gray-50 p-4 pt-8">
           {sidebarSections.map(id => (
             <div key={id}>{renderSection(id, undefined, false, 2)}</div>
@@ -823,7 +819,7 @@ const CVTemplateInspired: React.FC<CVTemplateProps> = ({
       </div>
     );
   }
-  
+
 
   // --- EDITOR VIEW ---
   return (
@@ -833,23 +829,23 @@ const CVTemplateInspired: React.FC<CVTemplateProps> = ({
         <div className="w-[65%]">
           <Droppable droppableId="1" direction="horizontal">
             {(provided) => (
-               <div 
-                 ref={provided.innerRef} 
-                 {...provided.droppableProps}
-                 className="flex items-center gap-6 mb-12 min-h-[160px]"
-               >
-                 {headerSections.map((id, index) => <DraggableItem key={id} id={id} index={index} place={1} />)}
-                 {provided.placeholder}
-               </div>
+              <div
+                ref={provided.innerRef}
+                {...provided.droppableProps}
+                className="flex items-center gap-6 mb-12 min-h-[160px]"
+              >
+                {headerSections.map((id, index) => <DraggableItem key={id} id={id} index={index} place={1} />)}
+                {provided.placeholder}
+              </div>
             )}
           </Droppable>
 
           <Droppable droppableId="3">
             {(provided) => (
-              <div 
-                 ref={provided.innerRef} 
-                 {...provided.droppableProps}
-                 className="min-h-[300px]"
+              <div
+                ref={provided.innerRef}
+                {...provided.droppableProps}
+                className="min-h-[300px]"
               >
                 {mainSections.map((id, index) => <DraggableItem key={id} id={id} index={index} place={3} />)}
                 {provided.placeholder}
@@ -861,13 +857,13 @@ const CVTemplateInspired: React.FC<CVTemplateProps> = ({
         {/* RIGHT SIDEBAR */}
         <Droppable droppableId="2">
           {(provided) => (
-            <div 
-               ref={provided.innerRef} 
-               {...provided.droppableProps}
-               className="w-[35%] bg-gray-50 p-4 min-h-[500px]"
+            <div
+              ref={provided.innerRef}
+              {...provided.droppableProps}
+              className="w-[35%] bg-gray-50 p-4 min-h-[500px]"
             >
-               {sidebarSections.map((id, index) => <DraggableItem key={id} id={id} index={index} place={2} />)}
-               {provided.placeholder}
+              {sidebarSections.map((id, index) => <DraggableItem key={id} id={id} index={index} place={2} />)}
+              {provided.placeholder}
             </div>
           )}
         </Droppable>

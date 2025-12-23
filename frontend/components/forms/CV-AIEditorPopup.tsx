@@ -2169,7 +2169,7 @@ export const ProjectPopup: FC<{
   const t = translations[language].projectPopup;
   const handleMaxLength = createMaxLengthHandler(language);
 
-  // 1. Khởi tạo state: Chuẩn hóa mọi định dạng ngày về YYYY-MM-DD ngay từ đầu
+  // 1. [ĐÃ SỬA] Khởi tạo state: Giữ nguyên string, không ép kiểu Date
   const [projects, setProjects] = useState<ProjectItem[]>(() => {
     const rawProjects =
       initialData.Project || initialData.project || initialData.projects || [];
@@ -2185,47 +2185,13 @@ export const ProjectPopup: FC<{
       ];
     }
 
-    return rawProjects.map((item: any) => {
-      let startDate = "";
-      let endDate = "";
-
-      // Xử lý Start Date
-      if (item?.startDate) {
-        try {
-          // Thử parse date
-          const date = new Date(item.startDate);
-          if (!isNaN(date.getTime())) {
-            startDate = date.toISOString().split("T")[0]; // Lấy YYYY-MM-DD
-          } else {
-            // Fallback nếu string không chuẩn ISO nhưng vẫn là string
-             startDate = typeof item.startDate === 'string' ? item.startDate.slice(0, 10) : "";
-          }
-        } catch (e) {
-          startDate = "";
-        }
-      }
-
-      // Xử lý End Date
-      if (item?.endDate) {
-        try {
-          const date = new Date(item.endDate);
-          if (!isNaN(date.getTime())) {
-            endDate = date.toISOString().split("T")[0];
-          } else {
-             endDate = typeof item.endDate === 'string' ? item.endDate.slice(0, 10) : "";
-          }
-        } catch (e) {
-          endDate = "";
-        }
-      }
-
-      return {
-        title: item?.title || item?.["title "] || "", // Xử lý cả trường hợp thừa khoảng trắng
-        summary: item?.summary || "",
-        startDate: startDate,
-        endDate: endDate,
-      };
-    });
+    return rawProjects.map((item: any) => ({
+      title: item?.title || item?.["title "] || "",
+      summary: item?.summary || "",
+      // Lấy trực tiếp giá trị string, không parse
+      startDate: item?.startDate || "", 
+      endDate: item?.endDate || "",
+    }));
   });
 
   const handleFieldChange = (
@@ -2275,27 +2241,17 @@ export const ProjectPopup: FC<{
 
   const handleSaveChanges = () => {
     if (!validateForm()) return;
+    
+    // 2. [ĐÃ SỬA] Lưu nguyên văn string người dùng nhập, không convert sang ISO
     const sanitized = projects
-      .map((item) => {
-        // Chuyển đổi an toàn từ YYYY-MM-DD sang ISO String (nếu backend cần)
-        // Nếu item.startDate đang rỗng thì giữ nguyên rỗng
-        const startDateISO = item.startDate
-          ? new Date(item.startDate).toISOString()
-          : "";
-        const endDateISO = item.endDate
-          ? new Date(item.endDate).toISOString()
-          : "";
-
-        return {
-          title: item.title?.trim() || "",
-          summary: item.summary || "",
-          startDate: startDateISO,
-          endDate: endDateISO,
-        };
-      })
+      .map((item) => ({
+        title: item.title?.trim() || "",
+        summary: item.summary || "",
+        startDate: item.startDate || "",
+        endDate: item.endDate || "",
+      }))
       .filter((item) => item.title); // Chỉ lưu project có tên
 
-    // Đảm bảo update vào đúng key "Project" (viết hoa) để thống nhất
     const updatedData = {
       ...initialData,
       Project: sanitized.length > 0 ? sanitized : [],
@@ -2337,6 +2293,8 @@ export const ProjectPopup: FC<{
                 onChange={(e) =>
                   handleFieldChange(index, "title", e.target.value)
                 }
+                onInput={handleMaxLength}
+                maxLength={200}
                 className="w-full border rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -2352,19 +2310,22 @@ export const ProjectPopup: FC<{
                 onChange={(e) =>
                   handleFieldChange(index, "summary", e.target.value)
                 }
+                onInput={handleMaxLength}
+                maxLength={2000}
                 className="w-full border rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
-            {/* Ngày tháng */}
+            {/* Ngày tháng - [ĐÃ SỬA] Chuyển về input text */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">
                   {t.startDateLabel}
                 </label>
                 <input
-                  type="date" // Input type date chuẩn
-                  value={project.startDate} // State đã chuẩn YYYY-MM-DD
+                  type="text" 
+                  placeholder="YYYY-MM-DD"
+                  value={project.startDate}
                   onChange={(e) =>
                     handleFieldChange(index, "startDate", e.target.value)
                   }
@@ -2376,8 +2337,9 @@ export const ProjectPopup: FC<{
                   {t.endDateLabel}
                 </label>
                 <input
-                  type="date" // Input type date chuẩn
-                  value={project.endDate} // State đã chuẩn YYYY-MM-DD
+                  type="text" 
+                  placeholder="YYYY-MM-DD or Present"
+                  value={project.endDate}
                   onChange={(e) =>
                     handleFieldChange(index, "endDate", e.target.value)
                   }

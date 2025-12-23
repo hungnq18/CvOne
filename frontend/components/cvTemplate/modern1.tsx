@@ -4,7 +4,7 @@ import Image from "next/image";
 import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
-import { GripVertical } from "lucide-react"; 
+import { GripVertical } from "lucide-react";
 import { getDefaultSectionPositions } from "./defaultSectionPositions";
 import { notify } from "@/lib/notify";
 
@@ -57,14 +57,14 @@ const translations = {
 // --- PORTAL COMPONENT ---
 const DragPortal = ({ children }: { children: React.ReactNode }) => {
   const [mounted, setMounted] = useState(false);
-  
+
   useEffect(() => {
     setMounted(true);
     return () => setMounted(false);
   }, []);
 
   if (!mounted) return null;
-  
+
   return createPortal(children, document.body);
 };
 
@@ -134,7 +134,7 @@ const HoverableWrapper: React.FC<HoverableWrapperProps> = ({
       className={`relative group cursor-pointer rounded-lg transition-all duration-300 ease-in-out ${hoverClass} ${
         // Khi đang kéo thì đè style lên để hiển thị đẹp
         isDragging ? "z-50 shadow-2xl ring-4 ring-[#8BAAFC] opacity-100 scale-105 bg-white" : ""
-      }`}
+        }`}
       onClick={() => onClick?.(sectionId)}
     >
       {/* --- NÚT KÉO THẢ --- */}
@@ -148,21 +148,21 @@ const HoverableWrapper: React.FC<HoverableWrapperProps> = ({
                      cursor-grab active:cursor-grabbing 
                      opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110 z-[100]"
           title="Kéo để sắp xếp vị trí"
-          onClick={(e) => e.stopPropagation()} 
+          onClick={(e) => e.stopPropagation()}
         >
           <GripVertical size={18} strokeWidth={2.5} />
         </div>
       )}
 
       {children}
-      
+
       {/* --- VIỀN HOVER --- */}
       {!isPdfMode && (
         <>
           <div
             className={`absolute inset-0 ${borderRadiusClass} border-4 border-[#8BAAFC] opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none`}
           ></div>
-          
+
           {/* --- LABEL --- */}
           <div
             className={`absolute top-0 left-4 -translate-y-1/2 bg-[#8BAAFC] text-white text-sm font-bold tracking-wide px-3 py-1 opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none`}
@@ -239,7 +239,7 @@ const ModernCV1: React.FC<ModernCV1Props> = ({
 }) => {
   const lang = language || "en";
   const defaultT = translations[lang as "en" | "vi"];
-  
+
   const t = {
     ...defaultT,
     ...(cvUiTexts && {
@@ -260,7 +260,7 @@ const ModernCV1: React.FC<ModernCV1Props> = ({
     }),
   };
   const userData = data?.userData || {};
-  
+
   const sectionPositions =
     data?.sectionPositions ||
     getDefaultSectionPositions(data?.templateTitle || "The Signature");
@@ -271,7 +271,7 @@ const ModernCV1: React.FC<ModernCV1Props> = ({
       : "Please drop sections inside the allowed layout areas.";
 
   const supportedSections = ["avatar", "info", "contact", "summary", "skills", "experience", "education", "certification", "achievement", "hobby", "Project"];
-  
+
   const leftSections = Object.entries(sectionPositions)
     .filter(([key, pos]) => {
       const place = (pos as { place: number }).place;
@@ -306,13 +306,13 @@ const ModernCV1: React.FC<ModernCV1Props> = ({
 
     const sourcePlace = parseInt(source.droppableId);
     const destPlace = parseInt(destination.droppableId);
-    
+
     // CHẶN: Không cho phép kéo thả sang place khác
     if (sourcePlace !== destPlace) {
       notify.error(dragWarningMessage);
       return;
     }
-    
+
     const newPositions = { ...sectionPositions };
 
     const sourceKeys = Object.entries(newPositions)
@@ -350,9 +350,9 @@ const ModernCV1: React.FC<ModernCV1Props> = ({
                 <div className="aspect-square w-40 lg:w-48 rounded-full overflow-hidden border-4 border-white/80 flex-shrink-0 relative">
                   {isPdfMode ? (
                     <div
-                      style={{ 
-                        width: '100%', 
-                        height: '100%', 
+                      style={{
+                        width: '100%',
+                        height: '100%',
                         backgroundImage: `url(${userData.avatar || "/avatar-female.png"})`,
                         backgroundSize: 'cover',
                         backgroundPosition: 'center',
@@ -430,56 +430,56 @@ const ModernCV1: React.FC<ModernCV1Props> = ({
 
       case "skills":
         return userData.skills?.length > 0 && (
-            <Section
-              key="skills"
-              title={t.skillsLabel}
-              sectionId="skills"
-              onSectionClick={onSectionClick}
-              isPdfMode={isPdfMode}
-              dragHandleProps={dragHandleProps}
-              isDragging={isDragging}
-            >
-              <ul className="space-y-8 list-disc pl-5">
-                {userData.skills.map((skill: any, i: number) => {
-                  const ratingRaw = Number(skill.rating);
-                  const hasRating = !isNaN(ratingRaw) && ratingRaw > 0;
-                  const rating = hasRating
-                    ? Math.max(0, Math.min(5, ratingRaw))
-                    : 0;
-                  const width = `${(rating / 5) * 100}%`;
+          <Section
+            key="skills"
+            title={t.skillsLabel}
+            sectionId="skills"
+            onSectionClick={onSectionClick}
+            isPdfMode={isPdfMode}
+            dragHandleProps={dragHandleProps}
+            isDragging={isDragging}
+          >
+            <ul className="space-y-8 list-disc pl-5">
+              {userData.skills.map((skill: any, i: number) => {
+                const ratingRaw = Number(skill.rating);
+                const hasRating = !isNaN(ratingRaw) && ratingRaw > 0;
+                const rating = hasRating
+                  ? Math.max(0, Math.min(5, ratingRaw))
+                  : 0;
+                const width = `${(rating / 5) * 100}%`;
 
-                  if (!hasRating) {
-                    return (
-                      <li key={i} className="group list-outside">
-                        <span className="text-xl font-semibold leading-relaxed flex-1 text-white">
-                          {skill.name}
-                        </span>
-                      </li>
-                    );
-                  }
-
+                if (!hasRating) {
                   return (
                     <li key={i} className="group list-outside">
-                      <div className="flex items-start justify-between gap-6 mb-3 text-white-600 group-hover:text-teal-200">
-                        <span className="text-xl font-semibold leading-relaxed flex-1 transition-colors duration-200">
-                          {skill.name}
-                        </span>
-                        <span className="text-2xl font-semibold whitespace-nowrap flex-shrink-0">
-                          {rating}/5
-                        </span>
-                      </div>
-                      <div className="relative h-1.5 bg-white/10 rounded-full overflow-hidden">
-                        <div
-                          className="absolute inset-y-0 left-0 bg-gradient-to-r from-teal-400/60 to-teal-300/60 rounded-full transition-all duration-500 ease-out"
-                          style={{ width }}
-                        />
-                      </div>
+                      <span className="text-xl font-semibold leading-relaxed flex-1 text-white">
+                        {skill.name}
+                      </span>
                     </li>
                   );
-                })}
-              </ul>
-            </Section>
-          );
+                }
+
+                return (
+                  <li key={i} className="group list-outside">
+                    <div className="flex items-start justify-between gap-6 mb-3 text-white-600 group-hover:text-teal-200">
+                      <span className="text-xl font-semibold leading-relaxed flex-1 transition-colors duration-200">
+                        {skill.name}
+                      </span>
+                      <span className="text-2xl font-semibold whitespace-nowrap flex-shrink-0">
+                        {rating}/5
+                      </span>
+                    </div>
+                    <div className="relative h-1.5 bg-white/10 rounded-full overflow-hidden">
+                      <div
+                        className="absolute inset-y-0 left-0 bg-gradient-to-r from-teal-400/60 to-teal-300/60 rounded-full transition-all duration-500 ease-out"
+                        style={{ width }}
+                      />
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </Section>
+        );
 
       case "info":
         return (
@@ -551,8 +551,8 @@ const ModernCV1: React.FC<ModernCV1Props> = ({
                   <h3 className="font-bold text-xl">{edu.institution}</h3>
                 </div>
                 <span className="text-base italic text-gray-300 shrink-0">
-                    {edu.startDate?.slice(0, 4)} - {edu.endDate?.slice(0, 4)}
-                  </span>
+                  {edu.startDate?.slice(0, 4)} - {edu.endDate?.slice(0, 4)}
+                </span>
                 <h4 className="font-bold text-lg text-gray-200">{t.major} {edu.major}</h4>
                 <p className="text-lg">{t.degree} {edu.degree}</p>
               </div>
@@ -621,7 +621,7 @@ const ModernCV1: React.FC<ModernCV1Props> = ({
             isDragging={isDragging}
           >
             <div className="px-8 lg:px-12">
-               {/* Tiêu đề giống style Contact/Summary bên trái */}
+              {/* Tiêu đề giống style Contact/Summary bên trái */}
               <h2 className="text-xl lg:text-2xl font-bold mb-6 pb-3 border-b border-white/50 pt-3">
                 {t.hobbyLabel}
               </h2>
@@ -648,31 +648,36 @@ const ModernCV1: React.FC<ModernCV1Props> = ({
             dragHandleProps={dragHandleProps}
             isDragging={isDragging}
           >
-              <div className="space-y-8">
+            <div className="space-y-8">
               {(userData.Project || []).map((project: any, i: number) => (
-              <div key={i} className="mb-8 last:mb-0">
-                <h3 className="font-bold text-xl">{project.title || project["title "]}</h3>
-                {project.startDate && (
-                  <span className="text-base italic text-gray-600">
-                    {new Date(project.startDate).toLocaleDateString("vi-VN", { month: "2-digit", year: "numeric" })}
-                    {project.endDate ? ` - ${new Date(project.endDate).toLocaleDateString("vi-VN", { month: "2-digit", year: "numeric" })}` : ` - ${t.present}`}
-                  </span>
-                )}
-                {project.summary && (
-                  <ul className="text-lg mt-2 whitespace-pre-line break-words list-disc pl-6 space-y-1">
-                    {String(project.summary)
-                      .split(/\r?\n/)
-                      .filter((line: string) => line.trim().length > 0)
-                      .map((line: string, idx: number) => (
-                    <li key={idx} className="list-disc">
-                      {line}
-                    </li>
-                      ))}
-                  </ul>
-                )}
-              </div>
-            ))}
-              </div>
+                <div key={i} className="mb-8 last:mb-0">
+                  <h3 className="font-bold text-xl">{project.title || project["title "]}</h3>
+                  {project.startDate && (
+                    <span className="text-sm text-slate-600 whitespace-nowrap">
+                      {/* Hiển thị trực tiếp string startDate */}
+                      {project.startDate}
+
+                      {/* Nếu có endDate thì hiển thị, nếu không thì hiển thị t.present (Hiện tại) */}
+                      {project.endDate
+                        ? ` - ${project.endDate}`
+                        : ` - ${t.present}`}
+                    </span>
+                  )}
+                  {project.summary && (
+                    <ul className="text-lg mt-2 whitespace-pre-line break-words list-disc pl-6 space-y-1">
+                      {String(project.summary)
+                        .split(/\r?\n/)
+                        .filter((line: string) => line.trim().length > 0)
+                        .map((line: string, idx: number) => (
+                          <li key={idx} className="list-disc">
+                            {line}
+                          </li>
+                        ))}
+                    </ul>
+                  )}
+                </div>
+              ))}
+            </div>
           </Section>
         );
 
@@ -697,7 +702,7 @@ const ModernCV1: React.FC<ModernCV1Props> = ({
               } : {})
             }}
           >
-             {renderSectionContent(id, provided.dragHandleProps, snapshot.isDragging)}
+            {renderSectionContent(id, provided.dragHandleProps, snapshot.isDragging)}
           </div>
         );
 
@@ -732,11 +737,11 @@ const ModernCV1: React.FC<ModernCV1Props> = ({
   return (
     <DragDropContext onDragEnd={handleDragEnd}>
       <div className="bg-white font-sans text-gray-800 flex flex-col lg:flex-row min-h-screen">
-        
+
         <Droppable droppableId="1">
           {(provided) => (
-            <div 
-              ref={provided.innerRef} 
+            <div
+              ref={provided.innerRef}
               {...provided.droppableProps}
               className="w-full lg:w-[38%] bg-[#004d40] text-white flex flex-col gap-8 py-8 lg:py-12 min-h-[500px]"
             >
@@ -750,13 +755,13 @@ const ModernCV1: React.FC<ModernCV1Props> = ({
 
         <Droppable droppableId="2">
           {(provided) => (
-            <div 
-               ref={provided.innerRef} 
-               {...provided.droppableProps}
-               className="w-full lg:w-[62%] min-h-[500px]"
+            <div
+              ref={provided.innerRef}
+              {...provided.droppableProps}
+              className="w-full lg:w-[62%] min-h-[500px]"
             >
               {rightSections.map((id, index) => (
-                 <DraggableItem key={id} id={id} index={index} />
+                <DraggableItem key={id} id={id} index={index} />
               ))}
               {provided.placeholder}
             </div>
