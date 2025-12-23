@@ -100,9 +100,7 @@ export class JobAnalysisService {
       const analysis = JSON.parse(cleanResponse);
       
       // Generate specific CV suggestions based on analysis
-      this.logger.debug("Starting CV suggestions generation...");
       const cvSuggestions = await this.generateCvSuggestions(analysis);
-      this.logger.log(`Generated ${cvSuggestions.length} CV suggestions`);
       analysis.cvSuggestions = cvSuggestions;
       
       const usage = completion.usage || {
@@ -139,18 +137,6 @@ export class JobAnalysisService {
         this.logger.warn("Insufficient data for CV suggestions generation");
         return [];
       }
-
-      // Log input data for debugging
-      this.logger.debug("Generating CV suggestions with data:", {
-        experienceLevel,
-        industry,
-        requiredSkillsCount: requiredSkills.length,
-        technologiesCount: technologies.length,
-        responsibilitiesCount: keyResponsibilities.length,
-        softSkillsCount: softSkills.length,
-        topSkills: requiredSkills.slice(0, 5),
-        topTechnologies: technologies.slice(0, 5),
-      });
 
       // Build concrete examples from actual data
       const skillsList = requiredSkills.slice(0, 10).join(", ");
@@ -210,15 +196,8 @@ Return ONLY a JSON array of strings. Each string is one detailed suggestion (80-
 
       const response = completion.choices[0]?.message?.content;
       if (!response) {
-        this.logger.error("No response from OpenAI for CV suggestions");
         throw new Error("No response from OpenAI for CV suggestions");
       }
-
-      // Log raw response from OpenAI
-      this.logger.debug("Raw OpenAI response for CV suggestions:", {
-        responseLength: response.length,
-        responsePreview: response.substring(0, 200),
-      });
 
       // Clean markdown if present
       let cleanResponse = response.trim();
@@ -234,33 +213,11 @@ Return ONLY a JSON array of strings. Each string is one detailed suggestion (80-
           .trim();
       }
 
-      this.logger.debug("Cleaned response:", {
-        cleanedLength: cleanResponse.length,
-        cleanedPreview: cleanResponse.substring(0, 200),
-      });
-
       const suggestions = JSON.parse(cleanResponse);
       if (Array.isArray(suggestions) && suggestions.length > 0) {
-        // Log parsed suggestions
-        this.logger.log(`Successfully generated ${suggestions.length} CV suggestions`);
-        this.logger.debug("CV Suggestions preview:", {
-          count: suggestions.length,
-          firstSuggestion: suggestions[0]?.substring(0, 150),
-          allSuggestions: suggestions.map((s: string, i: number) => ({
-            index: i,
-            length: s.length,
-            preview: s.substring(0, 100),
-            containsGenericTerms: /relevant|modern|various|general/i.test(s),
-          })),
-        });
         return suggestions;
       }
 
-      this.logger.error("Invalid suggestions format:", {
-        isArray: Array.isArray(suggestions),
-        length: suggestions?.length,
-        type: typeof suggestions,
-      });
       throw new Error("Invalid suggestions format");
     } catch (error) {
       this.logger.error(

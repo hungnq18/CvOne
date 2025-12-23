@@ -28,15 +28,6 @@ export class VietnameseContentService {
       const softSkills = (jobAnalysis?.softSkills || []).join(", ");
       const cvSuggestions = (jobAnalysis?.cvSuggestions || []).slice(0, 3).join("\n");
 
-      // Log for debugging
-      this.logger.debug("🔍 [Generate Summary VI] Job Analysis data:", {
-        experienceLevel,
-        requiredSkillsCount: jobAnalysis?.requiredSkills?.length || 0,
-        technologiesCount: jobAnalysis?.technologies?.length || 0,
-        hasCvSuggestions: !!jobAnalysis?.cvSuggestions,
-        cvSuggestionsCount: jobAnalysis?.cvSuggestions?.length || 0,
-      });
-
       const prompt = `
       Viết Professional Summary bằng tiếng Việt cho CV dựa trên phân tích JD chi tiết sau:
       

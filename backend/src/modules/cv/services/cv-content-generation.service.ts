@@ -439,19 +439,7 @@ Do not include any explanation or markdown, only valid JSON.
     jobAnalysis: any,
     additionalRequirements?: string
   ): Promise<any> {
-    // Log jobAnalysis data including cvSuggestions
-    this.logger.debug("🔍 [Generate CV] Job Analysis received:", {
-      hasJobAnalysis: !!jobAnalysis,
-      jobAnalysisKeys: jobAnalysis ? Object.keys(jobAnalysis) : [],
-      experienceLevel: jobAnalysis?.experienceLevel,
-      requiredSkillsCount: jobAnalysis?.requiredSkills?.length || 0,
-      technologiesCount: jobAnalysis?.technologies?.length || 0,
-      hasCvSuggestions: !!jobAnalysis?.cvSuggestions,
-      cvSuggestionsCount: jobAnalysis?.cvSuggestions?.length || 0,
-      cvSuggestionsPreview: jobAnalysis?.cvSuggestions?.slice(0, 2)?.map((s: string) => s?.substring(0, 100)),
-    });
-
-    // Generate professional summary using OpenAI
+      // Generate professional summary using OpenAI
     const summary = await this.generateProfessionalSummary(
       user,
       jobAnalysis,

@@ -197,24 +197,8 @@ const formatAnalysisResult = (
         ] || result.experienceLevel
       : null;
     
-    // Debug: Log full result object
-    console.log("🔍 [Format Analysis] Full result object:", {
-      resultKeys: Object.keys(result || {}),
-      result: result,
-      cvSuggestions: result?.cvSuggestions,
-      cvSuggestionsType: typeof result?.cvSuggestions,
-      isArray: Array.isArray(result?.cvSuggestions),
-      cvSuggestionsValue: result?.cvSuggestions,
-    });
-    
     // Use AI-generated suggestions from backend, fallback to default if empty
     const hasBackendSuggestions = result.cvSuggestions && result.cvSuggestions.length > 0;
-    console.log("🔍 [Format Analysis] Suggestions check:", {
-      hasCvSuggestions: !!result.cvSuggestions,
-      cvSuggestionsLength: result.cvSuggestions?.length || 0,
-      willUseBackendSuggestions: hasBackendSuggestions,
-      cvSuggestionsPreview: result.cvSuggestions?.slice(0, 2),
-    });
     
     const suggestions = hasBackendSuggestions
       ? result.cvSuggestions
@@ -226,23 +210,6 @@ const formatAnalysisResult = (
           t_results.suggestionResponsibilities,
           t_results.suggestionSoftSkills,
         ];
-    
-    console.log("✅ [Format Analysis] Final suggestions:", {
-      count: suggestions.length,
-      source: hasBackendSuggestions ? "backend" : "default",
-      suggestions: suggestions.map((s: string, i: number) => ({
-        index: i,
-        preview: s.substring(0, 80),
-      })),
-    });
-    
-    if (!hasBackendSuggestions) {
-      console.warn("⚠️ [Format Analysis] Using default suggestions! cvSuggestions not found or empty:", {
-        hasCvSuggestions: !!result.cvSuggestions,
-        cvSuggestionsValue: result?.cvSuggestions,
-        resultKeys: Object.keys(result || {}),
-      });
-    }
 
     return (
       <div className="space-y-4">
@@ -426,52 +393,9 @@ export default function JobDescriptionPage() {
     setAnalysisResult(null);
     try {
       const result = await analyzeJD(jobDescription);
-      console.log("🔍 [JD Analysis] Full API response:", result);
       
       // Backend returns { analyzedJob: {...}, total_tokens: ... }
       const analysisData = result?.analyzedJob || result;
-      console.log("🔍 [JD Analysis] Full API response structure:", {
-        resultKeys: Object.keys(result || {}),
-        hasAnalyzedJob: !!result?.analyzedJob,
-        analyzedJobKeys: result?.analyzedJob ? Object.keys(result.analyzedJob) : [],
-        analyzedJobCvSuggestions: result?.analyzedJob?.cvSuggestions,
-        analyzedJobCvSuggestionsCount: result?.analyzedJob?.cvSuggestions?.length || 0,
-      });
-      
-      console.log("🔍 [JD Analysis] Analysis data:", {
-        hasAnalyzedJob: !!result?.analyzedJob,
-        analysisDataKeys: Object.keys(analysisData || {}),
-        cvSuggestions: analysisData?.cvSuggestions,
-        cvSuggestionsCount: analysisData?.cvSuggestions?.length || 0,
-        cvSuggestionsPreview: analysisData?.cvSuggestions?.slice(0, 2),
-        fullCvSuggestions: analysisData?.cvSuggestions,
-      });
-      
-      if (analysisData?.cvSuggestions) {
-        console.log("✅ [JD Analysis] CV Suggestions received:", {
-          count: analysisData.cvSuggestions.length,
-          suggestions: analysisData.cvSuggestions.map((s: string, i: number) => ({
-            index: i,
-            length: s.length,
-            preview: s.substring(0, 100),
-            containsGenericTerms: /relevant|modern|various|general|focus on|emphasize/i.test(s),
-          })),
-        });
-      } else {
-        console.warn("⚠️ [JD Analysis] No cvSuggestions in response!", {
-          analysisDataKeys: Object.keys(analysisData || {}),
-          analysisData: analysisData,
-        });
-      }
-      
-      // Double check before formatting
-      console.log("🔍 [JD Analysis] Before formatAnalysisResult:", {
-        analysisDataKeys: Object.keys(analysisData || {}),
-        hasCvSuggestions: !!analysisData?.cvSuggestions,
-        cvSuggestionsCount: analysisData?.cvSuggestions?.length || 0,
-        cvSuggestions: analysisData?.cvSuggestions,
-        analysisData: analysisData,
-      });
       
       const formattedResult = formatAnalysisResult(analysisData, t.analysisResults);
       setAnalysisResult(formattedResult);
@@ -499,32 +423,10 @@ export default function JobDescriptionPage() {
     setAnalysisResult(null);
     try {
       const result = await uploadJDPdfAndAnalyze(jdFile);
-      console.log("🔍 [JD PDF Analysis] Full API response:", result);
       
       // Backend returns { analyzedJob: {...}, total_tokens: ... } from analyzeJobDescription
       // Also may include text field if extracted
       const analysisData = result?.analyzedJob || result?.analysis || result;
-      console.log("🔍 [JD PDF Analysis] Analysis data:", {
-        hasAnalyzedJob: !!result?.analyzedJob,
-        hasAnalysis: !!result?.analysis,
-        analysisDataKeys: Object.keys(analysisData || {}),
-        cvSuggestions: analysisData?.cvSuggestions,
-        cvSuggestionsCount: analysisData?.cvSuggestions?.length || 0,
-      });
-      
-      if (analysisData?.cvSuggestions) {
-        console.log("✅ [JD PDF Analysis] CV Suggestions received:", {
-          count: analysisData.cvSuggestions.length,
-          suggestions: analysisData.cvSuggestions.map((s: string, i: number) => ({
-            index: i,
-            length: s.length,
-            preview: s.substring(0, 100),
-          })),
-        });
-      } else {
-        console.warn("⚠️ [JD PDF Analysis] No cvSuggestions in response!");
-      }
-      
       const extractedText = result?.text || "";
 
       if (extractedText) {

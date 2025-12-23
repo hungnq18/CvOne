@@ -529,18 +529,6 @@ export const SummaryForm: FC<FormProps> = ({ data, onUpdate }) => {
     try {
       // Use jobAnalysis from CV provider (has cvSuggestions) instead of form data
       const jobAnalysis = jobAnalysisFromProvider || data?.jobAnalysis || {};
-      
-      console.log("🔍 [Summary Form] Using jobAnalysis for suggestSummary:", {
-        source: jobAnalysisFromProvider ? "CV Provider" : "Form Data",
-        hasJobAnalysis: !!jobAnalysis,
-        jobAnalysisKeys: Object.keys(jobAnalysis || {}),
-        hasCvSuggestions: !!jobAnalysis?.cvSuggestions,
-        cvSuggestionsCount: jobAnalysis?.cvSuggestions?.length || 0,
-        experienceLevel: jobAnalysis?.experienceLevel,
-        requiredSkillsCount: jobAnalysis?.requiredSkills?.length || 0,
-        technologiesCount: jobAnalysis?.technologies?.length || 0,
-      });
-      
       const res = await suggestSummary({}, jobAnalysis);
 
       const rawSummaries: any =
