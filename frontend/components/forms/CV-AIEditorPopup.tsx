@@ -2167,7 +2167,9 @@ export const ProjectPopup: FC<{
 }> = ({ onClose, initialData, onSave }) => {
   const { language } = useLanguage();
   const t = translations[language].projectPopup;
+  const handleMaxLength = createMaxLengthHandler(language);
 
+  // 1. Khởi tạo state: Chuẩn hóa mọi định dạng ngày về YYYY-MM-DD ngay từ đầu
   const [projects, setProjects] = useState<ProjectItem[]>(() => {
     const rawProjects =
       initialData.Project || initialData.project || initialData.projects || [];
@@ -2187,30 +2189,38 @@ export const ProjectPopup: FC<{
       let startDate = "";
       let endDate = "";
 
+      // Xử lý Start Date
       if (item?.startDate) {
         try {
+          // Thử parse date
           const date = new Date(item.startDate);
           if (!isNaN(date.getTime())) {
-            startDate = date.toISOString().split("T")[0];
+            startDate = date.toISOString().split("T")[0]; // Lấy YYYY-MM-DD
+          } else {
+            // Fallback nếu string không chuẩn ISO nhưng vẫn là string
+             startDate = typeof item.startDate === 'string' ? item.startDate.slice(0, 10) : "";
           }
         } catch (e) {
-          startDate = item.startDate;
+          startDate = "";
         }
       }
 
+      // Xử lý End Date
       if (item?.endDate) {
         try {
           const date = new Date(item.endDate);
           if (!isNaN(date.getTime())) {
             endDate = date.toISOString().split("T")[0];
+          } else {
+             endDate = typeof item.endDate === 'string' ? item.endDate.slice(0, 10) : "";
           }
         } catch (e) {
-          endDate = item.endDate;
+          endDate = "";
         }
       }
 
       return {
-        title: item?.title || item?.["title "] || "",
+        title: item?.title || item?.["title "] || "", // Xử lý cả trường hợp thừa khoảng trắng
         summary: item?.summary || "",
         startDate: startDate,
         endDate: endDate,
@@ -2241,14 +2251,39 @@ export const ProjectPopup: FC<{
       prev.filter((_, idx) => idx !== index)
     );
 
+  const validateForm = () => {
+    for (const project of projects) {
+      if (project.title && project.title.length > 200) {
+        notify.error(
+          language === "vi"
+            ? `Tên dự án không được vượt quá 200 ký tự`
+            : `Project name must not exceed 200 characters`
+        );
+        return false;
+      }
+      if (project.summary && project.summary.length > 2000) {
+        notify.error(
+          language === "vi"
+            ? `Mô tả dự án không được vượt quá 2000 ký tự`
+            : `Project summary must not exceed 2000 characters`
+        );
+        return false;
+      }
+    }
+    return true;
+  };
+
   const handleSaveChanges = () => {
+    if (!validateForm()) return;
     const sanitized = projects
       .map((item) => {
+        // Chuyển đổi an toàn từ YYYY-MM-DD sang ISO String (nếu backend cần)
+        // Nếu item.startDate đang rỗng thì giữ nguyên rỗng
         const startDateISO = item.startDate
-          ? new Date(item.startDate + "T00:00:00").toISOString()
+          ? new Date(item.startDate).toISOString()
           : "";
         const endDateISO = item.endDate
-          ? new Date(item.endDate + "T00:00:00").toISOString()
+          ? new Date(item.endDate).toISOString()
           : "";
 
         return {
@@ -2258,8 +2293,9 @@ export const ProjectPopup: FC<{
           endDate: endDateISO,
         };
       })
-      .filter((item) => item.title);
+      .filter((item) => item.title); // Chỉ lưu project có tên
 
+    // Đảm bảo update vào đúng key "Project" (viết hoa) để thống nhất
     const updatedData = {
       ...initialData,
       Project: sanitized.length > 0 ? sanitized : [],
@@ -2289,6 +2325,8 @@ export const ProjectPopup: FC<{
                 {t.removeButton}
               </button>
             </div>
+            
+            {/* Tên dự án */}
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">
                 {t.nameLabel}
@@ -2302,6 +2340,8 @@ export const ProjectPopup: FC<{
                 className="w-full border rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
+            
+            {/* Mô tả */}
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">
                 {t.summaryLabel}
@@ -2315,16 +2355,16 @@ export const ProjectPopup: FC<{
                 className="w-full border rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
+
+            {/* Ngày tháng */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">
                   {t.startDateLabel}
                 </label>
                 <input
-                  type="date"
-                  value={
-                    project.startDate ? project.startDate.slice(0, 10) : ""
-                  }
+                  type="date" // Input type date chuẩn
+                  value={project.startDate} // State đã chuẩn YYYY-MM-DD
                   onChange={(e) =>
                     handleFieldChange(index, "startDate", e.target.value)
                   }
@@ -2336,8 +2376,8 @@ export const ProjectPopup: FC<{
                   {t.endDateLabel}
                 </label>
                 <input
-                  type="date"
-                  value={project.endDate ? project.endDate.slice(0, 10) : ""}
+                  type="date" // Input type date chuẩn
+                  value={project.endDate} // State đã chuẩn YYYY-MM-DD
                   onChange={(e) =>
                     handleFieldChange(index, "endDate", e.target.value)
                   }

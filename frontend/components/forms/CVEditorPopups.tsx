@@ -1834,6 +1834,7 @@ export const ProjectPopup: FC<{
   const t = translations[language].projectPopup;
   const handleMaxLength = createMaxLengthHandler(language);
 
+  // 1. Khởi tạo state với logic chuẩn hóa ngày tháng về YYYY-MM-DD
   const [projects, setProjects] = useState<ProjectItem[]>(() => {
     const rawProjects =
       initialData.Project || initialData.project || initialData.projects || [];
@@ -1853,25 +1854,32 @@ export const ProjectPopup: FC<{
       let startDate = "";
       let endDate = "";
 
+      // Xử lý Start Date
       if (item?.startDate) {
         try {
           const date = new Date(item.startDate);
           if (!isNaN(date.getTime())) {
-            startDate = date.toISOString().split("T")[0];
+            startDate = date.toISOString().split("T")[0]; // Lấy phần YYYY-MM-DD
+          } else {
+            // Nếu date string không chuẩn, giữ nguyên hoặc reset
+             startDate = typeof item.startDate === 'string' ? item.startDate.slice(0, 10) : "";
           }
         } catch (e) {
-          startDate = item.startDate;
+          startDate = "";
         }
       }
 
+      // Xử lý End Date
       if (item?.endDate) {
         try {
           const date = new Date(item.endDate);
           if (!isNaN(date.getTime())) {
-            endDate = date.toISOString().split("T")[0];
+            endDate = date.toISOString().split("T")[0]; // Lấy phần YYYY-MM-DD
+          } else {
+             endDate = typeof item.endDate === 'string' ? item.endDate.slice(0, 10) : "";
           }
         } catch (e) {
-          endDate = item.endDate;
+          endDate = "";
         }
       }
 
@@ -1933,11 +1941,13 @@ export const ProjectPopup: FC<{
     if (!validateForm()) return;
     const sanitized = projects
       .map((item) => {
+        // Chuyển đổi lại sang ISO string khi lưu (nếu backend cần full datetime)
+        // Nếu backend chỉ cần YYYY-MM-DD thì bỏ đoạn new Date(...) đi
         const startDateISO = item.startDate
-          ? new Date(item.startDate + "T00:00:00").toISOString()
+          ? new Date(item.startDate).toISOString() 
           : "";
         const endDateISO = item.endDate
-          ? new Date(item.endDate + "T00:00:00").toISOString()
+          ? new Date(item.endDate).toISOString()
           : "";
 
         return {
@@ -1947,8 +1957,9 @@ export const ProjectPopup: FC<{
           endDate: endDateISO,
         };
       })
-      .filter((item) => item.title);
+      .filter((item) => item.title); // Chỉ lưu các dự án có Tên
 
+    // Cập nhật lại vào key chính xác (Project)
     const updatedData = {
       ...initialData,
       Project: sanitized.length > 0 ? sanitized : [],
@@ -1978,6 +1989,8 @@ export const ProjectPopup: FC<{
                 {t.removeButton}
               </button>
             </div>
+            
+            {/* Project Name */}
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">
                 {t.nameLabel}
@@ -1993,6 +2006,8 @@ export const ProjectPopup: FC<{
                 className="w-full border rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
+
+            {/* Summary */}
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">
                 {t.summaryLabel}
@@ -2008,16 +2023,16 @@ export const ProjectPopup: FC<{
                 className="w-full border rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
+
+            {/* Date Fields */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">
                   {t.startDateLabel}
                 </label>
                 <input
-                  type="date"
-                  value={
-                    project.startDate ? project.startDate.slice(0, 10) : ""
-                  }
+                  type="date" // Đã set type="date"
+                  value={project.startDate} // State đã là YYYY-MM-DD
                   onChange={(e) =>
                     handleFieldChange(index, "startDate", e.target.value)
                   }
@@ -2029,8 +2044,8 @@ export const ProjectPopup: FC<{
                   {t.endDateLabel}
                 </label>
                 <input
-                  type="date"
-                  value={project.endDate ? project.endDate.slice(0, 10) : ""}
+                  type="date" // Đã set type="date"
+                  value={project.endDate} // State đã là YYYY-MM-DD
                   onChange={(e) =>
                     handleFieldChange(index, "endDate", e.target.value)
                   }
