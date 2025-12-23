@@ -31,9 +31,11 @@ export class UsersService {
     }
   }
 
-  async getAllUsers(): Promise<User[]> {
+  async getAllUsers(userId: string): Promise<User[]> {
     return this.userModel
-      .find()
+      .find({
+        _id: { $ne: userId }, // ❌ không lấy chính user này
+      })
       .populate({
         path: "account_id",
         select: "email role",
