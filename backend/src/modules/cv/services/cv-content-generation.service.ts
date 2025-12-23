@@ -12,6 +12,39 @@ export class CvContentGenerationService {
   ) {}
 
   /**
+   * Auto-detect language from text or job analysis
+   */
+  private detectLanguage(text?: string, jobAnalysis?: any): "vi" | "en" {
+    // Check text first if provided
+    if (text && text.trim().length > 0) {
+      const vietnameseChars = /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđĐ]/i;
+      const vietnameseWords = /\b(và|với|trong|cho|của|được|là|một|các|này|đó|nào|khi|nếu|để|về|theo|từ|sẽ|đã|đang|việc|dự án|hệ thống|ứng dụng|phần mềm|phát triển|thiết kế|quản lý|kinh nghiệm|kỹ năng|công ty|chức vụ)\b/i;
+      if (vietnameseChars.test(text) || vietnameseWords.test(text)) {
+        return "vi";
+      }
+    }
+
+    // Check job analysis fields
+    if (jobAnalysis) {
+      const checkText = [
+        ...(jobAnalysis.keyResponsibilities || []),
+        ...(jobAnalysis.cvSuggestions || []),
+        jobAnalysis.additionalRequirements || "",
+      ].join(" ");
+
+      if (checkText) {
+        const vietnameseChars = /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđĐ]/i;
+        const vietnameseWords = /\b(và|với|trong|cho|của|được|là|một|các|này|đó|nào|khi|nếu|để|về|theo|từ|sẽ|đã|đang|việc|dự án|hệ thống|ứng dụng|phần mềm|phát triển|thiết kế|quản lý|kinh nghiệm|kỹ năng|công ty|chức vụ)\b/i;
+        if (vietnameseChars.test(checkText) || vietnameseWords.test(checkText)) {
+          return "vi";
+        }
+      }
+    }
+
+    return "en";
+  }
+
+  /**
    * Generate multiple professional summaries using OpenAI
    */
   async generateProfessionalSummary(
@@ -20,10 +53,53 @@ export class CvContentGenerationService {
     additionalRequirements?: string
   ): Promise<{ professional: string[]; total_tokens: number }> {
     try {
+      // Auto-detect language from job analysis
+      const detectedLanguage = this.detectLanguage(additionalRequirements, jobAnalysis);
+      const isVietnamese = detectedLanguage === "vi";
+      
       const keyResponsibilities = (jobAnalysis?.keyResponsibilities || []).slice(0, 5).join("; ") || "Not specified";
       const softSkills = (jobAnalysis?.softSkills || []).join(", ") || "Not specified";
       
-      const prompt = `
+      const prompt = isVietnamese ? `
+Viết 3 đoạn Professional Summary khác nhau bằng tiếng Việt cho CV dựa trên thông tin chi tiết sau:
+
+Thông tin người dùng:
+- Tên: ${userProfile.first_name} ${userProfile.last_name}
+- Địa điểm: ${userProfile.city || "Không xác định"}, ${userProfile.country || "Không xác định"}
+
+Chi tiết phân tích JD:
+- Kỹ năng kỹ thuật yêu cầu: ${(jobAnalysis?.requiredSkills || []).join(", ") || "Không xác định"}
+- Công nghệ & Tools: ${(jobAnalysis?.technologies || []).join(", ") || "Không xác định"}
+- Cấp độ kinh nghiệm yêu cầu: ${jobAnalysis?.experienceLevel || "Không xác định"}
+- Ngành: ${jobAnalysis?.industry || "Không xác định"}
+- Trách nhiệm chính: ${keyResponsibilities}
+- Kỹ năng mềm: ${softSkills}
+
+Yêu cầu bổ sung: ${additionalRequirements || "Không có"}
+
+YÊU CẦU CHI TIẾT cho mỗi summary:
+1. Câu đầu: Bắt đầu bằng job title/role cụ thể (VD: "Kỹ sư phần mềm Backend" không phải "chuyên gia") và đề cập 2-3 công nghệ cốt lõi từ job analysis
+2. Câu thứ hai: Nhấn mạnh trách nhiệm cụ thể từ keyResponsibilities phù hợp với công việc, đề cập kỹ năng mềm nếu có
+3. Câu thứ ba (tùy chọn): Thể hiện giá trị với thành tựu cụ thể hoặc lĩnh vực chuyên môn phù hợp với yêu cầu công việc
+4. Sử dụng động từ: phát triển, triển khai, tối ưu, thiết kế, xây dựng, tạo, quản lý
+5. Bao gồm công nghệ cụ thể: Đề cập công nghệ thực tế từ job analysis (VD: "Node.js, PostgreSQL, Docker" không phải "công nghệ hiện đại")
+6. Phù hợp cấp độ kinh nghiệm: Cho ${jobAnalysis?.experienceLevel || "mid-level"}, sử dụng ngôn ngữ phù hợp (junior = "với kinh nghiệm trong", senior = "chuyên gia trong", "nhiều năm kinh nghiệm")
+7. Độ dài: Đúng 2-3 câu, tổng 40-60 từ
+8. Cụ thể: Tránh cụm từ chung chung như "đam mê công nghệ" hoặc "làm việc nhóm" trừ khi kỹ năng mềm được đề cập trong job analysis
+
+Cấu trúc ví dụ:
+- Tùy chọn 1: Tập trung vào chuyên môn kỹ thuật và công nghệ cụ thể
+- Tùy chọn 2: Tập trung vào trách nhiệm và thành tựu
+- Tùy chọn 3: Tập trung vào kỹ năng mềm và hợp tác (chỉ nếu được đề cập trong job analysis)
+
+Chỉ trả về mảng JSON gồm 3 summaries, ví dụ:
+[
+  "Summary 1 với công nghệ và trách nhiệm cụ thể...",
+  "Summary 2 với trọng tâm khác...",
+  "Summary 3 với cách tiếp cận thay thế..."
+]
+Không bao gồm giải thích hoặc markdown, chỉ JSON hợp lệ.
+` : `
 Generate 3 different compelling professional summaries for a CV based on the following detailed information:
 
 User Profile:
@@ -64,14 +140,17 @@ Return only a JSON array of 3 summaries, e.g.:
 Do not include any explanation or markdown, only valid JSON.
 `;
 
+      const systemMessage = isVietnamese
+        ? "Bạn là chuyên gia viết CV chuyên nghiệp. Mỗi summary phải bao gồm công nghệ, trách nhiệm và thành tựu cụ thể từ job analysis. Tránh cụm từ chung chung. Luôn trả về mảng JSON gồm đúng 3 summaries khác nhau với các trọng tâm đa dạng."
+        : "You are a professional CV writer specializing in creating specific, detailed professional summaries. Each summary must include specific technologies, responsibilities, and achievements from the job analysis. Avoid generic phrases. Always return a JSON array of exactly 3 different summaries with varied focus areas.";
+
       const openai = this.openaiApiService.getOpenAI();
       const completion = await openai.chat.completions.create({
         model: "gpt-4o",
         messages: [
           {
             role: "system",
-            content:
-              "You are a professional CV writer specializing in creating specific, detailed professional summaries. Each summary must include specific technologies, responsibilities, and achievements from the job analysis. Avoid generic phrases. Always return a JSON array of exactly 3 different summaries with varied focus areas.",
+            content: systemMessage,
           },
           {
             role: "user",
@@ -134,6 +213,10 @@ Do not include any explanation or markdown, only valid JSON.
     total_tokens: number;
   }> {
     try {
+      // Auto-detect language from job analysis
+      const detectedLanguage = this.detectLanguage(undefined, jobAnalysis);
+      const isVietnamese = detectedLanguage === "vi";
+      
       const years =
         experienceLevel === "senior"
           ? 5
@@ -148,7 +231,59 @@ Do not include any explanation or markdown, only valid JSON.
       const keyResponsibilities = (jobAnalysis.keyResponsibilities || []).slice(0, 5).join("; ") || "Not specified";
       const softSkills = (jobAnalysis.softSkills || []).join(", ") || "Not specified";
       
-      const prompt = `
+      const prompt = isVietnamese ? `
+Tạo một mục kinh nghiệm làm việc thực tế và chính xác ở định dạng JSON dựa CHẶT CHẼ trên phân tích JD chi tiết được cung cấp.
+
+Chi tiết phân tích JD:
+- Kỹ năng kỹ thuật yêu cầu: ${jobAnalysis.requiredSkills?.join(", ") || "Không xác định"}
+- Công nghệ & Tools: ${jobAnalysis.technologies?.join(", ") || "Không xác định"}
+- Cấp độ kinh nghiệm: ${experienceLevel}
+- Ngành: ${jobAnalysis.industry || "công nghệ"}
+- Trách nhiệm chính từ JD: ${keyResponsibilities}
+- Kỹ năng mềm: ${softSkills}
+
+Thời gian kinh nghiệm: ${years} năm (cấp độ ${experienceLevel})
+
+Cấu trúc JSON đầu ra:
+{
+  "title": "Chức danh cụ thể phù hợp với cấp độ kinh nghiệm",
+  "company": "Tên công ty thực tế (không chung chung như 'Công ty Công nghệ')",
+  "startDate": "YYYY-MM-DD",
+  "endDate": "YYYY-MM-DD",
+  "description": "2-3 câu với trách nhiệm cụ thể, công nghệ sử dụng, và thành tựu có thể đo lường"
+}
+
+YÊU CẦU CHI TIẾT:
+1. Chức danh: Phải cụ thể và phù hợp với cấp độ kinh nghiệm:
+   - Junior: "Lập trình viên", "Nhà phát triển"
+   - Mid-level: "Kỹ sư phần mềm", "Lập trình viên"
+   - Senior: "Kỹ sư phần mềm cao cấp", "Trưởng nhóm"
+   Bao gồm công nghệ chính nếu liên quan (VD: "Kỹ sư Backend cao cấp (Node.js)")
+
+2. Tên công ty: Tạo tên công ty thực tế dựa trên ngành:
+   - Công nghệ: Sử dụng tên như "TechCorp Solutions", "Digital Innovations", "Cloud Systems"
+   - Tài chính: "Nhóm Dịch vụ Tài chính", "Công ty Giải pháp Đầu tư"
+   - Y tế: "HealthTech Solutions", "Hệ thống Y tế"
+   - Tránh: "Công ty", "Công ty Công nghệ", "ABC Corp"
+
+3. Mô tả (2-3 câu, 50-70 từ):
+   - Câu 1: Liệt kê 2-3 trách nhiệm cụ thể từ keyResponsibilities, đề cập công nghệ chính từ job analysis
+   - Câu 2: Mô tả thành tựu cụ thể với số liệu/tác động (VD: "cải thiện hiệu suất 30%", "giảm lỗi 25%", "xử lý 10,000+ yêu cầu/ngày")
+   - Câu 3 (tùy chọn): Đề cập hợp tác hoặc kỹ năng mềm nếu liên quan đến job analysis
+   
+4. Phải bao gồm:
+   - Ít nhất 3 công nghệ cụ thể từ job analysis (không phải thuật ngữ chung chung)
+   - Ít nhất 2 trách nhiệm từ keyResponsibilities
+   - Ít nhất 1 thành tựu có thể đo lường với số/phần trăm
+   - Động từ: phát triển, triển khai, tối ưu, thiết kế, xây dựng, tạo, quản lý, cải thiện, giảm, tăng
+
+5. KHÔNG bao gồm:
+   - Trách nhiệm chung chung không có trong job analysis
+   - Công nghệ không được đề cập trong job analysis
+   - Thành tựu mơ hồ không có số liệu
+
+Chỉ trả về JSON hợp lệ, không có văn bản hoặc markdown bổ sung.
+` : `
 Generate a realistic and accurate work experience entry in JSON format based STRICTLY on the provided detailed job analysis.
 
 Job Analysis Details:
@@ -202,14 +337,17 @@ DETAILED Requirements:
 Return only valid JSON with no additional text or markdown.
 `;
 
+      const systemMessage = isVietnamese
+        ? "Bạn là chuyên gia viết CV chuyên nghiệp. Mỗi mục kinh nghiệm phải bao gồm công nghệ chính xác, trách nhiệm cụ thể từ job analysis, và thành tựu có thể đo lường với số liệu. Tránh mô tả chung chung. Luôn trả về JSON hợp lệ."
+        : "You are a professional CV writer specializing in creating detailed, specific work experience entries. Each entry must include exact technologies, specific responsibilities from the job analysis, and measurable achievements with numbers. Avoid generic descriptions. Always return valid JSON only.";
+
       const openai = this.openaiApiService.getOpenAI();
       const completion = await openai.chat.completions.create({
         model: "gpt-4o",
         messages: [
           {
             role: "system",
-            content:
-              "You are a professional CV writer specializing in creating detailed, specific work experience entries. Each entry must include exact technologies, specific responsibilities from the job analysis, and measurable achievements with numbers. Avoid generic descriptions. Always return valid JSON only.",
+            content: systemMessage,
           },
           {
             role: "user",

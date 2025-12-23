@@ -166,6 +166,23 @@ Return only valid JSON without any additional text.
   }
 
   /**
+   * Auto-detect language from text
+   */
+  private detectLanguage(text: string): "vi" | "en" {
+    if (!text || text.trim().length === 0) return "en";
+    
+    // Check for Vietnamese characters
+    const vietnameseChars = /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđĐ]/i;
+    const hasVietnamese = vietnameseChars.test(text);
+    
+    // Additional check: common Vietnamese words
+    const vietnameseWords = /\b(và|với|trong|cho|của|được|là|một|các|này|đó|nào|khi|nếu|để|về|theo|từ|sẽ|đã|đang|việc|dự án|hệ thống|ứng dụng|phần mềm|phát triển|thiết kế|quản lý|kinh nghiệm|kỹ năng|công ty|chức vụ)\b/i;
+    const hasVietnameseWords = vietnameseWords.test(text);
+    
+    return (hasVietnamese || hasVietnameseWords) ? "vi" : "en";
+  }
+
+  /**
    * Rewrite a work experience description to be more professional and impressive
    */
   async rewriteWorkDescription(
@@ -173,23 +190,34 @@ Return only valid JSON without any additional text.
     language?: string
   ): Promise<{ workDescription: string; total_tokens: number }> {
     try {
-      let languageNote = "";
-      if (language === "vi") {
-        languageNote =
-          "\nLưu ý: Viết lại mô tả này bằng tiếng Việt chuyên nghiệp, tự nhiên, súc tích.";
-      } else if (language === "en") {
-        languageNote =
-          "\nNote: Rewrite this description in professional, natural, concise English.";
+      // Auto-detect language if not provided
+      const detectedLanguage = language || this.detectLanguage(description);
+
+      let languageInstruction = "";
+      if (detectedLanguage === "vi") {
+        languageInstruction =
+          "\n\nQUAN TRỌNG: Văn bản gốc là tiếng Việt. Bạn PHẢI viết lại bằng tiếng Việt, giữ nguyên ngôn ngữ. Sử dụng ngôn ngữ chuyên nghiệp, tự nhiên, súc tích. Không được dịch sang tiếng Anh.";
+      } else {
+        languageInstruction =
+          "\n\nIMPORTANT: The original text is in English. You MUST rewrite it in English, keeping the same language. Use professional, natural, concise language. Do not translate to Vietnamese or any other language.";
       }
+
       const prompt = `
-Rewrite the following work experience description to be more professional, impressive, and concise. Use action verbs, highlight achievements, and make it suitable for a CV.${languageNote}
+Rewrite the following work experience description to be more professional, impressive, and concise. Use action verbs, highlight achievements, and make it suitable for a CV.${languageInstruction}
 
 Original description:
 """
 ${description}
 """
 
-Return only the rewritten description, no explanation, no markdown.
+CRITICAL REQUIREMENTS:
+- Keep the SAME LANGUAGE as the original text
+- Use professional CV style with action verbs
+- Highlight achievements and impact
+- Be concise but impactful
+- Do NOT translate or change the language
+
+Return only the rewritten description in the SAME LANGUAGE as the original, no explanation, no markdown.
 `;
       const openai = this.openaiApiService.getOpenAI();
       const completion = await openai.chat.completions.create({
@@ -198,7 +226,7 @@ Return only the rewritten description, no explanation, no markdown.
           {
             role: "system",
             content:
-              "You are a professional CV writer. Rewrite work experience descriptions to be impressive and concise.",
+              "You are a professional CV writer. When rewriting work experience descriptions, you MUST keep the same language as the original text. If the original is in Vietnamese, rewrite in Vietnamese. If the original is in English, rewrite in English. Never translate or change the language.",
           },
           {
             role: "user",

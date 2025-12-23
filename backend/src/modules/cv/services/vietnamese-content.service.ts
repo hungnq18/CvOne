@@ -12,13 +12,49 @@ export class VietnameseContentService {
   ) {}
 
   /**
-   * Generate professional summary in Vietnamese using OpenAI
+   * Auto-detect language from text or job analysis
+   */
+  private detectLanguage(text?: string, jobAnalysis?: any): "vi" | "en" {
+    // Check text first if provided
+    if (text && text.trim().length > 0) {
+      const vietnameseChars = /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđĐ]/i;
+      const vietnameseWords = /\b(và|với|trong|cho|của|được|là|một|các|này|đó|nào|khi|nếu|để|về|theo|từ|sẽ|đã|đang|việc|dự án|hệ thống|ứng dụng|phần mềm|phát triển|thiết kế|quản lý|kinh nghiệm|kỹ năng|công ty|chức vụ)\b/i;
+      if (vietnameseChars.test(text) || vietnameseWords.test(text)) {
+        return "vi";
+      }
+    }
+
+    // Check job analysis fields
+    if (jobAnalysis) {
+      const checkText = [
+        ...(jobAnalysis.keyResponsibilities || []),
+        ...(jobAnalysis.cvSuggestions || []),
+        jobAnalysis.additionalRequirements || "",
+      ].join(" ");
+
+      if (checkText) {
+        const vietnameseChars = /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđĐ]/i;
+        const vietnameseWords = /\b(và|với|trong|cho|của|được|là|một|các|này|đó|nào|khi|nếu|để|về|theo|từ|sẽ|đã|đang|việc|dự án|hệ thống|ứng dụng|phần mềm|phát triển|thiết kế|quản lý|kinh nghiệm|kỹ năng|công ty|chức vụ)\b/i;
+        if (vietnameseChars.test(checkText) || vietnameseWords.test(checkText)) {
+          return "vi";
+        }
+      }
+    }
+
+    return "en";
+  }
+
+  /**
+   * Generate professional summary with auto-detected language using OpenAI
    */
   async generateProfessionalSummaryVi(
     jobAnalysis: any,
     additionalRequirements?: string
   ): Promise<{ summary: string; total_tokens: number }> {
     try {
+      // Auto-detect language from job analysis
+      const detectedLanguage = this.detectLanguage(additionalRequirements, jobAnalysis);
+      
       // Extract structured data from job analysis
       const requiredSkills = (jobAnalysis?.requiredSkills || []).join(", ");
       const technologies = (jobAnalysis?.technologies || []).join(", ");
@@ -28,7 +64,10 @@ export class VietnameseContentService {
       const softSkills = (jobAnalysis?.softSkills || []).join(", ");
       const cvSuggestions = (jobAnalysis?.cvSuggestions || []).slice(0, 3).join("\n");
 
-      const prompt = `
+      // Build prompt based on detected language
+      const isVietnamese = detectedLanguage === "vi";
+      
+      const prompt = isVietnamese ? `
       Viết Professional Summary bằng tiếng Việt cho CV dựa trên phân tích JD chi tiết sau:
       
       === THÔNG TIN JD ===
@@ -61,7 +100,44 @@ export class VietnameseContentService {
       9. KHÔNG dùng từ chung chung như "công nghệ hiện đại", "các công cụ" - phải liệt kê TÊN CỤ THỂ
       
       Chỉ trả về đoạn summary, không markdown, không giải thích.
+      ` : `
+      Write a Professional Summary in English for a CV based on the following detailed job analysis:
+      
+      === JOB ANALYSIS ===
+      - Experience Level: ${experienceLevel}
+      - Industry: ${industry}
+      - Required Skills: ${requiredSkills || "Not specified"}
+      - Technologies & Tools: ${technologies || "Not specified"}
+      - Key Responsibilities: ${keyResponsibilities || "Not specified"}
+      - Soft Skills: ${softSkills || "Not specified"}
+      
+      ${cvSuggestions ? `=== CV SUGGESTIONS FROM JD ===\n${cvSuggestions}\n` : ""}
+      
+      ${additionalRequirements ? `Additional Requirements: ${additionalRequirements}\n` : ""}
+      
+      === MANDATORY RULES ===
+      1. EXACTLY 2-3 sentences (not 4)
+      2. Start with specific job title based on experience level and industry:
+         - Junior: "Developer", "Software Developer"
+         - Mid-level: "Software Engineer", "Developer"
+         - Senior: "Senior Software Engineer", "Expert Developer"
+      3. Third person, no "I/me/my"
+      4. List ALL and EXACT technologies from the list above, prioritize programming languages first
+      5. Experience level appropriate:
+         - Junior: "with experience in", "experienced in"
+         - Mid-level: "with experience", "solid foundation in"
+         - Senior: "with years of experience", "expert in"
+      6. Soft skills use active voice: "demonstrates...", "shows ability to..."
+      7. Action verbs: developed, implemented, built, optimized, designed, managed
+      8. Use information from "CV SUGGESTIONS FROM JD" if available to make summary more specific
+      9. DO NOT use generic terms like "modern technologies", "various tools" - must list SPECIFIC NAMES
+      
+      Return only the summary, no markdown, no explanation.
       `;
+
+      const systemMessage = isVietnamese
+        ? "Bạn là chuyên gia viết CV chuyên nghiệp. Bạn PHẢI sử dụng CHÍNH XÁC các tên công nghệ, kỹ năng từ job analysis. KHÔNG dùng từ chung chung. Luôn trả về đoạn Professional Summary bằng tiếng Việt, không markdown, 2-3 câu."
+        : "You are a professional CV writer. You MUST use EXACT technology and skill names from the job analysis. DO NOT use generic terms. Always return a Professional Summary in English, no markdown, 2-3 sentences.";
 
       const openai = this.openaiApiService.getOpenAI();
       const completion = await openai.chat.completions.create({
@@ -69,8 +145,7 @@ export class VietnameseContentService {
         messages: [
           {
             role: "system",
-            content:
-              "Bạn là chuyên gia viết CV chuyên nghiệp. Bạn PHẢI sử dụng CHÍNH XÁC các tên công nghệ, kỹ năng từ job analysis. KHÔNG dùng từ chung chung. Luôn trả về đoạn Professional Summary bằng tiếng Việt, không markdown, 2-3 câu.",
+            content: systemMessage,
           },
           {
             role: "user",

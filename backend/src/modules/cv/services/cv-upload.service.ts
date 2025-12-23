@@ -4,6 +4,7 @@ import { CvUploadValidator } from "../validators/cv-upload.validator";
 import { CvAnalysisService } from "./cv-analysis.service";
 import { CvContentGenerationService } from "./cv-content-generation.service";
 import { JobAnalysisService } from "./job-analysis.service";
+import { PdfOcrService } from "./pdf-ocr.service";
 
 @Injectable()
 export class CvUploadService {
@@ -13,7 +14,8 @@ export class CvUploadService {
     private readonly cvAnalysisService: CvAnalysisService,
     private readonly cvContentGenerationService: CvContentGenerationService,
     private readonly jobAnalysisService: JobAnalysisService,
-    private readonly cvPdfCloudService: CvPdfCloudService
+    private readonly cvPdfCloudService: CvPdfCloudService,
+    private readonly pdfOcrService: PdfOcrService
   ) {}
 
   /**
@@ -28,8 +30,8 @@ export class CvUploadService {
     CvUploadValidator.validateFile(file);
     CvUploadValidator.validateJobDescription(jobDescription);
 
-    // Extract and validate PDF text
-    const cvText = await CvUploadValidator.validateAndExtractText(file);
+    // Extract and validate PDF text (with OCR fallback)
+    const cvText = await CvUploadValidator.validateAndExtractText(file, this.pdfOcrService);
 
     try {
       // Process with AI in parallel for better performance
@@ -64,8 +66,8 @@ export class CvUploadService {
     CvUploadValidator.validateFile(file);
     CvUploadValidator.validateJobDescription(jobDescription);
 
-    // Extract and validate PDF text
-    const cvText = await CvUploadValidator.validateAndExtractText(file);
+    // Extract and validate PDF text (with OCR fallback)
+    const cvText = await CvUploadValidator.validateAndExtractText(file, this.pdfOcrService);
 
     try {
       // Upload original CV to cloud storage

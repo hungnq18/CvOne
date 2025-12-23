@@ -3,6 +3,7 @@
 "use client";
 
 import { analyzeJD, suggestSkills, suggestSummary } from "@/api/cvapi";
+import { toast } from "@/hooks/use-toast";
 import { useOnClickOutside } from "@/hooks/useOnClickOutside";
 import { notify } from "@/lib/notify";
 import { useCV } from "@/providers/cv-provider";
@@ -16,9 +17,8 @@ import {
   Wand2,
   X,
 } from "lucide-react";
-import { ChangeEvent, FC, ReactNode, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { toast } from "@/hooks/use-toast";
+import { ChangeEvent, FC, ReactNode, useRef, useState } from "react";
 
 const createMaxLengthHandler =
   (language: string) =>
@@ -1018,7 +1018,7 @@ export const ExperiencePopup: FC<{
     setLoadingAI(true);
     try {
       const { rewriteWorkDescription } = await import("@/api/cvapi");
-      const res = await rewriteWorkDescription(currentItem.description, "vi");
+      const res = await rewriteWorkDescription(currentItem.description, language);
 
       const rewritten =
         (res as any)?.rewritten?.workDescription ??
