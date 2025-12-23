@@ -326,7 +326,8 @@ export default function JobDescriptionPage() {
 
         let extractedText = result?.text?.trim() || "";
         if (!extractedText && result && typeof result === "object") {
-          extractedText = analysisToText(result);
+          const analysisData = result.analyzedJob || result.analysis || result;
+          extractedText = analysisToText(analysisData);
         }
 
         if (extractedText) {
