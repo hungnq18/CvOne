@@ -148,6 +148,16 @@ export const approveJobByAdmin = async (id: string): Promise<Job> => {
 };
 
 /**
+ * Reject a job by admin
+ */
+export const rejectJobByAdmin = async (id: string): Promise<Job> => {
+  return fetchWithAuth(API_ENDPOINTS.JOB.REJECT_BY_ADMIN(id), {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+  });
+};
+
+/**
  * Get all jobs (synchronous version for backward compatibility)
  * @returns Array of jobs
  */

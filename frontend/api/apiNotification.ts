@@ -30,6 +30,8 @@ export const sendNotification = async (data: {
   message: string;
   type: string;
   link?: string;
+  recipient?: string;
+  jobId?: string;
 }) => {
   try {
     return await fetchWithAuth(API_ENDPOINTS.NOTIFICATION.GET_NOTIFICATIONS, {

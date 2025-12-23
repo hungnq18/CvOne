@@ -113,6 +113,14 @@ export class JobsController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("admin")
+  @Put(":id/reject")
+  async rejectJobByAdmin(@Param("id") id: string) {
+    // Admin reject: xóa job khỏi hệ thống (job đang ở trạng thái pending)
+    return this.jobsService.delete(id);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles("hr")
   @Delete(":id")
   delete(@Param("id") id: string) {
