@@ -30,6 +30,8 @@ export class JobAnalysisService {
   }> {
     try {
       const prompt = `
+      Detect the main language of the Job Description (JD) below and RESPOND ENTIRELY in that language. Do not mix languages. If the JD is mixed, use the majority language; fallback to English only when unclear.
+
       Extract key information from this job description and return ONLY a valid JSON object.
       
       Job Description:
@@ -47,16 +49,17 @@ export class JobAnalysisService {
         "certifications": ["cert1", "cert2"]
       }
       
-      EXTRACTION RULES - Be thorough:
+      EXTRACTION RULES - Be thorough and keep the output language consistent with the JD:
       
       - requiredSkills: ALL technical skills from required AND preferred sections (include OOP, SOLID, design patterns, debugging, optimization, etc.)
       - experienceLevel: Based on years (1-2=junior, 3-5=mid-level, 6+=senior)
-      - keyResponsibilities: Copy FULL original sentences, do not summarize
+      - keyResponsibilities: Copy FULL original sentences, do not summarize, keep original JD language
       - industry: Infer from job context
       - technologies: ALL tools/frameworks/platforms mentioned - languages, ORMs, cloud services, containers, CI/CD
       - softSkills: Extract explicit mentions AND infer from duties (e.g., "work closely"=collaboration, "team"=teamwork)
       - education: Extract if stated, default "Bachelor's" for tech roles
       - certifications: Check entire description INCLUDING benefits section, use [] if none
+      - Language: Keep all text values in the same language detected from the JD. If keyResponsibilities are in Vietnamese, force ALL extracted fields (requiredSkills, technologies, softSkills, education, certifications, industry, experienceLevel) to be Vietnamese too.
       
       Return only the JSON object.
       `;
@@ -68,7 +71,7 @@ export class JobAnalysisService {
           {
             role: "system",
             content:
-              "You are a professional job description analyzer. Always respond with valid JSON format.",
+              "You are a professional job description analyzer. Always respond with valid JSON format and match the language of the provided job description (single language only). If key responsibilities are Vietnamese, force all extracted fields to Vietnamese.",
           },
           {
             role: "user",
@@ -147,7 +150,7 @@ export class JobAnalysisService {
       const secondaryResp = keyResponsibilities[1] || "";
       const softSkillsText = softSkills.slice(0, 3).join(", ");
 
-      const prompt = `You are a CV expert. Generate 6-7 SPECIFIC, DETAILED CV suggestions based on this job analysis.
+      const prompt = `You are a CV expert. Detect the language from the job analysis data below and respond entirely in that language (single language only). Generate 6-7 SPECIFIC, DETAILED CV suggestions based on this job analysis.
 
 JOB ANALYSIS DATA:
 - Experience Level: ${experienceLevel}
@@ -185,7 +188,7 @@ Return ONLY a JSON array of strings. Each string is one detailed suggestion (80-
           {
             role: "system",
             content:
-              "You are a professional CV advisor. You MUST use EXACT skill and technology names from the provided job analysis. NEVER use generic terms like 'relevant skills', 'modern technologies', or 'various tools'. Each suggestion must be detailed (80-120 words) and include 4-6 EXACT skill/technology names from the job analysis. Always return valid JSON array only.",
+              "You are a professional CV advisor. Match the language of the provided job analysis (single language only). You MUST use EXACT skill and technology names from the provided job analysis. NEVER use generic terms like 'relevant skills', 'modern technologies', or 'various tools'. Each suggestion must be detailed (80-120 words) and include 4-6 EXACT skill/technology names from the job analysis. Always return valid JSON array only.",
           },
           {
             role: "user",
