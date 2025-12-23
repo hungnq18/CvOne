@@ -20,35 +20,46 @@ export class CvContentGenerationService {
     additionalRequirements?: string
   ): Promise<{ professional: string[]; total_tokens: number }> {
     try {
+      const keyResponsibilities = (jobAnalysis?.keyResponsibilities || []).slice(0, 5).join("; ") || "Not specified";
+      const softSkills = (jobAnalysis?.softSkills || []).join(", ") || "Not specified";
+      
       const prompt = `
-Generate 3 different compelling professional summaries for a CV based on the following information:
+Generate 3 different compelling professional summaries for a CV based on the following detailed information:
 
 User Profile:
 - Name: ${userProfile.first_name} ${userProfile.last_name}
-- City: ${userProfile.city || "Not specified"}
-- Country: ${userProfile.country || "Not specified"}
+- Location: ${userProfile.city || "Not specified"}, ${userProfile.country || "Not specified"}
 
-Job Analysis:
-- Required Skills: ${(jobAnalysis?.requiredSkills || []).join(", ") || "Not specified"}
-- Experience Level: ${jobAnalysis?.experienceLevel || "Not specified"}
+Job Analysis Details:
+- Required Technical Skills: ${(jobAnalysis?.requiredSkills || []).join(", ") || "Not specified"}
+- Technologies & Tools: ${(jobAnalysis?.technologies || []).join(", ") || "Not specified"}
+- Experience Level Required: ${jobAnalysis?.experienceLevel || "Not specified"}
 - Industry: ${jobAnalysis?.industry || "Not specified"}
-- Technologies: ${(jobAnalysis?.technologies || []).join(", ") || "Not specified"}
+- Key Responsibilities: ${keyResponsibilities}
+- Soft Skills: ${softSkills}
 
 Additional Requirements: ${additionalRequirements || "None"}
 
-Create 3 professional summaries that:
-1. Highlight relevant skills and experience
-2. Match the job requirements
-3. Show enthusiasm and potential
-4. Are 2-3 sentences long
-5. Use professional language
-6. Focus on value proposition
+DETAILED Requirements for each summary:
+1. First sentence: Start with specific job title/role (e.g., "Senior Backend Developer" not "professional") and mention 2-3 core technologies from the job analysis
+2. Second sentence: Highlight specific responsibilities from keyResponsibilities that match the job, mention relevant soft skills if applicable
+3. Third sentence (optional): Show value proposition with specific achievements or expertise areas that align with the job requirements
+4. Use action verbs: developed, implemented, optimized, designed, built, created, managed
+5. Include specific technologies: Mention actual technologies from the job analysis (e.g., "Node.js, PostgreSQL, Docker" not "modern technologies")
+6. Match experience level: For ${jobAnalysis?.experienceLevel || "mid-level"} level, use appropriate language (junior = "with experience in", senior = "expert in", "extensive experience")
+7. Length: Exactly 2-3 sentences, 40-60 words total
+8. Be specific: Avoid generic phrases like "passionate about technology" or "team player" unless soft skills are mentioned in job analysis
+
+Example structure:
+- Option 1: Focus on technical expertise and specific technologies
+- Option 2: Focus on responsibilities and achievements
+- Option 3: Focus on soft skills and collaboration (only if mentioned in job analysis)
 
 Return only a JSON array of 3 summaries, e.g.:
 [
-  "Summary 1...",
-  "Summary 2...",
-  "Summary 3..."
+  "Summary 1 with specific technologies and responsibilities...",
+  "Summary 2 with different focus...",
+  "Summary 3 with alternative approach..."
 ]
 Do not include any explanation or markdown, only valid JSON.
 `;
@@ -60,7 +71,7 @@ Do not include any explanation or markdown, only valid JSON.
           {
             role: "system",
             content:
-              "You are a professional CV writer. Create compelling and relevant professional summaries. Always return a JSON array of 3 summaries.",
+              "You are a professional CV writer specializing in creating specific, detailed professional summaries. Each summary must include specific technologies, responsibilities, and achievements from the job analysis. Avoid generic phrases. Always return a JSON array of exactly 3 different summaries with varied focus areas.",
           },
           {
             role: "user",
@@ -78,7 +89,6 @@ Do not include any explanation or markdown, only valid JSON.
         completion_tokens: 0,
         total_tokens: 0,
       };
-      console.log("Usage summary:", usage);
       // Remove markdown if present
       let cleanResponse = response.trim();
       if (cleanResponse.startsWith("```json")) {
@@ -135,34 +145,61 @@ Do not include any explanation or markdown, only valid JSON.
       );
       const endDate = new Date();
 
+      const keyResponsibilities = (jobAnalysis.keyResponsibilities || []).slice(0, 5).join("; ") || "Not specified";
+      const softSkills = (jobAnalysis.softSkills || []).join(", ") || "Not specified";
+      
       const prompt = `
-Generate a realistic and accurate work experience entry in JSON format based strictly on the provided job analysis.
+Generate a realistic and accurate work experience entry in JSON format based STRICTLY on the provided detailed job analysis.
 
-Job Analysis:
-- Required Skills: ${jobAnalysis.requiredSkills?.join(", ") || "Not specified"}
+Job Analysis Details:
+- Required Technical Skills: ${jobAnalysis.requiredSkills?.join(", ") || "Not specified"}
+- Technologies & Tools: ${jobAnalysis.technologies?.join(", ") || "Not specified"}
 - Experience Level: ${experienceLevel}
-- Technologies: ${jobAnalysis.technologies?.join(", ") || "Not specified"}
 - Industry: ${jobAnalysis.industry || "technology"}
+- Key Responsibilities from JD: ${keyResponsibilities}
+- Soft Skills: ${softSkills}
 
-Experience Duration: ${years} year(s)
+Experience Duration: ${years} year(s) (${experienceLevel} level)
 
 Output JSON structure:
 {
-  "title": "Job Title",
-  "company": "Company Name",
+  "title": "Specific Job Title matching experience level",
+  "company": "Realistic Company Name (not generic like 'Tech Company')",
   "startDate": "YYYY-MM-DD",
   "endDate": "YYYY-MM-DD",
-  "description": "2–3 sentences describing responsibilities, applied technologies, and measurable achievements"
+  "description": "2-3 sentences with specific responsibilities, technologies used, and measurable achievements"
 }
 
-Requirements:
-- Job title must reflect the experience level and focus.
-- Company name must be realistic and not generic placeholders.
-- Description must incorporate required skills, technologies, and responsibilities from the job analysis without adding unrelated information.
-- Include at least one measurable achievement.
-- Use clear business-professional language and action verbs.
-- Return only valid JSON with no additional text.
+DETAILED Requirements:
+1. Job Title: Must be specific and match experience level:
+   - Junior: "Junior [Role]" or "[Role]"
+   - Mid-level: "[Role]" or "Mid-level [Role]"
+   - Senior: "Senior [Role]" or "Lead [Role]"
+   Include primary technology if relevant (e.g., "Senior Backend Developer (Node.js)")
 
+2. Company Name: Create a realistic company name based on industry:
+   - Technology: Use names like "TechCorp Solutions", "Digital Innovations Ltd", "Cloud Systems Inc"
+   - Finance: "Financial Services Group", "Investment Solutions Co"
+   - Healthcare: "HealthTech Solutions", "Medical Systems Inc"
+   - Avoid: "Company", "Tech Company", "ABC Corp"
+
+3. Description (2-3 sentences, 50-70 words):
+   - Sentence 1: List 2-3 specific responsibilities from keyResponsibilities, mention primary technologies from job analysis
+   - Sentence 2: Describe specific achievements with metrics/impact (e.g., "improved performance by 30%", "reduced errors by 25%", "handled 10,000+ requests/day")
+   - Sentence 3 (optional): Mention collaboration or soft skills if relevant to job analysis
+   
+4. Must include:
+   - At least 3 specific technologies from the job analysis (not generic terms)
+   - At least 2 responsibilities from keyResponsibilities
+   - At least 1 measurable achievement with numbers/percentages
+   - Action verbs: developed, implemented, optimized, designed, built, created, managed, improved, reduced, increased
+
+5. Do NOT include:
+   - Generic responsibilities not in job analysis
+   - Technologies not mentioned in job analysis
+   - Vague achievements without metrics
+
+Return only valid JSON with no additional text or markdown.
 `;
 
       const openai = this.openaiApiService.getOpenAI();
@@ -172,7 +209,7 @@ Requirements:
           {
             role: "system",
             content:
-              "You are a professional CV writer. Create realistic and compelling work experience entries.",
+              "You are a professional CV writer specializing in creating detailed, specific work experience entries. Each entry must include exact technologies, specific responsibilities from the job analysis, and measurable achievements with numbers. Avoid generic descriptions. Always return valid JSON only.",
           },
           {
             role: "user",
@@ -185,7 +222,6 @@ Requirements:
         completion_tokens: 0,
         total_tokens: 0,
       };
-      console.log("Usage summary:", usage);
 
       const response = completion.choices[0]?.message?.content;
       if (!response) {
@@ -220,7 +256,9 @@ Requirements:
   }> {
     try {
       const safeAnalysis = jobAnalysis || {};
-      const requiredSkills: string[] = Array.isArray(safeAnalysis.requiredSkills)
+      const requiredSkills: string[] = Array.isArray(
+        safeAnalysis.requiredSkills
+      )
         ? safeAnalysis.requiredSkills
         : [];
       const technologies: string[] = Array.isArray(safeAnalysis.technologies)
@@ -229,7 +267,8 @@ Requirements:
       const softSkills: string[] = Array.isArray(safeAnalysis.softSkills)
         ? safeAnalysis.softSkills
         : [];
-      const experienceLevel: string = safeAnalysis.experienceLevel || "Not specified";
+      const experienceLevel: string =
+        safeAnalysis.experienceLevel || "Not specified";
 
       const existingSkills =
         userSkills?.map((s) => s.name).join(", ") || "None";
@@ -237,13 +276,13 @@ Requirements:
       const prompt = `
 Generate 3 different skills section options for a CV based STRICTLY on the job analysis and existing user skills.
 
-Job Analysis:
-- Required Skills: ${requiredSkills.join(", ") || "Not specified"}
-- Technologies: ${technologies.join(", ") || "Not specified"}
+Job Analysis Details:
+- Required Technical Skills: ${requiredSkills.join(", ") || "Not specified"}
+- Technologies & Tools: ${technologies.join(", ") || "Not specified"}
 - Soft Skills: ${softSkills.join(", ") || "Not specified"}
 - Experience Level: ${experienceLevel}
 
-Existing User Skills: ${existingSkills}
+Existing User Skills: ${existingSkills || "None"}
 
 Each option should be a skills list in JSON format with ratings (1-5):
 [
@@ -253,21 +292,53 @@ Each option should be a skills list in JSON format with ratings (1-5):
   }
 ]
 
-STRICT Requirements:
-- ONLY include skills that are mentioned in the job analysis (requiredSkills, technologies, softSkills)
-- DO NOT add any skills that are NOT in the job analysis
-- If soft skills are mentioned in job analysis, include them; otherwise, do not add generic soft skills
-- Rate skills appropriately for the experience level
-- Include 6-12 skills per option (only from job analysis)
-- Use proper capitalization for skill names
-- Ratings: 1=Beginner, 2=Elementary, 3=Intermediate, 4=Advanced, 5=Expert
-- Prioritize required skills and technologies from job analysis
+DETAILED STRICT Requirements:
+1. Skills Selection:
+   - ONLY include skills EXACTLY as mentioned in job analysis (requiredSkills, technologies, softSkills)
+   - DO NOT add any skills NOT in the job analysis
+   - DO NOT add generic soft skills (communication, teamwork) unless explicitly mentioned in job analysis
+   - Include 6-12 skills per option (prioritize required skills first, then technologies, then soft skills if available)
+
+2. Skill Names:
+   - Use exact names from job analysis (case-sensitive)
+   - Maintain proper capitalization (e.g., "JavaScript" not "javascript", "Node.js" not "nodejs")
+   - For technologies, use standard names (e.g., "React" not "ReactJS", "PostgreSQL" not "Postgres")
+
+3. Rating Guidelines (based on ${experienceLevel} level):
+   - Junior (0-2 years):
+     * Core required skills: 3-4 (Intermediate to Advanced)
+     * Technologies: 2-3 (Elementary to Intermediate)
+     * Soft skills: 3-4 (if mentioned)
+   
+   - Mid-level (3-5 years):
+     * Core required skills: 4-5 (Advanced to Expert)
+     * Technologies: 3-4 (Intermediate to Advanced)
+     * Soft skills: 4 (if mentioned)
+   
+   - Senior (5+ years):
+     * Core required skills: 4-5 (Advanced to Expert)
+     * Technologies: 4-5 (Advanced to Expert)
+     * Soft skills: 4-5 (if mentioned)
+
+4. Rating Scale:
+   - 1 = Beginner: Basic understanding, minimal experience
+   - 2 = Elementary: Some experience, can work with guidance
+   - 3 = Intermediate: Comfortable, can work independently
+   - 4 = Advanced: Strong expertise, can mentor others
+   - 5 = Expert: Deep knowledge, industry leader level
+
+5. Option Variations:
+   - Option 1: Focus on core required skills + primary technologies (8-10 skills)
+   - Option 2: Include all required skills + technologies + soft skills if available (10-12 skills)
+   - Option 3: Balanced mix with emphasis on most important skills (8-10 skills)
+
+6. If user has existing skills, prioritize those skills but still only from job analysis
 
 Return only a JSON array of 3 skills lists, e.g.:
 [
-  [ { "name": "Skill 1", "rating": 4 }, ... ],
-  [ { "name": "Skill 1", "rating": 4 }, ... ],
-  [ { "name": "Skill 1", "rating": 4 }, ... ]
+  [ { "name": "JavaScript", "rating": 4 }, { "name": "Node.js", "rating": 4 }, ... ],
+  [ { "name": "JavaScript", "rating": 5 }, { "name": "React", "rating": 4 }, ... ],
+  [ { "name": "TypeScript", "rating": 4 }, { "name": "PostgreSQL", "rating": 4 }, ... ]
 ]
 Do not include any explanation or markdown, only valid JSON.
 `;
@@ -279,7 +350,7 @@ Do not include any explanation or markdown, only valid JSON.
           {
             role: "system",
             content:
-              "You are a professional CV writer. Create skills sections STRICTLY based on the job analysis provided. Only include skills mentioned in the job analysis (requiredSkills, technologies, softSkills). Do not add any skills outside the job analysis. Always return a JSON array of 3 skills lists.",
+              "You are a professional CV writer specializing in creating precise skills sections. You must ONLY include skills exactly as mentioned in the job analysis. Rate skills appropriately based on experience level (junior=2-3, mid=3-4, senior=4-5). Use exact skill names with proper capitalization. Never add skills outside the job analysis. Always return a JSON array of exactly 3 different skills lists with varied focus.",
           },
           {
             role: "user",
@@ -297,7 +368,6 @@ Do not include any explanation or markdown, only valid JSON.
         completion_tokens: 0,
         total_tokens: 0,
       };
-      console.log("Usage skills :", usage);
       // Remove markdown if present
       let cleanResponse = response.trim();
       if (cleanResponse.startsWith("```json")) {
@@ -314,11 +384,7 @@ Do not include any explanation or markdown, only valid JSON.
       const skillsLists = JSON.parse(cleanResponse);
 
       // Danh sách skill hợp lệ rút ra từ JD
-      const validSkills = [
-        ...requiredSkills,
-        ...technologies,
-        ...softSkills,
-      ]
+      const validSkills = [...requiredSkills, ...technologies, ...softSkills]
         .filter(Boolean)
         .map((s) => s.toLowerCase());
 
@@ -330,24 +396,17 @@ Do not include any explanation or markdown, only valid JSON.
           return [];
         }
 
-        // Chỉ giữ lại skills khớp với JD (case-insensitive matching)
-        const filtered = list.filter((skillObj) => {
-          const skillName = (skillObj.name || "").toLowerCase().trim();
-          // Kiểm tra exact match hoặc partial match (để xử lý các biến thể như "JavaScript" vs "javascript")
-          return validSkills.some(validSkill => {
-            const valid = validSkill.toLowerCase().trim();
-            return skillName === valid || 
-                   skillName.includes(valid) || 
-                   valid.includes(skillName);
-          });
-        });
+        // Lọc theo JD - chỉ giữ lại skills khớp với JD
+        const filtered = list.filter((skillObj) =>
+          validSkills.includes((skillObj.name || "").toLowerCase())
+        );
 
-        // Chỉ trả về skills khớp với JD, không có fallback
         // Gán lại rating nếu user có sẵn kỹ năng
         return filtered.map((skillObj) => {
           if (userSkills) {
             const found = userSkills.find(
-              (s) => s.name.toLowerCase() === (skillObj.name || "").toLowerCase()
+              (s) =>
+                s.name.toLowerCase() === (skillObj.name || "").toLowerCase()
             );
             if (found) {
               return { ...skillObj, rating: found.rating };
@@ -372,7 +431,6 @@ Do not include any explanation or markdown, only valid JSON.
       throw error;
     }
   }
-
   /**
    * Generate CV content based on user profile and job analysis
    */
@@ -381,6 +439,18 @@ Do not include any explanation or markdown, only valid JSON.
     jobAnalysis: any,
     additionalRequirements?: string
   ): Promise<any> {
+    // Log jobAnalysis data including cvSuggestions
+    this.logger.debug("🔍 [Generate CV] Job Analysis received:", {
+      hasJobAnalysis: !!jobAnalysis,
+      jobAnalysisKeys: jobAnalysis ? Object.keys(jobAnalysis) : [],
+      experienceLevel: jobAnalysis?.experienceLevel,
+      requiredSkillsCount: jobAnalysis?.requiredSkills?.length || 0,
+      technologiesCount: jobAnalysis?.technologies?.length || 0,
+      hasCvSuggestions: !!jobAnalysis?.cvSuggestions,
+      cvSuggestionsCount: jobAnalysis?.cvSuggestions?.length || 0,
+      cvSuggestionsPreview: jobAnalysis?.cvSuggestions?.slice(0, 2)?.map((s: string) => s?.substring(0, 100)),
+    });
+
     // Generate professional summary using OpenAI
     const summary = await this.generateProfessionalSummary(
       user,
@@ -551,10 +621,6 @@ Clear, natural phrasing - no awkward machine translations
       const uiTextTokens = uiTextResponse.usage?.total_tokens ?? 0;
 
       const totalTokens = contentTokens + uiTextTokens;
-
-      console.log("Content Tokens:", contentTokens);
-      console.log("UI Tokens:", uiTextTokens);
-      console.log("Total Tokens:", totalTokens);
 
       // ======= Xử lý phần uiTexts =======
       let uiTranslated = uiTextResponse.choices[0]?.message?.content?.trim();

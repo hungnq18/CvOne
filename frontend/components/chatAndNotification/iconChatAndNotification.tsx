@@ -6,6 +6,8 @@ import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { useSocket } from "@/providers/SocketProvider";
+import Cookies from "js-cookie";
+import { jwtDecode } from "jwt-decode";
 
 const IconChatAndNotification: React.FC = () => {
   const pathname = usePathname();
@@ -14,8 +16,6 @@ const IconChatAndNotification: React.FC = () => {
 
   // Lấy realtime từ SocketProvider
   const { unreadCount, unreadNotifications } = useSocket();
-
-  console.log("🎯 IconChatAndNotification rendered - unreadCount:", unreadCount, "unreadNotifications:", unreadNotifications);
 
   // 🟢 Icon chỉ navigate - KHÔNG emit / KHÔNG set flag
   // NotificationCenterClient mount sẽ handle emit + flag
@@ -29,8 +29,24 @@ const IconChatAndNotification: React.FC = () => {
   const shouldHideIcon = isOnChat;
   const shouldHideBadges = isOnNotifications || isOnChat;
 
-  if (!user || shouldHideIcon)
-    return null;
+  const roleFromUser = (user as any)?.role as string | undefined;
+  const roleFromToken = (() => {
+    try {
+      const token = Cookies.get("token");
+      if (!token) return undefined;
+      const decoded: any = jwtDecode(token);
+      return decoded?.role as string | undefined;
+    } catch {
+      return undefined;
+    }
+  })();
+
+  const role = roleFromUser ?? roleFromToken;
+
+  // Không hiển thị icon chat/notification cho admin và marketing
+  if (role === "admin" || role === "mkt") return null;
+
+  if (!user || shouldHideIcon) return null;
 
   return (
     <div className={`fixed bottom-6 right-6 z-50 flex flex-col gap-3`}>

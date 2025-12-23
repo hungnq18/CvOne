@@ -25,12 +25,7 @@ import { CreateConversationDto } from "../conversation/dto/create-conversation.d
 })
 export class ChatGateway {
   @WebSocketServer() server: Server;
-  constructor(
-    private readonly chatService: ChatService,
-    private readonly notificationsService: NotificationsService,
-    private readonly notificationsGateway: NotificationsGateway,
-    private readonly conversationEvents: ConversationEventsService
-  ) {}
+  constructor(private readonly chatService: ChatService) {}
 
   @SubscribeMessage("sendMessage")
   async handleSendMessage(
@@ -60,7 +55,6 @@ export class ChatGateway {
   ) {
     const room = `user:${userId}`;
     client.join(room);
-    console.log("✅ User joined room:", room);
   }
 
   @SubscribeMessage("joinRoom")
@@ -97,33 +91,6 @@ export class ChatGateway {
     });
   }
 
-  @SubscribeMessage("sendRealtimeNotification")
-  async handleRealtimeNotification(
-    @MessageBody()
-    data: {
-      userId: string;
-      title: string;
-      message: string;
-      type: string;
-      link?: string;
-      jobId: string;
-    },
-    @ConnectedSocket() client: Socket
-  ) {
-    const notification = await this.notificationsService.createNotification(
-      {
-        title: data.title,
-        message: data.message,
-        type: data.type,
-        link: data.link,
-        jobId: data.jobId || "",
-      },
-      data.userId
-    );
-
-    // Gửi thông báo realtime tới người dùng cụ thể
-    this.notificationsGateway.sendNotificationToUser(data.userId, notification);
-  }
   emitNewConversation(conversation: any) {
     const participantIds = conversation.participants.map((p: any) =>
       p._id.toString()

@@ -4,6 +4,7 @@ import {
   Controller,
   Delete,
   Get,
+  Logger,
   Param,
   Patch,
   Post,
@@ -37,6 +38,8 @@ import { OpenAiService } from "./services/openai.service";
  */
 @Controller("cv")
 export class CvController {
+  private readonly logger = new Logger(CvController.name);
+
   constructor(
     private readonly cvService: CvService,
     private readonly cvUploadService: CvUploadService,
@@ -202,6 +205,16 @@ export class CvController {
     @Body("jobAnalysis") jobAnalysis: any,
     @Body("additionalRequirements") additionalRequirements?: string
   ) {
+    // Log incoming request
+    this.logger.log("🔍 [Generate CV with AI] Request received:", {
+      userId,
+      hasJobAnalysis: !!jobAnalysis,
+      jobAnalysisKeys: jobAnalysis ? Object.keys(jobAnalysis) : [],
+      hasCvSuggestions: !!jobAnalysis?.cvSuggestions,
+      cvSuggestionsCount: jobAnalysis?.cvSuggestions?.length || 0,
+      experienceLevel: jobAnalysis?.experienceLevel,
+    });
+
     // Get user data
     const user = await this.userModel.findById(userId);
     if (!user) throw new Error("User not found");
@@ -212,6 +225,8 @@ export class CvController {
       jobAnalysis,
       additionalRequirements
     );
+
+    this.logger.log("✅ [Generate CV with AI] CV content generated successfully");
 
     return {
       success: true,
@@ -296,11 +311,24 @@ export class CvController {
     @Body("jobAnalysis") jobAnalysis: any,
     @Body("additionalRequirements") additionalRequirements?: string
   ) {
+    // Log incoming request
+    this.logger.log("🔍 [Suggest Summary] Request received:", {
+      hasJobAnalysis: !!jobAnalysis,
+      jobAnalysisKeys: jobAnalysis ? Object.keys(jobAnalysis) : [],
+      hasCvSuggestions: !!jobAnalysis?.cvSuggestions,
+      cvSuggestionsCount: jobAnalysis?.cvSuggestions?.length || 0,
+      experienceLevel: jobAnalysis?.experienceLevel,
+      requiredSkillsCount: jobAnalysis?.requiredSkills?.length || 0,
+      technologiesCount: jobAnalysis?.technologies?.length || 0,
+    });
+
     // Không truyền userProfile nữa, chỉ truyền jobAnalysis và additionalRequirements
     const summary = await this.openAiService.generateProfessionalSummaryVi(
       jobAnalysis,
       additionalRequirements
     );
+
+    this.logger.log("✅ [Suggest Summary] Summary generated successfully");
 
     return { summaries: [summary], total_tokens: summary.total_tokens };
   }

@@ -26,7 +26,7 @@ export const getAllBanners = async (): Promise<Banner[]> => {
  * @returns Promise with array of active banner data
  */
 export const getBannersForUser = async (): Promise<Banner[]> => {
-  const response = await fetchWithoutAuth(API_ENDPOINTS.BANNER.FOR_USER);
+  const response = await fetchWithAuth(API_ENDPOINTS.BANNER.FOR_USER);
   return response as Banner[];
 };
 

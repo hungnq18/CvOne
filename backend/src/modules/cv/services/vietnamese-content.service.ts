@@ -1,6 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { OpenaiApiService } from "./openai-api.service";
 import { AiUsageLogService } from "src/modules/ai-usage-log/ai-usage-log.service";
+import { OpenaiApiService } from "./openai-api.service";
 
 @Injectable()
 export class VietnameseContentService {
@@ -19,21 +19,55 @@ export class VietnameseContentService {
     additionalRequirements?: string
   ): Promise<{ summary: string; total_tokens: number }> {
     try {
+      // Extract structured data from job analysis
+      const requiredSkills = (jobAnalysis?.requiredSkills || []).join(", ");
+      const technologies = (jobAnalysis?.technologies || []).join(", ");
+      const experienceLevel = jobAnalysis?.experienceLevel || "mid-level";
+      const industry = jobAnalysis?.industry || "technology";
+      const keyResponsibilities = (jobAnalysis?.keyResponsibilities || []).slice(0, 3).join("; ");
+      const softSkills = (jobAnalysis?.softSkills || []).join(", ");
+      const cvSuggestions = (jobAnalysis?.cvSuggestions || []).slice(0, 3).join("\n");
+
+      // Log for debugging
+      this.logger.debug("🔍 [Generate Summary VI] Job Analysis data:", {
+        experienceLevel,
+        requiredSkillsCount: jobAnalysis?.requiredSkills?.length || 0,
+        technologiesCount: jobAnalysis?.technologies?.length || 0,
+        hasCvSuggestions: !!jobAnalysis?.cvSuggestions,
+        cvSuggestionsCount: jobAnalysis?.cvSuggestions?.length || 0,
+      });
+
       const prompt = `
-      Viết Professional Summary bằng tiếng Việt cho CV dựa trên phân tích JD:
+      Viết Professional Summary bằng tiếng Việt cho CV dựa trên phân tích JD chi tiết sau:
       
-      ${JSON.stringify(jobAnalysis)}
+      === THÔNG TIN JD ===
+      - Cấp độ kinh nghiệm: ${experienceLevel}
+      - Ngành: ${industry}
+      - Kỹ năng yêu cầu: ${requiredSkills || "Không xác định"}
+      - Công nghệ & Tools: ${technologies || "Không xác định"}
+      - Trách nhiệm chính: ${keyResponsibilities || "Không xác định"}
+      - Kỹ năng mềm: ${softSkills || "Không xác định"}
       
-      ${additionalRequirements ? `Yêu cầu bổ sung: ${additionalRequirements}` : ""}
+      ${cvSuggestions ? `=== GỢI Ý CV TỪ JD ===\n${cvSuggestions}\n` : ""}
       
-      QUY TẮC:
-      - ĐÚNG 2-3 câu (không được 4 câu)
-      - Bắt đầu bằng job title cụ thể (VD: "Lập trình viên back-end") - KHÔNG dùng "Nhân sự trẻ", "Ứng viên"
-      - Ngôi thứ ba ẩn, không có "tôi/mình/em"
-      - Liệt kê ĐẦY ĐỦ technologies từ CẢ "requiredSkills" và "technologies", ưu tiên ngôn ngữ lập trình đầu tiên (VD: C#, .NET Core, SQL Server)
-      - Experience level: junior="với kinh nghiệm", KHÔNG dùng "thành thạo" cho junior
-      - Soft skills dùng active voice: "có kỹ năng..." KHÔNG "kỹ năng được đánh giá cao"
-      - Động từ: phát triển, triển khai, xây dựng, tối ưu
+      ${additionalRequirements ? `Yêu cầu bổ sung: ${additionalRequirements}\n` : ""}
+      
+      === QUY TẮC BẮT BUỘC ===
+      1. ĐÚNG 2-3 câu (không được 4 câu)
+      2. Bắt đầu bằng job title cụ thể dựa trên experience level và industry:
+         - Junior: "Lập trình viên", "Nhà phát triển"
+         - Mid-level: "Kỹ sư phần mềm", "Lập trình viên"
+         - Senior: "Kỹ sư phần mềm cao cấp", "Chuyên gia phát triển"
+      3. Ngôi thứ ba ẩn, không có "tôi/mình/em"
+      4. Liệt kê ĐẦY ĐỦ và CHÍNH XÁC các technologies từ danh sách trên, ưu tiên ngôn ngữ lập trình đầu tiên
+      5. Experience level phù hợp:
+         - Junior: "với kinh nghiệm trong", "có kinh nghiệm"
+         - Mid-level: "với kinh nghiệm", "có nền tảng vững chắc"
+         - Senior: "với nhiều năm kinh nghiệm", "chuyên gia trong"
+      6. Soft skills dùng active voice: "có kỹ năng...", "thể hiện khả năng..."
+      7. Động từ: phát triển, triển khai, xây dựng, tối ưu, thiết kế, quản lý
+      8. Sử dụng thông tin từ "GỢI Ý CV TỪ JD" nếu có để làm summary cụ thể hơn
+      9. KHÔNG dùng từ chung chung như "công nghệ hiện đại", "các công cụ" - phải liệt kê TÊN CỤ THỂ
       
       Chỉ trả về đoạn summary, không markdown, không giải thích.
       `;
@@ -45,7 +79,7 @@ export class VietnameseContentService {
           {
             role: "system",
             content:
-              "Bạn là chuyên gia viết CV. Luôn trả về đoạn Professional Summary bằng tiếng Việt, không markdown.",
+              "Bạn là chuyên gia viết CV chuyên nghiệp. Bạn PHẢI sử dụng CHÍNH XÁC các tên công nghệ, kỹ năng từ job analysis. KHÔNG dùng từ chung chung. Luôn trả về đoạn Professional Summary bằng tiếng Việt, không markdown, 2-3 câu.",
           },
           {
             role: "user",
@@ -58,7 +92,6 @@ export class VietnameseContentService {
         completion_tokens: 0,
         total_tokens: 0,
       };
-      console.log("Usage summary:", usage);
       const response = completion.choices[0]?.message?.content;
       if (!response) {
         throw new Error("No response from OpenAI");

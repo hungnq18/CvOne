@@ -1,11 +1,11 @@
 "use client";
 
 import { analyzeJD } from "@/api/cvapi";
+import { toast } from "@/hooks/use-toast";
 import { useCV } from "@/providers/cv-provider";
 import { useLanguage } from "@/providers/global_provider";
-import { FC, ReactNode, useState } from "react";
 import { useRouter } from "next/navigation";
-import { toast } from "@/hooks/use-toast";
+import { FC, ReactNode, useState } from "react";
 
 // --- ĐỐI TƯỢNG TRANSLATIONS ---
 const translations = {
@@ -146,14 +146,31 @@ const formatAnalysisResult = (
           result.experienceLevel as keyof typeof t_results.levelMap
         ] || result.experienceLevel
       : null;
-    const suggestions = [
-      t_results.suggestionFocusSkills,
-      t_results.suggestionFocusExperience(
-        result.experienceLevel || t_results.defaultLevel
-      ),
-      t_results.suggestionResponsibilities,
-      t_results.suggestionSoftSkills,
-    ];
+    
+    // Use AI-generated suggestions from backend
+    console.log("🔍 [Up JD Format] Full result object:", {
+      resultKeys: Object.keys(result || {}),
+      result: result,
+      cvSuggestions: result?.cvSuggestions,
+      cvSuggestionsType: typeof result?.cvSuggestions,
+      isArray: Array.isArray(result?.cvSuggestions),
+    });
+    
+    const suggestions = result.cvSuggestions || [];
+    console.log("🔍 [Up JD Format] Suggestions in formatAnalysisResult:", {
+      hasCvSuggestions: !!result.cvSuggestions,
+      cvSuggestionsLength: result.cvSuggestions?.length || 0,
+      suggestionsCount: suggestions.length,
+      suggestionsPreview: suggestions.slice(0, 2).map((s: string) => s?.substring(0, 80)),
+      fullSuggestions: suggestions,
+    });
+    
+    if (!result.cvSuggestions || result.cvSuggestions.length === 0) {
+      console.warn("⚠️ [Up JD Format] No cvSuggestions found in result!", {
+        resultKeys: Object.keys(result || {}),
+        result: result,
+      });
+    }
 
     return (
       <div className="space-y-4">
@@ -197,9 +214,11 @@ const formatAnalysisResult = (
             <AnalysisList items={result.certifications} />
           </AnalysisSection>
         )}
-        <AnalysisSection icon="💡" title={t_results.suggestionsTitle}>
-          <AnalysisList items={suggestions} />
-        </AnalysisSection>
+        {suggestions.length > 0 && (
+          <AnalysisSection icon="💡" title={t_results.suggestionsTitle}>
+            <AnalysisList items={suggestions} />
+          </AnalysisSection>
+        )}
       </div>
     );
   } catch (error) {
@@ -238,8 +257,49 @@ const UpJdStep: React.FC<UpJdStepProps> = () => {
 
     try {
       const result = await analyzeJD(jobDescription);
-      setJobAnalysis(result);
-      const formattedResult = formatAnalysisResult(result.analyzedJob, t.results);
+      console.log("🔍 [Up JD Analysis] Full API response:", result);
+      
+      // Backend returns { analyzedJob: {...}, total_tokens: ... }
+      // Extract analyzedJob and save it
+      const analyzedJob = result?.analyzedJob || result;
+      console.log("🔍 [Up JD Analysis] Analyzed job data:", {
+        hasAnalyzedJob: !!result?.analyzedJob,
+        analyzedJobKeys: Object.keys(analyzedJob || {}),
+        cvSuggestions: analyzedJob?.cvSuggestions,
+        cvSuggestionsCount: analyzedJob?.cvSuggestions?.length || 0,
+        cvSuggestionsPreview: analyzedJob?.cvSuggestions?.slice(0, 2),
+        fullCvSuggestions: analyzedJob?.cvSuggestions,
+      });
+      
+      // Save only analyzedJob, not the whole response
+      setJobAnalysis(analyzedJob);
+      
+      if (analyzedJob?.cvSuggestions) {
+        console.log("✅ [Up JD Analysis] CV Suggestions received:", {
+          count: analyzedJob.cvSuggestions.length,
+          suggestions: analyzedJob.cvSuggestions.map((s: string, i: number) => ({
+            index: i,
+            length: s.length,
+            preview: s.substring(0, 100),
+            containsGenericTerms: /relevant|modern|various|general|focus on|emphasize/i.test(s),
+          })),
+        });
+      } else {
+        console.warn("⚠️ [Up JD Analysis] No cvSuggestions in response!", {
+          analyzedJobKeys: Object.keys(analyzedJob || {}),
+          analyzedJob: analyzedJob,
+        });
+      }
+      
+      // Double check before formatting
+      console.log("🔍 [Up JD Analysis] Before formatAnalysisResult:", {
+        analyzedJobKeys: Object.keys(analyzedJob || {}),
+        hasCvSuggestions: !!analyzedJob?.cvSuggestions,
+        cvSuggestionsCount: analyzedJob?.cvSuggestions?.length || 0,
+        cvSuggestions: analyzedJob?.cvSuggestions,
+      });
+      
+      const formattedResult = formatAnalysisResult(analyzedJob, t.results);
       setAnalysisResult(formattedResult);
     } catch (error: any) {
       console.error("Error analyzing job description:", error);

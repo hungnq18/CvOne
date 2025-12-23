@@ -42,6 +42,12 @@ export class ApplyJobService {
       throw new BadRequestException("Công việc đã hết hạn nộp hồ sơ.");
     }
 
+    if (job.user_id.toString() === userId) {
+      throw new BadRequestException(
+        "Không thể ứng tuyển với người tạo công việc"
+      );
+    }
+
     // Tạo apply mới
     const applyJob = new this.applyJobModel({
       ...dto,

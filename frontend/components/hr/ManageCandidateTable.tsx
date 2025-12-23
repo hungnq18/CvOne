@@ -237,12 +237,8 @@ const ManageCandidateTable = () => {
     coverletterUrl?: string
   ) => {
     if (coverletterUrl) {
-      const link = document.createElement("a");
-      link.href = coverletterUrl;
-      link.download = "";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      // Mở file trong tab mới thay vì tải về
+      window.open(coverletterUrl, "_blank");
       return;
     }
     if (!coverLetterId) return;
@@ -565,12 +561,8 @@ const ManageCandidateTable = () => {
               if (downloadModal.app?.cvId?._id || downloadModal.app?.cv_id) {
                 await handleDownloadCV(downloadModal.app.cvId);
               } else if (downloadModal.app?.cvUrl) {
-                const link = document.createElement("a");
-                link.href = downloadModal.app.cvUrl;
-                link.download = "";
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
+                // Mở file trong tab mới thay vì tải về
+                window.open(downloadModal.app.cvUrl, "_blank");
               }
             }}
           >

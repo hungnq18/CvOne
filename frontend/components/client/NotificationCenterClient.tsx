@@ -17,14 +17,19 @@ import { getUserById } from "@/api/userApi";
 
 export default function NotificationCenterClient() {
   const { user } = useAuth();
-  const { notifications, setNotifications, socket, setIsViewingNotifications, unreadNotifications } = useSocket();
+  const {
+    notifications,
+    setNotifications,
+    socket,
+    setIsViewingNotifications,
+    unreadNotifications,
+  } = useSocket();
   const [modalNotification, setModalNotification] = useState<any>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 8;
   const [lastActiveId, setLastActiveId] = useState<string | null>(null);
   const { language } = useLanguage();
-
   const t = {
     en: {
       title: "Notifications",
@@ -43,7 +48,7 @@ export default function NotificationCenterClient() {
       contactInstruction: "Click to chat with HR",
       jobDetail: "Job Detail",
       na: "N/A",
-      dismiss: "Dismiss"
+      dismiss: "Dismiss",
     },
     vi: {
       title: "Thông báo",
@@ -62,7 +67,7 @@ export default function NotificationCenterClient() {
       contactInstruction: "Nhấn để chat với HR",
       jobDetail: "Chi tiết công việc",
       na: "N/A",
-      dismiss: "Đóng"
+      dismiss: "Đóng",
     },
   }[language];
 
@@ -101,7 +106,10 @@ export default function NotificationCenterClient() {
               const job = await getJobById(
                 typeof notif.jobId === "object" ? notif.jobId._id : notif.jobId
               );
-              const hrUserId = typeof job?.user_id === "object" ? job.user_id.$oid : job?.user_id;
+              const hrUserId =
+                typeof job?.user_id === "object"
+                  ? job.user_id.$oid
+                  : job?.user_id;
               if (hrUserId) {
                 const hrUser = await getUserById(hrUserId);
                 return {
@@ -133,7 +141,7 @@ export default function NotificationCenterClient() {
       await markAllNotificationsAsRead();
       socket?.emit("notification:read:all", { userId: user?._id });
       setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
-    } catch { }
+    } catch {}
   };
 
   const handleClearAll = () => setNotifications([]);
@@ -144,7 +152,8 @@ export default function NotificationCenterClient() {
     if (!detail && notif.jobId) {
       try {
         const job = await getJobById(notif.jobId);
-        const hrUserId = typeof job?.user_id === "object" ? job.user_id.$oid : job?.user_id;
+        const hrUserId =
+          typeof job?.user_id === "object" ? job.user_id.$oid : job?.user_id;
         detail = { ...job, hrUserId };
 
         // ✅ Fetch HR user info để lấy phone
@@ -152,7 +161,6 @@ export default function NotificationCenterClient() {
           try {
             const hrUser = await getUserById(hrUserId);
             detail = { ...detail, hrPhone: hrUser?.phone || t.na };
-            console.log("📞 HR Phone fetched:", hrUser?.phone);
           } catch (err) {
             console.error("Error fetching HR user info:", err);
             detail = { ...detail, hrPhone: t.na };
@@ -191,7 +199,9 @@ export default function NotificationCenterClient() {
 
       {notifications.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center bg-white">
-          <h3 className="text-lg font-medium text-gray-900 mb-2">{t.noNotifications}</h3>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
+            {t.noNotifications}
+          </h3>
         </div>
       ) : (
         <div className="bg-white">
@@ -210,8 +220,10 @@ export default function NotificationCenterClient() {
                   onDelete={async () => {
                     try {
                       await deleteNotification(notif._id);
-                      setNotifications((prev) => prev.filter((n) => n._id !== notif._id));
-                    } catch { }
+                      setNotifications((prev) =>
+                        prev.filter((n) => n._id !== notif._id)
+                      );
+                    } catch {}
                   }}
                 />
               ))}

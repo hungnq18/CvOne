@@ -59,6 +59,17 @@ const JobDialog: React.FC<JobDialogProps> = ({
   isEdit,
   errors,
 }) => {
+  // Hàm để chuyển đổi ISO date thành format YYYY-MM-DD
+  const getFormattedDate = (date: string | undefined) => {
+    if (!date) return new Date().toISOString().split("T")[0];
+    if (typeof date === "string" && date.includes("T")) {
+      // Nếu là ISO format, lấy phần YYYY-MM-DD
+      return date.split("T")[0];
+    }
+    // Nếu đã là format YYYY-MM-DD
+    return date;
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-full max-w-xl sm:max-w-2xl max-h-[80vh] overflow-y-auto">
@@ -217,10 +228,7 @@ const JobDialog: React.FC<JobDialogProps> = ({
               id="application-deadline"
               type="date"
               min={new Date().toISOString().split("T")[0]}
-              value={
-                job.applicationDeadline ||
-                new Date().toISOString().split("T")[0]
-              }
+              value={getFormattedDate(job.applicationDeadline)}
               onChange={(e) =>
                 onChange({
                   ...job,

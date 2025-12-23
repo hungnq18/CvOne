@@ -17,8 +17,8 @@ export class FormFeedbackService {
     @InjectModel(FormFeedback.name)
     private feedbackModel: Model<FormFeedbackDocument>,
     private readonly usersService: UsersService,
-    private readonly creditService: CreditsService,
-  ) { }
+    private readonly creditService: CreditsService
+  ) {}
 
   async create(createDto: CreateFormFeedbackDto): Promise<FormFeedback> {
     const created = new this.feedbackModel({
@@ -27,14 +27,12 @@ export class FormFeedbackService {
     });
 
     const emailAnswer = createDto.answers.find(
-      (a) => a.title && a.title.toLowerCase() === "email",
+      (a) => a.title && a.title.toLowerCase() === "email"
     );
 
     const email = (emailAnswer?.answer as string | null) || null;
-    console.log("Added voucher for user feedback:", email);
 
     const user = email ? await this.usersService.getUserByEmail(email) : null;
-    console.log("Added user:", user);
     if (!user) {
       return await created.save();
     }
@@ -50,7 +48,7 @@ export class FormFeedbackService {
     if (voucherId) {
       await this.creditService.addVoucherForUserFeedback(
         user._id.toString(),
-        voucherId,
+        voucherId
       );
     }
     return created;
