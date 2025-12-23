@@ -7,6 +7,7 @@ import {
   Patch,
   Post,
   Put,
+  Request,
   UseGuards,
 } from "@nestjs/common";
 import { UsersService } from "./users.service";
@@ -38,8 +39,9 @@ export class UsersController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles("admin", "mkt")
   @Get()
-  async getAllUsers() {
-    return this.usersService.getAllUsers();
+  async getAllUsers(@Request() req) {
+    const userId = req.user.user._id;
+    return this.usersService.getAllUsers(userId);
   }
   @UseGuards(JwtAuthGuard)
   @Get("account/:accountId")
