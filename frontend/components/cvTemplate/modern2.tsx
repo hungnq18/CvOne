@@ -169,7 +169,7 @@ const HoverableWrapper: React.FC<HoverableWrapperProps> = ({
 const renderDescription = (desc: string) => {
   if (!desc) return null;
   const lines = desc
-    .split(".")
+    .split(". ")
     .map((line) => line.trim())
     .filter((line) => line.length > 0);
   return (
@@ -570,7 +570,7 @@ const Modern2: React.FC<Modern2Props> = ({
             <Section
               key="skills"
               title={t.skillsLabel}
-              sectionId={sectionMap.certification}
+              sectionId={sectionMap.skills}
               onSectionClick={onSectionClick}
               isPdfMode={isPdfMode}
               dragHandleProps={dragHandleProps}
