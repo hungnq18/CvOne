@@ -12,7 +12,7 @@
 export function vndToToken(vnd: number): number {
     // 2000 VND = 1000 token
     // 1 VND = 0.5 token
-    return Math.floor(vnd * 0.5)
+    return Math.floor(vnd * 1)
 }
 
 /**
@@ -23,9 +23,8 @@ export function vndToToken(vnd: number): number {
 export function tokenToVnd(tokens: number): number {
     // 1000 token = 2000 VND
     // 1 token = 2 VND
-    return tokens * 2
+    return tokens * 1
 }
-
 /**
  * Format VND currency
  * @param amount - Amount in VND

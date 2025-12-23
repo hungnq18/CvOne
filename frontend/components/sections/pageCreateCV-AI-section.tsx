@@ -1,44 +1,39 @@
 "use client";
 
-import { useSearchParams, useRouter } from "next/navigation";
-import React, { useEffect, useState, useRef, useCallback } from "react";
 import {
   createCV,
   CV,
   CVTemplate,
-  getCVById,
   getCVTemplateById,
   getCVTemplates,
   suggestTemplateByAI,
-  translateCV,
-  updateCV,
+  translateCV
 } from "@/api/cvapi";
 import { templateComponentMap } from "@/components/cvTemplate/index";
+import { CVAIEditorPopupsManager } from "@/components/forms/CV-AIEditorPopup";
+import CVTemplateLayoutPopup from "@/components/forms/CVTemplateLayoutPopup";
+import { FeedbackPopup } from "@/components/modals/feedbackPopup";
+import TranslateCVModal from "@/components/modals/TranslateCVModal";
+import { FeedbackSuccessPopup } from "@/components/modals/voucherPopup";
+import { useOnClickOutside } from "@/hooks/useOnClickOutside";
+import { notify } from "@/lib/notify";
+import { useCV } from "@/providers/cv-provider";
+import { useLanguage } from "@/providers/global_provider";
+import { jwtDecode } from "jwt-decode";
 import {
-  FileDown,
-  Printer,
-  Mail,
   ArrowLeft,
   CheckCircle2,
-  Loader2,
+  FileDown,
   Languages,
   LayoutTemplate,
-  Plus,
+  Loader2,
   Minus,
+  Plus
 } from "lucide-react";
 import Image from "next/image";
-import { useCV } from "@/providers/cv-provider";
-import { useOnClickOutside } from "@/hooks/useOnClickOutside";
-import { jwtDecode } from "jwt-decode";
-import { CVAIEditorPopupsManager } from "@/components/forms/CV-AIEditorPopup";
-import TranslateCVModal from "@/components/modals/TranslateCVModal";
-import { useLanguage } from "@/providers/global_provider";
-import CVTemplateLayoutPopup from "@/components/forms/CVTemplateLayoutPopup";
+import { useRouter, useSearchParams } from "next/navigation";
+import React, { useEffect, useRef, useState } from "react";
 import { getDefaultSectionPositions } from "../cvTemplate/defaultSectionPositions";
-import { notify } from "@/lib/notify";
-import { FeedbackPopup } from "@/components/modals/feedbackPopup";
-import { FeedbackSuccessPopup } from "@/components/modals/voucherPopup";
-import { toast } from "@/hooks/use-toast";
 
 // --- TRANSLATIONS ---
 const translations = {
@@ -385,14 +380,14 @@ const PageCreateCVAIContent = () => {
         contentData.uiTexts = cvUiTexts;
       }
 
-      if (cvId) {
-        const dataToUpdate: Partial<CV> = {
-          content: contentData,
-          title: cvTitle || t.cvForUser(userData.firstName),
-          updatedAt: new Date().toISOString(),
-        };
-        await updateCV(cvId, dataToUpdate);
-      } else {
+      // if (cvId) {
+      //   const dataToUpdate: Partial<CV> = {
+      //     content: contentData,
+      //     title: cvTitle || t.cvForUser(userData.firstName),
+      //     updatedAt: new Date().toISOString(),
+      //   };
+      //   await updateCV(cvId, dataToUpdate);
+      // } else {
         const dataToCreate: Omit<CV, "_id"> = {
           userId: userId || "",
           title:
@@ -413,7 +408,7 @@ const PageCreateCVAIContent = () => {
             scroll: false,
           });
         }
-      }
+      // }
       notify.success(t.saveSuccess);
       setIsDirty(false);
       return true;

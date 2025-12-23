@@ -4,11 +4,9 @@ import {
   createCV,
   CV,
   CVTemplate,
-  getCVById,
   getCVTemplateById,
   getCVTemplates,
-  updateCV,
-  translateCV,
+  translateCV
 } from "@/api/cvapi";
 import { templateComponentMap } from "@/components/cvTemplate/index";
 import { CVEditorPopupsManager } from "@/components/forms/CVEditorPopups";
@@ -19,22 +17,20 @@ import {
   ArrowLeft,
   CheckCircle2,
   FileDown,
-  Loader2,
-  Mail,
-  Printer,
-  Minus,
-  Plus,
   Languages,
+  Loader2,
+  Minus,
+  Plus
 } from "lucide-react";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useEffect, useRef, useState } from "react";
 // BƯỚC 1: Import hook để lấy ngôn ngữ
-import { useLanguage } from "@/providers/global_provider";
 import CVTemplateLayoutPopup from "@/components/forms/CVTemplateLayoutPopup";
-import { getDefaultSectionPositions } from "../cvTemplate/defaultSectionPositions";
-import { notify } from "@/lib/notify";
 import TranslateCVModal from "@/components/modals/TranslateCVModal";
+import { notify } from "@/lib/notify";
+import { useLanguage } from "@/providers/global_provider";
+import { getDefaultSectionPositions } from "../cvTemplate/defaultSectionPositions";
 
 // --- BƯỚC 2: TẠO ĐỐI TƯỢNG TRANSLATIONS ---
 const translations = {
@@ -496,15 +492,15 @@ const PageCreateCVContent = () => {
         contentData.uiTexts = cvUiTexts;
       }
 
-      if (cvId) {
-        const dataToUpdate: Partial<CV> = {
-          content: contentData,
-          title: cvTitle || t.cvForUser(userData.firstName),
-          updatedAt: new Date().toISOString(),
-        };
+      // if (cvId) {
+      //   const dataToUpdate: Partial<CV> = {
+      //     content: contentData,
+      //     title: cvTitle || t.cvForUser(userData.firstName),
+      //     updatedAt: new Date().toISOString(),
+      //   };
 
-        await updateCV(cvId, dataToUpdate);
-      } else {
+      //   await updateCV(cvId, dataToUpdate);
+      // } else {
         const dataToCreate: Omit<CV, "_id"> = {
           userId: userId || "",
           title:
@@ -524,7 +520,7 @@ const PageCreateCVContent = () => {
           setCvId(newCV.id);
           router.replace(`/createCV?id=${newCV.id}`, { scroll: false });
         }
-      }
+      // }
       notify.success(t.saveSuccess);
       setIsDirty(false);
       return true;
