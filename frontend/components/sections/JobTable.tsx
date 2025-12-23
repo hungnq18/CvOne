@@ -35,7 +35,6 @@ const JobTable: React.FC<JobTableProps> = ({
       await unSaveJob(jobId);
       if (onRemove) onRemove(jobId);
     } catch (err) {
-      console.error("Failed to remove saved job", err);
       notify.error("Failed to remove saved job");
     }
   };

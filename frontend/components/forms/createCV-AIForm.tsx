@@ -301,7 +301,6 @@ export const InfoForm: FC<FormProps> = ({ data, onUpdate }) => {
       const responseData = await response.json();
       onUpdate({ ...data, avatar: responseData.secure_url });
     } catch (error) {
-      console.error(error);
       notify.error(
         error instanceof Error ? error.message : t.uploadErrorGeneral
       );
@@ -612,7 +611,8 @@ export const SummaryForm: FC<FormProps> = ({ data, onUpdate }) => {
                 >
                   <button
                     type="button"
-                    className={`flex items-center justify-center w-9 h-9 rounded-full text-xl font-bold mt-1 focus:outline-none transition-colors flex-shrink-0 ${ // Thêm flex-shrink-0 để nút không bị méo
+                    className={`flex items-center justify-center w-9 h-9 rounded-full text-xl font-bold mt-1 focus:outline-none transition-colors flex-shrink-0 ${
+                      // Thêm flex-shrink-0 để nút không bị méo
                       isSelected
                         ? "bg-blue-500 text-white hover:bg-blue-600"
                         : "bg-blue-900 text-white hover:bg-blue-700"
@@ -622,7 +622,9 @@ export const SummaryForm: FC<FormProps> = ({ data, onUpdate }) => {
                   >
                     {isSelected ? "-" : "+"}
                   </button>
-                  <div className="flex-1 text-[15px] leading-snug min-w-0"> {/* Thêm min-w-0 để tránh lỗi flex con tràn cha */}
+                  <div className="flex-1 text-[15px] leading-snug min-w-0">
+                    {" "}
+                    {/* Thêm min-w-0 để tránh lỗi flex con tràn cha */}
                     {/* SỬA TẠI ĐÂY: Xóa 'break-all', chỉ giữ 'break-words' và 'whitespace-pre-line' */}
                     <div className="text-gray-800 break-words whitespace-pre-line">
                       {item}
@@ -1180,7 +1182,6 @@ export const SkillsForm: FC<FormProps> = ({ data, onUpdate }) => {
         // Gửi đúng object jobAnalysis cho API suggestSkills
         await fetchSuggestions(analyzedJob);
       } catch (err: any) {
-        console.error("Error analyzing JD:", err);
         setAnalyzingJD(false);
         const message: string =
           (err?.data && typeof err.data.message === "string"
@@ -1237,7 +1238,6 @@ export const SkillsForm: FC<FormProps> = ({ data, onUpdate }) => {
         setAiSkillSuggestions([]);
       }
     } catch (error: any) {
-      console.error("Error fetching skills:", error);
       setAiSkillSuggestions([]);
 
       const message: string =

@@ -1,5 +1,3 @@
-
-
 import { fetchWithAuth, fetchWithoutAuth } from "./apiClient";
 import { API_ENDPOINTS } from "./apiConfig";
 
@@ -23,7 +21,7 @@ export interface Job {
   isActive: boolean;
   createdAt?: string;
   updatedAt?: string;
-  applicationDeadline: string
+  applicationDeadline: string;
 }
 
 export interface DashboardJob {
@@ -48,9 +46,14 @@ export interface ApplyJob {
  * Get all jobs (public endpoint)
  * @returns Promise with array of jobs
  */
-export const getJobs = async (page: number = 1, limit: number = 100): Promise<Job[]> => {
+export const getJobs = async (
+  page: number = 1,
+  limit: number = 100
+): Promise<Job[]> => {
   try {
-    const response = await fetchWithoutAuth(`${API_ENDPOINTS.JOB.GET_ALL}?page=${page}&limit=${limit}`);
+    const response = await fetchWithoutAuth(
+      `${API_ENDPOINTS.JOB.GET_ALL}?page=${page}&limit=${limit}`
+    );
     if (response && Array.isArray(response.data)) {
       return response.data;
     } else if (Array.isArray(response)) {
@@ -72,12 +75,9 @@ export const getJobById = async (id: string): Promise<Job | undefined> => {
     const response = await fetchWithAuth(API_ENDPOINTS.JOB.GET_BY_ID(id));
     return response;
   } catch (error) {
-    console.error('Error fetching job by ID:', error);
     return undefined;
   }
 };
-
-
 
 /**
  * Update a job (requires HR auth)
@@ -85,11 +85,14 @@ export const getJobById = async (id: string): Promise<Job | undefined> => {
  * @param data - Job data to update
  * @returns Promise with the updated job
  */
-export const updateJob = async (id: string, data: Partial<Job>): Promise<Job> => {
+export const updateJob = async (
+  id: string,
+  data: Partial<Job>
+): Promise<Job> => {
   return fetchWithAuth(API_ENDPOINTS.JOB.UPDATE(id), {
     method: "PUT",
     body: JSON.stringify(data),
-    headers: { 'Content-Type': 'application/json' },
+    headers: { "Content-Type": "application/json" },
   });
 };
 
@@ -101,7 +104,7 @@ export const updateJob = async (id: string, data: Partial<Job>): Promise<Job> =>
 export const deleteJob = async (id: string): Promise<void> => {
   return fetchWithAuth(API_ENDPOINTS.JOB.DELETE(id), {
     method: "DELETE",
-    headers: { 'Content-Type': 'application/json' },
+    headers: { "Content-Type": "application/json" },
   });
 };
 
@@ -114,7 +117,6 @@ export const getJobsByHR = async (): Promise<Job[]> => {
     const response = await fetchWithAuth(API_ENDPOINTS.JOB.GET_JOB_BY_HR);
     return response || [];
   } catch (error) {
-    console.error('Error fetching jobs by HR:', error);
     return [];
   }
 };
@@ -131,7 +133,6 @@ export const getPendingJobsForAdmin = async (
       `${API_ENDPOINTS.JOB.GET_PENDING_FOR_ADMIN}?page=${page}&limit=${limit}`
     );
   } catch (error) {
-    console.error("Error fetching pending jobs for admin:", error);
     return { data: [], total: 0, page, limit };
   }
 };
@@ -174,14 +175,20 @@ export const getLocalJobById = async (id: string): Promise<Job | undefined> => {
  * @param count - The number of related jobs to return
  * @returns Array of related jobs
  */
-export const findRelatedLocalJobs = async (currentJob: Job, count: number): Promise<Job[]> => {
+export const findRelatedLocalJobs = async (
+  currentJob: Job,
+  count: number
+): Promise<Job[]> => {
   try {
     const allJobs = await getJobs();
-    const currentSkills = (currentJob.skills || '').toLowerCase().split(',').map(s => s.trim());
+    const currentSkills = (currentJob.skills || "")
+      .toLowerCase()
+      .split(",")
+      .map((s) => s.trim());
     const currentRole = currentJob.role;
 
     return allJobs
-      .filter(job => {
+      .filter((job) => {
         // Exclude the current job itself
         if (job._id === currentJob._id) return false;
 
@@ -189,14 +196,18 @@ export const findRelatedLocalJobs = async (currentJob: Job, count: number): Prom
         const hasSameRole = job.role === currentRole;
 
         // Check for at least one matching skill
-        const jobSkills = (job.skills || '').toLowerCase().split(',').map(s => s.trim());
-        const hasSharedSkill = currentSkills.some(skill => skill && jobSkills.includes(skill));
+        const jobSkills = (job.skills || "")
+          .toLowerCase()
+          .split(",")
+          .map((s) => s.trim());
+        const hasSharedSkill = currentSkills.some(
+          (skill) => skill && jobSkills.includes(skill)
+        );
 
         return hasSameRole || hasSharedSkill;
       })
       .slice(0, count);
   } catch (error) {
-    console.error('Error finding related jobs:', error);
     return [];
   }
 };
@@ -238,11 +249,15 @@ export const unSaveJob = async (jobId: string): Promise<any> => {
  * @param limit - Items per page
  * @returns Promise with paginated saved jobs
  */
-export const getSavedJobsByUser = async (page: number = 1, limit: number = 10): Promise<any> => {
+export const getSavedJobsByUser = async (
+  page: number = 1,
+  limit: number = 10
+): Promise<any> => {
   try {
-    return await fetchWithAuth(`${API_ENDPOINTS.SAVED_JOB.GET_SAVE_JOB}?page=${page}&limit=${limit}`);
+    return await fetchWithAuth(
+      `${API_ENDPOINTS.SAVED_JOB.GET_SAVE_JOB}?page=${page}&limit=${limit}`
+    );
   } catch (error) {
-    console.error('Error fetching saved jobs:', error);
     return { data: [], total: 0, page, limit };
   }
 };
@@ -253,11 +268,15 @@ export const getSavedJobsByUser = async (page: number = 1, limit: number = 10): 
  * @param limit - Items per page
  * @returns Promise with paginated applied jobs
  */
-export const getAppliedJobsByUser = async (page: number = 1, limit: number = 10): Promise<any> => {
+export const getAppliedJobsByUser = async (
+  page: number = 1,
+  limit: number = 10
+): Promise<any> => {
   try {
-    return await fetchWithAuth(`${API_ENDPOINTS.APPLYJOB.GET_APPLY_JOB_BY_USER}?page=${page}&limit=${limit}`);
+    return await fetchWithAuth(
+      `${API_ENDPOINTS.APPLYJOB.GET_APPLY_JOB_BY_USER}?page=${page}&limit=${limit}`
+    );
   } catch (error) {
-    console.error('Error fetching applied jobs:', error);
     return { data: [], total: 0, page, limit };
   }
 };
@@ -271,6 +290,6 @@ export const createJob = async (data: Partial<Job>): Promise<Job> => {
   return fetchWithAuth(API_ENDPOINTS.JOB.CREATE, {
     method: "POST",
     body: JSON.stringify(data),
-    headers: { 'Content-Type': 'application/json' },
+    headers: { "Content-Type": "application/json" },
   });
 };

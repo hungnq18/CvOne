@@ -192,7 +192,7 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
       // 🔥 FIX: Ensure sender object exists for avatar rendering
       // Nếu server chỉ gửi senderId, ta cần populate sender from DB
       if (!msg.sender && msg.senderId) {
-        console.warn("⚠️ Message missing sender object, fetching from DB...");
+        // console.warn("⚠️ Message missing sender object, fetching from DB...");
         // Nếu cần, có thể gọi API để fetch sender info
         // Tạm thời: tạo placeholder sender để tránh crash
         msg.sender = {
@@ -242,7 +242,7 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
       try {
         setNotifications(Array.isArray(list) ? list : []);
       } catch (err) {
-        console.error("❌ Error loading notifications:", err);
+        // console.error("❌ Error loading notifications:", err);
         setNotifications([]);
       }
     });

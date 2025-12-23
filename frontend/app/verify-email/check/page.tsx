@@ -86,7 +86,6 @@ export default function CheckEmailPage() {
           router.push("/verify-email");
         }, 2000);
       } catch (err) {
-        console.error("Verification failed:", err);
         setIsVerified(false);
         toast.error("Có lỗi xảy ra trong quá trình xác thực.");
         router.push("/verify-email");

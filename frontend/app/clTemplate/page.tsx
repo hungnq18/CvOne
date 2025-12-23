@@ -18,9 +18,7 @@ export default function Page() {
       try {
         const templates = await getCLTemplates();
         setClTemplates(templates);
-      } catch (error) {
-        console.error("Failed to fetch CL templates:", error);
-      }
+      } catch (error) {}
     };
 
     fetchTemplates();

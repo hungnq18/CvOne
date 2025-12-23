@@ -163,7 +163,6 @@ function UploadCLTemplateContent() {
                 file={uploadedFile}
                 onLoadSuccess={onDocumentLoadSuccess}
                 onLoadError={(error) => {
-                  console.error("Error loading PDF for text extraction:", error);
                   toast.error(`Lỗi khi xử lý file PDF: ${error.message}`);
                 }}
               />

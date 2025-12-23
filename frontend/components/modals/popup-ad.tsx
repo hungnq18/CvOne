@@ -75,15 +75,13 @@ const PopupAd: React.FC = () => {
             banner.position === "center" &&
             banner.imageUrl &&
             banner.redirectUrl &&
-            banner.isActive !== false,
+            banner.isActive !== false
         );
 
         if (found) {
           setBanner(found);
         }
-      } catch (error) {
-        console.error("Failed to fetch popup banner:", error);
-      }
+      } catch (error) {}
     };
 
     fetchPopupBanner();
@@ -112,11 +110,7 @@ const PopupAd: React.FC = () => {
         >
           ×
         </CloseButton>
-        <a
-          href={banner.redirectUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
+        <a href={banner.redirectUrl} target="_blank" rel="noopener noreferrer">
           <AdImage
             src={banner.imageUrl}
             alt={banner.title || "Popup quảng cáo"}
@@ -130,5 +124,3 @@ const PopupAd: React.FC = () => {
 };
 
 export default PopupAd;
-
-

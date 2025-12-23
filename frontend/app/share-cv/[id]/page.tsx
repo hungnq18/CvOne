@@ -131,7 +131,6 @@ export default function ShareCVPage() {
           })
           .save();
       } catch (error) {
-        console.error("Error generating PDF:", error);
         notify.error("An error occurred while exporting the PDF file.");
       } finally {
         if (root) {
@@ -142,7 +141,6 @@ export default function ShareCVPage() {
         }
       }
     } catch (err) {
-      console.error("Error in download:", err);
       notify.error("Failed to generate PDF");
     }
   };

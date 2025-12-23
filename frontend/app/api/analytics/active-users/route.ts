@@ -21,7 +21,7 @@ export async function GET() {
         error: "Google Analytics env vars are not configured",
         activeUsers: 0,
       },
-      { status: 500 },
+      { status: 500 }
     );
   }
 
@@ -36,15 +36,12 @@ export async function GET() {
 
     return NextResponse.json({ activeUsers });
   } catch (error) {
-    console.error("Failed to fetch GA4 active users:", error);
     return NextResponse.json(
       {
         error: "Failed to fetch GA4 active users",
         activeUsers: 0,
       },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
-
-

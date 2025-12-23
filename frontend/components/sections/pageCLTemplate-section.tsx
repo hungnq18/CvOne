@@ -31,11 +31,17 @@ interface TemplateSectionProps {
 
 const TemplateSection: React.FC<TemplateSectionProps> = ({ clTemplates }) => {
   const { language } = useLanguage();
-  const [viewMode, setViewMode] = useState<"recommended" | "all">("recommended");
-  const [previewingTemplate, setPreviewingTemplate] = useState<CLTemplate | null>(null);
+  const [viewMode, setViewMode] = useState<"recommended" | "all">(
+    "recommended"
+  );
+  const [previewingTemplate, setPreviewingTemplate] =
+    useState<CLTemplate | null>(null);
 
-  const recommendedTemplates = clTemplates.filter((template) => template.isRecommended);
-  const displayedTemplates = viewMode === "recommended" ? recommendedTemplates : clTemplates;
+  const recommendedTemplates = clTemplates.filter(
+    (template) => template.isRecommended
+  );
+  const displayedTemplates =
+    viewMode === "recommended" ? recommendedTemplates : clTemplates;
 
   const handlePreviewClick = (template: CLTemplate) => {
     setPreviewingTemplate(template);
@@ -57,9 +63,10 @@ const TemplateSection: React.FC<TemplateSectionProps> = ({ clTemplates }) => {
         <button
           onClick={() => setViewMode("recommended")}
           className={`w-40 h-12 rounded-lg border font-medium transition-all duration-200 text-base shadow-sm
-            ${viewMode === "recommended"
-              ? "bg-blue-600 text-white border-blue-600 hover:bg-blue-700"
-              : "bg-blue-50 text-blue-600 border-blue-600 hover:bg-blue-100"
+            ${
+              viewMode === "recommended"
+                ? "bg-blue-600 text-white border-blue-600 hover:bg-blue-700"
+                : "bg-blue-50 text-blue-600 border-blue-600 hover:bg-blue-100"
             }`}
         >
           {language === "vi" ? "Được Đề Xuất" : "Recommended"}
@@ -67,9 +74,10 @@ const TemplateSection: React.FC<TemplateSectionProps> = ({ clTemplates }) => {
         <button
           onClick={() => setViewMode("all")}
           className={`w-40 h-12 rounded-lg border font-medium transition-all duration-200 text-base shadow-sm
-            ${viewMode === "all"
-              ? "bg-blue-600 text-white border-blue-600 hover:bg-blue-700"
-              : "bg-blue-50 text-blue-600 border-blue-600 hover:bg-blue-100"
+            ${
+              viewMode === "all"
+                ? "bg-blue-600 text-white border-blue-600 hover:bg-blue-700"
+                : "bg-blue-50 text-blue-600 border-blue-600 hover:bg-blue-100"
             }`}
         >
           {language === "vi" ? "Tất Cả" : "All"}
@@ -117,7 +125,6 @@ export const getServerSideProps: GetServerSideProps = async () => {
     const clTemplates = await getCLTemplates();
     return { props: { clTemplates } };
   } catch (error) {
-    console.error("Error fetching CL templates:", error);
     return { props: { clTemplates: [] } };
   }
 };

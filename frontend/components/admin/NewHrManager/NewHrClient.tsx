@@ -4,136 +4,141 @@ import { useEffect, useState } from "react";
 import { HRTable } from "./NewHrTable";
 import { HRDetailModal } from "./NewHrDetailModal";
 import { HrUser, getUnactiveHrUsers, updateHrActiveStatus } from "@/api/apiHr";
-import { deleteUser } from "@/api/userApi"
-import { useLanguage } from "@/providers/global_provider"
+import { deleteUser } from "@/api/userApi";
+import { useLanguage } from "@/providers/global_provider";
 
 export default function HRManagementDashboard() {
-    const { t } = useLanguage()
-    const [applications, setApplications] = useState<HrUser[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [selectedApp, setSelectedApp] = useState<HrUser | null>(null);
-    const [isModalOpen, setIsModalOpen] = useState(false);
+  const { t } = useLanguage();
+  const [applications, setApplications] = useState<HrUser[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedApp, setSelectedApp] = useState<HrUser | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-    // Hàm fetch lại danh sách applications
-    const fetchApplications = async () => {
-        try {
-            setLoading(true);
-            const data = await getUnactiveHrUsers();
-            setApplications(data);
-        } catch (error) {
-            console.error("Error fetching HR users:", error);
-        } finally {
-            setLoading(false);
-        }
-    };
+  // Hàm fetch lại danh sách applications
+  const fetchApplications = async () => {
+    try {
+      setLoading(true);
+      const data = await getUnactiveHrUsers();
+      setApplications(data);
+    } catch (error) {
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    // Fetch khi load page
-    useEffect(() => {
-        fetchApplications();
-    }, []);
+  // Fetch khi load page
+  useEffect(() => {
+    fetchApplications();
+  }, []);
 
-    // APPROVE HR
-    const handleApprove = async (accountId: string) => {
-        try {
-            await updateHrActiveStatus(accountId, { isActive: true });
-            await fetchApplications(); // reset lại danh sách
-        } catch (error) {
-            console.error("Approve error:", error);
-        } finally {
-            setIsModalOpen(false);
-            setSelectedApp(null);
-        }
-    };
+  // APPROVE HR
+  const handleApprove = async (accountId: string) => {
+    try {
+      await updateHrActiveStatus(accountId, { isActive: true });
+      await fetchApplications(); // reset lại danh sách
+    } catch (error) {
+    } finally {
+      setIsModalOpen(false);
+      setSelectedApp(null);
+    }
+  };
 
-    // REJECT HR
-    const handleReject = async (userId: string) => {
-        try {
-            await deleteUser(userId);
-            await fetchApplications(); // reset lại danh sách
-        } catch (error) {
-            console.error("Delete user failed", error);
-        } finally {
-            setIsModalOpen(false);
-            setSelectedApp(null);
-        }
-    };
+  // REJECT HR
+  const handleReject = async (userId: string) => {
+    try {
+      await deleteUser(userId);
+      await fetchApplications(); // reset lại danh sách
+    } catch (error) {
+    } finally {
+      setIsModalOpen(false);
+      setSelectedApp(null);
+    }
+  };
 
-    // View Details
-    const handleViewDetails = (app: HrUser) => {
-        setSelectedApp(app);
-        setIsModalOpen(true);
-    };
+  // View Details
+  const handleViewDetails = (app: HrUser) => {
+    setSelectedApp(app);
+    setIsModalOpen(true);
+  };
 
-    const pendingApps = applications;
+  const pendingApps = applications;
 
-    return (
-        <div className="flex flex-col h-screen bg-background">
-            {/* Header */}
-            <header className="sticky top-0 z-50 border-b border-border bg-card">
-                <div className="flex items-center justify-between px-8 py-6">
-                    <div>
-                        <h1 className="text-3xl font-bold text-foreground">{t.admin.newHr.title}</h1>
-                        <p className="mt-1 text-sm text-muted-foreground">
-                            {t.admin.newHr.desc}
-                        </p>
-                    </div>
-                    <div className="rounded-lg bg-blue-50 px-4 py-2">
-                        <p className="text-sm font-medium text-blue-900">{t.admin.newHr.pending}</p>
-                        <p className="text-2xl font-bold text-blue-600">{pendingApps.length}</p>
-                    </div>
-                </div>
-            </header>
-
-            {/* Main content */}
-            <div className="flex-1 overflow-auto p-8">
-                <div className="rounded-lg border border-border bg-card">
-                    <div className="border-b border-border px-6 py-4">
-                        <h2 className="text-xl font-semibold text-foreground">{t.admin.newHr.pendingRegistrations}</h2>
-                    </div>
-
-                    <div className="p-6">
-                        {loading ? (
-                            <div className="py-12 text-center text-muted-foreground">{t.admin.newHr.loading}</div>
-                        ) : pendingApps.length > 0 ? (
-                            <HRTable
-                                applications={pendingApps}
-                                onViewDetails={handleViewDetails}
-                                showStatus={false}
-                            />
-                        ) : (
-                            <div className="py-12 text-center text-muted-foreground">
-                                {t.admin.newHr.empty}
-                            </div>
-                        )}
-                    </div>
-                </div>
-            </div>
-
-            {/* Modal */}
-            {selectedApp && (
-                <HRDetailModal
-                    application={{
-                        ...selectedApp,
-                        _id: selectedApp._id,
-                        first_name: selectedApp.first_name,
-                        last_name: selectedApp.last_name,
-                        company_name: selectedApp.company_name,
-                        company_country: selectedApp.company_country,
-                        company_city: selectedApp.company_city,
-                        company_district: selectedApp.company_district,
-                        createdAt: selectedApp.createdAt,
-                    }}
-                    isOpen={isModalOpen}
-                    onClose={() => {
-                        setIsModalOpen(false);
-                        setSelectedApp(null);
-                    }}
-                    onApprove={() => handleApprove(selectedApp.account_id._id)}
-
-                    onReject={() => handleReject(selectedApp._id)}
-
-                />
-            )}
+  return (
+    <div className="flex flex-col h-screen bg-background">
+      {/* Header */}
+      <header className="sticky top-0 z-50 border-b border-border bg-card">
+        <div className="flex items-center justify-between px-8 py-6">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">
+              {t.admin.newHr.title}
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {t.admin.newHr.desc}
+            </p>
+          </div>
+          <div className="rounded-lg bg-blue-50 px-4 py-2">
+            <p className="text-sm font-medium text-blue-900">
+              {t.admin.newHr.pending}
+            </p>
+            <p className="text-2xl font-bold text-blue-600">
+              {pendingApps.length}
+            </p>
+          </div>
         </div>
-    );
+      </header>
+
+      {/* Main content */}
+      <div className="flex-1 overflow-auto p-8">
+        <div className="rounded-lg border border-border bg-card">
+          <div className="border-b border-border px-6 py-4">
+            <h2 className="text-xl font-semibold text-foreground">
+              {t.admin.newHr.pendingRegistrations}
+            </h2>
+          </div>
+
+          <div className="p-6">
+            {loading ? (
+              <div className="py-12 text-center text-muted-foreground">
+                {t.admin.newHr.loading}
+              </div>
+            ) : pendingApps.length > 0 ? (
+              <HRTable
+                applications={pendingApps}
+                onViewDetails={handleViewDetails}
+                showStatus={false}
+              />
+            ) : (
+              <div className="py-12 text-center text-muted-foreground">
+                {t.admin.newHr.empty}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Modal */}
+      {selectedApp && (
+        <HRDetailModal
+          application={{
+            ...selectedApp,
+            _id: selectedApp._id,
+            first_name: selectedApp.first_name,
+            last_name: selectedApp.last_name,
+            company_name: selectedApp.company_name,
+            company_country: selectedApp.company_country,
+            company_city: selectedApp.company_city,
+            company_district: selectedApp.company_district,
+            createdAt: selectedApp.createdAt,
+          }}
+          isOpen={isModalOpen}
+          onClose={() => {
+            setIsModalOpen(false);
+            setSelectedApp(null);
+          }}
+          onApprove={() => handleApprove(selectedApp.account_id._id)}
+          onReject={() => handleReject(selectedApp._id)}
+        />
+      )}
+    </div>
+  );
 }

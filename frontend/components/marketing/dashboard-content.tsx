@@ -1,15 +1,15 @@
-"use client"
+"use client";
 
-import { UserCheck, Ticket, Megaphone, Activity } from "lucide-react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { UserStatsChart } from "@/components/marketing/user-stats-chart"
-import { useEffect, useState } from "react"
-import { getAllUsers } from "@/api/userApi"
-import type { User } from "@/types/auth"
-import { getAllVouchers } from "@/api/voucherApi"
-import { getAllBanners } from "@/api/bannerApi"
-import { getActiveUsers } from "@/api/analyticsApi"
-import { useLanguage } from "@/providers/global_provider"
+import { UserCheck, Ticket, Megaphone, Activity } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { UserStatsChart } from "@/components/marketing/user-stats-chart";
+import { useEffect, useState } from "react";
+import { getAllUsers } from "@/api/userApi";
+import type { User } from "@/types/auth";
+import { getAllVouchers } from "@/api/voucherApi";
+import { getAllBanners } from "@/api/bannerApi";
+import { getActiveUsers } from "@/api/analyticsApi";
+import { useLanguage } from "@/providers/global_provider";
 
 interface UserData {
   month: string;
@@ -39,7 +39,7 @@ export function DashboardContent() {
       value: "0",
       icon: Megaphone,
     },
-  ])
+  ]);
   const [userChartData, setUserChartData] = useState<UserData[]>([]);
 
   useEffect(() => {
@@ -50,15 +50,14 @@ export function DashboardContent() {
           getAllVouchers(),
           getAllBanners(),
           getActiveUsers().catch((err) => {
-            console.error("Failed to fetch GA active users:", err)
-            return 0
+            return 0;
           }),
         ]);
 
         // users từ API /users có dạng user + account_id (được populate với { email, role })
         const populatedUsers = users as any[];
         const activeHRs = populatedUsers.filter(
-          (u) => u.account_id?.role === "hr",
+          (u) => u.account_id?.role === "hr"
         ).length;
 
         setStats((prev) => [
@@ -70,19 +69,30 @@ export function DashboardContent() {
 
         const monthlyUserData = processUserData(users as User[]);
         setUserChartData(monthlyUserData);
-      } catch (error) {
-        console.error("Failed to fetch dashboard stats:", error)
-      }
-    }
+      } catch (error) {}
+    };
 
-    fetchStats()
-  }, [])
+    fetchStats();
+  }, []);
 
   const processUserData = (users: User[]): UserData[] => {
-    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const monthNames = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ];
     const monthlyData: { [key: string]: number } = {};
 
-    users.forEach(user => {
+    users.forEach((user) => {
       if (user.createdAt) {
         const date = new Date(user.createdAt);
         const monthIndex = date.getMonth();
@@ -95,9 +105,9 @@ export function DashboardContent() {
       }
     });
 
-    return monthNames.map(monthName => ({
+    return monthNames.map((monthName) => ({
       month: monthName,
-      users: monthlyData[monthName] || 0
+      users: monthlyData[monthName] || 0,
     }));
   };
 
@@ -138,5 +148,5 @@ export function DashboardContent() {
         </Card>
       </div>
     </div>
-  )
+  );
 }

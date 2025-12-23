@@ -22,10 +22,11 @@ const translations = {
         invalidFormat: "Invalid file format. Please select a PDF file.",
         readError: "Could not read the selected file.",
         extractError: "Could not extract content from this PDF file.",
-        previewError: (message: string) => `Cannot load PDF preview: ${message}`,
-        uploadRequired: "Please upload a PDF file before continuing."
-      }
-    }
+        previewError: (message: string) =>
+          `Cannot load PDF preview: ${message}`,
+        uploadRequired: "Please upload a PDF file before continuing.",
+      },
+    },
   },
   vi: {
     uploadCV: {
@@ -39,21 +40,42 @@ const translations = {
         invalidFormat: "Định dạng file không hợp lệ. Vui lòng chọn file PDF.",
         readError: "Không thể đọc file đã chọn.",
         extractError: "Không thể trích xuất nội dung từ file PDF này.",
-        previewError: (message: string) => `Không thể tải preview PDF: ${message}`,
-        uploadRequired: "Vui lòng tải lên file PDF trước khi tiếp tục."
-      }
-    }
-  }
+        previewError: (message: string) =>
+          `Không thể tải preview PDF: ${message}`,
+        uploadRequired: "Vui lòng tải lên file PDF trước khi tiếp tục.",
+      },
+    },
+  },
 };
 
-type OnDocumentLoadSuccess = NonNullable<React.ComponentProps<typeof Document>["onLoadSuccess"]>;
+type OnDocumentLoadSuccess = NonNullable<
+  React.ComponentProps<typeof Document>["onLoadSuccess"]
+>;
 
-function UploadPDFInput({ onFileChange, disabled, label }: { onFileChange: (file: File) => void, disabled?: boolean, label: string }) {
+function UploadPDFInput({
+  onFileChange,
+  disabled,
+  label,
+}: {
+  onFileChange: (file: File) => void;
+  disabled?: boolean;
+  label: string;
+}) {
   return (
-    <label htmlFor="file-upload-modal" className="w-full flex flex-col justify-center text-center items-center gap-2 cursor-pointer border-2 border-dashed border-gray-300 bg-white p-4 rounded-md shadow-sm">
+    <label
+      htmlFor="file-upload-modal"
+      className="w-full flex flex-col justify-center text-center items-center gap-2 cursor-pointer border-2 border-dashed border-gray-300 bg-white p-4 rounded-md shadow-sm"
+    >
       <span className="font-normal text-gray-600">{label}</span>
-      <input type="file" id="file-upload-modal" className="hidden" accept="application/pdf"
-        onChange={e => { const file = e.target.files?.[0]; if (file) onFileChange(file); }}
+      <input
+        type="file"
+        id="file-upload-modal"
+        className="hidden"
+        accept="application/pdf"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) onFileChange(file);
+        }}
         disabled={disabled}
       />
     </label>
@@ -84,11 +106,16 @@ function UploadCVPage() {
 
     if (file.type !== "application/pdf") {
       setOutput(JSON.stringify({ error: t.alerts.invalidFormat }, null, 2));
-      setPdfFile(null); setNumPages(0); setFileName("");
+      setPdfFile(null);
+      setNumPages(0);
+      setFileName("");
       return;
     }
 
-    setIsLoading(true); setOutput(""); setPdfFile(null); setFileName(file.name);
+    setIsLoading(true);
+    setOutput("");
+    setPdfFile(null);
+    setFileName(file.name);
 
     const reader = new FileReader();
     reader.onload = (event) => {
@@ -96,7 +123,7 @@ function UploadCVPage() {
         const arrayBuffer = event.target?.result as ArrayBuffer;
         setPdfFile(new Uint8Array(arrayBuffer));
       } catch (error) {
-        console.error("Lỗi khi đọc file:", error);
+        // console.error("Lỗi khi đọc file:", error);
         setOutput(JSON.stringify({ error: t.alerts.readError }, null, 2));
         setIsLoading(false);
       }
@@ -108,13 +135,13 @@ function UploadCVPage() {
     setNumPages(pdf.numPages);
     setIsLoading(false);
   };
-  
+
   const handleNextStep = () => {
     if (!pdfFile) {
       notify.error(t.alerts.uploadRequired);
       return;
     }
-    
+
     router.push(`/job-description-cv?id=${templateId}`);
   };
 
@@ -123,12 +150,22 @@ function UploadCVPage() {
       <div className="flex flex-col md:flex-row gap-8">
         <div className="w-full md:w-1/3 flex flex-col">
           <h2 className="text-2xl font-bold mb-4">{t.title}</h2>
-          <UploadPDFInput onFileChange={handleFileUpload} disabled={isLoading} label={t.uploadLabel} />
+          <UploadPDFInput
+            onFileChange={handleFileUpload}
+            disabled={isLoading}
+            label={t.uploadLabel}
+          />
           <div className="mt-8 flex justify-between">
-            <button onClick={() => window.history.back()} className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100">
+            <button
+              onClick={() => window.history.back()}
+              className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100"
+            >
               {t.buttonBack}
             </button>
-            <button onClick={handleNextStep} className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+            <button
+              onClick={handleNextStep}
+              className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            >
               {t.buttonNext}
             </button>
           </div>
@@ -142,13 +179,24 @@ function UploadCVPage() {
                 loading={t.pdfLoading}
                 onLoadSuccess={onDocumentLoadSuccess}
                 onLoadError={(error) => {
-                  console.error("Lỗi khi tải PDF preview:", error);
-                  setOutput(JSON.stringify({ error: t.alerts.previewError(error.message) }, null, 2));
+                  // console.error("Lỗi khi tải PDF preview:", error);
+                  setOutput(
+                    JSON.stringify(
+                      { error: t.alerts.previewError(error.message) },
+                      null,
+                      2
+                    )
+                  );
                   setIsLoading(false);
                 }}
               >
                 {Array.from(new Array(numPages), (_, i) => (
-                  <Page key={`page_${i + 1}`} pageNumber={i + 1} renderAnnotationLayer={false} renderTextLayer={false} />
+                  <Page
+                    key={`page_${i + 1}`}
+                    pageNumber={i + 1}
+                    renderAnnotationLayer={false}
+                    renderTextLayer={false}
+                  />
                 ))}
               </Document>
             )}
