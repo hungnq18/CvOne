@@ -570,7 +570,7 @@ const Modern2: React.FC<Modern2Props> = ({
             <Section
               key="skills"
               title={t.skillsLabel}
-              sectionId={sectionMap.certification}
+              sectionId={sectionMap.skills}
               onSectionClick={onSectionClick}
               isPdfMode={isPdfMode}
               dragHandleProps={dragHandleProps}
