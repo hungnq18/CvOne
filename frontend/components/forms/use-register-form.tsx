@@ -111,7 +111,7 @@ const translations: {
         "Password must contain at least one number and one special character",
       registerSuccess: "Registration successful!",
       registerFailed: "Registration failed",
-      checkEmail: "Please check your email for verification",
+      checkEmail: "Please check your email for verification, may be email will be in spam box",
       agreeToTerms: "You must agree to the terms and conditions.",
       wordLimitError:
         "Họ, Tên và Tên công ty chỉ được chứa tối đa 5 từ mỗi trường!",
@@ -195,7 +195,7 @@ const translations: {
       passwordComplexity: "Mật khẩu phải chứa ít nhất 1 số và 1 ký tự đặc biệt",
       registerSuccess: "Đăng ký thành công!",
       registerFailed: "Đăng ký thất bại",
-      checkEmail: "Vui lòng kiểm tra email của bạn để xác nhận",
+      checkEmail: "Vui lòng kiểm tra email của bạn để xác nhận, có thể email sẽ ở trong mục spam",
       agreeToTerms: "Bạn phải đồng ý với các điều khoản và điều kiện.",
       wordLimitError:
         "Họ, Tên và Tên công ty chỉ được chứa tối đa 5 từ mỗi trường!",

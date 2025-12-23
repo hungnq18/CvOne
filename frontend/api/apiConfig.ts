@@ -102,6 +102,7 @@ export const API_ENDPOINTS = {
     ANALYZE_JD_PDF: "/jobs/analyze-jd-pdf",
     GET_PENDING_FOR_ADMIN: "/jobs/pending/admin",
     APPROVE_BY_ADMIN: (id: string) => `/jobs/${id}/approve`,
+    REJECT_BY_ADMIN: (id: string) => `/jobs/${id}/reject`,
   },
   NOTIFICATION: {
     GET_NOTIFICATIONS: "/notifications",

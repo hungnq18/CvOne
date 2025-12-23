@@ -12,11 +12,27 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { getPendingJobsForAdmin, approveJobByAdmin, Job } from "@/api/jobApi";
+import {
+  getPendingJobsForAdmin,
+  approveJobByAdmin,
+  rejectJobByAdmin,
+  Job,
+} from "@/api/jobApi";
 import { format } from "date-fns";
-import { toast } from "react-hot-toast";
 import { useLanguage } from "@/providers/global_provider";
 import { sendNotification } from "@/api/apiNotification";
+import {
+  showErrorToast,
+  showSuccessToast,
+} from "@/utils/popUpUtils";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export function JobApprovalTable() {
   const { t } = useLanguage();
@@ -25,6 +41,8 @@ export function JobApprovalTable() {
   const [limit] = useState(10);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
+  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
 
   const fetchJobs = async (pageNumber: number) => {
     try {
@@ -34,7 +52,7 @@ export function JobApprovalTable() {
       setTotal(res.total || 0);
       setPage(res.page || pageNumber);
     } catch (error) {
-      toast.error(t.admin.jobApproval.messages.loadError);
+      showErrorToast(t.common.error, t.admin.jobApproval.messages.loadError);
     } finally {
       setLoading(false);
     }
@@ -51,20 +69,56 @@ export function JobApprovalTable() {
       if (!approveRes) return;
       const message = `Chúc mừng bạn! Tin tuyển dụng "${jobTitle}" đã được Admin xét duyệt thành công và hiện đã được công khai trên hệ thống.`;
 
+      const recipientId = (hr as any)?._id ?? hr;
+
       const notifData = {
         title: "Job Approved",
         message,
-        recipient: hr,
-        type: "info",
+        recipient: recipientId,
+        type: "approve",
         jobId: jobId,
       };
       await sendNotification(notifData);
 
-      toast.success(t.admin.jobApproval.messages.approveSuccess);
+      showSuccessToast(
+        t.common.success,
+        t.admin.jobApproval.messages.approveSuccess
+      );
       fetchJobs(page);
     } catch (error) {
-      toast.error(t.admin.jobApproval.messages.approveError);
+      showErrorToast(
+        t.common.error,
+        t.admin.jobApproval.messages.approveError
+      );
     }
+  };
+
+  const handleReject = async (jobId: string) => {
+    try {
+      await rejectJobByAdmin(jobId);
+      showSuccessToast(
+        t.common.success,
+        t.admin.jobApproval.messages.rejectSuccess
+      );
+      fetchJobs(page);
+    } catch (error) {
+      showErrorToast(
+        t.common.error,
+        t.admin.jobApproval.messages.rejectError
+      );
+    }
+  };
+
+  const openRejectDialog = (job: Job) => {
+    setSelectedJob(job);
+    setIsRejectDialogOpen(true);
+  };
+
+  const handleConfirmReject = async () => {
+    if (!selectedJob) return;
+    await handleReject(selectedJob._id);
+    setIsRejectDialogOpen(false);
+    setSelectedJob(null);
   };
 
   const totalPages = Math.max(1, Math.ceil(total / limit));
@@ -93,7 +147,7 @@ export function JobApprovalTable() {
                 <TableHead>{t.admin.jobApproval.table.location}</TableHead>
                 <TableHead>{t.admin.jobApproval.table.postingDate}</TableHead>
                 <TableHead>{t.admin.jobApproval.table.deadline}</TableHead>
-                <TableHead className="text-right">
+                <TableHead>
                   {t.admin.jobApproval.table.actions}
                 </TableHead>
               </TableRow>
@@ -114,9 +168,6 @@ export function JobApprovalTable() {
                   <TableCell>
                     <div className="flex flex-col gap-1">
                       <span className="font-medium">{job.title}</span>
-                      <span className="text-xs text-muted-foreground line-clamp-1">
-                        {job.description}
-                      </span>
                     </div>
                   </TableCell>
                   <TableCell>
@@ -137,16 +188,27 @@ export function JobApprovalTable() {
                       : "-"}
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button
-                      size="sm"
-                      className="bg-green-600 hover:bg-green-700"
-                      onClick={() =>
-                        handleApprove(job._id, job.title, job.user_id)
-                      }
-                      disabled={loading}
-                    >
-                      {t.admin.jobApproval.approve}
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        className="bg-green-600 hover:bg-green-700"
+                        onClick={() =>
+                          handleApprove(job._id, job.title, job.user_id)
+                        }
+                        disabled={loading}
+                      >
+                        {t.admin.jobApproval.approve}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-red-500 text-red-600 hover:bg-red-50"
+                        onClick={() => openRejectDialog(job)}
+                        disabled={loading}
+                      >
+                        {t.admin.jobApproval.reject}
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -181,6 +243,35 @@ export function JobApprovalTable() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Reject Confirmation Dialog */}
+      <Dialog open={isRejectDialogOpen} onOpenChange={setIsRejectDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t.common.confirmDeleteTitle}</DialogTitle>
+            <DialogDescription>
+              {t.common.confirmDeleteDesc}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsRejectDialogOpen(false)}
+            >
+              {t.common.cancel}
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={handleConfirmReject}
+              disabled={loading}
+            >
+              {t.common.confirm}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

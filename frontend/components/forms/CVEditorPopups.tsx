@@ -3,7 +3,7 @@
 
 import { useOnClickOutside } from "@/hooks/useOnClickOutside";
 import { useLanguage } from "@/providers/global_provider";
-import { Edit, Loader2, PlusCircle, Trash2, X } from "lucide-react";
+import { Edit, Loader2, PlusCircle, Trash2, X, RotateCcw } from "lucide-react";
 import { ChangeEvent, FC, ReactNode, useRef, useState } from "react";
 import { notify } from "@/lib/notify";
 import { useRouter } from "next/navigation";
@@ -11,17 +11,17 @@ import { toast } from "@/hooks/use-toast";
 
 const createMaxLengthHandler =
   (language: string) =>
-  (e: React.FormEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const target = e.target as HTMLInputElement | HTMLTextAreaElement;
-    const maxLength = target.maxLength;
-    if (maxLength > 0 && target.value.length >= maxLength) {
-      notify.error(
-        language === "vi"
-          ? `Đã đạt giới hạn tối đa ${maxLength} ký tự`
-          : `Maximum limit of ${maxLength} characters reached`
-      );
-    }
-  };
+    (e: React.FormEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      const target = e.target as HTMLInputElement | HTMLTextAreaElement;
+      const maxLength = target.maxLength;
+      if (maxLength > 0 && target.value.length >= maxLength) {
+        notify.error(
+          language === "vi"
+            ? `Đã đạt giới hạn tối đa ${maxLength} ký tự`
+            : `Maximum limit of ${maxLength} characters reached`
+        );
+      }
+    };
 
 const translations = {
   en: {
@@ -1454,6 +1454,20 @@ export const SkillsPopup: FC<{
               {skill.name}
             </span>
             <div className="ml-auto flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() =>
+                  setSkills((prev: any[]) =>
+                    prev.map((s, i) => (i === index ? { ...s, rating: 0 } : s))
+                  )
+                }
+                // Chỉ hiện nút khi rating > 0
+                className={`mr-1 p-1 rounded-full text-slate-400 hover:text-red-500 hover:bg-slate-100 transition-all ${(skill.rating || 0) === 0 ? "hidden" : "block"
+                  }`}
+                title={language === "vi" ? "Xóa đánh giá" : "Clear rating"}
+              >
+                <RotateCcw size={14} />
+              </button>
               {[1, 2, 3, 4, 5].map((n) => (
                 <button
                   key={n}
@@ -1465,9 +1479,8 @@ export const SkillsPopup: FC<{
                       )
                     )
                   }
-                  className={`${
-                    (skill.rating || 0) >= n ? "bg-blue-600" : "bg-blue-200"
-                  } w-6 h-2 rounded transition-colors`}
+                  className={`${(skill.rating || 0) >= n ? "bg-blue-600" : "bg-blue-200"
+                    } w-6 h-2 rounded transition-colors`}
                   aria-label={`${t.rating}: ${n}`}
                 />
               ))}
@@ -1821,6 +1834,7 @@ export const ProjectPopup: FC<{
   const t = translations[language].projectPopup;
   const handleMaxLength = createMaxLengthHandler(language);
 
+  // 1. [ĐÃ SỬA] Khởi tạo state: Giữ nguyên string, không ép kiểu Date
   const [projects, setProjects] = useState<ProjectItem[]>(() => {
     const rawProjects =
       initialData.Project || initialData.project || initialData.projects || [];
@@ -1836,39 +1850,13 @@ export const ProjectPopup: FC<{
       ];
     }
 
-    return rawProjects.map((item: any) => {
-      let startDate = "";
-      let endDate = "";
-
-      if (item?.startDate) {
-        try {
-          const date = new Date(item.startDate);
-          if (!isNaN(date.getTime())) {
-            startDate = date.toISOString().split("T")[0];
-          }
-        } catch (e) {
-          startDate = item.startDate;
-        }
-      }
-
-      if (item?.endDate) {
-        try {
-          const date = new Date(item.endDate);
-          if (!isNaN(date.getTime())) {
-            endDate = date.toISOString().split("T")[0];
-          }
-        } catch (e) {
-          endDate = item.endDate;
-        }
-      }
-
-      return {
-        title: item?.title || item?.["title "] || "",
-        summary: item?.summary || "",
-        startDate: startDate,
-        endDate: endDate,
-      };
-    });
+    return rawProjects.map((item: any) => ({
+      title: item?.title || item?.["title "] || "",
+      summary: item?.summary || "",
+      // Lấy trực tiếp giá trị string, không parse
+      startDate: item?.startDate || "", 
+      endDate: item?.endDate || "",
+    }));
   });
 
   const handleFieldChange = (
@@ -1918,23 +1906,16 @@ export const ProjectPopup: FC<{
 
   const handleSaveChanges = () => {
     if (!validateForm()) return;
+    
+    // 2. [ĐÃ SỬA] Lưu nguyên văn string người dùng nhập, không convert sang ISO
     const sanitized = projects
-      .map((item) => {
-        const startDateISO = item.startDate
-          ? new Date(item.startDate + "T00:00:00").toISOString()
-          : "";
-        const endDateISO = item.endDate
-          ? new Date(item.endDate + "T00:00:00").toISOString()
-          : "";
-
-        return {
-          title: item.title?.trim() || "",
-          summary: item.summary || "",
-          startDate: startDateISO,
-          endDate: endDateISO,
-        };
-      })
-      .filter((item) => item.title);
+      .map((item) => ({
+        title: item.title?.trim() || "",
+        summary: item.summary || "",
+        startDate: item.startDate || "",
+        endDate: item.endDate || "",
+      }))
+      .filter((item) => item.title); // Chỉ lưu project có tên
 
     const updatedData = {
       ...initialData,
@@ -1965,6 +1946,8 @@ export const ProjectPopup: FC<{
                 {t.removeButton}
               </button>
             </div>
+            
+            {/* Tên dự án */}
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">
                 {t.nameLabel}
@@ -1980,6 +1963,8 @@ export const ProjectPopup: FC<{
                 className="w-full border rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
+            
+            {/* Mô tả */}
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">
                 {t.summaryLabel}
@@ -1995,16 +1980,17 @@ export const ProjectPopup: FC<{
                 className="w-full border rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
+
+            {/* Ngày tháng - [ĐÃ SỬA] Chuyển về input text */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">
                   {t.startDateLabel}
                 </label>
                 <input
-                  type="date"
-                  value={
-                    project.startDate ? project.startDate.slice(0, 10) : ""
-                  }
+                  type="text" 
+                  placeholder="YYYY-MM-DD"
+                  value={project.startDate}
                   onChange={(e) =>
                     handleFieldChange(index, "startDate", e.target.value)
                   }
@@ -2016,8 +2002,9 @@ export const ProjectPopup: FC<{
                   {t.endDateLabel}
                 </label>
                 <input
-                  type="date"
-                  value={project.endDate ? project.endDate.slice(0, 10) : ""}
+                  type="text" 
+                  placeholder="YYYY-MM-DD or Present"
+                  value={project.endDate}
                   onChange={(e) =>
                     handleFieldChange(index, "endDate", e.target.value)
                   }

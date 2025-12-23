@@ -6,6 +6,9 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { verifyToken, resetPassword } from "@/api/authApi";
 import Image from "next/image";
 import logoImg from "../../public/logo/logoCVOne.svg";
+import { useToast } from "@/components/ui/use-toast";
+// 1. Import hook ngôn ngữ
+import { useLanguage } from "@/providers/global_provider";
 
 const Wrapper = styled.div`
   min-height: 100vh;
@@ -151,9 +154,61 @@ const BackToLogin = styled.div`
   }
 `;
 
+// 2. Định nghĩa object Translations
+const translations = {
+  en: {
+    title: "Reset Password",
+    newPasswordLabel: "New Password",
+    confirmPasswordLabel: "Confirm Password",
+    newPasswordPlaceholder: "Min 8 chars, 1 number, 1 special char",
+    confirmPasswordPlaceholder: "Re-enter new password",
+    submitButton: "Reset Password",
+    submittingButton: "Resetting...",
+    backToLogin: "Back to Login",
+    tokenInvalid: "Invalid or expired token.",
+    passwordTooShort: "Password must be at least 8 characters.",
+    passwordNoNumber: "Password must contain at least one number.",
+    passwordNoSpecial: "Password must contain at least one special character.",
+    passwordMismatch: "Passwords do not match.",
+    successTitle: "Success",
+    successMessage: "Password reset successfully! Redirecting...",
+    errorTitle: "Error",
+    systemError: "An error occurred. Please try again.",
+    validationErrorTitle: "Invalid Password",
+    mismatchErrorTitle: "Mismatch Error",
+  },
+  vi: {
+    title: "Đặt lại mật khẩu",
+    newPasswordLabel: "Mật khẩu mới",
+    confirmPasswordLabel: "Xác nhận mật khẩu",
+    newPasswordPlaceholder: "Tối thiểu 8 ký tự, 1 số, 1 ký tự đặc biệt",
+    confirmPasswordPlaceholder: "Nhập lại mật khẩu mới",
+    submitButton: "Đặt lại mật khẩu",
+    submittingButton: "Đang đặt lại...",
+    backToLogin: "Quay lại đăng nhập",
+    tokenInvalid: "Token không hợp lệ hoặc đã hết hạn.",
+    passwordTooShort: "Mật khẩu phải có ít nhất 8 ký tự.",
+    passwordNoNumber: "Mật khẩu phải chứa ít nhất một số.",
+    passwordNoSpecial: "Mật khẩu phải chứa ít nhất một ký tự đặc biệt.",
+    passwordMismatch: "Mật khẩu xác nhận không khớp.",
+    successTitle: "Thành công",
+    successMessage: "Đặt lại mật khẩu thành công! Đang chuyển hướng...",
+    errorTitle: "Lỗi",
+    systemError: "Có lỗi xảy ra. Vui lòng thử lại.",
+    validationErrorTitle: "Mật khẩu không hợp lệ",
+    mismatchErrorTitle: "Lỗi xác nhận",
+  }
+};
+
 export default function ResetPasswordPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { toast } = useToast();
+  
+  // 3. Sử dụng hook language và lấy text tương ứng
+  const { language } = useLanguage();
+  const t = translations[language as keyof typeof translations]; // Ép kiểu để TS hiểu key
+
   const token = searchParams.get("token") || "";
 
   const [tokenValid, setTokenValid] = useState<boolean | null>(null);
@@ -166,7 +221,7 @@ export default function ResetPasswordPage() {
   useEffect(() => {
     if (!token) {
       setTokenValid(false);
-      setMessage("Token không hợp lệ hoặc đã hết hạn.");
+      setMessage(t.tokenInvalid);
       return;
     }
     verifyToken(token)
@@ -175,33 +230,75 @@ export default function ResetPasswordPage() {
       })
       .catch(() => {
         setTokenValid(false);
-        setMessage("Token không hợp lệ hoặc đã hết hạn.");
+        setMessage(t.tokenInvalid);
       });
-  }, [token]);
+  }, [token, t.tokenInvalid]);
+
+  const validatePassword = (pass: string) => {
+    if (pass.length < 8) {
+      return t.passwordTooShort;
+    }
+    if (!/\d/.test(pass)) {
+      return t.passwordNoNumber;
+    }
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(pass)) {
+      return t.passwordNoSpecial;
+    }
+    return null;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage("");
     setSuccess(false);
-    if (password.length < 6) {
-      setMessage("Mật khẩu phải có ít nhất 6 ký tự.");
+
+    const passwordError = validatePassword(password);
+    if (passwordError) {
+      setMessage(passwordError);
+      toast({
+        variant: "destructive",
+        title: t.validationErrorTitle,
+        description: passwordError,
+      });
       return;
     }
+
     if (password !== confirmPassword) {
-      setMessage("Mật khẩu xác nhận không khớp.");
+      setMessage(t.passwordMismatch);
+      toast({
+        variant: "destructive",
+        title: t.mismatchErrorTitle,
+        description: t.passwordMismatch,
+      });
       return;
     }
+
     setLoading(true);
     try {
       await resetPassword(token, password);
-      setMessage("Đặt lại mật khẩu thành công! Bạn sẽ được đưa lại trang đăng nhập.");
+      
+      setMessage(t.successMessage);
       setSuccess(true);
+      
+      toast({
+        title: t.successTitle,
+        description: t.successMessage,
+        variant: "default",
+      });
+
       setTimeout(() => {
         router.push("/login");
       }, 2000);
     } catch (err: any) {
-      setMessage(err?.message || "Có lỗi xảy ra. Vui lòng thử lại.");
+      const errorMsg = err?.message || t.systemError;
+      setMessage(errorMsg);
       setSuccess(false);
+      
+      toast({
+        variant: "destructive",
+        title: t.errorTitle,
+        description: errorMsg,
+      });
     } finally {
       setLoading(false);
     }
@@ -223,18 +320,18 @@ export default function ResetPasswordPage() {
         </LogoSide>
         <FormSide>
           <Form onSubmit={handleSubmit}>
-            <Title>Đặt lại mật khẩu</Title>
+            <Title>{t.title}</Title>
             {tokenValid === false && (
               <Message style={{ color: '#dc2626' }}>{message}</Message>
             )}
             {tokenValid && (
               <>
                 <div>
-                  <Label htmlFor="password">Mật khẩu mới</Label>
+                  <Label htmlFor="password">{t.newPasswordLabel}</Label>
                   <Input
                     type="password"
                     id="password"
-                    placeholder="Nhập mật khẩu mới"
+                    placeholder={t.newPasswordPlaceholder}
                     value={password}
                     onChange={e => setPassword(e.target.value)}
                     disabled={loading}
@@ -242,11 +339,11 @@ export default function ResetPasswordPage() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="confirmPassword">Xác nhận mật khẩu</Label>
+                  <Label htmlFor="confirmPassword">{t.confirmPasswordLabel}</Label>
                   <Input
                     type="password"
                     id="confirmPassword"
-                    placeholder="Nhập lại mật khẩu mới"
+                    placeholder={t.confirmPasswordPlaceholder}
                     value={confirmPassword}
                     onChange={e => setConfirmPassword(e.target.value)}
                     disabled={loading}
@@ -254,7 +351,7 @@ export default function ResetPasswordPage() {
                   />
                 </div>
                 <SubmitButton type="submit" disabled={loading}>
-                  {loading ? "Đang đặt lại..." : "Đặt lại mật khẩu"}
+                  {loading ? t.submittingButton : t.submitButton}
                 </SubmitButton>
                 {message && (
                   <Message style={{ color: success ? '#16a34a' : '#dc2626' }}>{message}</Message>
@@ -263,10 +360,10 @@ export default function ResetPasswordPage() {
             )}
           </Form>
           <BackToLogin>
-            <a href="/login">Quay lại đăng nhập</a>
+            <a href="/login">{t.backToLogin}</a>
           </BackToLogin>
         </FormSide>
       </Container>
     </Wrapper>
   );
-} 
+}

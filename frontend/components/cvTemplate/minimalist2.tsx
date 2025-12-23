@@ -18,7 +18,7 @@ const translations = {
     careerObjectiveLabel: "CAREER OBJECTIVE",
     skillsLabel: "SKILLS",
     referenceLabel: "REFERENCE",
-    experienceLabel: "RELATED EXPERIENCE",
+    experienceLabel: "WORK EXPERIENCE",
     educationLabel: "EDUCATION",
     phone: "Phone:",
     email: "Email:",
@@ -42,7 +42,7 @@ const translations = {
     careerObjectiveLabel: "MỤC TIÊU NGHỀ NGHIỆP",
     skillsLabel: "KỸ NĂNG",
     referenceLabel: "REFERENCE",
-    experienceLabel: "KINH NGHIỆM LIÊN QUAN",
+    experienceLabel: "KINH NGHIỆM lÀM VIỆC",
     educationLabel: "HỌC VẤN",
     phone: "Điện thoại:",
     email: "Email:",
@@ -120,8 +120,8 @@ const HoverableWrapper: React.FC<HoverableWrapperProps> = ({
   const hoverClass = hoverEffectMap[sectionId] || "";
   const borderRadiusClass = sectionId === "avatar" ? "rounded-full" : "rounded-lg";
   const labelPositionClass = sectionId === "avatar"
-      ? "top-0 left-1/2 -translate-x-1/2 -translate-y-[calc(100%+8px)]"
-      : "top-2 right-2";
+    ? "top-0 left-1/2 -translate-x-1/2 -translate-y-[calc(100%+8px)]"
+    : "top-2 right-2";
 
   const labelRoundedClass = sectionId === "avatar" ? "rounded-lg" : "rounded";
 
@@ -145,14 +145,14 @@ const HoverableWrapper: React.FC<HoverableWrapperProps> = ({
                      text-slate-400 hover:text-green-600 hover:border-green-300 hover:bg-green-50
                      cursor-grab active:cursor-grabbing 
                      opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110 z-[100]
-                     hidden lg:flex" 
+                     hidden lg:flex"
           title="Kéo để sắp xếp vị trí"
           style={{
-             left: isAvatar ? '0' : undefined,
-             transform: isAvatar ? 'translate(-120%, -50%)' : undefined,
-             zIndex: 100
+            left: isAvatar ? '0' : undefined,
+            transform: isAvatar ? 'translate(-120%, -50%)' : undefined,
+            zIndex: 100
           }}
-          onClick={(e: any) => e.stopPropagation()} 
+          onClick={(e: any) => e.stopPropagation()}
         >
           <GripVertical size={18} strokeWidth={2.5} />
         </div>
@@ -187,7 +187,7 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
 }) => {
   const lang = language || "en";
   const defaultT = translations[lang as "en" | "vi"];
-  
+
   // Xác định locale cho date string (nếu là vi thì dùng vi-VN, còn lại dùng en-US)
   const dateLocale = lang === "vi" ? "vi-VN" : "en-US";
 
@@ -245,7 +245,7 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
   type SectionPosition = { place: number; order: number };
 
   const supportedSections = ["avatar", "info", "contact", "summary", "skills", "experience", "education", "certification", "achievement", "hobby", "Project"];
-  
+
   const leftSections = Object.entries(sectionPositions)
     .filter(([key, pos]) => {
       const place = (pos as SectionPosition).place;
@@ -274,12 +274,12 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
 
     const sourcePlace = parseInt(source.droppableId);
     const destPlace = parseInt(destination.droppableId);
-    
+
     if (sourcePlace !== destPlace) {
       notify.error(dragWarningMessage);
       return;
     }
-    
+
     const newPositions = { ...sectionPositions };
 
     const getKeys = (place: number) => Object.entries(newPositions)
@@ -293,8 +293,8 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
     const [moved] = destKeys.splice(source.index, 1);
     destKeys.splice(destination.index, 0, moved);
 
-    destKeys.forEach((key, index) => { 
-      newPositions[key] = { place: destPlace, order: index }; 
+    destKeys.forEach((key, index) => {
+      newPositions[key] = { place: destPlace, order: index };
     });
 
     onLayoutChange(newPositions);
@@ -317,7 +317,7 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
 
   const renderSection = (sectionId: string, dragHandleProps?: any, isDragging?: boolean) => {
     // Shared container class for consistent padding adjustment
-    const sectionContainerClass = "px-4 sm:px-6 lg:px-10"; 
+    const sectionContainerClass = "px-4 sm:px-6 lg:px-10";
     const rightSectionContainerClass = "px-4 sm:px-6 lg:px-12 py-4 sm:py-6";
 
     switch (sectionId) {
@@ -336,9 +336,9 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
                 <div className="w-32 h-32 sm:w-36 sm:h-36 lg:w-40 lg:h-40 rounded-full overflow-hidden bg-white border-4 sm:border-6 border-white shadow-2xl ring-4 ring-green-700/20 relative">
                   {isPdfMode ? (
                     <div
-                      style={{ 
-                        width: '100%', 
-                        height: '100%', 
+                      style={{
+                        width: '100%',
+                        height: '100%',
                         backgroundImage: `url(${userData.avatar || "/avatar-female.png"})`,
                         backgroundSize: 'cover',
                         backgroundPosition: 'center',
@@ -428,97 +428,97 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
 
       case "summary":
         return userData.summary && (
-            <HoverableWrapper
-              key="summary"
-              label={t.careerObjectiveLabel}
-              sectionId={sectionMap.summary}
-              onClick={onSectionClick}
-              isPdfMode={isPdfMode}
-              dragHandleProps={dragHandleProps}
-              isDragging={isDragging}
-            >
-              <div className={rightSectionContainerClass}>
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-green-700 flex items-center justify-center shrink-0">
-                    <Briefcase className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
-                  </div>
-                  <h2 className="text-lg sm:text-xl lg:text-2xl font-bold tracking-tight text-gray-900 uppercase break-words">
-                    {t.careerObjectiveLabel}
-                  </h2>
+          <HoverableWrapper
+            key="summary"
+            label={t.careerObjectiveLabel}
+            sectionId={sectionMap.summary}
+            onClick={onSectionClick}
+            isPdfMode={isPdfMode}
+            dragHandleProps={dragHandleProps}
+            isDragging={isDragging}
+          >
+            <div className={rightSectionContainerClass}>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-green-700 flex items-center justify-center shrink-0">
+                  <Briefcase className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                 </div>
-                <div className="bg-white p-4 sm:p-5 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 border-l-4 border-lime-500">
-                  <p className="text-sm sm:text-base text-gray-800 leading-relaxed break-words">
-                    {userData.summary}
-                  </p>
-                </div>
+                <h2 className="text-lg sm:text-xl lg:text-2xl font-bold tracking-tight text-gray-900 uppercase break-words">
+                  {t.careerObjectiveLabel}
+                </h2>
               </div>
-            </HoverableWrapper>
+              <div className="bg-white p-4 sm:p-5 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 border-l-4 border-lime-500">
+                <p className="text-sm sm:text-base text-gray-800 leading-relaxed break-words">
+                  {userData.summary}
+                </p>
+              </div>
+            </div>
+          </HoverableWrapper>
         );
 
       case "skills":
         return userData.skills?.length > 0 && (
-            <HoverableWrapper
-              key="skills"
-              label={t.skillsLabel}
-              sectionId={sectionMap.skills}
-              onClick={onSectionClick}
-              isPdfMode={isPdfMode}
-              dragHandleProps={dragHandleProps}
-              isDragging={isDragging}
-            >
-              <div className={sectionContainerClass + " pb-6"}>
-                <div className="mb-4">
-                  <div className="flex items-center gap-2">
-                    <div className="h-1 w-6 sm:w-8 bg-green-700 rounded-full" />
-                    <h2 className="text-base sm:text-lg font-bold tracking-wider text-green-900 break-words">
-                      {t.skillsLabel}
-                    </h2>
-                  </div>
-                </div>
-
-                <div className="bg-white/60 backdrop-blur-sm p-4 sm:p-6 rounded-xl shadow-md">
-                  <div className="space-y-4">
-                    {userData.skills.map((skill: any, i: number) => {
-                      const ratingRaw = Number(skill.rating);
-                      const hasRating = !isNaN(ratingRaw) && ratingRaw > 0;
-                      const rating = hasRating
-                        ? Math.max(0, Math.min(5, ratingRaw))
-                        : 0;
-                      const width = `${(rating / 5) * 100}%`;
-
-                      if (!hasRating) {
-                        return (
-                          <div key={i} className="group">
-                            <span className="text-sm sm:text-base font-semibold text-gray-900 break-words block">
-                              {skill.name}
-                            </span>
-                          </div>
-                        );
-                      }
-
-                      return (
-                        <div key={i} className="group">
-                          <div className="flex items-start justify-between gap-4 mb-2">
-                            <span className="text-sm sm:text-base text-gray-900 font-semibold leading-relaxed break-words flex-1">
-                              {skill.name}
-                            </span>
-                            <span className="text-green-800 text-xs font-semibold whitespace-nowrap pt-1">
-                              {rating}/5
-                            </span>
-                          </div>
-                          <div className="relative h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                            <div
-                              className="absolute inset-y-0 left-0 bg-gradient-to-r from-green-500 to-green-600 rounded-full transition-all duration-500 ease-out group-hover:from-green-600 group-hover:to-green-700 group-hover:shadow-[0_0_12px_rgba(34,197,94,0.5)]"
-                              style={{ width }}
-                            />
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
+          <HoverableWrapper
+            key="skills"
+            label={t.skillsLabel}
+            sectionId={sectionMap.skills}
+            onClick={onSectionClick}
+            isPdfMode={isPdfMode}
+            dragHandleProps={dragHandleProps}
+            isDragging={isDragging}
+          >
+            <div className={sectionContainerClass + " pb-6"}>
+              <div className="mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="h-1 w-6 sm:w-8 bg-green-700 rounded-full" />
+                  <h2 className="text-base sm:text-lg font-bold tracking-wider text-green-900 break-words">
+                    {t.skillsLabel}
+                  </h2>
                 </div>
               </div>
-            </HoverableWrapper>
+
+              <div className="bg-white/60 backdrop-blur-sm p-4 sm:p-6 rounded-xl shadow-md">
+                <div className="space-y-4">
+                  {userData.skills.map((skill: any, i: number) => {
+                    const ratingRaw = Number(skill.rating);
+                    const hasRating = !isNaN(ratingRaw) && ratingRaw > 0;
+                    const rating = hasRating
+                      ? Math.max(0, Math.min(5, ratingRaw))
+                      : 0;
+                    const width = `${(rating / 5) * 100}%`;
+
+                    if (!hasRating) {
+                      return (
+                        <div key={i} className="group">
+                          <span className="text-sm sm:text-base font-semibold text-gray-900 break-words block">
+                            {skill.name}
+                          </span>
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div key={i} className="group">
+                        <div className="flex items-start justify-between gap-4 mb-2">
+                          <span className="text-sm sm:text-base text-gray-900 font-semibold leading-relaxed break-words flex-1">
+                            {skill.name}
+                          </span>
+                          <span className="text-green-800 text-xs font-semibold whitespace-nowrap pt-1">
+                            {rating}/5
+                          </span>
+                        </div>
+                        <div className="relative h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                          <div
+                            className="absolute inset-y-0 left-0 bg-gradient-to-r from-green-500 to-green-600 rounded-full transition-all duration-500 ease-out group-hover:from-green-600 group-hover:to-green-700 group-hover:shadow-[0_0_12px_rgba(34,197,94,0.5)]"
+                            style={{ width }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </HoverableWrapper>
         );
 
       case "info":
@@ -625,7 +625,7 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
                 {(userData.education || []).map((edu: any, i: number) => (
                   <div key={i} className="border-b border-green-200 last:border-b-0 pb-3 last:pb-0">
                     <p className="text-sm font-bold text-gray-800 mb-1 break-words">
-                       {edu.institution} - {edu.major}
+                      {edu.institution} - {edu.major}
                     </p>
                     <p className="text-xs font-medium text-green-700">
                       {edu.startDate?.slice(0, 4)} - {edu.endDate?.slice(0, 4)}
@@ -771,16 +771,13 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
                       {project.title || project["title "]}
                     </h3>
                     {project.startDate && (
-                      <span className="text-xs sm:text-sm text-gray-600 whitespace-nowrap block mb-2">
-                        {new Date(project.startDate).toLocaleDateString(dateLocale, {
-                          month: "2-digit",
-                          year: "numeric",
-                        })}
+                      <span className="text-sm text-slate-600 whitespace-nowrap">
+                        {/* Hiển thị trực tiếp string startDate */}
+                        {project.startDate}
+
+                        {/* Nếu có endDate thì hiển thị, nếu không thì hiển thị t.present (Hiện tại) */}
                         {project.endDate
-                          ? ` - ${new Date(project.endDate).toLocaleDateString(dateLocale, {
-                              month: "2-digit",
-                              year: "numeric",
-                            })}`
+                          ? ` - ${project.endDate}`
                           : ` - ${t.present}`}
                       </span>
                     )}
@@ -820,11 +817,11 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
                 transform: `${provided.draggableProps.style?.transform || ''} scale(${scale})`,
                 transformOrigin: "top left",
                 zIndex: 9999,
-                maxWidth: "90vw", 
+                maxWidth: "90vw",
               } : {})
             }}
           >
-             {renderSection(id, provided.dragHandleProps, snapshot.isDragging)}
+            {renderSection(id, provided.dragHandleProps, snapshot.isDragging)}
           </div>
         );
 
@@ -838,7 +835,7 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
 
   if (isPdfMode) {
     return (
-      <div 
+      <div
         className="bg-white font-sans text-gray-800 flex flex-row min-h-screen mx-auto overflow-hidden shadow-none"
         style={{ width: "794px", minHeight: "1123px" }}
       >
@@ -865,13 +862,13 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
         {/* LEFT SIDEBAR - Droppable ID="1" */}
         <Droppable droppableId="1">
           {(provided) => (
-            <div 
-               ref={provided.innerRef} 
-               {...provided.droppableProps}
-               className="w-full lg:w-[38%] bg-gradient-to-br from-green-50 to-green-100/50 flex flex-col gap-6 sm:gap-8 py-8 sm:py-10 relative border-b-4 lg:border-b-0 lg:border-r-4 border-green-700 min-h-[200px] sm:min-h-[500px]"
+            <div
+              ref={provided.innerRef}
+              {...provided.droppableProps}
+              className="w-full lg:w-[38%] bg-gradient-to-br from-green-50 to-green-100/50 flex flex-col gap-6 sm:gap-8 py-8 sm:py-10 relative border-b-4 lg:border-b-0 lg:border-r-4 border-green-700 min-h-[200px] sm:min-h-[500px]"
             >
-               {leftSections.map((id, index) => <DraggableItem key={id} id={id} index={index} />)}
-               {provided.placeholder}
+              {leftSections.map((id, index) => <DraggableItem key={id} id={id} index={index} />)}
+              {provided.placeholder}
             </div>
           )}
         </Droppable>
@@ -879,13 +876,13 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
         {/* RIGHT CONTENT - Droppable ID="2" */}
         <Droppable droppableId="2">
           {(provided) => (
-            <div 
-               ref={provided.innerRef} 
-               {...provided.droppableProps}
-               className="w-full lg:w-[62%] bg-white min-h-[200px] sm:min-h-[500px]"
+            <div
+              ref={provided.innerRef}
+              {...provided.droppableProps}
+              className="w-full lg:w-[62%] bg-white min-h-[200px] sm:min-h-[500px]"
             >
-               {rightSections.map((id, index) => <DraggableItem key={id} id={id} index={index} />)}
-               {provided.placeholder}
+              {rightSections.map((id, index) => <DraggableItem key={id} id={id} index={index} />)}
+              {provided.placeholder}
             </div>
           )}
         </Droppable>
