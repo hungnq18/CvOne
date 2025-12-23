@@ -2,12 +2,11 @@
 "use client";
 
 import { useOnClickOutside } from "@/hooks/useOnClickOutside";
-import { useLanguage } from "@/providers/global_provider";
-import { Edit, Loader2, PlusCircle, Trash2, X, RotateCcw } from "lucide-react";
-import { ChangeEvent, FC, ReactNode, useRef, useState } from "react";
 import { notify } from "@/lib/notify";
+import { useLanguage } from "@/providers/global_provider";
+import { Edit, Loader2, PlusCircle, RotateCcw, Trash2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { toast } from "@/hooks/use-toast";
+import { ChangeEvent, FC, ReactNode, useRef, useState } from "react";
 
 const createMaxLengthHandler =
   (language: string) =>
@@ -100,7 +99,9 @@ const translations = {
       entryLabel: "Certification",
       credentialLabel: "Certification Name",
       startDateLabel: "Start Date",
+      startDatePlaceholder: "YYYY-MM-DD",
       endDateLabel: "End Date",
+      endDatePlaceholder: "YYYY-MM-DD or Present",
       addCertificationButton: "Add Certification",
       removeButton: "Remove",
     },
@@ -211,7 +212,9 @@ const translations = {
       entryLabel: "Chứng chỉ",
       credentialLabel: "Tên chứng chỉ",
       startDateLabel: "Ngày bắt đầu",
+      startDatePlaceholder: "YYYY-MM-DD",
       endDateLabel: "Ngày kết thúc",
+      endDatePlaceholder: "YYYY-MM-DD hoặc Present",
       addCertificationButton: "Thêm chứng chỉ",
       removeButton: "Xóa",
     },
@@ -1524,11 +1527,32 @@ export const CertificationPopup: FC<{
   const { language } = useLanguage();
   const t = translations[language].certificationPopup;
 
+  // Helper function to format date for display
+  const formatDateForInput = (dateValue: any): string => {
+    if (!dateValue) return "";
+    // If it's "Present", keep it as-is
+    if (dateValue === "Present" || dateValue === "Hiện tại") return "Present";
+    // If it's already a string in YYYY-MM-DD format, keep it
+    if (typeof dateValue === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
+      return dateValue;
+    }
+    // If it's a Date object or ISO string, format to YYYY-MM-DD
+    try {
+      const date = dateValue instanceof Date ? dateValue : new Date(dateValue);
+      if (!isNaN(date.getTime())) {
+        return date.toISOString().split('T')[0];
+      }
+    } catch (e) {
+      // If parsing fails, return original value
+    }
+    return dateValue?.toString() || "";
+  };
+
   const [certifications, setCertifications] = useState<CertificationItem[]>(
     (initialData.certification || []).map((item: any) => ({
       title: item?.title || "",
-      startDate: item?.startDate || "",
-      endDate: item?.endDate || "",
+      startDate: formatDateForInput(item?.startDate) || "",
+      endDate: formatDateForInput(item?.endDate) || "",
     }))
   );
   const handleMaxLength = createMaxLengthHandler(language);
@@ -1626,8 +1650,9 @@ export const CertificationPopup: FC<{
                   {t.startDateLabel}
                 </label>
                 <input
-                  type="date"
-                  value={cert.startDate ? cert.startDate.slice(0, 10) : ""}
+                  type="text"
+                  placeholder={t.startDatePlaceholder}
+                  value={cert.startDate || ""}
                   onChange={(e) =>
                     handleFieldChange(index, "startDate", e.target.value)
                   }
@@ -1639,8 +1664,9 @@ export const CertificationPopup: FC<{
                   {t.endDateLabel}
                 </label>
                 <input
-                  type="date"
-                  value={cert.endDate ? cert.endDate.slice(0, 10) : ""}
+                  type="text"
+                  placeholder={t.endDatePlaceholder}
+                  value={cert.endDate || ""}
                   onChange={(e) =>
                     handleFieldChange(index, "endDate", e.target.value)
                   }
@@ -1850,12 +1876,32 @@ export const ProjectPopup: FC<{
       ];
     }
 
+    // Helper function to format date for display
+    const formatDateForInput = (dateValue: any): string => {
+      if (!dateValue) return "";
+      // If it's "Present", keep it as-is
+      if (dateValue === "Present" || dateValue === "Hiện tại") return "Present";
+      // If it's already a string in YYYY-MM-DD format, keep it
+      if (typeof dateValue === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
+        return dateValue;
+      }
+      // If it's a Date object or ISO string, format to YYYY-MM-DD
+      try {
+        const date = dateValue instanceof Date ? dateValue : new Date(dateValue);
+        if (!isNaN(date.getTime())) {
+          return date.toISOString().split('T')[0];
+        }
+      } catch (e) {
+        // If parsing fails, return original value
+      }
+      return dateValue?.toString() || "";
+    };
+
     return rawProjects.map((item: any) => ({
       title: item?.title || item?.["title "] || "",
       summary: item?.summary || "",
-      // Lấy trực tiếp giá trị string, không parse
-      startDate: item?.startDate || "", 
-      endDate: item?.endDate || "",
+      startDate: formatDateForInput(item?.startDate) || "", 
+      endDate: formatDateForInput(item?.endDate) || "",
     }));
   });
 

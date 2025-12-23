@@ -24,6 +24,64 @@ export class CvService {
     private readonly configService: ConfigService,
   ) { }
 
+  /**
+   * Normalize date fields in CV content
+   * - Converts "Hiện tại" to "Present" for consistency
+   * - Formats Date objects and ISO strings to "YYYY-MM-DD" format
+   * - Keeps "Present" and "YYYY-MM-DD" strings as-is
+   */
+  private normalizeDateFields(content: any): any {
+    if (!content?.userData) return content;
+
+    const normalizeDate = (value: any): string | null => {
+      // Normalize Vietnamese "Hiện tại" to "Present"
+      if (value === "Hiện tại" || value === "Present") return "Present";
+      
+      // Handle null/undefined
+      if (value == null || value === "") return null;
+      
+      // If already a string in YYYY-MM-DD format, keep it
+      if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value.trim())) {
+        return value.trim();
+      }
+      
+      // If it's a Date object or ISO string, format to YYYY-MM-DD
+      try {
+        const date = value instanceof Date ? value : new Date(value);
+        if (!isNaN(date.getTime())) {
+          return date.toISOString().split('T')[0];
+        }
+      } catch (e) {
+        // If parsing fails, return null
+      }
+      
+      return null;
+    };
+
+    const normalized = { ...content };
+    normalized.userData = { ...content.userData };
+
+    // Normalize Project dates
+    if (Array.isArray(normalized.userData.Project)) {
+      normalized.userData.Project = normalized.userData.Project.map((project: any) => ({
+        ...project,
+        startDate: normalizeDate(project.startDate),
+        endDate: normalizeDate(project.endDate),
+      }));
+    }
+
+    // Normalize certification dates
+    if (Array.isArray(normalized.userData.certification)) {
+      normalized.userData.certification = normalized.userData.certification.map((cert: any) => ({
+        ...cert,
+        startDate: normalizeDate(cert.startDate),
+        endDate: normalizeDate(cert.endDate),
+      }));
+    }
+
+    return normalized;
+  }
+
   async getAllCVs(userId: string): Promise<Cv[]> {
     return this.cvCacheService.getCachedCVs(userId);
   }
@@ -74,9 +132,12 @@ export class CvService {
       },
     };
 
+    // Normalize date fields (standardize "Present", parse date strings)
+    const normalizedContent = this.normalizeDateFields(content);
+
     const newCV = new this.cvModel({
       ...createCvDto,
-      content,
+      content: normalizedContent,
       userId,
       isPublic: false,
       isSaved: false,
@@ -91,8 +152,14 @@ export class CvService {
   }
 
   async updateCV(id: string, userId: string, data: Partial<Cv>): Promise<Cv> {
+    // Normalize date fields if content is being updated
+    const normalizedData = { ...data };
+    if (normalizedData.content) {
+      normalizedData.content = this.normalizeDateFields(normalizedData.content);
+    }
+
     const cv = await this.cvModel
-      .findOneAndUpdate({ _id: id, userId }, { $set: data }, { new: true })
+      .findOneAndUpdate({ _id: id, userId }, { $set: normalizedData }, { new: true })
       .exec();
     if (!cv) {
       throw new NotFoundException("CV not found");

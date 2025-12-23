@@ -13,10 +13,10 @@ import {
   Edit,
   Loader2,
   PlusCircle,
+  RotateCcw,
   Trash2,
   Wand2,
-  X,
-  RotateCcw
+  X
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { ChangeEvent, FC, ReactNode, useRef, useState } from "react";
@@ -2185,12 +2185,32 @@ export const ProjectPopup: FC<{
       ];
     }
 
+    // Helper function to format date for display
+    const formatDateForInput = (dateValue: any): string => {
+      if (!dateValue) return "";
+      // If it's "Present", keep it as-is
+      if (dateValue === "Present" || dateValue === "Hiện tại") return "Present";
+      // If it's already a string in YYYY-MM-DD format, keep it
+      if (typeof dateValue === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
+        return dateValue;
+      }
+      // If it's a Date object or ISO string, format to YYYY-MM-DD
+      try {
+        const date = dateValue instanceof Date ? dateValue : new Date(dateValue);
+        if (!isNaN(date.getTime())) {
+          return date.toISOString().split('T')[0];
+        }
+      } catch (e) {
+        // If parsing fails, return original value
+      }
+      return dateValue?.toString() || "";
+    };
+
     return rawProjects.map((item: any) => ({
       title: item?.title || item?.["title "] || "",
       summary: item?.summary || "",
-      // Lấy trực tiếp giá trị string, không parse
-      startDate: item?.startDate || "", 
-      endDate: item?.endDate || "",
+      startDate: formatDateForInput(item?.startDate) || "", 
+      endDate: formatDateForInput(item?.endDate) || "",
     }));
   });
 

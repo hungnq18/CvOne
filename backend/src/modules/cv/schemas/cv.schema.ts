@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Document, Schema as MongooseSchema, Types } from 'mongoose';
 
 @Schema({ timestamps: true })
 export class Cv extends Document {
@@ -56,8 +56,8 @@ export class Cv extends Document {
             {
               title: { type: String },
               summary: { type: String },
-              startDate: { type: Date },
-              endDate: { type: Date },
+              startDate: { type: MongooseSchema.Types.Mixed }, // Allow Date or String
+              endDate: { type: MongooseSchema.Types.Mixed }, // Allow Date, String, or "Present"
               tags: [{ type: String }],
             },
           ],
@@ -67,8 +67,8 @@ export class Cv extends Document {
           type: [
             {
               title: { type: String },
-              startDate: { type: Date },
-              endDate: { type: Date },
+              startDate: { type: MongooseSchema.Types.Mixed }, // Allow Date or String
+              endDate: { type: MongooseSchema.Types.Mixed }, // Allow Date, String, or "Present"
             },
           ],
           default: [],
@@ -123,14 +123,14 @@ export class Cv extends Document {
       Project?: {
         title: string;
         summary: string;
-        startDate?: Date;
-        endDate?: Date;
+        startDate?: Date | string;
+        endDate?: Date | string | null; // Allow Date, string (like "Present"), or null
         tags?: string[];
       }[];
       certification?: {
         title: string;
-        startDate?: Date;
-        endDate?: Date;
+        startDate?: Date | string;
+        endDate?: Date | string | null; // Allow Date, string (like "Present"), or null
       }[];
       achievement?: string[];
       hobby?: string[];
