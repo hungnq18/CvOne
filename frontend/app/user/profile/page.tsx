@@ -28,7 +28,6 @@ function getUserIdFromServerToken(): string | null {
       null
     );
   } catch (e) {
-    // console.warn("Failed to decode token on server", e);
     return null;
   }
 }
@@ -50,18 +49,12 @@ async function fetchUserOnServer(): Promise<User | null> {
     );
 
     if (!res.ok) {
-      console.error(
-        "Failed to fetch user by id on server:",
-        res.status,
-        await res.text()
-      );
       return null;
     }
 
     const data = (await res.json()) as User;
     return data ?? null;
   } catch (error) {
-    console.error("Error fetching user on server:", error);
     return null;
   }
 }
@@ -88,11 +81,6 @@ async function fetchAppliedJobsOnServer(): Promise<{
     );
 
     if (!res.ok) {
-      console.error(
-        "Failed to fetch applied jobs on server:",
-        res.status,
-        await res.text()
-      );
       return { applies: [], jobs: [] };
     }
 
@@ -107,7 +95,6 @@ async function fetchAppliedJobsOnServer(): Promise<{
       jobs: jobsWithDetails,
     };
   } catch (error) {
-    console.error("Error fetching applied jobs on server:", error);
     return { applies: [], jobs: [] };
   }
 }

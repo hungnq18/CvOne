@@ -27,7 +27,11 @@ export default function PaymentSuccessPage() {
         setLoading(true);
 
         if (!orderCode) {
-          setError(language === "vi" ? "Không tìm thấy mã đơn hàng." : "Order code not found.");
+          setError(
+            language === "vi"
+              ? "Không tìm thấy mã đơn hàng."
+              : "Order code not found."
+          );
           return;
         }
 
@@ -36,7 +40,11 @@ export default function PaymentSuccessPage() {
           response?.data ?? response?.order ?? response;
 
         if (!orderDetail || !orderDetail.status) {
-          setError(language === "vi" ? "Không tìm thấy đơn hàng hợp lệ." : "Invalid order.");
+          setError(
+            language === "vi"
+              ? "Không tìm thấy đơn hàng hợp lệ."
+              : "Invalid order."
+          );
           return;
         }
 
@@ -56,8 +64,11 @@ export default function PaymentSuccessPage() {
           await updateToken({ token: orderDetail.totalToken });
         }
       } catch (err) {
-        console.error("❌ Error fetching order:", err);
-        setError(language === "vi" ? "Không thể xử lý đơn hàng." : "Failed to process order.");
+        setError(
+          language === "vi"
+            ? "Không thể xử lý đơn hàng."
+            : "Failed to process order."
+        );
       } finally {
         setLoading(false);
       }
@@ -81,16 +92,13 @@ export default function PaymentSuccessPage() {
         {language === "vi" ? "Đang xử lý..." : "Processing..."}
       </p>
     );
-  if (error)
-    return (
-      <p className="text-center mt-10 text-red-600">
-        {error}
-      </p>
-    );
+  if (error) return <p className="text-center mt-10 text-red-600">{error}</p>;
   if (!order)
     return (
       <p className="text-center mt-10 text-gray-600">
-        {language === "vi" ? "Không có thông tin đơn hàng." : "No order information available."}
+        {language === "vi"
+          ? "Không có thông tin đơn hàng."
+          : "No order information available."}
       </p>
     );
 
@@ -104,7 +112,9 @@ export default function PaymentSuccessPage() {
               <CheckCircle className="w-14 h-14 text-white" strokeWidth={1.5} />
             </div>
             <h1 className="text-4xl md:text-5xl font-bold text-green-800 dark:text-green-400 mb-2">
-              {language === "vi" ? "Thanh toán thành công!" : "Payment Successful!"}
+              {language === "vi"
+                ? "Thanh toán thành công!"
+                : "Payment Successful!"}
             </h1>
             <p className="text-lg text-green-600 dark:text-green-300">
               {language === "vi"
@@ -130,8 +140,12 @@ export default function PaymentSuccessPage() {
                   className="border-green-200 dark:border-green-900/30 hover:bg-green-50 dark:hover:bg-slate-800 bg-transparent"
                 >
                   {copied
-                    ? language === "vi" ? "✓ Đã sao chép" : "✓ Copied"
-                    : language === "vi" ? "Sao chép" : "Copy"}
+                    ? language === "vi"
+                      ? "✓ Đã sao chép"
+                      : "✓ Copied"
+                    : language === "vi"
+                    ? "Sao chép"
+                    : "Copy"}
                 </Button>
               </div>
             </div>
@@ -148,7 +162,9 @@ export default function PaymentSuccessPage() {
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
-                    {language === "vi" ? "Phương thức thanh toán" : "Payment Method"}
+                    {language === "vi"
+                      ? "Phương thức thanh toán"
+                      : "Payment Method"}
                   </p>
                   <p className="text-lg font-semibold text-gray-900 dark:text-white">
                     {order.paymentMethod}
@@ -161,20 +177,22 @@ export default function PaymentSuccessPage() {
                   {language === "vi" ? "Trạng thái" : "Status"}
                 </p>
                 <div
-                  className={`inline-flex items-center gap-2 px-3 py-1 rounded-full ${order.status === "completed"
+                  className={`inline-flex items-center gap-2 px-3 py-1 rounded-full ${
+                    order.status === "completed"
                       ? "bg-green-100 dark:bg-green-900/30"
                       : order.status === "pending"
-                        ? "bg-yellow-100 dark:bg-yellow-900/30"
-                        : "bg-red-100 dark:bg-red-900/30"
-                    }`}
+                      ? "bg-yellow-100 dark:bg-yellow-900/30"
+                      : "bg-red-100 dark:bg-red-900/30"
+                  }`}
                 >
                   <div
-                    className={`w-2 h-2 rounded-full ${order.status === "completed"
+                    className={`w-2 h-2 rounded-full ${
+                      order.status === "completed"
                         ? "bg-green-600 dark:bg-green-400"
                         : order.status === "pending"
-                          ? "bg-yellow-600 dark:bg-yellow-400"
-                          : "bg-red-600 dark:bg-red-400"
-                      }`}
+                        ? "bg-yellow-600 dark:bg-yellow-400"
+                        : "bg-red-600 dark:bg-red-400"
+                    }`}
                   ></div>
                   <span className="text-sm font-medium text-gray-700 dark:text-gray-300 capitalize">
                     {order.status}
@@ -188,12 +206,12 @@ export default function PaymentSuccessPage() {
                 {language === "vi" ? "Ngày giao dịch" : "Transaction Date"}:{" "}
                 {order.createdAt
                   ? new Date(order.createdAt).toLocaleDateString("vi-VN", {
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })
                   : new Date().toLocaleDateString("vi-VN")}
               </p>
             </div>

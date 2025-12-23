@@ -24,51 +24,55 @@ export interface Country {
 
 export const getProvinces = async (): Promise<Province[]> => {
   try {
-    const response = await fetch('https://provinces.open-api.vn/api/p/');
+    const response = await fetch("https://provinces.open-api.vn/api/p/");
     if (!response.ok) {
-      throw new Error('Failed to fetch provinces');
+      throw new Error("Failed to fetch provinces");
     }
     const data = await response.json();
     return data;
   } catch (error) {
-    console.error("Error fetching provinces:", error);
     return [];
   }
 };
 
-export const getDistrictsByProvinceCode = async (provinceCode: number): Promise<District[]> => {
+export const getDistrictsByProvinceCode = async (
+  provinceCode: number
+): Promise<District[]> => {
   if (!provinceCode) return [];
   try {
-    const response = await fetch(`https://provinces.open-api.vn/api/p/${provinceCode}?depth=2`);
+    const response = await fetch(
+      `https://provinces.open-api.vn/api/p/${provinceCode}?depth=2`
+    );
     if (!response.ok) {
-        throw new Error('Failed to fetch districts');
+      throw new Error("Failed to fetch districts");
     }
     const data: Province = await response.json();
     return data.districts || [];
   } catch (error) {
-    console.error("Error fetching districts:", error);
     return [];
   }
 };
 
 export const getCountries = async (): Promise<Country[]> => {
   try {
-    const response = await fetch('https://restcountries.com/v3.1/all?fields=name,cca2,idd,flag');
+    const response = await fetch(
+      "https://restcountries.com/v3.1/all?fields=name,cca2,idd,flag"
+    );
     if (!response.ok) {
-      throw new Error('Failed to fetch countries');
+      throw new Error("Failed to fetch countries");
     }
     const data = await response.json();
 
     const countries: Country[] = data
       .map((country: any) => {
         const phoneCode = country.idd?.root
-          ? `${country.idd.root}${country.idd.suffixes?.[0] || ''}`
-          : '';
+          ? `${country.idd.root}${country.idd.suffixes?.[0] || ""}`
+          : "";
         return {
           name: country.name.common,
           code: country.cca2,
-          phoneCode: phoneCode || '',
-          flag: country.flag || '',
+          phoneCode: phoneCode || "",
+          flag: country.flag || "",
         };
       })
       .filter((country: Country) => country.phoneCode) // Chỉ lấy các quốc gia có mã điện thoại
@@ -76,7 +80,6 @@ export const getCountries = async (): Promise<Country[]> => {
 
     return countries;
   } catch (error) {
-    console.error("Error fetching countries:", error);
     return [];
   }
 };

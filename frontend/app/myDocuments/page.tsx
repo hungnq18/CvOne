@@ -58,7 +58,9 @@ function MyDocumentsContent() {
 
   const [showFeedbackPopup, setShowFeedbackPopup] = useState(false);
   const [showVoucherPopup, setShowVoucherPopup] = useState(false);
-  const [feedbackFeature, setFeedbackFeature] = useState<"cv" | "cover-letter" | null>(null);
+  const [feedbackFeature, setFeedbackFeature] = useState<
+    "cv" | "cover-letter" | null
+  >(null);
 
   // Check for feedback popup query param
   useEffect(() => {
@@ -89,14 +91,15 @@ function MyDocumentsContent() {
               isSaved: true,
             };
             await createCL(newCL);
-            notify.success("Your pending cover letter has been saved successfully!");
+            notify.success(
+              "Your pending cover letter has been saved successfully!"
+            );
             // After saving, we can trigger a reload of the cover letters
             // The second useEffect will handle fetching the updated list.
-            setCoverLetterList(prevList => [...prevList, newCL as CL]); // Optimistic update
+            setCoverLetterList((prevList) => [...prevList, newCL as CL]); // Optimistic update
             loadCoverLetters(); //
           }
         } catch (error) {
-          console.error("Failed to save pending cover letter:", error);
           notify.error("There was an error saving your pending cover letter.");
           // Optional: If saving fails, you might want to put it back into localStorage
           // localStorage.setItem("pendingCL", pendingCLJSON);
@@ -113,7 +116,6 @@ function MyDocumentsContent() {
       const clData = await getCLs();
       setCoverLetterList(clData || []);
     } catch (error) {
-      console.error("Failed to fetch cover letters:", error);
     } finally {
       setLoadingCL(false);
     }
@@ -128,9 +130,7 @@ function MyDocumentsContent() {
         const [cvs] = await Promise.all([getAllCVs()]);
         setcvList(cvs);
         setLoadingCV(false);
-      } catch (err) {
-        console.error("Lỗi khi gọi getAllCVs hoặc getAllTemplates:", err);
-      }
+      } catch (err) {}
     };
     loadCV();
   }, [language]);
@@ -173,8 +173,14 @@ function MyDocumentsContent() {
               className="flex-1 min-w-0"
             />
             <div className="flex items-center space-x-4">
-              <form className="relative w-full sm:w-auto" onSubmit={e => e.preventDefault()}>
-                <button type="submit" className="absolute left-2 -translate-y-1/2 top-1/2 p-1">
+              <form
+                className="relative w-full sm:w-auto"
+                onSubmit={(e) => e.preventDefault()}
+              >
+                <button
+                  type="submit"
+                  className="absolute left-2 -translate-y-1/2 top-1/2 p-1"
+                >
                   <svg
                     width="17"
                     height="16"
@@ -198,10 +204,14 @@ function MyDocumentsContent() {
                   type="text"
                   placeholder={t.search.placeholder}
                   value={searchValue}
-                  onChange={e => setSearchValue(e.target.value)}
+                  onChange={(e) => setSearchValue(e.target.value)}
                 />
                 {searchValue && (
-                  <button type="button" onClick={() => setSearchValue('')} className="absolute right-3 -translate-y-1/2 top-1/2 p-1">
+                  <button
+                    type="button"
+                    onClick={() => setSearchValue("")}
+                    className="absolute right-3 -translate-y-1/2 top-1/2 p-1"
+                  >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       className="w-4 h-4 text-gray-700"
@@ -276,7 +286,13 @@ function MyDocumentsContent() {
 
 export default function Page() {
   return (
-    <Suspense fallback={<div className="min-h-screen py-6 px-4 sm:px-6 lg:px-8 mt-16 flex items-center justify-center">Loading...</div>}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen py-6 px-4 sm:px-6 lg:px-8 mt-16 flex items-center justify-center">
+          Loading...
+        </div>
+      }
+    >
       <MyDocumentsContent />
     </Suspense>
   );

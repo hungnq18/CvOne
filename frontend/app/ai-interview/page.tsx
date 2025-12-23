@@ -3,14 +3,25 @@
 import { aiInterviewApi } from "@/api/aiInterviewApi";
 import AiInterviewModal from "@/components/ai-interview/AiInterviewModal";
 import InterviewHistory from "@/components/ai-interview/InterviewHistory";
-import InterviewSetupModal, { InterviewConfig } from "@/components/ai-interview/InterviewSetupModal";
+import InterviewSetupModal, {
+  InterviewConfig,
+} from "@/components/ai-interview/InterviewSetupModal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useRequireLogin } from "@/hooks/requireLogin";
 import { notify } from "@/lib/notify";
 import { useLanguage } from "@/providers/global_provider";
-import { Brain, Clock, History, Play, Sparkles, Star, TrendingUp, Users } from "lucide-react";
+import {
+  Brain,
+  Clock,
+  History,
+  Play,
+  Sparkles,
+  Star,
+  TrendingUp,
+  Users,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 
 const aiInterviewTexts = {
@@ -72,11 +83,14 @@ const aiInterviewTexts = {
     howItWorks: {
       title: "How It Works",
       step1Title: "Upload Job Description",
-      step1Desc: "Paste the job description you're applying for to get relevant questions.",
+      step1Desc:
+        "Paste the job description you're applying for to get relevant questions.",
       step2Title: "Answer Questions",
-      step2Desc: "Practice answering interview questions and get real-time AI feedback.",
+      step2Desc:
+        "Practice answering interview questions and get real-time AI feedback.",
       step3Title: "Improve & Repeat",
-      step3Desc: "Review feedback, practice more, and track your improvement over time.",
+      step3Desc:
+        "Review feedback, practice more, and track your improvement over time.",
     },
     historyModalTitle: "Interview History",
     historyModalClose: "Close",
@@ -139,11 +153,14 @@ const aiInterviewTexts = {
     howItWorks: {
       title: "Quy trình hoạt động",
       step1Title: "Tải mô tả công việc",
-      step1Desc: "Dán mô tả công việc bạn muốn ứng tuyển để nhận bộ câu hỏi phù hợp.",
+      step1Desc:
+        "Dán mô tả công việc bạn muốn ứng tuyển để nhận bộ câu hỏi phù hợp.",
       step2Title: "Trả lời câu hỏi",
-      step2Desc: "Luyện tập trả lời câu hỏi phỏng vấn và nhận phản hồi từ AI theo thời gian thực.",
+      step2Desc:
+        "Luyện tập trả lời câu hỏi phỏng vấn và nhận phản hồi từ AI theo thời gian thực.",
       step3Title: "Cải thiện & lặp lại",
-      step3Desc: "Xem lại phản hồi, luyện tập thêm và theo dõi mức độ cải thiện của bạn.",
+      step3Desc:
+        "Xem lại phản hồi, luyện tập thêm và theo dõi mức độ cải thiện của bạn.",
     },
     historyModalTitle: "Lịch sử phỏng vấn",
     historyModalClose: "Đóng",
@@ -157,7 +174,8 @@ export default function AiInterviewPage() {
   const [showSetupModal, setShowSetupModal] = useState(false);
   const [showInterviewModal, setShowInterviewModal] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
-  const [interviewConfig, setInterviewConfig] = useState<InterviewConfig | null>(null);
+  const [interviewConfig, setInterviewConfig] =
+    useState<InterviewConfig | null>(null);
   const [stats, setStats] = useState({
     totalSessions: 0,
     completedSessions: 0,
@@ -184,7 +202,6 @@ export default function AiInterviewPage() {
         setStats(response.data.stats);
       }
     } catch (error) {
-      console.error("Error loading stats:", error);
     } finally {
       setIsLoadingStats(false);
     }
@@ -220,20 +237,32 @@ export default function AiInterviewPage() {
         notify.error(response.error || "Failed to retake interview");
       }
     } catch (error) {
-      console.error("Error retaking interview:", error);
       notify.error("Failed to retake interview");
     }
   };
 
   const displayStats = [
-    { label: t.stats.practiceSessions, value: stats.totalSessions.toString(), icon: Play },
+    {
+      label: t.stats.practiceSessions,
+      value: stats.totalSessions.toString(),
+      icon: Play,
+    },
     {
       label: t.stats.averageScore,
-      value: stats.averageScore > 0 ? `${stats.averageScore.toFixed(1)}/10` : "N/A",
+      value:
+        stats.averageScore > 0 ? `${stats.averageScore.toFixed(1)}/10` : "N/A",
       icon: Star,
     },
-    { label: t.stats.completed, value: stats.completedSessions.toString(), icon: Clock },
-    { label: t.stats.inProgress, value: stats.inProgressSessions.toString(), icon: Brain },
+    {
+      label: t.stats.completed,
+      value: stats.completedSessions.toString(),
+      icon: Clock,
+    },
+    {
+      label: t.stats.inProgress,
+      value: stats.inProgressSessions.toString(),
+      icon: Brain,
+    },
   ];
 
   return (
@@ -241,8 +270,12 @@ export default function AiInterviewPage() {
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">{t.headerTitle}</h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">{t.headerSubtitle}</p>
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+            {t.headerTitle}
+          </h1>
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            {t.headerSubtitle}
+          </p>
         </div>
 
         {/* Quick Stats */}
@@ -251,7 +284,9 @@ export default function AiInterviewPage() {
             <Card key={index}>
               <CardContent className="p-4 text-center">
                 <stat.icon className="h-8 w-8 text-blue-600 mx-auto mb-2" />
-                <div className="text-2xl font-bold text-gray-900">{stat.value}</div>
+                <div className="text-2xl font-bold text-gray-900">
+                  {stat.value}
+                </div>
                 <div className="text-sm text-gray-600">{stat.label}</div>
               </CardContent>
             </Card>
@@ -271,7 +306,9 @@ export default function AiInterviewPage() {
             <CardContent className="space-y-4">
               <p className="text-gray-600">{t.startCard.description}</p>
               <div className="space-y-2">
-                <Badge variant="outline">{t.startCard.badges.personalized}</Badge>
+                <Badge variant="outline">
+                  {t.startCard.badges.personalized}
+                </Badge>
                 <Badge variant="outline">{t.startCard.badges.feedback}</Badge>
                 <Badge variant="outline">{t.startCard.badges.followUp}</Badge>
               </div>
@@ -299,7 +336,9 @@ export default function AiInterviewPage() {
               <p className="text-gray-600">{t.historyCard.description}</p>
               <div className="space-y-2">
                 <Badge variant="outline">{t.historyCard.badges.tracking}</Badge>
-                <Badge variant="outline">{t.historyCard.badges.analytics}</Badge>
+                <Badge variant="outline">
+                  {t.historyCard.badges.analytics}
+                </Badge>
                 <Badge variant="outline">{t.historyCard.badges.history}</Badge>
               </div>
               <Button
@@ -318,7 +357,9 @@ export default function AiInterviewPage() {
 
         {/* Features */}
         <div className="mb-12">
-          <h2 className="text-3xl font-bold text-center text-gray-900 mb-8">{t.featuresTitle}</h2>
+          <h2 className="text-3xl font-bold text-center text-gray-900 mb-8">
+            {t.featuresTitle}
+          </h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {t.features.map((feature, index) => {
               const Icon = [Sparkles, Brain, TrendingUp, Users][index];
@@ -326,8 +367,12 @@ export default function AiInterviewPage() {
                 <Card key={index} className="text-center">
                   <CardContent className="p-6">
                     <Icon className="h-12 w-12 text-blue-600 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
-                    <p className="text-gray-600 text-sm">{feature.description}</p>
+                    <h3 className="text-lg font-semibold mb-2">
+                      {feature.title}
+                    </h3>
+                    <p className="text-gray-600 text-sm">
+                      {feature.description}
+                    </p>
                   </CardContent>
                 </Card>
               );
@@ -338,7 +383,9 @@ export default function AiInterviewPage() {
         {/* How It Works */}
         <Card className="mb-12">
           <CardHeader>
-            <CardTitle className="text-center text-2xl">{t.howItWorks.title}</CardTitle>
+            <CardTitle className="text-center text-2xl">
+              {t.howItWorks.title}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid md:grid-cols-3 gap-8">
@@ -346,7 +393,9 @@ export default function AiInterviewPage() {
                 <div className="bg-blue-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
                   <span className="text-2xl font-bold text-blue-600">1</span>
                 </div>
-                <h3 className="text-lg font-semibold mb-2">{t.howItWorks.step1Title}</h3>
+                <h3 className="text-lg font-semibold mb-2">
+                  {t.howItWorks.step1Title}
+                </h3>
                 <p className="text-gray-600">{t.howItWorks.step1Desc}</p>
               </div>
 
@@ -354,7 +403,9 @@ export default function AiInterviewPage() {
                 <div className="bg-green-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
                   <span className="text-2xl font-bold text-green-600">2</span>
                 </div>
-                <h3 className="text-lg font-semibold mb-2">{t.howItWorks.step2Title}</h3>
+                <h3 className="text-lg font-semibold mb-2">
+                  {t.howItWorks.step2Title}
+                </h3>
                 <p className="text-gray-600">{t.howItWorks.step2Desc}</p>
               </div>
 
@@ -362,7 +413,9 @@ export default function AiInterviewPage() {
                 <div className="bg-purple-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
                   <span className="text-2xl font-bold text-purple-600">3</span>
                 </div>
-                <h3 className="text-lg font-semibold mb-2">{t.howItWorks.step3Title}</h3>
+                <h3 className="text-lg font-semibold mb-2">
+                  {t.howItWorks.step3Title}
+                </h3>
                 <p className="text-gray-600">{t.howItWorks.step3Desc}</p>
               </div>
             </div>
@@ -393,14 +446,16 @@ export default function AiInterviewPage() {
             <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
               <div className="flex items-center justify-between p-6 border-b">
                 <h2 className="text-2xl font-bold">{t.historyModalTitle}</h2>
-                <Button variant="ghost" size="sm" onClick={() => setShowHistory(false)}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowHistory(false)}
+                >
                   ×
                 </Button>
               </div>
               <div className="p-6">
-                <InterviewHistory 
-                  onRetakeInterview={handleRetakeInterview}
-                />
+                <InterviewHistory onRetakeInterview={handleRetakeInterview} />
               </div>
             </div>
           </div>

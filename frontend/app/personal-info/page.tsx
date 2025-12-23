@@ -187,7 +187,6 @@ function PersonalInfoContent() {
         const provincesData = await getProvinces();
         setProvinces(provincesData);
       } catch (error) {
-        console.error("Error loading data:", error);
       } finally {
         setLoading(false);
       }
@@ -243,9 +242,7 @@ function PersonalInfoContent() {
             selectedProvinceCode
           );
           setDistricts(districtsData);
-        } catch (error) {
-          console.error("Error loading districts:", error);
-        }
+        } catch (error) {}
       } else {
         setDistricts([]);
       }
@@ -291,8 +288,7 @@ function PersonalInfoContent() {
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};
 
-    if (!formData.firstName.trim())
-      newErrors.firstName = t.errors.firstName;
+    if (!formData.firstName.trim()) newErrors.firstName = t.errors.firstName;
     if (!formData.lastName.trim()) newErrors.lastName = t.errors.lastName;
     if (!formData.email.trim()) newErrors.email = t.errors.emailRequired;
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
@@ -428,7 +424,9 @@ function PersonalInfoContent() {
                   />
                 </div>
               </div>
-              {errors.phone && <p className="text-red-500 text-sm">{errors.phone}</p>}
+              {errors.phone && (
+                <p className="text-red-500 text-sm">{errors.phone}</p>
+              )}
             </div>
             <InputField
               label={t.email}

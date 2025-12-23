@@ -146,7 +146,6 @@ const ManageCandidateTable = () => {
         notify.error("Không tìm thấy dữ liệu Cover Letter.");
       }
     } catch (error) {
-      console.error("Lỗi khi lấy Cover Letter:", error);
       notify.error("Đã có lỗi xảy ra khi lấy dữ liệu Cover Letter.");
     }
   };
@@ -224,7 +223,6 @@ const ManageCandidateTable = () => {
         })
         .save();
     } catch (error) {
-      console.error("Lỗi khi tạo PDF:", error);
       notify.error("Đã có lỗi xảy ra khi xuất file PDF.");
     } finally {
       if (root) root.unmount();
@@ -459,10 +457,10 @@ const ManageCandidateTable = () => {
                     {app.updatedAt
                       ? new Date(app.updatedAt).toLocaleDateString()
                       : app.createdAt
-                        ? new Date(app.createdAt).toLocaleDateString()
-                        : app.submit_at
-                          ? new Date(app.submit_at).toLocaleDateString()
-                          : "-"}
+                      ? new Date(app.createdAt).toLocaleDateString()
+                      : app.submit_at
+                      ? new Date(app.submit_at).toLocaleDateString()
+                      : "-"}
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center space-x-2">
@@ -579,7 +577,7 @@ const ManageCandidateTable = () => {
               ) {
                 handleDownloadCL(
                   downloadModal.app?.coverletterId?._id ||
-                  downloadModal.app?.coverletter_id,
+                    downloadModal.app?.coverletter_id,
                   downloadModal.app?.coverletterUrl
                 );
               } else if (downloadModal.app?.clUrl) {

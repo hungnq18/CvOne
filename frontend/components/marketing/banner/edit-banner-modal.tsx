@@ -1,7 +1,7 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -9,28 +9,33 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Banner, updateBanner } from "@/api/bannerApi"
-import { showSuccessToast, showErrorToast } from "@/utils/popUpUtils"
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Banner, updateBanner } from "@/api/bannerApi";
+import { showSuccessToast, showErrorToast } from "@/utils/popUpUtils";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { useLanguage } from "@/providers/global_provider"
+} from "@/components/ui/select";
+import { useLanguage } from "@/providers/global_provider";
 
 interface EditBannerModalProps {
-  banner: Banner
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  onBannerUpdated: () => void
+  banner: Banner;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onBannerUpdated: () => void;
 }
 
-export function EditBannerModal({ banner, open, onOpenChange, onBannerUpdated }: EditBannerModalProps) {
+export function EditBannerModal({
+  banner,
+  open,
+  onOpenChange,
+  onBannerUpdated,
+}: EditBannerModalProps) {
   const [formData, setFormData] = useState({
     title: "",
     redirectUrl: "",
@@ -38,8 +43,8 @@ export function EditBannerModal({ banner, open, onOpenChange, onBannerUpdated }:
     position: "top",
     startDate: "",
     endDate: "",
-  })
-  const [isLoading, setIsLoading] = useState(false)
+  });
+  const [isLoading, setIsLoading] = useState(false);
   const { t } = useLanguage();
 
   useEffect(() => {
@@ -49,16 +54,20 @@ export function EditBannerModal({ banner, open, onOpenChange, onBannerUpdated }:
         redirectUrl: banner.redirectUrl || "",
         imageUrl: banner.imageUrl || "",
         position: banner.position || "top",
-        startDate: banner.startDate ? new Date(banner.startDate).toISOString().split("T")[0] : "",
-        endDate: banner.endDate ? new Date(banner.endDate).toISOString().split("T")[0] : "",
-      })
+        startDate: banner.startDate
+          ? new Date(banner.startDate).toISOString().split("T")[0]
+          : "",
+        endDate: banner.endDate
+          ? new Date(banner.endDate).toISOString().split("T")[0]
+          : "",
+      });
     }
-  }, [banner])
+  }, [banner]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { id, value } = e.target
-    setFormData((prev) => ({ ...prev, [id]: value }))
-  }
+    const { id, value } = e.target;
+    setFormData((prev) => ({ ...prev, [id]: value }));
+  };
 
   const validateForm = () => {
     if (!formData.title.trim()) return t.banner.validation.requiredTitle;
@@ -69,7 +78,7 @@ export function EditBannerModal({ banner, open, onOpenChange, onBannerUpdated }:
     if (!formData.redirectUrl.trim()) return t.banner.validation.requiredUrl;
 
     if (new Date(formData.startDate) > new Date(formData.endDate)) {
-        return t.banner.validation.dateOrder;
+      return t.banner.validation.dateOrder;
     }
     return null;
   };
@@ -77,23 +86,22 @@ export function EditBannerModal({ banner, open, onOpenChange, onBannerUpdated }:
   const handleSubmit = async () => {
     const validationError = validateForm();
     if (validationError) {
-        showErrorToast(t.banner.validation.missingInfo, validationError);
-        return;
+      showErrorToast(t.banner.validation.missingInfo, validationError);
+      return;
     }
 
-    setIsLoading(true)
+    setIsLoading(true);
     try {
-      await updateBanner(banner._id, formData)
-      showSuccessToast(t.common.success, t.banner.messages.updateSuccess)
-      onBannerUpdated()
-      onOpenChange(false)
+      await updateBanner(banner._id, formData);
+      showSuccessToast(t.common.success, t.banner.messages.updateSuccess);
+      onBannerUpdated();
+      onOpenChange(false);
     } catch (error) {
-      console.error("Failed to update banner:", error)
-      showErrorToast(t.common.error, t.banner.messages.updateError)
+      showErrorToast(t.common.error, t.banner.messages.updateError);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -108,10 +116,10 @@ export function EditBannerModal({ banner, open, onOpenChange, onBannerUpdated }:
               {t.banner.fields.title} <span className="text-red-500">*</span>
             </Label>
             <Input
-                id="title"
-                value={formData.title}
-                onChange={handleInputChange}
-                placeholder={t.banner.fields.title}
+              id="title"
+              value={formData.title}
+              onChange={handleInputChange}
+              placeholder={t.banner.fields.title}
             />
           </div>
 
@@ -120,21 +128,21 @@ export function EditBannerModal({ banner, open, onOpenChange, onBannerUpdated }:
               {t.banner.fields.position} <span className="text-red-500">*</span>
             </Label>
             <Select
-                value={formData.position}
-                onValueChange={(value) =>
-                  setFormData((prev) => ({ ...prev, position: value }))
-                }
+              value={formData.position}
+              onValueChange={(value) =>
+                setFormData((prev) => ({ ...prev, position: value }))
+              }
             >
-                <SelectTrigger>
-                  <SelectValue placeholder={t.banner.fields.selectPosition} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="top">Top</SelectItem>
-                  <SelectItem value="bottom">Bottom</SelectItem>
-                  <SelectItem value="center">Center</SelectItem>
-                  <SelectItem value="left">Left</SelectItem>
-                  <SelectItem value="right">Right</SelectItem>
-                </SelectContent>
+              <SelectTrigger>
+                <SelectValue placeholder={t.banner.fields.selectPosition} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="top">Top</SelectItem>
+                <SelectItem value="bottom">Bottom</SelectItem>
+                <SelectItem value="center">Center</SelectItem>
+                <SelectItem value="left">Left</SelectItem>
+                <SelectItem value="right">Right</SelectItem>
+              </SelectContent>
             </Select>
           </div>
 
@@ -143,28 +151,30 @@ export function EditBannerModal({ banner, open, onOpenChange, onBannerUpdated }:
               {t.banner.fields.imageUrl} <span className="text-red-500">*</span>
             </Label>
             <Input
-                id="imageUrl"
-                value={formData.imageUrl}
-                onChange={handleInputChange}
-                placeholder="https://example.com/image.jpg"
+              id="imageUrl"
+              value={formData.imageUrl}
+              onChange={handleInputChange}
+              placeholder="https://example.com/image.jpg"
             />
           </div>
 
           <div className="grid gap-2">
             <Label htmlFor="redirectUrl">
-              {t.banner.fields.redirectUrl} <span className="text-red-500">*</span>
+              {t.banner.fields.redirectUrl}{" "}
+              <span className="text-red-500">*</span>
             </Label>
             <Input
-                id="redirectUrl"
-                value={formData.redirectUrl}
-                onChange={handleInputChange}
-                placeholder="https://example.com/promotion"
+              id="redirectUrl"
+              value={formData.redirectUrl}
+              onChange={handleInputChange}
+              placeholder="https://example.com/promotion"
             />
           </div>
 
           <div className="grid gap-2">
             <Label htmlFor="startDate">
-              {t.banner.fields.startDate} <span className="text-red-500">*</span>
+              {t.banner.fields.startDate}{" "}
+              <span className="text-red-500">*</span>
             </Label>
             <Input
               id="startDate"
@@ -187,12 +197,14 @@ export function EditBannerModal({ banner, open, onOpenChange, onBannerUpdated }:
           </div>
         </div>
         <DialogFooter>
-            <Button variant="outline" onClick={() => onOpenChange(false)}>{t.common.cancel}</Button>
-            <Button type="submit" onClick={handleSubmit} disabled={isLoading}>
-                {isLoading ? t.common.saving : t.common.save}
-            </Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            {t.common.cancel}
+          </Button>
+          <Button type="submit" onClick={handleSubmit} disabled={isLoading}>
+            {isLoading ? t.common.saving : t.common.save}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

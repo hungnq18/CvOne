@@ -123,9 +123,7 @@ const useBannerByPosition = (position: BannerPosition) => {
         if (found) {
           setBanner(found);
         }
-      } catch (error) {
-        console.error("Failed to fetch banners for position:", position, error);
-      }
+      } catch (error) {}
     };
 
     fetchBanner();

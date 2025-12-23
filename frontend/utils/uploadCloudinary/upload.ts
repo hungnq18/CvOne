@@ -50,7 +50,7 @@ export async function uploadFileToCloudinary(file: File): Promise<string> {
 
     return data.secure_url;
   } catch (error) {
-    console.error("Lỗi khi upload file PDF lên Cloudinary:", error);
+    // console.error("Lỗi khi upload file PDF lên Cloudinary:", error);
     throw error instanceof Error
       ? error
       : new Error("Lỗi không xác định khi upload file");

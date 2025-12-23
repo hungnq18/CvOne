@@ -191,7 +191,6 @@ function RecipentInfoContent() {
         const provincesData = await getProvinces();
         setProvinces(provincesData);
       } catch (error) {
-        console.error("Error loading data:", error);
       } finally {
         setLoading(false);
       }
@@ -224,11 +223,12 @@ function RecipentInfoContent() {
             setSelectedProvinceCode(selectedProvince.code);
           }
         }
-      // Xóa recipientCountryCode khỏi localStorage nếu có
-      if (coverLetterData.recipientCountryCode) {
-        delete coverLetterData.recipientCountryCode;
+        // Xóa recipientCountryCode khỏi localStorage nếu có
+        if (coverLetterData.recipientCountryCode) {
+          delete coverLetterData.recipientCountryCode;
+        }
       }
-    }}
+    }
   }, [provinces]);
 
   // Load districts when province changes
@@ -240,9 +240,7 @@ function RecipentInfoContent() {
             selectedProvinceCode
           );
           setDistricts(districtsData);
-        } catch (error) {
-          console.error("Error loading districts:", error);
-        }
+        } catch (error) {}
       } else {
         setDistricts([]);
       }
@@ -430,15 +428,21 @@ function RecipentInfoContent() {
                   <input
                     type="tel"
                     value={formData.recipientPhone}
-                    onChange={(e) => handleInputChange("recipientPhone", e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("recipientPhone", e.target.value)
+                    }
                     placeholder={t.placeholder.phone}
                     className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                      errors.recipientPhone ? "border-red-500" : "border-gray-300"
+                      errors.recipientPhone
+                        ? "border-red-500"
+                        : "border-gray-300"
                     }`}
                   />
                 </div>
               </div>
-              {errors.recipientPhone && <p className="text-red-500 text-sm">{errors.recipientPhone}</p>}
+              {errors.recipientPhone && (
+                <p className="text-red-500 text-sm">{errors.recipientPhone}</p>
+              )}
             </div>
             <InputField
               label={t.email}

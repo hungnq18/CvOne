@@ -1,16 +1,15 @@
-"use client"
+"use client";
 
-import Image from "next/image"
-import Link from "next/link"
-import React from "react"
-import { FaEye, FaEyeSlash, FaFacebook } from "react-icons/fa"
-import { FcGoogle } from "react-icons/fc"
-import styled from "styled-components"
-import logoImg from "../../public/logo/logoCVOne.svg"
-import { useLoginForm } from "@/components/forms/use-login-form"
-import { useRouter, useSearchParams } from "next/navigation"
-import { useLanguage } from "@/providers/global_provider"
-
+import Image from "next/image";
+import Link from "next/link";
+import React from "react";
+import { FaEye, FaEyeSlash, FaFacebook } from "react-icons/fa";
+import { FcGoogle } from "react-icons/fc";
+import styled from "styled-components";
+import logoImg from "../../public/logo/logoCVOne.svg";
+import { useLoginForm } from "@/components/forms/use-login-form";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useLanguage } from "@/providers/global_provider";
 
 const LoginWrapper = styled.div`
   min-height: 100vh;
@@ -20,7 +19,7 @@ const LoginWrapper = styled.div`
   background: #f0f0f0;
   padding: 20px;
   margin-top: 40px;
-`
+`;
 
 const LoginContainer = styled.div`
   display: flex;
@@ -32,10 +31,14 @@ const LoginContainer = styled.div`
   width: 100%;
   min-height: 500px;
   margin: 0 auto;
-`
+`;
 
 const LogoSide = styled.div`
-  background: linear-gradient(135deg, rgb(255, 255, 255) 0%, rgb(109, 193, 235) 100%);
+  background: linear-gradient(
+    135deg,
+    rgb(255, 255, 255) 0%,
+    rgb(109, 193, 235) 100%
+  );
   display: flex;
   align-items: center;
   justify-content: center;
@@ -46,7 +49,7 @@ const LogoSide = styled.div`
   @media (max-width: 768px) {
     display: none;
   }
-`
+`;
 
 const ImageWrapper = styled.div`
   width: 100%;
@@ -55,7 +58,7 @@ const ImageWrapper = styled.div`
   max-height: 300px;
   position: relative;
   margin: auto;
-`
+`;
 
 const FormSide = styled.div`
   flex: 1;
@@ -69,7 +72,7 @@ const FormSide = styled.div`
     padding: 20px;
     width: 100%;
   }
-`
+`;
 
 const LoginForm = styled.form`
   width: 100%;
@@ -78,7 +81,7 @@ const LoginForm = styled.form`
   display: flex;
   flex-direction: column;
   gap: 20px;
-`
+`;
 
 const Title = styled.h2`
   text-align: center;
@@ -86,12 +89,12 @@ const Title = styled.h2`
   font-size: 32px;
   color: #058ac3;
   letter-spacing: 1px;
-`
+`;
 
 const Label = styled.label`
   font-weight: 500;
   color: #222;
-`
+`;
 
 const Input = styled.input`
   padding: 10px 12px;
@@ -110,14 +113,14 @@ const Input = styled.input`
     background-color: #f5f5f5;
     cursor: not-allowed;
   }
-`
+`;
 
 const PasswordWrapper = styled.div`
   position: relative;
   display: flex;
   flex-direction: column;
   gap: 6px;
-`
+`;
 
 const EyeIcon = styled.span`
   position: absolute;
@@ -125,14 +128,18 @@ const EyeIcon = styled.span`
   top: 36px;
   cursor: pointer;
   color: #888;
-`
+`;
 
 const SubmitButton = styled.button`
   flex: 1;
   padding: 14px;
   border-radius: 12px;
   border: 2px solid rgb(51, 131, 236);
-  background: linear-gradient(135deg,rgb(58, 137, 241) 0%,rgb(56, 123, 211) 100%);
+  background: linear-gradient(
+    135deg,
+    rgb(58, 137, 241) 0%,
+    rgb(56, 123, 211) 100%
+  );
   color: white;
   font-weight: 600;
   font-size: 16px;
@@ -147,13 +154,18 @@ const SubmitButton = styled.button`
   overflow: hidden;
 
   &::before {
-    content: '';
+    content: "";
     position: absolute;
     top: 0;
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.2),
+      transparent
+    );
     transition: left 0.5s;
   }
 
@@ -162,7 +174,11 @@ const SubmitButton = styled.button`
   }
 
   &:hover {
-    background: linear-gradient(135deg,rgb(30, 111, 217) 0%,rgb(23, 91, 187) 100%);
+    background: linear-gradient(
+      135deg,
+      rgb(30, 111, 217) 0%,
+      rgb(23, 91, 187) 100%
+    );
     box-shadow: 0 6px 25px rgba(24, 119, 242, 0.5);
     transform: translateY(-3px);
   }
@@ -177,7 +193,7 @@ const SubmitButton = styled.button`
     border-color: #ccc;
     transform: none;
     box-shadow: none;
-    
+
     &::before {
       display: none;
     }
@@ -192,13 +208,13 @@ const SubmitButton = styled.button`
     position: relative;
     z-index: 1;
   }
-`
+`;
 
 const ErrorMessage = styled.div`
   color: #dc2626;
   font-size: 14px;
   margin-top: 4px;
-`
+`;
 
 const RegisterLink = styled.div`
   text-align: center;
@@ -213,12 +229,12 @@ const RegisterLink = styled.div`
     text-decoration: none;
     margin-left: 4px;
     transition: all 0.2s;
-    
+
     &:hover {
       text-decoration: underline;
     }
   }
-`
+`;
 
 const LinksContainer = styled.div`
   display: flex;
@@ -228,7 +244,7 @@ const LinksContainer = styled.div`
   margin-top: 6px;
   flex-wrap: nowrap;
   width: 100%;
-`
+`;
 
 const StyledLink = styled(Link)`
   color: #058ac3;
@@ -251,19 +267,19 @@ const StyledLink = styled(Link)`
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(5, 138, 195, 0.3);
   }
-`
+`;
 
 const Separator = styled.span`
   color: #d0d7de;
   font-weight: 300;
   font-size: 14px;
-`
+`;
 
 const SocialButtonsContainer = styled.div`
   display: flex;
   gap: 12px;
   width: 100%;
-`
+`;
 
 const GoogleButton = styled.button`
   flex: 1;
@@ -285,7 +301,7 @@ const GoogleButton = styled.button`
   overflow: hidden;
 
   &::before {
-    content: '';
+    content: "";
     position: absolute;
     top: 50%;
     left: 50%;
@@ -317,7 +333,7 @@ const GoogleButton = styled.button`
     cursor: not-allowed;
     transform: none;
     box-shadow: none;
-    
+
     &::before {
       display: none;
     }
@@ -332,7 +348,7 @@ const GoogleButton = styled.button`
     position: relative;
     z-index: 1;
   }
-`
+`;
 
 const FacebookButton = styled.button<{ $isVietnamese?: boolean }>`
   flex: 1;
@@ -342,7 +358,7 @@ const FacebookButton = styled.button<{ $isVietnamese?: boolean }>`
   background: linear-gradient(135deg, #1877f2 0%, #0c65d8 100%);
   color: white;
   font-weight: 600;
-  font-size: ${props => props.$isVietnamese ? '14px' : '16px'};
+  font-size: ${(props) => (props.$isVietnamese ? "14px" : "16px")};
   display: flex;
   align-items: center;
   justify-content: center;
@@ -354,13 +370,18 @@ const FacebookButton = styled.button<{ $isVietnamese?: boolean }>`
   overflow: hidden;
 
   &::before {
-    content: '';
+    content: "";
     position: absolute;
     top: 0;
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.2),
+      transparent
+    );
     transition: left 0.5s;
   }
 
@@ -384,7 +405,7 @@ const FacebookButton = styled.button<{ $isVietnamese?: boolean }>`
     border-color: #ccc;
     transform: none;
     box-shadow: none;
-    
+
     &::before {
       display: none;
     }
@@ -399,7 +420,7 @@ const FacebookButton = styled.button<{ $isVietnamese?: boolean }>`
     position: relative;
     z-index: 1;
   }
-`
+`;
 
 const Divider = styled.div`
   display: flex;
@@ -409,7 +430,7 @@ const Divider = styled.div`
 
   &::before,
   &::after {
-    content: '';
+    content: "";
     flex: 1;
     border-bottom: 1px solid #d0d7de;
   }
@@ -420,7 +441,7 @@ const Divider = styled.div`
     font-size: 14px;
     font-weight: 500;
   }
-`
+`;
 
 export default function LoginPage() {
   const {
@@ -433,9 +454,9 @@ export default function LoginPage() {
     handleSubmit,
     handleGoogleLogin,
     handleFacebookLogin,
-    setShowPassword
-  } = useLoginForm(["user", "hr"])
-  const router = useRouter()
+    setShowPassword,
+  } = useLoginForm(["user", "hr"]);
+  const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/";
   const { language } = useLanguage();
@@ -444,17 +465,14 @@ export default function LoginPage() {
   const handleLogin = async (role: string) => {
     try {
       if (role === "admin") {
-        window.location.href = "/admin"
+        window.location.href = "/admin";
       } else if (role === "hr") {
-        window.location.href = "/hr/dashboard"
+        window.location.href = "/hr/dashboard";
       } else {
         router.push(callbackUrl);
       }
-
-    } catch (error) {
-      console.error("Login failed", error)
-    }
-  }
+    } catch (error) {}
+  };
 
   return (
     <LoginWrapper>
@@ -519,7 +537,7 @@ export default function LoginPage() {
               <Separator>|</Separator>
               <StyledLink href="/fogetPassword">{t.fogetPassword}</StyledLink>
             </LinksContainer>
-            
+
             <Divider>
               <span>{t.or}</span>
             </Divider>
@@ -544,10 +562,9 @@ export default function LoginPage() {
                 <span>{t.facebookButton}</span>
               </FacebookButton>
             </SocialButtonsContainer>
-
           </LoginForm>
         </FormSide>
       </LoginContainer>
     </LoginWrapper>
-  )
+  );
 }

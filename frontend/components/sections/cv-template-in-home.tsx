@@ -243,7 +243,6 @@ export const getServerSideProps: GetServerSideProps = async () => {
     const data = await getCVTemplates();
     return { props: { initialTemplates: data } };
   } catch (error) {
-    console.error("Error fetching CV templates:", error);
     return { props: { initialTemplates: [] } };
   }
 };

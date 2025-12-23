@@ -25,7 +25,6 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(sorted);
   } catch (error) {
-    console.error("Error in /api/cities:", error);
     return NextResponse.json(
       { message: "Failed to load cities" },
       { status: 500 }

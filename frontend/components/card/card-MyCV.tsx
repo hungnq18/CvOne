@@ -12,7 +12,14 @@ import { templateComponentMap } from "@/components/cvTemplate/index";
 import { useLanguage } from "@/providers/global_provider";
 import { Card } from "antd";
 import { motion } from "framer-motion";
-import { Edit, Trash2, Share2, ExternalLinkIcon, CopyIcon, AlertTriangle } from "lucide-react";
+import {
+  Edit,
+  Trash2,
+  Share2,
+  ExternalLinkIcon,
+  CopyIcon,
+  AlertTriangle,
+} from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { getDefaultSectionPositions } from "@/components/cvTemplate/defaultSectionPositions";
@@ -136,7 +143,10 @@ const CardMyCV: React.FC<CardMyCVProps> = ({ cvListOverride }) => {
   const [shareUrl, setShareUrl] = useState<string>("");
   const [copied, setCopied] = useState<boolean>(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [cvToDelete, setCvToDelete] = useState<{ id: string; title: string } | null>(null);
+  const [cvToDelete, setCvToDelete] = useState<{
+    id: string;
+    title: string;
+  } | null>(null);
 
   const enrichCVsWithUserData = async (list: CV[]): Promise<CV[]> => {
     // QUAN TRỌNG: Luôn fetch lại full CV data để đảm bảo có cvTemplateId và userData mới nhất
@@ -156,9 +166,7 @@ const CardMyCV: React.FC<CardMyCVProps> = ({ cvListOverride }) => {
               },
             } as CV;
           }
-        } catch (err) {
-          // console.warn(`[card-MyCV] Failed to fetch full CV ${cv._id}:`, err);
-        }
+        } catch (err) {}
         return cv;
       })
     );
@@ -174,18 +182,14 @@ const CardMyCV: React.FC<CardMyCVProps> = ({ cvListOverride }) => {
       const enriched = await enrichCVsWithUserData(cvs || []);
       setCvList(enriched);
       setTemplates(templatesData);
-    } catch (err) {
-      console.error(t.errors.fetch, err);
-    }
+    } catch (err) {}
   };
 
   const fetchTemplatesOnly = async () => {
     try {
       const templatesData = await getCVTemplates();
       setTemplates(templatesData);
-    } catch (err) {
-      console.error(t.errors.fetch, err);
-    }
+    } catch (err) {}
   };
 
   useEffect(() => {
@@ -209,16 +213,17 @@ const CardMyCV: React.FC<CardMyCVProps> = ({ cvListOverride }) => {
 
   const handleDeleteConfirm = async () => {
     if (!cvToDelete) return;
-    
+
     try {
       setDeletingCVId(cvToDelete.id);
       await deleteCV(cvToDelete.id);
-      setCvList((prevList) => prevList.filter((cv) => cv._id !== cvToDelete.id));
+      setCvList((prevList) =>
+        prevList.filter((cv) => cv._id !== cvToDelete.id)
+      );
       notify.success(t.deleteDialog.success);
       setDeleteDialogOpen(false);
       setCvToDelete(null);
     } catch (error) {
-      console.error(t.errors.delete, error);
       notify.error(t.deleteDialog.error);
     } finally {
       setDeletingCVId(null);
@@ -264,7 +269,7 @@ const CardMyCV: React.FC<CardMyCVProps> = ({ cvListOverride }) => {
             const template = templates.find(
               (temp) => temp._id === cv.cvTemplateId
             );
-            
+
             if (!template) {
               // console.warn("[card-MyCV] Template not found:", {
               //   cvId: cv._id,
@@ -274,10 +279,10 @@ const CardMyCV: React.FC<CardMyCVProps> = ({ cvListOverride }) => {
               // });
               return null;
             }
-            
+
             const TemplateComponent =
               templateComponentMap?.[template.title || ""];
-            
+
             if (!TemplateComponent) {
               // console.warn("[card-MyCV] Template component not found:", {
               //   cvId: cv._id,
@@ -289,38 +294,41 @@ const CardMyCV: React.FC<CardMyCVProps> = ({ cvListOverride }) => {
             }
 
             const userData = cv.content?.userData || {};
-            
+
             // Lấy sectionPositions với ưu tiên: userData > default
             let sectionPositions =
               userData.sectionPositions ||
               getDefaultSectionPositions(template.title);
-            
+
             // VALIDATION: Đảm bảo sectionPositions khớp với template hiện tại
             // Chỉ validate nếu có sectionPositions từ userData (không validate default)
             if (userData.sectionPositions) {
-              const defaultPositions = getDefaultSectionPositions(template.title);
+              const defaultPositions = getDefaultSectionPositions(
+                template.title
+              );
               const defaultSectionKeys = Object.keys(defaultPositions).sort();
               const currentSectionKeys = Object.keys(sectionPositions).sort();
-              
+
               // Chỉ reset nếu thiếu các section bắt buộc (có trong default)
               // Cho phép có thêm section (ví dụ: Project với chữ P hoa)
               const missingRequiredSections = defaultSectionKeys.filter(
-                key => !currentSectionKeys.includes(key)
+                (key) => !currentSectionKeys.includes(key)
               );
-              
+
               if (missingRequiredSections.length > 0) {
                 // Merge: giữ lại các section hiện có, thêm các section thiếu từ default
                 const mergedPositions = { ...sectionPositions };
-                missingRequiredSections.forEach(key => {
+                missingRequiredSections.forEach((key) => {
                   mergedPositions[key] = defaultPositions[key];
                 });
                 sectionPositions = mergedPositions;
-                
+
                 // Chỉ log warning một lần cho mỗi CV (sử dụng một flag đơn giản)
                 if (!(window as any).__cvValidationWarned) {
                   (window as any).__cvValidationWarned = new Set();
                 }
-                const warnedSet = (window as any).__cvValidationWarned as Set<string>;
+                const warnedSet = (window as any)
+                  .__cvValidationWarned as Set<string>;
                 if (!warnedSet.has(cv._id)) {
                   // console.warn("[card-MyCV] sectionPositions thiếu section, đã merge với default:", {
                   //   cvId: cv._id,
@@ -438,7 +446,10 @@ const CardMyCV: React.FC<CardMyCVProps> = ({ cvListOverride }) => {
                         <div>
                           <button
                             onClick={() =>
-                              handleDeleteClick(cv._id, cv.title || t.card.unnamed)
+                              handleDeleteClick(
+                                cv._id,
+                                cv.title || t.card.unnamed
+                              )
                             }
                             disabled={deletingCVId === cv._id}
                             className={`flex ${

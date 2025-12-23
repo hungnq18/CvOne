@@ -82,9 +82,7 @@ function ChatPage() {
           [selectedConversationId as any]: data,
         }));
         setShouldScroll(true);
-      } catch (err) {
-        console.error("Failed to load messages:", err);
-      }
+      } catch (err) {}
     }
 
     loadMessages();
@@ -148,7 +146,6 @@ function ChatPage() {
           setOtherUserData(userData);
         }
       } catch (err) {
-        console.error("Error fetching user data:", err);
         setOtherUserData(null);
       }
     }

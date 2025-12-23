@@ -31,7 +31,8 @@ const uploadJDTranslations = {
     enterText: "Enter Job Description",
     placeholder: "Paste the job description here...",
     notEnoughTokensTitle: "Error: Not enough tokens",
-    notEnoughTokensDesc: "You don't have enough tokens to use this feature. Please top up more tokens to continue.",
+    notEnoughTokensDesc:
+      "You don't have enough tokens to use this feature. Please top up more tokens to continue.",
   },
   vi: {
     title: "Tải lên mô tả công việc",
@@ -48,7 +49,8 @@ const uploadJDTranslations = {
     enterText: "Nhập mô tả công việc",
     placeholder: "Dán nội dung mô tả công việc vào đây...",
     notEnoughTokensTitle: "Lỗi: Không đủ Tokens",
-    notEnoughTokensDesc: "Bạn không đủ tokens để sử dụng tính năng này. Vui lòng nạp thêm tokens để tiếp tục.",
+    notEnoughTokensDesc:
+      "Bạn không đủ tokens để sử dụng tính năng này. Vui lòng nạp thêm tokens để tiếp tục.",
   },
 };
 
@@ -62,7 +64,6 @@ function UploadJDContent() {
   const [isUploading, setIsUploading] = useState(false);
   const [extractedText, setExtractedText] = useState<string | null>(null);
   const [manualJdText, setManualJdText] = useState("");
-
 
   const { language } = useLanguage();
   const t = uploadJDTranslations[language];
@@ -97,7 +98,11 @@ function UploadJDContent() {
       return;
     }
 
-    if (uploadedFile && uploadedFile.type === "application/pdf" && !extractedText) {
+    if (
+      uploadedFile &&
+      uploadedFile.type === "application/pdf" &&
+      !extractedText
+    ) {
       toast.error("Đang xử lý file PDF, vui lòng đợi hoặc thử upload lại.");
       return;
     }
@@ -116,7 +121,9 @@ function UploadJDContent() {
       // Retrieve CL text from localStorage
       const clText = localStorage.getItem("coverLetterData");
       if (!clText) {
-        throw new Error("Không tìm thấy nội dung Cover Letter. Vui lòng thử lại từ bước trước.");
+        throw new Error(
+          "Không tìm thấy nội dung Cover Letter. Vui lòng thử lại từ bước trước."
+        );
       }
 
       const coverLetterDataString = localStorage.getItem("coverLetterData");
@@ -126,7 +133,9 @@ function UploadJDContent() {
       const finalTemplateId = templateId || coverLetterData.templateId;
 
       if (!finalTemplateId) {
-        throw new Error("Không tìm thấy template ID. Vui lòng chọn một template.");
+        throw new Error(
+          "Không tìm thấy template ID. Vui lòng chọn một template."
+        );
       }
 
       const payload = {
@@ -135,14 +144,11 @@ function UploadJDContent() {
         templateId: finalTemplateId,
       };
 
-      const response = await fetch(
-        `${API_URL}${API_ENDPOINTS.CL.EXTRACT_AI}`,
-        {
-          method: "POST",
-          headers: headers,
-          body: JSON.stringify(payload),
-        }
-      );
+      const response = await fetch(`${API_URL}${API_ENDPOINTS.CL.EXTRACT_AI}`, {
+        method: "POST",
+        headers: headers,
+        body: JSON.stringify(payload),
+      });
 
       const responseData = await response.json();
 
@@ -163,14 +169,13 @@ function UploadJDContent() {
       if (finalTemplateId) params.append("templateId", finalTemplateId);
       // We are navigating to the creation page, maybe pass an ID from the response?
       // Assuming responseData contains info to proceed
-      if (responseData.id) { // Or whatever identifier the backend returns
-          params.append("clId", responseData.id);
+      if (responseData.id) {
+        // Or whatever identifier the backend returns
+        params.append("clId", responseData.id);
       }
 
       router.push(`/createCLTemplate?${params.toString()}`);
-
     } catch (error: any) {
-      console.error("Error during JD/CL processing:", error);
       if (error.message.includes("Not enough tokens")) {
         showErrorToast(t.notEnoughTokensTitle, t.notEnoughTokensDesc);
         router.push("/user/wallet");
@@ -195,7 +200,10 @@ function UploadJDContent() {
         <div className="flex flex-col md:flex-row w-full gap-8 mb-16 px-4">
           {/* Left side: Manual Text Input */}
           <div className="flex-1">
-            <Label htmlFor="manual-jd" className="mb-2 block text-lg font-semibold text-gray-700">
+            <Label
+              htmlFor="manual-jd"
+              className="mb-2 block text-lg font-semibold text-gray-700"
+            >
               {(t as any).enterText}
             </Label>
             <Textarea
@@ -210,7 +218,7 @@ function UploadJDContent() {
           {/* Right side: File Upload */}
           <div className="flex-1">
             <Label className="mb-2 block text-lg font-semibold text-gray-700">
-              {language === 'vi' ? 'Tải lên file' : 'Upload file'}
+              {language === "vi" ? "Tải lên file" : "Upload file"}
             </Label>
             <label
               htmlFor="jd-upload"
@@ -251,7 +259,6 @@ function UploadJDContent() {
                   file={uploadedFile}
                   onLoadSuccess={onDocumentLoadSuccess}
                   onLoadError={(error) => {
-                    console.error("Error loading PDF for text extraction:", error);
                     toast.error(`Lỗi khi xử lý file PDF: ${error.message}`);
                   }}
                 />

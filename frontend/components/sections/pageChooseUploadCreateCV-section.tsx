@@ -111,7 +111,6 @@ export default function PageChooseUploadCreateCVSection() {
         notify.error(t.alerts.fileTooLarge413);
       } else {
         notify.error(t.alerts.analysisError);
-        console.error("Lỗi phân tích CV:", error);
       }
     } finally {
       setIsLoading(false);

@@ -146,7 +146,7 @@ const formatAnalysisResult = (
           result.experienceLevel as keyof typeof t_results.levelMap
         ] || result.experienceLevel
       : null;
-    
+
     // Use AI-generated suggestions from backend
     const suggestions = result.cvSuggestions || [];
 
@@ -200,7 +200,7 @@ const formatAnalysisResult = (
       </div>
     );
   } catch (error) {
-    console.error(t_results.errorFormatting, error);
+    // console.error(t_results.errorFormatting, error);
     return (
       <div className="whitespace-pre-wrap">
         {JSON.stringify(result, null, 2)}
@@ -235,18 +235,18 @@ const UpJdStep: React.FC<UpJdStepProps> = () => {
 
     try {
       const result = await analyzeJD(jobDescription);
-      
+
       // Backend returns { analyzedJob: {...}, total_tokens: ... }
       // Extract analyzedJob and save it
       const analyzedJob = result?.analyzedJob || result;
-      
+
       // Save only analyzedJob, not the whole response
       setJobAnalysis(analyzedJob);
-      
+
       const formattedResult = formatAnalysisResult(analyzedJob, t.results);
       setAnalysisResult(formattedResult);
     } catch (error: any) {
-      console.error("Error analyzing job description:", error);
+      // console.error("Error analyzing job description:", error);
       const message: string =
         (error?.data && typeof error.data.message === "string"
           ? error.data.message
@@ -255,9 +255,10 @@ const UpJdStep: React.FC<UpJdStepProps> = () => {
       if (message.includes("Not enough tokens")) {
         toast({
           title: "CVone",
-          description: language === "vi"
-            ? "Không đủ token AI. Vui lòng nạp thêm để tiếp tục sử dụng tính năng AI."
-            : "Not enough AI tokens. Please top up to continue using AI features.",
+          description:
+            language === "vi"
+              ? "Không đủ token AI. Vui lòng nạp thêm để tiếp tục sử dụng tính năng AI."
+              : "Not enough AI tokens. Please top up to continue using AI features.",
           variant: "destructive",
         });
         setTimeout(() => {

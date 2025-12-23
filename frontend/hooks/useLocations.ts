@@ -1,5 +1,10 @@
-import { useState, useEffect, useCallback } from 'react';
-import { getProvinces, getDistrictsByProvinceCode, Province, District } from '@/api/locationApi';
+import { useState, useEffect, useCallback } from "react";
+import {
+  getProvinces,
+  getDistrictsByProvinceCode,
+  Province,
+  District,
+} from "@/api/locationApi";
 
 export const useLocations = () => {
   const [provinces, setProvinces] = useState<Province[]>([]);
@@ -7,7 +12,8 @@ export const useLocations = () => {
   const [recipientDistricts, setRecipientDistricts] = useState<District[]>([]);
   const [isLoadingProvinces, setIsLoadingProvinces] = useState(false);
   const [isLoadingDistricts, setIsLoadingDistricts] = useState(false);
-  const [isLoadingRecipientDistricts, setIsLoadingRecipientDistricts] = useState(false);
+  const [isLoadingRecipientDistricts, setIsLoadingRecipientDistricts] =
+    useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -17,8 +23,8 @@ export const useLocations = () => {
         const provinceData = await getProvinces();
         setProvinces(provinceData);
       } catch (err) {
-        setError('Failed to fetch provinces.');
-        console.error(err);
+        setError("Failed to fetch provinces.");
+        // console.error(err);
       } finally {
         setIsLoadingProvinces(false);
       }
@@ -27,42 +33,51 @@ export const useLocations = () => {
     fetchProvinces();
   }, []);
 
-  const fetchDistrictsForCity = useCallback(async (cityName: string) => {
-    const selectedProvince = provinces.find(p => p.name === cityName);
-    if (!selectedProvince) {
-      setDistricts([]);
-      return;
-    }
-    setIsLoadingDistricts(true);
-    try {
-      const districtData = await getDistrictsByProvinceCode(selectedProvince.code);
-      setDistricts(districtData);
-    } catch (err) {
-      setError('Failed to fetch districts.');
-      console.error(err);
-    } finally {
-      setIsLoadingDistricts(false);
-    }
-  }, [provinces]);
+  const fetchDistrictsForCity = useCallback(
+    async (cityName: string) => {
+      const selectedProvince = provinces.find((p) => p.name === cityName);
+      if (!selectedProvince) {
+        setDistricts([]);
+        return;
+      }
+      setIsLoadingDistricts(true);
+      try {
+        const districtData = await getDistrictsByProvinceCode(
+          selectedProvince.code
+        );
+        setDistricts(districtData);
+      } catch (err) {
+        setError("Failed to fetch districts.");
+        // console.error(err);
+      } finally {
+        setIsLoadingDistricts(false);
+      }
+    },
+    [provinces]
+  );
 
-  const fetchDistrictsForRecipientCity = useCallback(async (cityName: string) => {
-    const selectedProvince = provinces.find(p => p.name === cityName);
-    if (!selectedProvince) {
-      setRecipientDistricts([]);
-      return;
-    }
-    setIsLoadingRecipientDistricts(true);
-    try {
-      const districtData = await getDistrictsByProvinceCode(selectedProvince.code);
-      setRecipientDistricts(districtData);
-    } catch (err) {
-      setError('Failed to fetch recipient districts.');
-      console.error(err);
-    } finally {
-      setIsLoadingRecipientDistricts(false);
-    }
-  }, [provinces]);
-
+  const fetchDistrictsForRecipientCity = useCallback(
+    async (cityName: string) => {
+      const selectedProvince = provinces.find((p) => p.name === cityName);
+      if (!selectedProvince) {
+        setRecipientDistricts([]);
+        return;
+      }
+      setIsLoadingRecipientDistricts(true);
+      try {
+        const districtData = await getDistrictsByProvinceCode(
+          selectedProvince.code
+        );
+        setRecipientDistricts(districtData);
+      } catch (err) {
+        setError("Failed to fetch recipient districts.");
+        // console.error(err);
+      } finally {
+        setIsLoadingRecipientDistricts(false);
+      }
+    },
+    [provinces]
+  );
 
   return {
     provinces,
@@ -73,6 +88,6 @@ export const useLocations = () => {
     isLoadingRecipientDistricts,
     error,
     fetchDistrictsForCity,
-    fetchDistrictsForRecipientCity
+    fetchDistrictsForRecipientCity,
   };
 };
