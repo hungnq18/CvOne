@@ -147,12 +147,19 @@ export class UsersService {
   }
 
   async deleteUser(userId: string): Promise<{ deleted: boolean }> {
-    const user = await this.userModel.findById(userId);
+    const user = await this.userModel.findById(userId).populate("account_id");
     if (!user) {
       throw new NotFoundException("User not found");
     }
 
-    const accountId = user.account_id;
+    const account: any = user.account_id;
+
+    // Không cho phép xóa user có account admin
+    if (account && account.role === "admin") {
+      throw new BadRequestException("Admin user cannot be deleted");
+    }
+
+    const accountId = account?._id || user.account_id;
 
     // Delete the user
     const userDeletionResult = await this.userModel

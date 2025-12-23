@@ -14,12 +14,15 @@ import {
 import { Button } from "@/components/ui/button"
 
 interface DashboardHeaderSharedProps {
+  // role dùng để xác định đường dẫn sau khi logout
+  role: "admin" | "marketing"
   roleLabel: string
   avatarSrc: string
   avatarFallback: string
 }
 
 export function DashboardHeaderShared({
+  role,
   roleLabel,
   avatarSrc,
   avatarFallback,
@@ -36,9 +39,10 @@ export function DashboardHeaderShared({
   });
 
   const handleLogout = () => {
-    logout();
-    document.cookie = "token=; path=/; max-age=0";
-    window.location.href = '/login';
+    logout()
+    document.cookie = "token=; path=/; max-age=0"
+    const redirectPath = role === "admin" ? "/admin/login" : "/marketing/login"
+    router.push(redirectPath)
   }
 
   return (

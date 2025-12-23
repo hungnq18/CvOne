@@ -51,6 +51,7 @@ import {
   Province,
 } from "@/api/locationApi";
 import { showErrorToast, showSuccessToast } from "@/utils/popUpUtils";
+import { useAuth } from "@/providers/auth-provider";
 
 interface PopulatedAccount {
   _id: string;
@@ -93,6 +94,7 @@ const INTERNAL_EMAIL_DOMAIN = ""; // vd '@yourcompany.com' hoặc để '' => ch
 
 export function ManageUsers() {
   const { t } = useLanguage();
+  const { user: currentUser } = useAuth();
   const [users, setUsers] = useState<PopulatedUser[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -170,18 +172,18 @@ export function ManageUsers() {
 
   const validateForm = (): boolean => {
     if (!formData.email.trim()) {
-      showErrorToast("Validation Error", "Email is required");
+      showErrorToast("Validation Error", t.admin.manageUser.messages.emailRequired);
       return false;
     }
     if (formData.email.length > 20) {
-      showErrorToast("Validation Error", "Email tối đa 20 ký tự");
+      showErrorToast("Validation Error", t.admin.manageUser.messages.emailMaxLength);
       return false;
     }
 
     // Kiểm tra định dạng email
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
     if (!emailRegex.test(formData.email.trim())) {
-      showErrorToast("Validation Error", "Email không đúng định dạng chuẩn");
+      showErrorToast("Validation Error", t.admin.manageUser.messages.emailInvalid);
       return false;
     }
 
@@ -192,7 +194,7 @@ export function ManageUsers() {
     ) {
       showErrorToast(
         "Validation Error",
-        `Email bắt buộc thuộc domain ${INTERNAL_EMAIL_DOMAIN}`
+        t.admin.manageUser.messages.emailDomainRequired.replace("{domain}", INTERNAL_EMAIL_DOMAIN)
       );
       return false;
     }
@@ -202,7 +204,7 @@ export function ManageUsers() {
     if (DISPOSABLE_DOMAINS.some((domain) => emailDomain.endsWith(domain))) {
       showErrorToast(
         "Validation Error",
-        "Không được dùng email tạm thời/disposable trong hệ thống"
+        t.admin.manageUser.messages.emailDisposable
       );
       return false;
     }
@@ -218,24 +220,24 @@ export function ManageUsers() {
             user.account_id.email.toLowerCase() === lowerEmail
         )
       ) {
-        showErrorToast("Validation Error", "Email đã tồn tại trong hệ thống");
+        showErrorToast("Validation Error", t.admin.manageUser.messages.emailExists);
         return false;
       }
     }
 
     // Validate first_name và last_name
     if (formData.first_name && formData.first_name.length > 10) {
-      showErrorToast("Validation Error", "First name tối đa 10 ký tự");
+      showErrorToast("Validation Error", t.admin.manageUser.messages.firstNameMaxLength);
       return false;
     }
     if (formData.last_name && formData.last_name.length > 10) {
-      showErrorToast("Validation Error", "Last name tối đa 10 ký tự");
+      showErrorToast("Validation Error", t.admin.manageUser.messages.lastNameMaxLength);
       return false;
     }
 
     if (!isEditMode) {
       if (!formData.password.trim()) {
-        showErrorToast("Validation Error", "Password is required");
+        showErrorToast("Validation Error", t.admin.manageUser.messages.passwordRequired);
         return false;
       }
 
@@ -245,7 +247,7 @@ export function ManageUsers() {
       if (!passwordRegex.test(formData.password)) {
         showErrorToast(
           "Invalid Password",
-          "Password must contain at least 1 uppercase letter, 1 number, and 1 special character"
+          t.admin.manageUser.messages.passwordInvalid
         );
         return false;
       }
@@ -350,12 +352,19 @@ export function ManageUsers() {
   };
 
   const openDeleteDialog = (user: PopulatedUser) => {
+    if (user.account_id?.role === "admin") {
+      showErrorToast("Error", t.admin.manageUser.messages.deleteAdminError);
+      return;
+    }
     setSelectedUser(user);
     setIsDeleteDialogOpen(true);
   };
 
   const filteredUsers = users.filter((user) => {
     if (!user.account_id) return false;
+
+    // Không hiển thị chính user đang đăng nhập
+    if (currentUser && user._id === (currentUser as any)._id) return false;
 
     const term = searchTerm.toLowerCase();
     const fullName = `${user.first_name ?? ""} ${

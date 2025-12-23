@@ -350,16 +350,21 @@ export class AccountsService {
   }
 
   async deleteAccount(accountId: string): Promise<{ deleted: boolean }> {
-    const result = await this.accountModel.findByIdAndDelete(accountId).exec();
-    if (!result) {
+    const account = await this.accountModel.findById(accountId).exec();
+    if (!account) {
       throw new NotFoundException("Account not found");
     }
-    if (result.role === "admin") {
+
+    // Không cho phép xóa account admin
+    if (account.role === "admin") {
       throw new BadRequestException("Admin account cannot be deleted");
     }
+
+    await this.accountModel.findByIdAndDelete(accountId).exec();
+
     const role =
-      result.role === "hr" || result.role === "user" ? result.role : "user"; // fallback
-    this.mailService.sendDeleteAccountEmail(result.email, role);
+      account.role === "hr" || account.role === "user" ? account.role : "user"; // fallback
+    this.mailService.sendDeleteAccountEmail(account.email, role);
     return { deleted: true };
   }
 
