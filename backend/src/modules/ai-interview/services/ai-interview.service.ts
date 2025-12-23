@@ -385,16 +385,14 @@ QUAN TRỌNG: Chỉ trả về JSON, không có text giải thích thêm. Format
       const response = completion.choices[0]?.message?.content || '';
       
       if (!response) {
-        this.logger.warn('Empty response from OpenAI, falling back to medium difficulty');
-        return 'medium';
+        throw new Error('Empty response from OpenAI');
       }
       
       const analysis = this.parseJsonResponse(response);
       
       // Validate the response structure
       if (!analysis.difficulty || !['easy', 'medium', 'hard'].includes(analysis.difficulty)) {
-        this.logger.warn(`Invalid difficulty value: ${analysis.difficulty}, falling back to medium`);
-        return 'medium';
+        throw new Error(`Invalid difficulty value: ${analysis.difficulty}`);
       }
       
       this.logger.log(`Determined difficulty: ${analysis.difficulty} - ${analysis.reason || 'N/A'}`);
@@ -402,8 +400,7 @@ QUAN TRỌNG: Chỉ trả về JSON, không có text giải thích thêm. Format
 
     } catch (error) {
       this.logger.error(`Error determining difficulty: ${error.message}`, error.stack);
-      // Fallback to medium if AI fails
-      return 'medium';
+      throw error;
     }
   }
 
@@ -419,7 +416,7 @@ QUAN TRỌNG: Chỉ trả về JSON, không có text giải thích thêm. Format
     companyName?: string
   ): Promise<{ session: AiInterviewSession; total_tokens: number }> {
     try {
-      // Detect language from job description (AI first, fallback heuristic)
+      // Detect language from job description using AI
       const detectedLanguageResult = await detectLanguageSmart(jobDescription, this.openaiApiService, this.logger);
       const detectedLanguage =
         typeof detectedLanguageResult === 'string'
@@ -478,7 +475,7 @@ QUAN TRỌNG: Chỉ trả về JSON, không có text giải thích thêm. Format
     difficulty?: 'easy' | 'medium' | 'hard'
   ): Promise<InterviewQuestionPool> {
     try {
-      // Detect language from job description (AI first, fallback heuristic)
+      // Detect language from job description using AI
       const detectedLanguageResult = await detectLanguageSmart(jobDescription, this.openaiApiService, this.logger);
       const detectedLanguage =
         typeof detectedLanguageResult === 'string'

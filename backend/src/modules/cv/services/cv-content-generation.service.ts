@@ -97,22 +97,13 @@ Do not include any explanation or markdown, only valid JSON.
         return { professional: summaries, total_tokens: usage.total_tokens };
       }
 
-      // fallback: wrap single summary in array
-      return {
-        professional: [cleanResponse],
-        total_tokens: usage.total_tokens,
-      };
+      throw new Error("Invalid response format: expected array of 3 summaries");
     } catch (error) {
       this.logger.error(
         `Error generating professional summary: ${error.message}`,
         error.stack
       );
-      // fallback: return 3 copies of fallback summary
-      const fallback = this.generateFallbackSummary(
-        userProfile,
-        jobAnalysis || {}
-      );
-      return { professional: [fallback, fallback, fallback], total_tokens: 0 };
+      throw error;
     }
   }
 
@@ -213,21 +204,7 @@ Requirements:
         `Error generating work experience: ${error.message}`,
         error.stack
       );
-
-      // Check if it's a quota exceeded error
-      if (error.message.includes("429") || error.message.includes("quota")) {
-        this.logger.warn(
-          "OpenAI quota exceeded, using fallback work experience"
-        );
-      }
-
-      return {
-        experience: this.generateFallbackWorkExperience(
-          jobAnalysis || {},
-          experienceLevel
-        ),
-        total_tokens: 0,
-      };
+      throw error;
     }
   }
 
@@ -258,11 +235,12 @@ Requirements:
         userSkills?.map((s) => s.name).join(", ") || "None";
 
       const prompt = `
-Generate 3 different skills section options for a CV based on the job analysis and existing user skills.
+Generate 3 different skills section options for a CV based STRICTLY on the job analysis and existing user skills.
 
 Job Analysis:
 - Required Skills: ${requiredSkills.join(", ") || "Not specified"}
 - Technologies: ${technologies.join(", ") || "Not specified"}
+- Soft Skills: ${softSkills.join(", ") || "Not specified"}
 - Experience Level: ${experienceLevel}
 
 Existing User Skills: ${existingSkills}
@@ -275,13 +253,15 @@ Each option should be a skills list in JSON format with ratings (1-5):
   }
 ]
 
-Requirements:
-- Each option should include both required skills and technologies from job analysis
-- Add relevant soft skills (communication, teamwork, leadership, etc.)
+STRICT Requirements:
+- ONLY include skills that are mentioned in the job analysis (requiredSkills, technologies, softSkills)
+- DO NOT add any skills that are NOT in the job analysis
+- If soft skills are mentioned in job analysis, include them; otherwise, do not add generic soft skills
 - Rate skills appropriately for the experience level
-- Include 8-12 skills per option
+- Include 6-12 skills per option (only from job analysis)
 - Use proper capitalization for skill names
 - Ratings: 1=Beginner, 2=Elementary, 3=Intermediate, 4=Advanced, 5=Expert
+- Prioritize required skills and technologies from job analysis
 
 Return only a JSON array of 3 skills lists, e.g.:
 [
@@ -299,7 +279,7 @@ Do not include any explanation or markdown, only valid JSON.
           {
             role: "system",
             content:
-              "You are a professional CV writer. Create relevant skills sections with appropriate ratings. Always return a JSON array of 3 skills lists.",
+              "You are a professional CV writer. Create skills sections STRICTLY based on the job analysis provided. Only include skills mentioned in the job analysis (requiredSkills, technologies, softSkills). Do not add any skills outside the job analysis. Always return a JSON array of 3 skills lists.",
           },
           {
             role: "user",
@@ -345,24 +325,26 @@ Do not include any explanation or markdown, only valid JSON.
       function filterSkills(list: Array<{ name: string; rating: number }>) {
         if (!Array.isArray(list)) return [];
 
-        // Nếu không có validSkills, trả nguyên list từ OpenAI
+        // Nếu không có validSkills từ JD, trả về mảng rỗng
         if (validSkills.length === 0) {
-          return list;
+          return [];
         }
 
-        // Lọc theo JD
-        const filtered = list.filter((skillObj) =>
-          validSkills.includes((skillObj.name || "").toLowerCase())
-        );
+        // Chỉ giữ lại skills khớp với JD (case-insensitive matching)
+        const filtered = list.filter((skillObj) => {
+          const skillName = (skillObj.name || "").toLowerCase().trim();
+          // Kiểm tra exact match hoặc partial match (để xử lý các biến thể như "JavaScript" vs "javascript")
+          return validSkills.some(validSkill => {
+            const valid = validSkill.toLowerCase().trim();
+            return skillName === valid || 
+                   skillName.includes(valid) || 
+                   valid.includes(skillName);
+          });
+        });
 
-        // Nếu lọc xong rỗng => fallback dùng lại list gốc
-        const baseList =
-          filtered.length > 0
-            ? filtered
-            : list;
-
+        // Chỉ trả về skills khớp với JD, không có fallback
         // Gán lại rating nếu user có sẵn kỹ năng
-        return baseList.map((skillObj) => {
+        return filtered.map((skillObj) => {
           if (userSkills) {
             const found = userSkills.find(
               (s) => s.name.toLowerCase() === (skillObj.name || "").toLowerCase()
@@ -381,74 +363,16 @@ Do not include any explanation or markdown, only valid JSON.
         };
       }
 
-      // fallback: wrap single list in array
-      return {
-        skillsOptions: [filterSkills(skillsLists)],
-        total_tokens: usage.total_tokens,
-      };
+      throw new Error("Invalid response format: expected array of 3 skills lists");
     } catch (error) {
       this.logger.error(
         `Error generating skills section: ${error.message}`,
         error.stack
       );
-      // fallback: return 3 copies of fallback skills
-      const fallback = this.generateFallbackSkills(jobAnalysis || {});
-      return { skillsOptions: [fallback, fallback, fallback], total_tokens: 0 };
+      throw error;
     }
   }
 
-  // Fallback methods for when OpenAI is not available
-  private generateFallbackSummary(userProfile: any, jobAnalysis: any): string {
-    const experienceLevel = jobAnalysis?.experienceLevel || "professional";
-    const skills =
-      jobAnalysis?.requiredSkills?.slice(0, 3).join(", ") ||
-      "software development";
-
-    return `Experienced ${experienceLevel} professional with expertise in ${skills}.
-    Passionate about delivering high-quality solutions and collaborating with cross-functional teams.
-    Strong problem-solving skills and commitment to continuous learning and professional development.`;
-  }
-
-  private generateFallbackWorkExperience(
-    jobAnalysis: any,
-    experienceLevel: string
-  ): Array<any> {
-    const years =
-      experienceLevel === "senior"
-        ? 5
-        : experienceLevel === "mid-level"
-          ? 3
-          : 1;
-    const startDate = new Date(Date.now() - years * 365 * 24 * 60 * 60 * 1000);
-    const endDate = new Date();
-
-    return [
-      {
-        title: `${experienceLevel.charAt(0).toUpperCase() + experienceLevel.slice(1)} Developer`,
-        company: "Previous Company",
-        startDate: startDate.toISOString().split("T")[0],
-        endDate: endDate.toISOString().split("T")[0],
-        description: `Developed and maintained applications using ${jobAnalysis.technologies?.slice(0, 3).join(", ") || "modern technologies"}.
-      Collaborated with cross-functional teams to deliver high-quality software solutions.`,
-      },
-    ];
-  }
-
-  private generateFallbackSkills(
-    jobAnalysis: any
-  ): Array<{ name: string; rating: number }> {
-    const allSkills = [
-      ...(jobAnalysis?.requiredSkills || []),
-      ...(jobAnalysis?.technologies || []),
-    ];
-    const uniqueSkills = [...new Set(allSkills)];
-    console.log("uniqueSkills", uniqueSkills);
-
-    return uniqueSkills.slice(0, 8).map((skill) => ({
-      name: skill.charAt(0).toUpperCase() + skill.slice(1),
-      rating: Math.floor(Math.random() * 3) + 3,
-    }));
-  }
   /**
    * Generate CV content based on user profile and job analysis
    */
@@ -643,21 +567,13 @@ Clear, natural phrasing - no awkward machine translations
         .replace(/```$/, "")
         .trim();
 
-      // Tránh lỗi nếu OpenAI trả ra string JSON hoặc text
+      // Parse UI texts translation
       let translatedUiTexts: Record<string, string> = {};
-      try {
-        const parsed = JSON.parse(uiTranslated);
-        if (typeof parsed === "object" && !Array.isArray(parsed)) {
-          translatedUiTexts = parsed;
-        } else {
-          this.logger.warn(
-            "UI Texts translation is not object, fallback to empty object"
-          );
-        }
-      } catch {
-        this.logger.warn(
-          "Invalid JSON returned for uiTexts, fallback to empty object"
-        );
+      const parsed = JSON.parse(uiTranslated);
+      if (typeof parsed === "object" && !Array.isArray(parsed)) {
+        translatedUiTexts = parsed;
+      } else {
+        throw new Error("UI Texts translation is not a valid object");
       }
 
       return {

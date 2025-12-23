@@ -162,15 +162,7 @@ Return only valid JSON without any additional text.
         `Error analyzing CV content: ${error.message}`,
         error.stack
       );
-
-      // Check if it's a quota exceeded error
-      if (error.message.includes("429") || error.message.includes("quota")) {
-        this.logger.warn("OpenAI quota exceeded, using fallback CV analysis");
-        return this.fallbackCvAnalysis(cvText);
-      }
-
-      // Fallback to basic analysis if OpenAI fails
-      return this.fallbackCvAnalysis(cvText);
+      throw error;
     }
   }
 
@@ -246,48 +238,4 @@ Return only the rewritten description, no explanation, no markdown.
     }
   }
 
-  /**
-   * Fallback CV analysis when OpenAI is not available
-   */
-  private fallbackCvAnalysis(cvText: string) {
-    const lines = cvText.split("\n").filter((line) => line.trim());
-
-    return {
-      userData: {
-        firstName: "First",
-        lastName: "Name",
-        professional: "Software Developer",
-        city: "City",
-        country: "Country",
-        province: "Province",
-        phone: "Phone Number",
-        email: "email@example.com",
-        avatar: "",
-        summary: "Professional summary extracted from CV content",
-        skills: [
-          { name: "Problem Solving", rating: 4 },
-          { name: "Communication", rating: 4 },
-          { name: "Teamwork", rating: 4 },
-        ],
-        workHistory: [
-          {
-            title: "Software Developer",
-            company: "Company Name",
-            startDate: "2020-01-01",
-            endDate: "Present",
-            description: "Developed and maintained applications",
-          },
-        ],
-        education: [
-          {
-            startDate: "2016-09-01",
-            endDate: "2020-06-30",
-            major: "Computer Science",
-            degree: "Bachelor's Degree",
-            institution: "University Name",
-          },
-        ],
-      },
-    };
-  }
 }

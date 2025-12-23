@@ -261,14 +261,6 @@ export class CvController {
         templateId = defaultTemplate[0]?._id?.toString() || "";
       }
 
-      // Check if we're using fallback methods
-      const isUsingFallback =
-        !jobAnalysis.analyzedJob.softSkills ||
-        jobAnalysis.analyzedJob.softSkills.length === 0;
-      const message = isUsingFallback
-        ? "CV generated using basic analysis (OpenAI quota exceeded). Please check your OpenAI billing to enable AI-powered features."
-        : "CV generated successfully using AI analysis";
-
       // Create CV using the generated content
       const createCvDto: CreateCvDto = {
         cvTemplateId: new Types.ObjectId(templateId),
@@ -286,8 +278,6 @@ export class CvController {
         message: "CV generated and saved successfully",
         cv: savedCv,
         jobAnalysis,
-        aiMessage: message,
-        isUsingFallback,
         total_tokens: cvContent.total_tokens + jobAnalysis.total_tokens,
       };
     } catch (error) {

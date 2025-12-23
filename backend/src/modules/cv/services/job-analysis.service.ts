@@ -110,43 +110,7 @@ export class JobAnalysisService {
         `Error analyzing job description: ${error.message}`,
         error.stack
       );
-
-      // Check if it's a quota exceeded error
-      if (error.message.includes("429") || error.message.includes("quota")) {
-        this.logger.warn("OpenAI quota exceeded, using fallback analysis");
-        return {
-          analyzedJob: this.fallbackAnalysis(jobDescription),
-          total_tokens: 0,
-        };
-      }
-
-      // Fallback to basic analysis if OpenAI fails
-      return {
-        analyzedJob: this.fallbackAnalysis(jobDescription),
-        total_tokens: 0,
-      };
+      throw error;
     }
-  }
-
-  /**
-   * Fallback analysis when OpenAI is not available
-   */
-  private fallbackAnalysis(jobDescription: string) {
-    const lowerDescription = jobDescription.toLowerCase();
-
-    return {
-      requiredSkills: ["Problem Solving", "Communication", "Teamwork"],
-      experienceLevel: lowerDescription.includes("senior")
-        ? "senior"
-        : lowerDescription.includes("junior")
-          ? "junior"
-          : "mid-level",
-      keyResponsibilities: ["Development", "Collaboration"],
-      industry: "technology",
-      technologies: ["JavaScript", "React", "Node.js"],
-      softSkills: ["Communication", "Teamwork"],
-      education: "Bachelor's",
-      certifications: [],
-    };
   }
 }

@@ -77,11 +77,7 @@ export class VietnameseContentService {
         `Error generating Vietnamese professional summary: ${error.message}`,
         error.stack
       );
-      return {
-        summary:
-          "Ứng viên có kỹ năng và kinh nghiệm phù hợp với yêu cầu công việc, sẵn sàng đóng góp và phát triển trong môi trường chuyên nghiệp.",
-        total_tokens: 0,
-      };
+      throw error;
     }
   }
 
@@ -154,16 +150,13 @@ Không giải thích, không markdown.
       if (Array.isArray(summaries)) {
         return summaries;
       }
-      return [cleanResponse];
+      throw new Error("Invalid response format: expected array of summaries");
     } catch (error) {
       this.logger.error(
         `Error generating Vietnamese professional summaries: ${error.message}`,
         error.stack
       );
-      // fallback: return multiple copies of fallback
-      const fallback =
-        "Ứng viên có kỹ năng và kinh nghiệm phù hợp với yêu cầu công việc, sẵn sàng đóng góp và phát triển trong môi trường chuyên nghiệp.";
-      return Array(count).fill(fallback);
+      throw error;
     }
   }
 }
