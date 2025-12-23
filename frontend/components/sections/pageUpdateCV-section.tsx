@@ -36,6 +36,7 @@ import { notify } from "@/lib/notify";
 import TranslateCVModal from "@/components/modals/TranslateCVModal";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import { degrees } from "framer-motion";
 
 // --- TRANSLATIONS ---
 const translations = {
@@ -576,6 +577,7 @@ const PageUpdateCVContent = () => {
               gender: "Giới tính:",
               avatar: "Ảnh đại diện",
               fullNameAndTitle: "Họ tên & Chức danh",
+              degrees: "bằng cấp",
             }
           : {
               personalInformation: "Personal Information",
@@ -595,6 +597,8 @@ const PageUpdateCVContent = () => {
               gender: "Gender:",
               avatar: "Avatar",
               fullNameAndTitle: "Full Name & Title",
+              degrees: "degrees",
+
             };
 
       const currentUiTexts = cvUiTexts || defaultLabels;

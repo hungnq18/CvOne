@@ -144,14 +144,15 @@ const HoverableWrapper: React.FC<HoverableWrapperProps> = ({
                      bg-white rounded-full shadow-[0_4px_12px_rgba(0,0,0,0.15)] border border-gray-100 
                      text-slate-400 hover:text-green-600 hover:border-green-300 hover:bg-green-50
                      cursor-grab active:cursor-grabbing 
-                     opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110 z-[100]"
+                     opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110 z-[100]
+                     hidden lg:flex" 
           title="Kéo để sắp xếp vị trí"
           style={{
              left: isAvatar ? '0' : undefined,
              transform: isAvatar ? 'translate(-120%, -50%)' : undefined,
              zIndex: 100
           }}
-          onClick={(e) => e.stopPropagation()} 
+          onClick={(e: any) => e.stopPropagation()} 
         >
           <GripVertical size={18} strokeWidth={2.5} />
         </div>
@@ -164,7 +165,7 @@ const HoverableWrapper: React.FC<HoverableWrapperProps> = ({
             className={`absolute inset-0 ${borderRadiusClass} border-2 border-green-500/50 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none`}
           ></div>
           <div
-            className={`absolute ${labelPositionClass} bg-green-600 text-white text-xs font-bold tracking-wider px-3 py-1.5 ${labelRoundedClass} opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none shadow-lg z-10 text-center whitespace-nowrap`}
+            className={`absolute ${labelPositionClass} bg-green-600 text-white text-xs font-bold tracking-wider px-3 py-1.5 ${labelRoundedClass} opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none shadow-lg z-10 text-center whitespace-nowrap hidden sm:block`}
           >
             {label}
           </div>
@@ -186,6 +187,10 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
 }) => {
   const lang = language || "en";
   const defaultT = translations[lang as "en" | "vi"];
+  
+  // Xác định locale cho date string (nếu là vi thì dùng vi-VN, còn lại dùng en-US)
+  const dateLocale = lang === "vi" ? "vi-VN" : "en-US";
+
   const t = {
     ...defaultT,
     ...(cvUiTexts && {
@@ -203,6 +208,10 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
       phone: cvUiTexts.phone || defaultT.phone,
       email: cvUiTexts.email || defaultT.email,
       address: cvUiTexts.address || defaultT.address,
+      website: cvUiTexts.website || defaultT.website,
+      degree: cvUiTexts.degrees || defaultT.degree,
+      major: cvUiTexts.major || defaultT.major,
+      present: cvUiTexts.present || defaultT.present,
     }),
   };
 
@@ -235,8 +244,6 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
 
   type SectionPosition = { place: number; order: number };
 
-  // QUAN TRỌNG: Chỉ lấy các sections có place > 0 (place = 0 nghĩa là ẩn/không hiển thị)
-  // Và chỉ lấy các sections thực sự được hỗ trợ trong template này
   const supportedSections = ["avatar", "info", "contact", "summary", "skills", "experience", "education", "certification", "achievement", "hobby", "Project"];
   
   const leftSections = Object.entries(sectionPositions)
@@ -268,7 +275,6 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
     const sourcePlace = parseInt(source.droppableId);
     const destPlace = parseInt(destination.droppableId);
     
-    // CHẶN: Không cho phép kéo thả sang place khác
     if (sourcePlace !== destPlace) {
       notify.error(dragWarningMessage);
       return;
@@ -276,7 +282,6 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
     
     const newPositions = { ...sectionPositions };
 
-    // FIX LỖI: Thêm kiểu [string, any] cho tham số trong sort để TS không báo lỗi unknown
     const getKeys = (place: number) => Object.entries(newPositions)
       .filter(([_, pos]: [string, any]) => pos.place === place)
       .sort(([, a]: [string, any], [, b]: [string, any]) => a.order - b.order)
@@ -285,7 +290,6 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
     const sourceKeys = getKeys(sourcePlace);
     const destKeys = [...sourceKeys];
 
-    // Chỉ cho phép sắp xếp lại thứ tự trong cùng một place
     const [moved] = destKeys.splice(source.index, 1);
     destKeys.splice(destination.index, 0, moved);
 
@@ -303,7 +307,7 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
       .map((line) => line.trim())
       .filter((line) => line.length > 0);
     return (
-      <ul className="list-disc pl-4 space-y-1 text-xs leading-snug text-gray-700">
+      <ul className="list-disc pl-4 space-y-1 text-xs leading-snug text-gray-700 break-words">
         {lines.map((line, idx) => (
           <li key={idx}>{line}</li>
         ))}
@@ -312,10 +316,14 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
   };
 
   const renderSection = (sectionId: string, dragHandleProps?: any, isDragging?: boolean) => {
+    // Shared container class for consistent padding adjustment
+    const sectionContainerClass = "px-4 sm:px-6 lg:px-10"; 
+    const rightSectionContainerClass = "px-4 sm:px-6 lg:px-12 py-4 sm:py-6";
+
     switch (sectionId) {
       case "avatar":
         return (
-          <div className="px-8 lg:px-10" key="avatar">
+          <div className={sectionContainerClass} key="avatar">
             <div className="flex justify-center mb-2">
               <HoverableWrapper
                 label={t.avatarLabel}
@@ -325,7 +333,7 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
                 dragHandleProps={dragHandleProps}
                 isDragging={isDragging}
               >
-                <div className="w-36 h-36 lg:w-40 lg:h-40 rounded-full overflow-hidden bg-white border-6 border-white shadow-2xl ring-4 ring-green-700/20 relative">
+                <div className="w-32 h-32 sm:w-36 sm:h-36 lg:w-40 lg:h-40 rounded-full overflow-hidden bg-white border-4 sm:border-6 border-white shadow-2xl ring-4 ring-green-700/20 relative">
                   {isPdfMode ? (
                     <div
                       style={{ 
@@ -363,51 +371,51 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
             dragHandleProps={dragHandleProps}
             isDragging={isDragging}
           >
-            <div className="px-8 lg:px-10">
+            <div className={sectionContainerClass}>
               <div className="flex items-center gap-2 mb-3">
-                <div className="h-1 w-8 bg-green-700 rounded-full"></div>
-                <h2 className="text-lg font-bold tracking-wider text-green-900">
+                <div className="h-1 w-6 sm:w-8 bg-green-700 rounded-full"></div>
+                <h2 className="text-base sm:text-lg font-bold tracking-wider text-green-900 break-words">
                   {t.personalInfoLabel}
                 </h2>
               </div>
-              <div className="space-y-3 bg-white/60 backdrop-blur-sm p-4 rounded-xl shadow-md">
+              <div className="space-y-3 bg-white/60 backdrop-blur-sm p-3 sm:p-4 rounded-xl shadow-md">
                 <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-full bg-green-700 flex items-center justify-center shrink-0">
-                    <Mail className="w-4 h-4 text-white" />
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-green-700 flex items-center justify-center shrink-0">
+                    <Mail className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
                   </div>
-                  <div className="flex-1 pt-1">
-                    <span className="text-sm break-words text-gray-800 font-medium">
+                  <div className="flex-1 pt-1 min-w-0">
+                    <span className="text-xs sm:text-sm break-all text-gray-800 font-medium block">
                       {userData.email}
                     </span>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-full bg-green-700 flex items-center justify-center shrink-0">
-                    <Phone className="w-4 h-4 text-white" />
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-green-700 flex items-center justify-center shrink-0">
+                    <Phone className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
                   </div>
-                  <div className="flex-1 pt-1">
-                    <span className="text-sm text-gray-800 font-medium">
+                  <div className="flex-1 pt-1 min-w-0">
+                    <span className="text-xs sm:text-sm text-gray-800 font-medium block break-words">
                       {userData.phone}
                     </span>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-full bg-green-700 flex items-center justify-center shrink-0">
-                    <MapPin className="w-4 h-4 text-white" />
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-green-700 flex items-center justify-center shrink-0">
+                    <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
                   </div>
-                  <div className="flex-1 pt-1">
-                    <span className="text-sm text-gray-800 font-medium">
+                  <div className="flex-1 pt-1 min-w-0">
+                    <span className="text-xs sm:text-sm text-gray-800 font-medium block break-words">
                       {userData.city}, {userData.country}
                     </span>
                   </div>
                 </div>
                 {userData.website && (
                   <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-green-700 flex items-center justify-center shrink-0">
-                      <Globe className="w-4 h-4 text-white" />
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-green-700 flex items-center justify-center shrink-0">
+                      <Globe className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
                     </div>
-                    <div className="flex-1 pt-1">
-                      <span className="text-sm break-words text-gray-800 font-medium">
+                    <div className="flex-1 pt-1 min-w-0">
+                      <span className="text-xs sm:text-sm break-all text-gray-800 font-medium block">
                         {userData.website}
                       </span>
                     </div>
@@ -429,17 +437,17 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
               dragHandleProps={dragHandleProps}
               isDragging={isDragging}
             >
-              <div className="px-8 lg:px-12 py-6">
+              <div className={rightSectionContainerClass}>
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-xl bg-green-700 flex items-center justify-center">
-                    <Briefcase className="w-5 h-5 text-white" />
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-green-700 flex items-center justify-center shrink-0">
+                    <Briefcase className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                   </div>
-                  <h2 className="text-xl lg:text-2xl font-bold tracking-tight text-gray-900 uppercase">
+                  <h2 className="text-lg sm:text-xl lg:text-2xl font-bold tracking-tight text-gray-900 uppercase break-words">
                     {t.careerObjectiveLabel}
                   </h2>
                 </div>
-                <div className="bg-white p-5 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 border-l-4 border-lime-500">
-                  <p className="text-base text-gray-800 leading-relaxed">
+                <div className="bg-white p-4 sm:p-5 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 border-l-4 border-lime-500">
+                  <p className="text-sm sm:text-base text-gray-800 leading-relaxed break-words">
                     {userData.summary}
                   </p>
                 </div>
@@ -458,17 +466,17 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
               dragHandleProps={dragHandleProps}
               isDragging={isDragging}
             >
-              <div className="w-full max-w-4xl mx-auto p-6">
+              <div className={sectionContainerClass + " pb-6"}>
                 <div className="mb-4">
                   <div className="flex items-center gap-2">
-                    <div className="h-1 w-8 bg-green-700 rounded-full" />
-                    <h2 className="text-lg font-bold tracking-wider text-green-900">
+                    <div className="h-1 w-6 sm:w-8 bg-green-700 rounded-full" />
+                    <h2 className="text-base sm:text-lg font-bold tracking-wider text-green-900 break-words">
                       {t.skillsLabel}
                     </h2>
                   </div>
                 </div>
 
-                <div className="bg-white/60 backdrop-blur-sm p-6 rounded-xl shadow-md">
+                <div className="bg-white/60 backdrop-blur-sm p-4 sm:p-6 rounded-xl shadow-md">
                   <div className="space-y-4">
                     {userData.skills.map((skill: any, i: number) => {
                       const ratingRaw = Number(skill.rating);
@@ -481,7 +489,7 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
                       if (!hasRating) {
                         return (
                           <div key={i} className="group">
-                            <span className="text-base font-semibold text-gray-900 break-words">
+                            <span className="text-sm sm:text-base font-semibold text-gray-900 break-words block">
                               {skill.name}
                             </span>
                           </div>
@@ -490,11 +498,11 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
 
                       return (
                         <div key={i} className="group">
-                          <div className="flex items-start justify-between gap-6 mb-3">
-                            <span className="text-base text-gray-900 font-semibold leading-relaxed">
+                          <div className="flex items-start justify-between gap-4 mb-2">
+                            <span className="text-sm sm:text-base text-gray-900 font-semibold leading-relaxed break-words flex-1">
                               {skill.name}
                             </span>
-                            <span className="text-green-800 text-xs font-semibold whitespace-nowrap">
+                            <span className="text-green-800 text-xs font-semibold whitespace-nowrap pt-1">
                               {rating}/5
                             </span>
                           </div>
@@ -524,19 +532,21 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
             dragHandleProps={dragHandleProps}
             isDragging={isDragging}
           >
-            <div className="bg-gradient-to-r from-green-700 to-green-800 px-8 lg:px-12 py-10 relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-48 h-48 bg-lime-500/10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
-              <div className="absolute bottom-0 left-0 w-32 h-32 bg-lime-500/10 rounded-full translate-y-1/2 -translate-x-1/2"></div>
+            <div className="bg-gradient-to-r from-green-700 to-green-800 px-4 sm:px-8 lg:px-12 py-8 sm:py-10 relative overflow-hidden break-words">
+              {/* Decorative circles scaled down for mobile */}
+              <div className="absolute top-0 right-0 w-32 h-32 sm:w-48 sm:h-48 bg-lime-500/10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
+              <div className="absolute bottom-0 left-0 w-24 h-24 sm:w-32 sm:h-32 bg-lime-500/10 rounded-full translate-y-1/2 -translate-x-1/2"></div>
               <div className="relative z-10">
-                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white uppercase tracking-tight leading-none mb-1">
+                {/* Responsive font sizes */}
+                <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white uppercase tracking-tight leading-none mb-1 break-words">
                   {userData.firstName}
                 </h1>
-                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white uppercase tracking-tight leading-none mb-3">
+                <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white uppercase tracking-tight leading-none mb-3 break-words">
                   {userData.lastName}
                 </h1>
                 <div className="flex items-center gap-2 mt-3">
-                  <div className="h-1 w-12 bg-lime-500 rounded-full"></div>
-                  <p className="text-base lg:text-lg font-semibold tracking-widest text-lime-100 uppercase">
+                  <div className="h-1 w-8 sm:w-12 bg-lime-500 rounded-full shrink-0"></div>
+                  <p className="text-sm sm:text-base lg:text-lg font-semibold tracking-widest text-lime-100 uppercase break-words">
                     {professionalTitle}
                   </p>
                 </div>
@@ -556,31 +566,32 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
             dragHandleProps={dragHandleProps}
             isDragging={isDragging}
           >
-            <div className="px-8 lg:px-12 py-6">
+            <div className={rightSectionContainerClass}>
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-xl bg-green-700 flex items-center justify-center">
-                  <Briefcase className="w-5 h-5 text-white" />
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-green-700 flex items-center justify-center shrink-0">
+                  <Briefcase className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                 </div>
-                <h2 className="text-xl lg:text-2xl font-bold tracking-tight text-gray-900 uppercase">
+                <h2 className="text-lg sm:text-xl lg:text-2xl font-bold tracking-tight text-gray-900 uppercase break-words">
                   {t.experienceLabel}
                 </h2>
               </div>
               <div className="space-y-4">
                 {(userData.workHistory || []).map((job: any, i: number) => (
-                  <div key={i} className="relative pl-6 pb-4 last:pb-0 border-l-2 border-green-200 last:border-l-0">
+                  <div key={i} className="relative pl-4 sm:pl-6 pb-4 last:pb-0 border-l-2 border-green-200 last:border-l-0">
                     <div className="absolute left-0 top-0 w-3 h-3 rounded-full bg-lime-500 -translate-x-[7px] ring-4 ring-white"></div>
-                    <div className="bg-white p-5 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 border border-gray-100">
-                      <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-1 mb-2">
-                        <h3 className="font-bold text-lg text-green-900">{job.title}</h3>
-                        <span className="text-sm font-semibold text-gray-600 bg-green-50 px-3 py-1 rounded-full shrink-0">
+                    <div className="bg-white p-4 sm:p-5 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 border border-gray-100">
+                      {/* Flex wrap to prevent breaking on small screens */}
+                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 mb-2">
+                        <h3 className="font-bold text-base sm:text-lg text-green-900 break-words">{job.title}</h3>
+                        <span className="text-xs sm:text-sm font-semibold text-gray-600 bg-green-50 px-3 py-1 rounded-full shrink-0 self-start sm:self-auto whitespace-nowrap">
                           {job.startDate?.slice(5, 7)}/{job.startDate?.slice(0, 4)} -{" "}
                           {job.isCurrent || job.endDate === "Present" || job.endDate === "Hiện tại"
                             ? t.present
                             : `${job.endDate?.slice(5, 7)}/${job.endDate?.slice(0, 4)}`}
                         </span>
                       </div>
-                      <h4 className="font-semibold text-base text-gray-700 mb-3 flex items-center gap-2">
-                        <div className="w-1 h-1 rounded-full bg-lime-500"></div>
+                      <h4 className="font-semibold text-sm sm:text-base text-gray-700 mb-3 flex items-center gap-2 break-words">
+                        <div className="w-1 h-1 rounded-full bg-lime-500 shrink-0"></div>
                         {job.company}
                       </h4>
                       {renderDescription(job.description)}
@@ -603,26 +614,25 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
             dragHandleProps={dragHandleProps}
             isDragging={isDragging}
           >
-            <div className="px-8 lg:px-10">
+            <div className={sectionContainerClass}>
               <div className="flex items-center gap-2 mb-3">
-                <div className="h-1 w-8 bg-green-700 rounded-full"></div>
-                <h2 className="text-lg font-bold tracking-wider text-green-900">
+                <div className="h-1 w-6 sm:w-8 bg-green-700 rounded-full"></div>
+                <h2 className="text-base sm:text-lg font-bold tracking-wider text-green-900 break-words">
                   {t.educationLabel}
                 </h2>
               </div>
               <div className="bg-white/60 backdrop-blur-sm p-4 rounded-xl shadow-md space-y-3">
                 {(userData.education || []).map((edu: any, i: number) => (
                   <div key={i} className="border-b border-green-200 last:border-b-0 pb-3 last:pb-0">
-                    <p className="text-sm font-bold text-gray-800 mb-1">
+                    <p className="text-sm font-bold text-gray-800 mb-1 break-words">
                        {edu.institution} - {edu.major}
                     </p>
                     <p className="text-xs font-medium text-green-700">
                       {edu.startDate?.slice(0, 4)} - {edu.endDate?.slice(0, 4)}
                     </p>
-                    <p className="text-xs text-gray-600 mb-1">
+                    <p className="text-xs text-gray-600 mb-1 break-words">
                       <span className="font-semibold">{t.degree}</span> {edu.degree}
                     </p>
-                    
                   </div>
                 ))}
               </div>
@@ -641,25 +651,25 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
             dragHandleProps={dragHandleProps}
             isDragging={isDragging}
           >
-            <div className="px-8 lg:px-12 py-6 overflow-hidden">
+            <div className={rightSectionContainerClass + " overflow-hidden"}>
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-xl bg-green-700 flex items-center justify-center shrink-0">
-                  <Award className="w-5 h-5 text-white" />
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-green-700 flex items-center justify-center shrink-0">
+                  <Award className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                 </div>
-                <h2 className="text-xl lg:text-2xl font-bold tracking-tight text-gray-900 uppercase break-words">
+                <h2 className="text-lg sm:text-xl lg:text-2xl font-bold tracking-tight text-gray-900 uppercase break-words">
                   {t.certificationLabel}
                 </h2>
               </div>
               <div className="space-y-4">
                 {userData.certification.map((cert: any, i: number) => (
-                  <div key={i} className="bg-white p-5 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 border-l-4 border-lime-500 break-words overflow-hidden">
-                    <h3 className="text-lg font-bold text-gray-900 mb-2 break-words">{cert.title}</h3>
+                  <div key={i} className="bg-white p-4 sm:p-5 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 border-l-4 border-lime-500 break-words overflow-hidden">
+                    <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-2 break-words">{cert.title}</h3>
                     <div className="flex flex-wrap gap-4 text-sm text-gray-600">
                       {cert.startDate && (
-                        <span className="whitespace-nowrap">{new Date(cert.startDate).toLocaleDateString("vi-VN", { month: "2-digit", year: "numeric" })}</span>
+                        <span className="whitespace-nowrap">{new Date(cert.startDate).toLocaleDateString(dateLocale, { month: "2-digit", year: "numeric" })}</span>
                       )}
                       {cert.endDate ? (
-                        <span className="whitespace-nowrap">- {new Date(cert.endDate).toLocaleDateString("vi-VN", { month: "2-digit", year: "numeric" })}</span>
+                        <span className="whitespace-nowrap">- {new Date(cert.endDate).toLocaleDateString(dateLocale, { month: "2-digit", year: "numeric" })}</span>
                       ) : cert.startDate && (
                         <span className="whitespace-nowrap">- {t.present}</span>
                       )}
@@ -682,12 +692,12 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
             dragHandleProps={dragHandleProps}
             isDragging={isDragging}
           >
-            <div className="px-8 lg:px-12 py-6 overflow-hidden">
+            <div className={rightSectionContainerClass + " overflow-hidden"}>
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-xl bg-green-700 flex items-center justify-center shrink-0">
-                  <Award className="w-5 h-5 text-white" />
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-green-700 flex items-center justify-center shrink-0">
+                  <Award className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                 </div>
-                <h2 className="text-xl lg:text-2xl font-bold tracking-tight text-gray-900 uppercase break-words">
+                <h2 className="text-lg sm:text-xl lg:text-2xl font-bold tracking-tight text-gray-900 uppercase break-words">
                   {t.achievementLabel}
                 </h2>
               </div>
@@ -711,10 +721,10 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
             dragHandleProps={dragHandleProps}
             isDragging={isDragging}
           >
-            <div className="px-4 lg:px-6">
+            <div className={sectionContainerClass}>
               <div className="flex items-center gap-2 mb-3">
-                <div className="h-1 w-8 bg-green-700 rounded-full"></div>
-                <h2 className="text-lg font-bold tracking-wider text-green-900">
+                <div className="h-1 w-6 sm:w-8 bg-green-700 rounded-full"></div>
+                <h2 className="text-base sm:text-lg font-bold tracking-wider text-green-900 break-words">
                   {t.hobbyLabel}
                 </h2>
               </div>
@@ -723,7 +733,7 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
                   {userData.hobby.map((h: string, i: number) => (
                     <span
                       key={i}
-                      className="bg-green-200 text-black px-4 py-2 rounded-lg text-sm font-medium shadow-sm hover:bg-green-300 transition-colors"
+                      className="bg-green-200 text-black px-3 py-1 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-medium shadow-sm hover:bg-green-300 transition-colors break-words"
                     >
                       {h}
                     </span>
@@ -745,29 +755,29 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
             dragHandleProps={dragHandleProps}
             isDragging={isDragging}
           >
-            <div className="px-8 lg:px-12 py-6 overflow-hidden">
+            <div className={rightSectionContainerClass + " overflow-hidden"}>
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-xl bg-green-700 flex items-center justify-center shrink-0">
-                  <Briefcase className="w-5 h-5 text-white" />
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-green-700 flex items-center justify-center shrink-0">
+                  <Briefcase className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                 </div>
-                <h2 className="text-xl lg:text-2xl font-bold tracking-tight text-gray-900 uppercase break-words">
+                <h2 className="text-lg sm:text-xl lg:text-2xl font-bold tracking-tight text-gray-900 uppercase break-words">
                   {t.projectLabel}
                 </h2>
               </div>
               <div className="space-y-4">
                 {userData.Project.map((project: any, i: number) => (
-                  <div key={i} className="bg-white p-5 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 border-l-4 border-lime-500 break-words overflow-hidden">
-                    <h3 className="text-lg font-bold text-gray-900 mb-2 break-words">
+                  <div key={i} className="bg-white p-4 sm:p-5 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 border-l-4 border-lime-500 break-words overflow-hidden">
+                    <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-2 break-words">
                       {project.title || project["title "]}
                     </h3>
                     {project.startDate && (
-                      <span className="text-sm text-gray-600 whitespace-nowrap">
-                        {new Date(project.startDate).toLocaleDateString("vi-VN", {
+                      <span className="text-xs sm:text-sm text-gray-600 whitespace-nowrap block mb-2">
+                        {new Date(project.startDate).toLocaleDateString(dateLocale, {
                           month: "2-digit",
                           year: "numeric",
                         })}
                         {project.endDate
-                          ? ` - ${new Date(project.endDate).toLocaleDateString("vi-VN", {
+                          ? ` - ${new Date(project.endDate).toLocaleDateString(dateLocale, {
                               month: "2-digit",
                               year: "numeric",
                             })}`
@@ -775,7 +785,7 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
                       </span>
                     )}
                     {project.summary && (
-                      <ul className="text-sm text-gray-700 mt-2 break-words whitespace-pre-line list-disc pl-6 space-y-1">
+                      <ul className="text-sm text-gray-700 mt-2 break-words whitespace-pre-line list-disc pl-5 space-y-1">
                         {String(project.summary)
                           .split(/\r?\n/)
                           .filter((line: string) => line.trim().length > 0)
@@ -810,6 +820,7 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
                 transform: `${provided.draggableProps.style?.transform || ''} scale(${scale})`,
                 transformOrigin: "top left",
                 zIndex: 9999,
+                maxWidth: "90vw", 
               } : {})
             }}
           >
@@ -827,13 +838,19 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
 
   if (isPdfMode) {
     return (
-      <div className="bg-white font-sans text-gray-800 flex flex-col lg:flex-row shadow-2xl mx-auto">
-        <div className="w-full lg:w-[38%] bg-gradient-to-br from-green-50 to-green-100/50 flex flex-col gap-8 py-10 relative border-r-4 border-green-700">
+      <div 
+        className="bg-white font-sans text-gray-800 flex flex-row min-h-screen mx-auto overflow-hidden shadow-none"
+        style={{ width: "794px", minHeight: "1123px" }}
+      >
+        {/* Cột trái */}
+        <div className="basis-[38%] min-w-[38%] max-w-[38%] bg-gradient-to-br from-green-50 to-green-100/50 flex flex-col gap-6 py-8 relative border-r-4 border-green-700">
           {leftSections.map(id => (
             <div key={id}>{renderSection(id)}</div>
           ))}
         </div>
-        <div className="w-full lg:w-[62%] bg-white">
+
+        {/* Cột phải - Không dùng py-4 để header sát lề trên */}
+        <div className="basis-[62%] min-w-[62%] max-w-[62%] bg-white">
           {rightSections.map(id => (
             <div key={id}>{renderSection(id)}</div>
           ))}
@@ -844,14 +861,14 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
 
   return (
     <DragDropContext onDragEnd={handleDragEnd}>
-      <div className="bg-white font-sans text-gray-800 flex flex-col lg:flex-row shadow-2xl mx-auto">
+      <div className="bg-white font-sans text-gray-800 flex flex-col lg:flex-row shadow-2xl mx-auto overflow-x-hidden">
         {/* LEFT SIDEBAR - Droppable ID="1" */}
         <Droppable droppableId="1">
           {(provided) => (
             <div 
                ref={provided.innerRef} 
                {...provided.droppableProps}
-               className="w-full lg:w-[38%] bg-gradient-to-br from-green-50 to-green-100/50 flex flex-col gap-8 py-10 relative border-r-4 border-green-700 min-h-[500px]"
+               className="w-full lg:w-[38%] bg-gradient-to-br from-green-50 to-green-100/50 flex flex-col gap-6 sm:gap-8 py-8 sm:py-10 relative border-b-4 lg:border-b-0 lg:border-r-4 border-green-700 min-h-[200px] sm:min-h-[500px]"
             >
                {leftSections.map((id, index) => <DraggableItem key={id} id={id} index={index} />)}
                {provided.placeholder}
@@ -865,7 +882,7 @@ const Minimalist2: React.FC<Minimalist2Props> = ({
             <div 
                ref={provided.innerRef} 
                {...provided.droppableProps}
-               className="w-full lg:w-[62%] bg-white min-h-[500px]"
+               className="w-full lg:w-[62%] bg-white min-h-[200px] sm:min-h-[500px]"
             >
                {rightSections.map((id, index) => <DraggableItem key={id} id={id} index={index} />)}
                {provided.placeholder}

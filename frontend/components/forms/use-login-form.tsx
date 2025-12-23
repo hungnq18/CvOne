@@ -42,9 +42,8 @@ const translations = {
     fogetPassword: "Forgot password?",
     loginSuccess: "Login successful!",
     loginFailed: "Login failed",
-    invalidCredentials: "Invalid credentials",
-    emailNotVerified:
-      "Email not verified. Please check your email and verify your account before logging in.",
+    invalidCredentials: "Wrong email or password. Please try again.",
+    emailNotVerified:"Email not verified. Please check your email and verify your account before logging in.",
     emailRequired: "Email is required",
     passwordRequired: "Password is required",
     invalidEmailFormat: "Please enter a valid email address",
@@ -73,7 +72,7 @@ const translations = {
     fogetPassword: "Quên mật khẩu?",
     loginSuccess: "Đăng nhập thành công!",
     loginFailed: "Đăng nhập thất bại",
-    invalidCredentials: "Thông tin đăng nhập không chính xác",
+    invalidCredentials: "Thông tin đăng nhập không chính xác. Vui lòng thử lại.",
     emailNotVerified:
       "Email chưa được xác thực. Vui lòng kiểm tra email và xác thực tài khoản trước khi đăng nhập.",
     emailRequired: "Email là bắt buộc",

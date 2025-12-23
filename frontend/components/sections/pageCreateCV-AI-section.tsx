@@ -837,6 +837,7 @@ const PageCreateCVAIContent = () => {
               gender: "Giới tính:",
               avatar: "Ảnh đại diện",
               fullNameAndTitle: "Họ tên & Chức danh",
+              degrees: "bằng cấp",
             }
           : {
               personalInformation: "Personal Information",
@@ -856,6 +857,7 @@ const PageCreateCVAIContent = () => {
               gender: "Gender:",
               avatar: "Avatar",
               fullNameAndTitle: "Full Name & Title",
+              degrees: "degrees",
             };
 
       const currentUiTexts = cvUiTexts || defaultLabels;

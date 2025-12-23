@@ -35,6 +35,7 @@ import CVTemplateLayoutPopup from "@/components/forms/CVTemplateLayoutPopup";
 import { getDefaultSectionPositions } from "../cvTemplate/defaultSectionPositions";
 import { notify } from "@/lib/notify";
 import TranslateCVModal from "@/components/modals/TranslateCVModal";
+import { degrees } from "framer-motion";
 
 // --- BƯỚC 2: TẠO ĐỐI TƯỢNG TRANSLATIONS ---
 const translations = {
@@ -206,32 +207,32 @@ const PageCreateCVContent = () => {
 
     if (idFromUrl) {
       setLoading(true);
-          getCVTemplateById(idFromUrl)
-            .then((templateData) => {
-              if (templateData) {
-                loadTemplate(templateData);
-                if (
-                  (!userData || Object.keys(userData).length === 0) &&
-                  templateData.data?.userData
-                ) {
-                  updateUserData(templateData.data.userData);
-                }
-                setCvTitle(t.cvTitleDefault(templateData.title));
-              } else {
-                // console.error(
-                //   "[CreateCV] Template not found with ID:",
-                //   idFromUrl
-                // );
-              }
-              setLoading(false);
-            })
-            .catch((templateError) => {
-              // console.error(
-              //   "[CreateCV] Error loading template:",
-              //   templateError
-              // );
-              setLoading(false);
-            });
+      getCVTemplateById(idFromUrl)
+        .then((templateData) => {
+          if (templateData) {
+            loadTemplate(templateData);
+            if (
+              (!userData || Object.keys(userData).length === 0) &&
+              templateData.data?.userData
+            ) {
+              updateUserData(templateData.data.userData);
+            }
+            setCvTitle(t.cvTitleDefault(templateData.title));
+          } else {
+            // console.error(
+            //   "[CreateCV] Template not found with ID:",
+            //   idFromUrl
+            // );
+          }
+          setLoading(false);
+        })
+        .catch((templateError) => {
+          // console.error(
+          //   "[CreateCV] Error loading template:",
+          //   templateError
+          // );
+          setLoading(false);
+        });
     } else {
       setLoading(false);
     }
@@ -253,11 +254,11 @@ const PageCreateCVContent = () => {
 
         updateSectionPositions(selectedTemplate._id, correctPositions);
 
-        const templateUserData =
-          newTemplateData.data?.userData &&
-          Object.keys(newTemplateData.data.userData).length > 0
-            ? newTemplateData.data.userData
-            : userData || {};
+        const currentDataExists = userData && Object.keys(userData).length > 0;
+
+        const templateUserData = currentDataExists
+          ? userData // Giữ lại data người dùng
+          : newTemplateData.data?.userData || {}; // Nếu người dùng chưa nhập gì mới lấy data mẫu
 
         const newUserData = {
           ...templateUserData,
@@ -554,43 +555,45 @@ const PageCreateCVContent = () => {
       const defaultLabels =
         language === "vi"
           ? {
-              personalInformation: "Thông tin cá nhân",
-              contact: "Liên hệ",
-              careerObjective: "Mục tiêu sự nghiệp",
-              workExperience: "Kinh nghiệm làm việc",
-              education: "Học vấn",
-              skills: "Kỹ năng",
-              certification: "Chứng chỉ",
-              achievement: "Thành tựu",
-              hobby: "Sở thích",
-              project: "Dự án",
-              phone: "Điện thoại:",
-              email: "Email:",
-              address: "Địa chỉ:",
-              dateOfBirth: "Ngày sinh:",
-              gender: "Giới tính:",
-              avatar: "Ảnh đại diện",
-              fullNameAndTitle: "Họ tên & Chức danh",
-            }
+            personalInformation: "Thông tin cá nhân",
+            contact: "Liên hệ",
+            careerObjective: "Mục tiêu sự nghiệp",
+            workExperience: "Kinh nghiệm làm việc",
+            education: "Học vấn",
+            skills: "Kỹ năng",
+            certification: "Chứng chỉ",
+            achievement: "Thành tựu",
+            hobby: "Sở thích",
+            project: "Dự án",
+            phone: "Điện thoại:",
+            email: "Email:",
+            address: "Địa chỉ:",
+            dateOfBirth: "Ngày sinh:",
+            gender: "Giới tính:",
+            avatar: "Ảnh đại diện",
+            fullNameAndTitle: "Họ tên & Chức danh",
+            degrees: "bằng cấp"
+          }
           : {
-              personalInformation: "Personal Information",
-              contact: "Contact",
-              careerObjective: "Career Objective",
-              workExperience: "Work Experience",
-              education: "Education",
-              skills: "Skills",
-              certification: "Certification",
-              achievement: "Achievement",
-              hobby: "Hobby",
-              project: "Project",
-              phone: "Phone:",
-              email: "Email:",
-              address: "Address:",
-              dateOfBirth: "Date of Birth:",
-              gender: "Gender:",
-              avatar: "Avatar",
-              fullNameAndTitle: "Full Name & Title",
-            };
+            personalInformation: "Personal Information",
+            contact: "Contact",
+            careerObjective: "Career Objective",
+            workExperience: "Work Experience",
+            education: "Education",
+            skills: "Skills",
+            certification: "Certification",
+            achievement: "Achievement",
+            hobby: "Hobby",
+            project: "Project",
+            phone: "Phone:",
+            email: "Email:",
+            address: "Address:",
+            dateOfBirth: "Date of Birth:",
+            gender: "Gender:",
+            avatar: "Avatar",
+            fullNameAndTitle: "Full Name & Title",
+            degrees: "degrees",
+          };
 
       const currentUiTexts = cvUiTexts || defaultLabels;
 
@@ -701,7 +704,7 @@ const PageCreateCVContent = () => {
     iframe.style.left = "-9999px";
     // QUAN TRỌNG: Không set height cố định 1123px ở đây nữa
     // Để tạm thời là auto hoặc 100vh để load nội dung
-    iframe.style.height = "auto"; 
+    iframe.style.height = "auto";
     document.body.appendChild(iframe);
 
     const iframeDoc = iframe.contentWindow?.document;
@@ -721,7 +724,7 @@ const PageCreateCVContent = () => {
 
     const mountNode = iframeDoc.createElement("div");
     // Thêm class để báo hiệu đây là mode PDF cho CSS (nếu cần)
-    mountNode.className = "pdf-export-container"; 
+    mountNode.className = "pdf-export-container";
     iframeDoc.body.appendChild(mountNode);
 
     let root: any = null;
@@ -732,7 +735,7 @@ const PageCreateCVContent = () => {
 
       const { createRoot } = await import("react-dom/client");
       root = createRoot(mountNode);
-      
+
       // Render component
       root.render(renderCVForPDF());
 
@@ -742,7 +745,7 @@ const PageCreateCVContent = () => {
       // 4. TÍNH TOÁN CHIỀU CAO THỰC TẾ (CRITICAL STEP)
       // Lấy chiều cao thật của nội dung sau khi render
       const bodyHeight = iframeDoc.body.scrollHeight;
-      const contentHeight = mountNode.scrollHeight; 
+      const contentHeight = mountNode.scrollHeight;
       // Set chiều cao iframe bằng đúng chiều cao nội dung để html2canvas chụp được hết
       const finalHeight = Math.max(bodyHeight, contentHeight) + 50; // Cộng thêm chút padding dưới
       iframe.style.height = `${finalHeight}px`;
@@ -768,13 +771,13 @@ const PageCreateCVContent = () => {
       // 6. Xử lý phân trang PDF (Multi-page Logic)
       const imgData = canvas.toDataURL("image/jpeg", 1.0);
       const pdf = new jsPDF("p", "mm", "a4");
-      
+
       const imgWidth = 210; // A4 width in mm
       const pageHeight = 297; // A4 height in mm
-      
+
       // Tính chiều cao ảnh trong PDF dựa trên tỉ lệ gốc
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      
+
       let heightLeft = imgHeight;
       let position = 0;
 
@@ -799,7 +802,7 @@ const PageCreateCVContent = () => {
       if (document.body.contains(iframe)) document.body.removeChild(iframe);
     }
   };
-  
+
 
   const renderCVPreview = () => {
     if (loading || !currentTemplate || !userData) {
@@ -919,7 +922,7 @@ const PageCreateCVContent = () => {
               {showTemplatePopup && (
                 <div
                   className="absolute top-full mt-3 bg-white rounded-md shadow-lg z-20 p-4 w-[450px]"
-                  style={{ left: "-200%" }}
+                  style={{ left: "-110%" }}
                 >
                   <DropdownArrow />
                   <div className="grid grid-cols-3 gap-4">
@@ -1027,10 +1030,9 @@ const PageCreateCVContent = () => {
                     setActiveSection(section.id);
                   }}
                   className={`w-full flex items-center gap-3 p-3 rounded-md font-medium text-left transition-colors
-                    ${
-                      activeSection === section.id
-                        ? "bg-blue-100 text-blue-700"
-                        : "text-slate-700 hover:bg-slate-100"
+                    ${activeSection === section.id
+                      ? "bg-blue-100 text-blue-700"
+                      : "text-slate-700 hover:bg-slate-100"
                     }`}
                   title={
                     isInCV
@@ -1040,11 +1042,10 @@ const PageCreateCVContent = () => {
                 >
                   <span className="flex-1">{section.title}</span>
                   <span
-                    className={`section-toggle-icon flex items-center justify-center w-6 h-6 rounded-full transition-colors cursor-pointer ${
-                      isInCV
+                    className={`section-toggle-icon flex items-center justify-center w-6 h-6 rounded-full transition-colors cursor-pointer ${isInCV
                         ? "bg-red-100 text-red-600 hover:bg-red-200"
                         : "bg-blue-100 text-blue-600 hover:bg-blue-200"
-                    }`}
+                      }`}
                     onClick={(e) => handleSectionClick(section.id, e)}
                   >
                     {isInCV ? (
