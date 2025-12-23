@@ -515,7 +515,7 @@ export default function ManageJobPage() {
             <JobDeleteDialog
                 open={isDeleteDialogOpen}
                 onOpenChange={setIsDeleteDialogOpen}
-                onDelete={() => { }}
+                onDelete={handleDeleteJob}
                 job={selectedJob}
             />
         </div>

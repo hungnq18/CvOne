@@ -84,8 +84,6 @@ export function middleware(request: NextRequest) {
   // Route yêu cầu role nhưng chưa login
   if (requiredRoles && !token) {
     const url = new URL(getLoginUrl(), request.url);
-    // Use a relative callback to avoid switching scheme/host/port (e.g. http <-> https, localhost <-> 127.0.0.1)
-    // which can make the token cookie appear "missing" on the next request.
     const relativeCallback = `${request.nextUrl.pathname}${request.nextUrl.search}`;
     url.searchParams.set("callbackUrl", relativeCallback);
     return NextResponse.redirect(url);
