@@ -191,4 +191,85 @@ export class MailService {
       );
     }
   }
+  async sendDeleteAccountEmail(
+    email: string,
+    role: "hr" | "user",
+    reason?: string
+  ) {
+    this.ensureConfigured();
+
+    const supportEmail =
+      this.configService.get("SUPPORT_EMAIL") || "support@yourapp.com";
+
+    const isHr = role === "hr";
+
+    const subject = isHr
+      ? "Your HR Registration Request Was Not Approved"
+      : "Your Account Has Been Deleted";
+
+    const title = isHr ? "HR Registration Result" : "Account Deletion Notice";
+
+    const greeting = isHr ? "Dear HR Applicant" : "Dear User";
+
+    const mainMessage = isHr
+      ? `
+        <p>
+          Thank you for your interest in registering as an <b>HR partner</b> on our platform.
+        </p>
+        <p>
+          After careful review, we regret to inform you that your <b>HR registration request
+          has not been approved</b> at this time.
+        </p>
+      `
+      : `
+        <p>
+          We would like to inform you that your <b>user account</b> has been
+          <b>deleted by an administrator</b>.
+        </p>
+      `;
+
+    try {
+      await sgMail.send({
+        from: this.fromEmail as string,
+        to: email,
+        subject,
+        html: `
+          <h1>${title}</h1>
+  
+          <p>${greeting},</p>
+  
+          ${mainMessage}
+  
+          ${reason ? `<p><b>Reason:</b> ${reason}</p>` : ""}
+  
+          ${
+            isHr
+              ? `<p>
+                  You may update your information and submit a new HR registration request
+                  in the future.
+                </p>`
+              : ""
+          }
+  
+          <p>
+            If you have any questions or believe this decision was made in error,
+            please contact our support team.
+          </p>
+  
+          <p>
+            📧 Support email:
+            <a href="mailto:${supportEmail}">${supportEmail}</a>
+          </p>
+  
+          <br/>
+          <p>Best regards,<br/>The Support Team</p>
+        `,
+      });
+    } catch (error) {
+      console.error("Failed to send account status email:", error);
+      throw new Error(
+        "Failed to send account status email. Please try again later."
+      );
+    }
+  }
 }
