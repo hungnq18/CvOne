@@ -274,6 +274,10 @@ export const translations = {
         desc: "View all token purchase orders created in the system.",
         refresh: "Refresh",
         orders: "Orders",
+        filter: {
+          label: "Filter status",
+          all: "All status",
+        },
         table: {
           orderCode: "Order Code",
           user: "User",
@@ -394,6 +398,10 @@ export const translations = {
           statusPending: "Pending Approval",
           approve: "Approve",
           reject: "Reject",
+          confirmRejectTitle: "Confirm Rejection",
+          confirmRejectDesc: "Are you sure you want to reject this HR registration? This action cannot be undone.",
+          confirmRejectCancel: "Cancel",
+          confirmRejectConfirm: "Reject",
         },
       },
     },
@@ -886,6 +894,10 @@ export const translations = {
         desc: "Xem tất cả các đơn hàng mua token trong hệ thống.",
         refresh: "Làm mới",
         orders: "Đơn hàng",
+        filter: {
+          label: "Lọc trạng thái",
+          all: "Tất cả trạng thái",
+        },
         table: {
           orderCode: "Mã đơn",
           user: "Người dùng",
@@ -1006,6 +1018,10 @@ export const translations = {
           statusPending: "Chờ Duyệt",
           approve: "Phê Duyệt",
           reject: "Từ Chối",
+          confirmRejectTitle: "Xác Nhận Từ Chối",
+          confirmRejectDesc: "Bạn có chắc chắn muốn từ chối đơn đăng ký HR này? Hành động này không thể hoàn tác.",
+          confirmRejectCancel: "Hủy",
+          confirmRejectConfirm: "Từ Chối",
         },
       },
     },

@@ -5,6 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
   Table,
   TableBody,
   TableCell,
@@ -17,11 +24,20 @@ import { format } from "date-fns"
 import { toast } from "react-hot-toast"
 import { useLanguage } from "@/providers/global_provider"
 
+function formatCurrencyVND(amount: number) {
+  return new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
+    maximumFractionDigits: 0,
+  }).format(amount)
+}
+
 export function OrderManagementTable() {
   const { t } = useLanguage()
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
+  const [statusFilter, setStatusFilter] = useState<"all" | NonNullable<Order["status"]>>("all")
   const pageSize = 10
 
   const fetchOrders = async () => {
@@ -42,6 +58,9 @@ export function OrderManagementTable() {
     fetchOrders()
   }, [])
 
+  const getNormalizedStatus = (status?: Order["status"]): NonNullable<Order["status"]> =>
+    (status ?? "pending") as NonNullable<Order["status"]>
+
   const renderStatus = (status?: Order["status"]) => {
     switch (status) {
       case "completed":
@@ -53,10 +72,15 @@ export function OrderManagementTable() {
     }
   }
 
-  const totalPages = Math.max(1, Math.ceil(orders.length / pageSize))
+  const filteredOrders = orders.filter((order) => {
+    if (statusFilter === "all") return true
+    return getNormalizedStatus(order.status) === statusFilter
+  })
+
+  const totalPages = Math.max(1, Math.ceil(filteredOrders.length / pageSize))
   const safePage = Math.min(currentPage, totalPages)
   const startIndex = (safePage - 1) * pageSize
-  const paginatedOrders = orders.slice(startIndex, startIndex + pageSize)
+  const paginatedOrders = filteredOrders.slice(startIndex, startIndex + pageSize)
 
   return (
     <div className="flex-1 space-y-6 p-6 pt-0 bg-gray-50">
@@ -73,8 +97,28 @@ export function OrderManagementTable() {
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle>{t.admin.orders.orders} ({orders.length})</CardTitle>
+        <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <CardTitle>{t.admin.orders.orders} ({filteredOrders.length})</CardTitle>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">{t.admin.orders.filter.label}</span>
+            <Select
+              value={statusFilter}
+              onValueChange={(value) => {
+                setStatusFilter(value as typeof statusFilter)
+                setCurrentPage(1)
+              }}
+            >
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder={t.admin.orders.filter.all} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t.admin.orders.filter.all}</SelectItem>
+                <SelectItem value="pending">{t.admin.orders.status.pending}</SelectItem>
+                <SelectItem value="completed">{t.admin.orders.status.completed}</SelectItem>
+                <SelectItem value="cancelled">{t.admin.orders.status.cancelled}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </CardHeader>
         <CardContent>
           <Table>
@@ -90,7 +134,7 @@ export function OrderManagementTable() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {orders.length === 0 && !loading && (
+              {filteredOrders.length === 0 && !loading && (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center text-muted-foreground">
                     {t.admin.orders.table.empty}
@@ -108,7 +152,13 @@ export function OrderManagementTable() {
                         order.userId._id}
                   </TableCell>
                   <TableCell>{order.totalToken}</TableCell>
-                  <TableCell>${order.price.toFixed(2)}</TableCell>
+                  <TableCell>
+                    {formatCurrencyVND(
+                      typeof order.totalAmount === "number"
+                        ? order.totalAmount
+                        : order.price || 0,
+                    )}
+                  </TableCell>
                   <TableCell className="capitalize">{order.paymentMethod}</TableCell>
                   <TableCell>{renderStatus(order.status)}</TableCell>
                   <TableCell>
@@ -125,13 +175,13 @@ export function OrderManagementTable() {
           <div className="mt-4 flex items-center justify-between">
             <p className="text-sm text-muted-foreground">
               {t.admin.manageUser.table.showing}{" "}
-              {orders.length === 0
+              {filteredOrders.length === 0
                 ? 0
                 : `${startIndex + 1}–${Math.min(
                     startIndex + pageSize,
-                    orders.length
+                    filteredOrders.length
                   )}`}{" "}
-              {t.admin.manageUser.table.of} {orders.length} {t.admin.orders.orders.toLowerCase()}
+              {t.admin.manageUser.table.of} {filteredOrders.length} {t.admin.orders.orders.toLowerCase()}
             </p>
             <div className="flex items-center gap-2">
               <Button
@@ -152,7 +202,7 @@ export function OrderManagementTable() {
                 type="button"
                 variant="outline"
                 size="sm"
-                disabled={safePage === totalPages || loading || orders.length === 0}
+                disabled={safePage === totalPages || loading || filteredOrders.length === 0}
                 onClick={() =>
                   setCurrentPage((p) => Math.min(totalPages, p + 1))
                 }

@@ -233,29 +233,6 @@ const PageCreateCVAIContent = () => {
 
     if (idFromUrl) {
       setLoading(true);
-      getCVById(idFromUrl)
-        .then((templateData) => {
-          if (templateData) {
-            hasLoadedRef.current = idFromUrl; // Đánh dấu đã load
-            loadTemplate(templateData);
-            if (templateData.title) {
-              setCvTitle(templateData.title);
-            }
-            // CV đã lưu - giữ nguyên sectionPositions của nó
-            if (
-              (!userData || Object.keys(userData).length === 0) &&
-              templateData.content?.userData
-            ) {
-              updateUserData(templateData.content.userData);
-            }
-            if (templateData.content?.uiTexts) {
-              setCvUiTexts(templateData.content.uiTexts);
-            }
-          }
-          setLoading(false);
-        })
-        .catch(() => {
-          setCvId(null);
           getCVTemplateById(idFromUrl).then((templateData) => {
             if (templateData) {
               hasLoadedRef.current = idFromUrl; // Đánh dấu đã load
@@ -290,11 +267,10 @@ const PageCreateCVAIContent = () => {
             }
             setLoading(false);
           });
-        });
     } else {
       setLoading(false);
     }
-  }, [id]); // Chỉ load khi id thay đổi, không load lại khi userData thay đổi
+  }, [id]); 
 
   const handleTemplateSelect = async (selectedTemplate: CVTemplate) => {
     try {
@@ -325,7 +301,7 @@ const PageCreateCVAIContent = () => {
         setCvTitle(t.cvTitleDefault(selectedTemplate.title));
       }
     } catch (error) {
-      console.error(error);
+      // console.error(error);
     } finally {
       setLoading(false);
     }
@@ -355,7 +331,7 @@ const PageCreateCVAIContent = () => {
       const decoded = jwtDecode<DecodedToken>(token);
       return decoded.sub;
     } catch (error) {
-      console.error(t.errorDecodingToken, error);
+      // console.error(t.errorDecodingToken, error);
       return null;
     }
   };
@@ -442,7 +418,7 @@ const PageCreateCVAIContent = () => {
       setIsDirty(false);
       return true;
     } catch (error) {
-      console.error(t.saveError, error);
+      // console.error(t.saveError, error);
       notify.error(t.saveError);
       return false;
     } finally {
@@ -653,11 +629,14 @@ const PageCreateCVAIContent = () => {
   };
 
   const handleDownloadPDF = async () => {
+    // 1. Tạo iframe
     const iframe = document.createElement("iframe");
     iframe.style.position = "fixed";
-    iframe.style.width = "794px";
-    iframe.style.height = "1123px";
+    iframe.style.width = "794px"; // Chiều rộng cố định A4 (96dpi)
     iframe.style.left = "-9999px";
+    // QUAN TRỌNG: Không set height cố định 1123px ở đây nữa
+    // Để tạm thời là auto hoặc 100vh để load nội dung
+    iframe.style.height = "auto"; 
     document.body.appendChild(iframe);
 
     const iframeDoc = iframe.contentWindow?.document;
@@ -667,6 +646,7 @@ const PageCreateCVAIContent = () => {
       return;
     }
 
+    // 2. Copy styles vào iframe
     const head = iframeDoc.head;
     document
       .querySelectorAll('style, link[rel="stylesheet"]')
@@ -675,25 +655,43 @@ const PageCreateCVAIContent = () => {
       });
 
     const mountNode = iframeDoc.createElement("div");
+    // Thêm class để báo hiệu đây là mode PDF cho CSS (nếu cần)
+    mountNode.className = "pdf-export-container"; 
     iframeDoc.body.appendChild(mountNode);
 
     let root: any = null;
 
     try {
+      // 3. Render CV vào iframe
       await new Promise((resolve) => setTimeout(resolve, 300));
 
       const { createRoot } = await import("react-dom/client");
       root = createRoot(mountNode);
+      
+      // Render component
       root.render(renderCVForPDF());
 
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      // Chờ React render xong và ảnh load xong
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      // 4. TÍNH TOÁN CHIỀU CAO THỰC TẾ (CRITICAL STEP)
+      // Lấy chiều cao thật của nội dung sau khi render
+      const bodyHeight = iframeDoc.body.scrollHeight;
+      const contentHeight = mountNode.scrollHeight; 
+      // Set chiều cao iframe bằng đúng chiều cao nội dung để html2canvas chụp được hết
+      const finalHeight = Math.max(bodyHeight, contentHeight) + 50; // Cộng thêm chút padding dưới
+      iframe.style.height = `${finalHeight}px`;
 
       const html2canvas = (await import("html2canvas")).default;
       const jsPDF = (await import("jspdf")).default;
 
-      const canvas = await html2canvas(iframe.contentWindow.document.body, {
-        scale: 2,
+      // 5. Chụp ảnh toàn bộ nội dung (Full height)
+      const canvas = await html2canvas(iframeDoc.body, {
+        scale: 2, // Tăng scale lên 2 để nét hơn (Retina quality)
         useCORS: true,
+        height: finalHeight, // Bắt buộc khai báo height cho html2canvas
+        windowHeight: finalHeight,
+        scrollY: 0,
         onclone: (clonedDoc) => {
           const elements = clonedDoc.querySelectorAll(".tracking-wider");
           elements.forEach((el) => {
@@ -702,21 +700,34 @@ const PageCreateCVAIContent = () => {
         },
       });
 
+      // 6. Xử lý phân trang PDF (Multi-page Logic)
+      const imgData = canvas.toDataURL("image/jpeg", 1.0);
       const pdf = new jsPDF("p", "mm", "a4");
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+      
+      const imgWidth = 210; // A4 width in mm
+      const pageHeight = 297; // A4 height in mm
+      
+      // Tính chiều cao ảnh trong PDF dựa trên tỉ lệ gốc
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      
+      let heightLeft = imgHeight;
+      let position = 0;
 
-      pdf.addImage(
-        canvas.toDataURL("image/png"),
-        "PNG",
-        0,
-        0,
-        pdfWidth,
-        imgHeight
-      );
+      // Trang đầu tiên
+      pdf.addImage(imgData, "JPEG", 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      // Vòng lặp: Nếu còn nội dung thừa thì thêm trang mới
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight; // Dịch ảnh lên trên để lộ phần dưới
+        pdf.addPage();
+        pdf.addImage(imgData, "JPEG", 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
       pdf.save(`${cvTitle || "cv"}.pdf`);
     } catch (error) {
-      console.error(t.pdfCreateError, error);
+      // console.error(error);
       notify.error(t.pdfCreateError);
     } finally {
       if (root) root.unmount();
@@ -923,26 +934,21 @@ const PageCreateCVAIContent = () => {
       return;
     }
     setIsSuggesting(true);
+  
     try {
+      // console.log("Đang gọi AI với template hiện tại:", currentTemplate?._id);
+  
       const result = await suggestTemplateByAI(
         userData || {},
-        jobDescription || ""
+        currentTemplate?._id || ""
       );
-
-      // Response mới: { cvTemplates: [ ... ], total_tokens: number }
-      // Nhưng vẫn phòng khi backend bọc thêm data / đổi field nhẹ.
-      const templatesArray: any[] =
-        (result as any)?.cvTemplates ??
-        (result as any)?.data?.cvTemplates ??
-        (Array.isArray((result as any)?.data) ? (result as any).data : []) ??
-        [];
-
-      const first =
-        Array.isArray(templatesArray) && templatesArray.length > 0
-          ? templatesArray[0]
-          : null;
-
-      if (!first) {
+  
+      // console.log("Kết quả thô từ AI:", result);
+  
+      // CHỈNH SỬA TẠI ĐÂY: Xử lý linh hoạt nếu result là object đơn lẻ hoặc mảng
+      let templateData = result.cvTemplates;  
+      // Kiểm tra tính hợp lệ của template nhận được
+      if (!templateData) {
         notify.error(
           language === "vi"
             ? "AI không tìm được mẫu CV phù hợp"
@@ -950,18 +956,21 @@ const PageCreateCVAIContent = () => {
         );
         return;
       }
-
-      const templateId =
-        typeof first === "string" ? first : first?.templateId || first?._id;
+  
+      // Lấy ID để tìm kiếm trong danh sách allTemplates
+      const templateId = templateData?.templateId || templateData?._id || (typeof templateData === 'string' ? templateData : null);
+      
       let found: CVTemplate | undefined;
       if (templateId) {
         found = (allTemplates || []).find((t) => t._id === templateId);
       }
-
+  
+      // Ưu tiên template tìm thấy trong máy, nếu không thì dùng data từ AI (nếu có đủ title/image)
       const finalTemplate: CVTemplate | null =
-        found || (first && first.imageUrl && first.title ? first : null);
-
+        found || (templateData?.imageUrl && templateData?.title ? templateData : null);
+  
       if (!finalTemplate) {
+        // console.warn("Không tìm thấy template khớp trong allTemplates, ID:", templateId);
         notify.error(
           language === "vi"
             ? "Không thể ánh xạ mẫu CV AI trả về"
@@ -969,11 +978,13 @@ const PageCreateCVAIContent = () => {
         );
         return;
       }
-
+  
+      // console.log("Template cuối cùng được chọn:", finalTemplate);
       setSuggestedTemplate(finalTemplate);
       setShowSuggestModal(true);
+  
     } catch (e) {
-      console.error("AI suggestTemplate error:", e);
+      // console.error("Lỗi thực thi trong handleAISuggestTemplate:", e);
       notify.error(
         language === "vi" ? "AI đề xuất mẫu thất bại" : "AI suggestion failed"
       );
@@ -992,7 +1003,10 @@ const PageCreateCVAIContent = () => {
       !suppressAutoSuggest;
     if (!ready) return;
     setHasAutoSuggested(true);
-    handleAISuggestTemplate();
+    const timer = setTimeout(() => {
+      handleAISuggestTemplate();
+    }, 1000);
+    return () => clearTimeout(timer);
   }, [allTemplates, userData, hasAutoSuggested, suppressAutoSuggest]);
 
   // Cleanup timer khi component unmount
