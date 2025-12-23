@@ -34,6 +34,8 @@ import CVTemplateLayoutPopup from "@/components/forms/CVTemplateLayoutPopup";
 import { getDefaultSectionPositions } from "../cvTemplate/defaultSectionPositions";
 import { notify } from "@/lib/notify";
 import TranslateCVModal from "@/components/modals/TranslateCVModal";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 
 // --- TRANSLATIONS ---
 const translations = {
@@ -251,7 +253,7 @@ const PageUpdateCVContent = () => {
           setCvUiTexts(cv.content.uiTexts);
         }
       } catch (error) {
-        console.error(t.alerts.loadCVError, error);
+        // console.error(t.alerts.loadCVError, error);
         notify.error(
           error instanceof Error ? error.message : t.alerts.cantLoadCV
         );
@@ -313,7 +315,7 @@ const PageUpdateCVContent = () => {
         setIsDirty(true);
       }
     } catch (error) {
-      console.error(t.alerts.changeTemplateError, error);
+      // console.error(t.alerts.changeTemplateError, error);
       notify.error(t.alerts.changeTemplateError);
     } finally {
       setLoading(false);
@@ -532,7 +534,7 @@ const PageUpdateCVContent = () => {
       setIsDirty(false);
       return true;
     } catch (error) {
-      console.error(t.alerts.updateCVError, error);
+      // console.error(t.alerts.updateCVError, error);
       notify.error(t.alerts.updateCVError);
       return false;
     } finally {
@@ -744,11 +746,14 @@ const PageUpdateCVContent = () => {
   };
 
   const handleDownloadPDF = async () => {
+    // 1. Tạo iframe
     const iframe = document.createElement("iframe");
     iframe.style.position = "fixed";
-    iframe.style.width = "794px";
-    iframe.style.height = "1123px";
+    iframe.style.width = "794px"; // Chiều rộng cố định A4 (96dpi)
     iframe.style.left = "-9999px";
+    // QUAN TRỌNG: Không set height cố định 1123px ở đây nữa
+    // Để tạm thời là auto hoặc 100vh để load nội dung
+    iframe.style.height = "auto"; 
     document.body.appendChild(iframe);
 
     const iframeDoc = iframe.contentWindow?.document;
@@ -758,6 +763,7 @@ const PageUpdateCVContent = () => {
       return;
     }
 
+    // 2. Copy styles vào iframe
     const head = iframeDoc.head;
     document
       .querySelectorAll('style, link[rel="stylesheet"]')
@@ -766,34 +772,79 @@ const PageUpdateCVContent = () => {
       });
 
     const mountNode = iframeDoc.createElement("div");
+    // Thêm class để báo hiệu đây là mode PDF cho CSS (nếu cần)
+    mountNode.className = "pdf-export-container"; 
     iframeDoc.body.appendChild(mountNode);
 
     let root: any = null;
 
     try {
+      // 3. Render CV vào iframe
       await new Promise((resolve) => setTimeout(resolve, 300));
 
       const { createRoot } = await import("react-dom/client");
       root = createRoot(mountNode);
+      
+      // Render component
       root.render(renderCVForPDF());
 
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      // Chờ React render xong và ảnh load xong
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      const html2pdf =
-        (await import("html2pdf.js"))?.default || (await import("html2pdf.js"));
+      // 4. TÍNH TOÁN CHIỀU CAO THỰC TẾ (CRITICAL STEP)
+      // Lấy chiều cao thật của nội dung sau khi render
+      const bodyHeight = iframeDoc.body.scrollHeight;
+      const contentHeight = mountNode.scrollHeight; 
+      // Set chiều cao iframe bằng đúng chiều cao nội dung để html2canvas chụp được hết
+      const finalHeight = Math.max(bodyHeight, contentHeight) + 50; // Cộng thêm chút padding dưới
+      iframe.style.height = `${finalHeight}px`;
 
-      await html2pdf()
-        .from(iframe.contentWindow.document.body)
-        .set({
-          margin: 0,
-          filename: `${cvTitle || "cv"}.pdf`,
-          image: { type: "jpeg", quality: 0.98 },
-          html2canvas: { scale: 2, useCORS: true },
-          jsPDF: { unit: "px", format: [794, 1123], orientation: "portrait" },
-        })
-        .save();
+      const html2canvas = (await import("html2canvas")).default;
+      const jsPDF = (await import("jspdf")).default;
+
+      // 5. Chụp ảnh toàn bộ nội dung (Full height)
+      const canvas = await html2canvas(iframeDoc.body, {
+        scale: 2, // Tăng scale lên 2 để nét hơn (Retina quality)
+        useCORS: true,
+        height: finalHeight, // Bắt buộc khai báo height cho html2canvas
+        windowHeight: finalHeight,
+        scrollY: 0,
+        onclone: (clonedDoc) => {
+          const elements = clonedDoc.querySelectorAll(".tracking-wider");
+          elements.forEach((el) => {
+            (el as HTMLElement).style.letterSpacing = "normal";
+          });
+        },
+      });
+
+      // 6. Xử lý phân trang PDF (Multi-page Logic)
+      const imgData = canvas.toDataURL("image/jpeg", 1.0);
+      const pdf = new jsPDF("p", "mm", "a4");
+      
+      const imgWidth = 210; // A4 width in mm
+      const pageHeight = 297; // A4 height in mm
+      
+      // Tính chiều cao ảnh trong PDF dựa trên tỉ lệ gốc
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      // Trang đầu tiên
+      pdf.addImage(imgData, "JPEG", 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      // Vòng lặp: Nếu còn nội dung thừa thì thêm trang mới
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight; // Dịch ảnh lên trên để lộ phần dưới
+        pdf.addPage();
+        pdf.addImage(imgData, "JPEG", 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      pdf.save(`${cvTitle || "cv"}.pdf`);
     } catch (error) {
-      console.error(t.alerts.pdfCreateError, error);
+      // console.error(error);
       notify.error(t.alerts.pdfCreateError);
     } finally {
       if (root) root.unmount();

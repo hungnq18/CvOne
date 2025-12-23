@@ -225,21 +225,14 @@ function CreateCVwithAI() {
 
     return (
       <div className="flex justify-center mt-4">
-        {" "}
-        {/* Căn giữa preview */}
-        <div className="w-[320px] h-[460px] overflow-hidden rounded shadow-lg border border-gray-200 bg-white">
-          <div className="origin-top-left w-[794px] h-[1123px]">
-            {" "}
-            {/* Kích thước gốc A4 */}
-            <div
-              style={{
-                transformOrigin: "top left",
-                transform: `scale(${scaleFactor})`,
-              }}
-            >
-              <TemplateComponent data={componentData} language={language} />
-            </div>
+        <div className="w-[320px] h-[460px] overflow-y-auto overflow-x-hidden rounded shadow-lg border border-gray-200 bg-white">
+          <div
+            className="w-[794px] min-h-[1123px] h-fit bg-white"
+            style={{ zoom: scaleFactor }}
+          >
+            <TemplateComponent data={componentData} language={language} />
           </div>
+
         </div>
       </div>
     );
@@ -254,30 +247,28 @@ function CreateCVwithAI() {
   };
 
   // Validate phone
-  // - Không có dấu +: phải đúng 10 chữ số
-  // - Có dấu + (mã quốc gia): coi mã quốc gia là 1 phần; phần còn lại phải có đúng 9 chữ số
-  //   => Số chữ số sau dấu + có thể là 10..12 (mã quốc gia 1..3 chữ số + 9 chữ số còn lại)
   const isValidPhone = (phone: string): boolean => {
-    if (!phone || !phone.trim()) return true; // Phone không bắt buộc
+    if (!phone || !phone.trim()) return true; 
     const trimmed = phone.trim();
-
-    // Xóa khoảng trắng, gạch, chấm, ngoặc để kiểm tra
+  
     const cleaned = trimmed.replace(/[\s\-\.\(\)]/g, '');
-
-    if (cleaned.startsWith('+')) {
-      const digitsAfterPlus = cleaned.slice(1).replace(/\D/g, '');
-      // Hợp lệ nếu 10..12 chữ số (1..3 cho mã quốc gia + 9 còn lại)
-      return digitsAfterPlus.length >= 10 && digitsAfterPlus.length <= 12;
-    }
-
-    // Không có dấu +: yêu cầu đúng 10 chữ số
+  
     const digitsOnly = cleaned.replace(/\D/g, '');
-    return digitsOnly.length === 10;
+  
+    if (digitsOnly.length < 7 || digitsOnly.length > 15) {
+      return false;
+    }
+  
+    if (cleaned.startsWith('+')) {
+      return true;
+    } else {
+      return cleaned.startsWith('0');
+    }
   };
 
   const validateCurrentStep = (): boolean => {
     const data = userData || {} as any;
-    
+
     // Step 1: Personal Information
     if (currentStep === 1) {
       if (!data.firstName || !String(data.firstName).trim()) {
@@ -294,7 +285,7 @@ function CreateCVwithAI() {
         return false;
       }
     }
-    
+
     // Step 2: Contact Information
     if (currentStep === 2) {
       if (!data.email || !String(data.email).trim()) {
@@ -305,32 +296,29 @@ function CreateCVwithAI() {
         notify.error(language === "vi" ? "Email không hợp lệ. Vui lòng nhập đúng định dạng email" : "Invalid email address. Please enter a valid email format");
         return false;
       }
-      // Phone không bắt buộc nhưng nếu có thì phải tuân theo quy tắc:
-      // - Không có dấu +: đúng 10 chữ số
-      // - Có dấu +: mã quốc gia được tính như "1 phần", phần còn lại phải có đúng 9 chữ số
       if (data.phone && String(data.phone).trim()) {
         const phoneStr = String(data.phone).trim();
         if (!isValidPhone(phoneStr)) {
           notify.error(
             language === "vi"
-              ? "Số điện thoại không hợp lệ. Quy tắc: không có dấu + thì phải đúng 10 chữ số; có dấu + thì mã quốc gia tính là 1 phần và phần còn lại phải có đúng 9 chữ số. Ví dụ: +84 912 345 678 hoặc 0912345678"
-              : "Invalid phone number. Rules: without '+', must be exactly 10 digits; with '+', country code counts as 1 part and the remaining must be exactly 9 digits. Examples: +84 912 345 678 or 0912345678"
+              ? "Số điện thoại không hợp lệ. Quy tắc: số điện thoại từ 7 đến 15 chữ số Ví dụ: 0912345678"
+              : "Invalid phone number. Rules: phone number from 7 to 15 digits. Examples: 0912345678"
           );
           return false;
         }
       }
     }
-    
+
     // Step 3: Job Information - không bắt buộc
-    
+
     // Step 4: Skills - không bắt buộc
-    
+
     // Step 5: Experience - không bắt buộc
-    
+
     // Step 6: Education - không bắt buộc
-    
+
     // Step 7: Summary - không bắt buộc
-    
+
     return true;
   };
 
@@ -377,18 +365,17 @@ function CreateCVwithAI() {
 
   return (
     // SỬA: min-h-screen để đảm bảo bao phủ toàn màn hình
-    <div className="flex w-full min-h-screen bg-gray-100 items-start">
+    <div className="flex w-full min-h-screen bg-gray-100 items-stretch">
       {/* SỬA: Sidebar Trái - Sticky */}
-      <aside className="w-1/4 max-w-xs bg-gray-800 p-8 text-white pt-10 sticky top-0 h-screen overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600">
+      <aside className="w-1/4 max-w-xs bg-gray-800 p-8 text-white pt-10">
         <h1 className="text-xl font-bold mb-8">{t.title}</h1>
         <nav>
           <ol>
             {steps.map((step, index) => (
               <li
                 key={step.id}
-                className={`relative ${
-                  index === steps.length - 1 ? "" : "pb-5"
-                }`}
+                className={`relative ${index === steps.length - 1 ? "" : "pb-5"
+                  }`}
               >
                 <Step
                   step={step}
@@ -402,7 +389,7 @@ function CreateCVwithAI() {
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 flex flex-row">
+      <main className="flex-1 flex flex-row min-h-screen">
         {/* Cột Form Chính - Scrollable */}
         <div className="flex flex-col w-2/3 min-h-screen">
           <div className="flex-grow px-12 py-8 width-full">
@@ -415,10 +402,10 @@ function CreateCVwithAI() {
                     <div
                       className={`
                         w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300
-                        ${index + 1 < currentStep 
-                          ? "bg-gradient-to-r from-emerald-400 to-emerald-500 text-white shadow-md" 
-                          : index + 1 === currentStep 
-                            ? "bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg ring-4 ring-blue-100" 
+                        ${index + 1 < currentStep
+                          ? "bg-gradient-to-r from-emerald-400 to-emerald-500 text-white shadow-md"
+                          : index + 1 === currentStep
+                            ? "bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg ring-4 ring-blue-100"
                             : "bg-slate-100 text-slate-400 border-2 border-slate-200"
                         }
                       `}
@@ -426,10 +413,9 @@ function CreateCVwithAI() {
                       {index + 1 < currentStep ? "✓" : index + 1}
                     </div>
                     {index < steps.length - 1 && (
-                      <div 
-                        className={`w-8 h-1 mx-1 rounded-full transition-all duration-300 ${
-                          index + 1 < currentStep ? "bg-emerald-400" : "bg-slate-200"
-                        }`} 
+                      <div
+                        className={`w-8 h-1 mx-1 rounded-full transition-all duration-300 ${index + 1 < currentStep ? "bg-emerald-400" : "bg-slate-200"
+                          }`}
                       />
                     )}
                   </div>
@@ -491,7 +477,7 @@ function CreateCVwithAI() {
         </div>
 
         {/* SỬA: Sidebar Phải (Preview) - Sticky */}
-        <aside className="flex flex-col w-1/3 bg-white border-l sticky top-0 h-screen overflow-hidden">
+        <aside className="flex flex-col w-1/3 bg-white border-l">
           <div className="p-8 pb-0">
             <h3 className="text-lg font-semibold text-gray-800 mb-2 border-b pb-2">
               {t.preview}

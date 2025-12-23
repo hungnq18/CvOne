@@ -161,12 +161,40 @@ export function useLoginForm(allowedRoles?: string[]) {
         throw new Error("UNAUTHORIZED_ROLE");
       }
 
-      document.cookie = `token=${access_token}; path=/; max-age=3600; SameSite=Lax; Secure`;
+      // NOTE:
+      // - Cookie có flag `Secure` sẽ KHÔNG được lưu nếu site đang chạy HTTP (thường gặp khi `npm run start` chạy local).
+      // - Middleware dựa vào cookie `token`, nên nếu cookie không được lưu thì sẽ bị redirect về trang login.
+      const cookieParts = [
+        `token=${access_token}`,
+        "path=/",
+        "max-age=3600",
+        "SameSite=Lax",
+      ];
+      if (typeof window !== "undefined" && window.location.protocol === "https:") {
+        cookieParts.push("Secure");
+      }
+      document.cookie = cookieParts.join("; ");
 
       const params = new URLSearchParams(window.location.search);
-      const callbackUrl = params.get("callbackUrl");
-      if (callbackUrl) {
-        router.replace(callbackUrl);
+      const rawCallbackUrl = params.get("callbackUrl");
+      const safeCallbackUrl = (() => {
+        if (!rawCallbackUrl) return null;
+        // Prefer internal relative paths
+        if (rawCallbackUrl.startsWith("/")) return rawCallbackUrl;
+        // If an absolute URL sneaks in, only allow same-origin and convert to relative
+        try {
+          const u = new URL(rawCallbackUrl);
+          if (u.origin === window.location.origin) {
+            return `${u.pathname}${u.search}${u.hash}`;
+          }
+        } catch {
+          // ignore
+        }
+        return null;
+      })();
+
+      if (safeCallbackUrl) {
+        router.replace(safeCallbackUrl);
       } else if (decoded.role === "admin") {
         router.replace("/admin");
       } else if (decoded.role === "mkt") {

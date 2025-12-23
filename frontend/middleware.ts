@@ -44,10 +44,10 @@ const roleBasedPaths: { [key: string]: string[] } = {
   "/user/Wallet/deposit": ["user", "hr"],
   "/user/Wallet/history": ["user", "hr"],
 
-  "/payment/cancel": ["admin", "hr", "user"],
-  "/payment/success": ["admin", "hr", "user"],
-  "/chat": ["admin", "hr", "user"],
-  "/notifications": ["admin", "hr", "user"],
+  "/payment/cancel": ["admin", "hr", "user", "mkt"],
+  "/payment/success": ["admin", "hr", "user", "mkt"],
+  "/chat": ["admin", "hr", "user", "mkt"],
+  "/notifications": ["admin", "hr", "user", "mkt"],
 };
 
 export interface DecodedToken {
@@ -84,7 +84,10 @@ export function middleware(request: NextRequest) {
   // Route yêu cầu role nhưng chưa login
   if (requiredRoles && !token) {
     const url = new URL(getLoginUrl(), request.url);
-    url.searchParams.set("callbackUrl", request.url);
+    // Use a relative callback to avoid switching scheme/host/port (e.g. http <-> https, localhost <-> 127.0.0.1)
+    // which can make the token cookie appear "missing" on the next request.
+    const relativeCallback = `${request.nextUrl.pathname}${request.nextUrl.search}`;
+    url.searchParams.set("callbackUrl", relativeCallback);
     return NextResponse.redirect(url);
   }
 
