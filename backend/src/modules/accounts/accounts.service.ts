@@ -354,6 +354,9 @@ export class AccountsService {
     if (!result) {
       throw new NotFoundException("Account not found");
     }
+    const role =
+      result.role === "hr" || result.role === "user" ? result.role : "user"; // fallback
+    this.mailService.sendDeleteAccountEmail(result.email, role);
     return { deleted: true };
   }
 
