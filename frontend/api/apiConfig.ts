@@ -9,6 +9,8 @@ export const API_ENDPOINTS = {
     REGISTER: "/accounts/register",
     REGISTER_HR: "/accounts/register-hr", // api đăng ký hr kiểm tra kĩ các trường nhé t có thêm trường mã số thuế
     REGISTER_BY_ADMIN: "/accounts/register-by-admin",
+    LOGIN_GOOGLE: "/auth/login/google",
+    LOGIN_FACEBOOK: "/auth/login/facebook",
     UPDATE_ROLE: (id: string) => `/accounts/${id}/role`,
     LOGOUT: "/auth/logout",
     PROFILE: "/auth/profile",

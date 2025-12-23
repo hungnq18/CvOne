@@ -22,6 +22,10 @@ interface LoginResponse {
 
 const API_BASE = BASE_API_URL ?? "/api";
 const LOGIN_URL = `${API_BASE}${API_ENDPOINTS.AUTH.LOGIN}`;
+const LOGIN_GOOGLE_URL = `${API_BASE}${API_ENDPOINTS.AUTH.LOGIN_GOOGLE}`;
+const LOGIN_FACEBOOK_URL = `${API_BASE}${API_ENDPOINTS.AUTH.LOGIN_FACEBOOK}`;
+const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+const FACEBOOK_APP_ID = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID;
 
 const translations = {
   en: {
@@ -102,6 +106,70 @@ export function useLoginForm(allowedRoles?: string[]) {
   const { language } = useLanguage();
   const t = translations[language];
 
+  const handleAuthToken = async (access_token: string, emailHint?: string) => {
+    const decoded: DecodedToken = jwtDecode(access_token);
+
+    if (
+      allowedRoles &&
+      allowedRoles.length > 0 &&
+      !allowedRoles.includes(decoded.role)
+    ) {
+      throw new Error("UNAUTHORIZED_ROLE");
+    }
+
+    const cookieParts = [
+      `token=${access_token}`,
+      "path=/",
+      "max-age=3600",
+      "SameSite=Lax",
+    ];
+    if (
+      typeof window !== "undefined" &&
+      window.location.protocol === "https:"
+    ) {
+      cookieParts.push("Secure");
+    }
+    document.cookie = cookieParts.join("; ");
+
+    const params = new URLSearchParams(window.location.search);
+    const rawCallbackUrl = params.get("callbackUrl");
+    const safeCallbackUrl = (() => {
+      if (!rawCallbackUrl) return null;
+      if (rawCallbackUrl.startsWith("/")) return rawCallbackUrl;
+      try {
+        const u = new URL(rawCallbackUrl);
+        if (u.origin === window.location.origin) {
+          return `${u.pathname}${u.search}${u.hash}`;
+        }
+      } catch {
+        // ignore
+      }
+      return null;
+    })();
+
+    if (safeCallbackUrl) {
+      router.replace(safeCallbackUrl);
+    } else if (decoded.role === "admin") {
+      router.replace("/admin");
+    } else if (decoded.role === "mkt") {
+      router.replace("/marketing");
+    } else if (decoded.role === "hr") {
+      router.replace("/hr/dashboard");
+    } else {
+      router.replace("/");
+    }
+
+    await refreshUser();
+
+    window.dispatchEvent(new CustomEvent("loginSuccess"));
+    window.dispatchEvent(new CustomEvent("authChange"));
+
+    toast({
+      title: t.loginSuccess,
+      description: `Welcome back${emailHint ? `, ${emailHint}` : ""}!`,
+    });
+  };
+
   const validateForm = () => {
     if (!formData.email) {
       setError(t.emailRequired);
@@ -149,69 +217,7 @@ export function useLoginForm(allowedRoles?: string[]) {
       });
 
       const { access_token } = response.data;
-
-      const decoded: DecodedToken = jwtDecode(access_token);
-
-      if (
-        allowedRoles &&
-        allowedRoles.length > 0 &&
-        !allowedRoles.includes(decoded.role)
-      ) {
-        throw new Error("UNAUTHORIZED_ROLE");
-      }
-
-      // NOTE:
-      // - Cookie có flag `Secure` sẽ KHÔNG được lưu nếu site đang chạy HTTP (thường gặp khi `npm run start` chạy local).
-      // - Middleware dựa vào cookie `token`, nên nếu cookie không được lưu thì sẽ bị redirect về trang login.
-      const cookieParts = [
-        `token=${access_token}`,
-        "path=/",
-        "max-age=3600",
-        "SameSite=Lax",
-      ];
-      if (typeof window !== "undefined" && window.location.protocol === "https:") {
-        cookieParts.push("Secure");
-      }
-      document.cookie = cookieParts.join("; ");
-
-      const params = new URLSearchParams(window.location.search);
-      const rawCallbackUrl = params.get("callbackUrl");
-      const safeCallbackUrl = (() => {
-        if (!rawCallbackUrl) return null;
-        // Prefer internal relative paths
-        if (rawCallbackUrl.startsWith("/")) return rawCallbackUrl;
-        // If an absolute URL sneaks in, only allow same-origin and convert to relative
-        try {
-          const u = new URL(rawCallbackUrl);
-          if (u.origin === window.location.origin) {
-            return `${u.pathname}${u.search}${u.hash}`;
-          }
-        } catch {
-          // ignore
-        }
-        return null;
-      })();
-
-      if (safeCallbackUrl) {
-        router.replace(safeCallbackUrl);
-      } else if (decoded.role === "admin") {
-        router.replace("/admin");
-      } else if (decoded.role === "mkt") {
-        router.replace("/marketing");
-      } else if (decoded.role === "hr") {
-        router.replace("/hr/dashboard");
-      } else {
-        router.replace("/");
-      }
-      await refreshUser();
-
-      window.dispatchEvent(new CustomEvent("loginSuccess"));
-      window.dispatchEvent(new CustomEvent("authChange"));
-
-      toast({
-        title: t.loginSuccess,
-        description: `Welcome back, ${formData.email}!`,
-      });
+      await handleAuthToken(access_token, formData.email);
     } catch (err: any) {
       let msg = t.networkError;
 
@@ -244,12 +250,153 @@ export function useLoginForm(allowedRoles?: string[]) {
     }
   };
 
-  const handleGoogleLogin = () => {
-    // Placeholder for Google login logic
+  const handleGoogleLogin = async () => {
+    if (!GOOGLE_CLIENT_ID) {
+      showErrorToast(t.loginFailed, "Missing GOOGLE client id");
+      return;
+    }
+
+    setIsLoading(true);
+    setError("");
+
+    try {
+      // Load Google Identity script
+      await new Promise<void>((resolve, reject) => {
+        if (document.getElementById("google-identity")) return resolve();
+        const script = document.createElement("script");
+        script.src = "https://accounts.google.com/gsi/client";
+        script.async = true;
+        script.id = "google-identity";
+        script.onload = () => resolve();
+        script.onerror = () => reject(new Error("Failed to load Google script"));
+        document.body.appendChild(script);
+      });
+
+      // Use one-tap style popup to get credential (ID token)
+      const idToken = await new Promise<string>((resolve, reject) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const google: any = (window as any).google;
+        if (!google || !google.accounts || !google.accounts.id) {
+          reject(new Error("Google Identity not available"));
+          return;
+        }
+
+        google.accounts.id.initialize({
+          client_id: GOOGLE_CLIENT_ID,
+          callback: (response: { credential: string }) => {
+            if (response && response.credential) {
+              resolve(response.credential);
+            } else {
+              reject(new Error("No Google credential received"));
+            }
+          },
+        });
+
+        google.accounts.id.prompt((notification: { isNotDisplayed: () => boolean; getNotDisplayedReason: () => string }) => {
+          if (notification.isNotDisplayed && notification.isNotDisplayed()) {
+            reject(
+              new Error(
+                `Google prompt not displayed: ${notification.getNotDisplayedReason?.()}`,
+              ),
+            );
+          }
+        });
+      });
+
+      const res = await axios.post<LoginResponse>(LOGIN_GOOGLE_URL, {
+        token: idToken,
+      });
+
+      await handleAuthToken(res.data.access_token);
+    } catch (err: any) {
+      const msg =
+        err?.response?.data?.message ||
+        err?.message ||
+        t.networkError ||
+        "Google login failed";
+      setError(msg);
+      toast({ title: t.loginFailed, description: msg, variant: "destructive" });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleFacebookLogin = () => {
-    // Placeholder for Facebook login logic
+  const handleFacebookLogin = async () => {
+    if (!FACEBOOK_APP_ID) {
+      showErrorToast(t.loginFailed, "Missing Facebook app id");
+      return;
+    }
+
+    setIsLoading(true);
+    setError("");
+
+    try {
+      // Load Facebook SDK if needed
+      await new Promise<void>((resolve, reject) => {
+        if ((window as any).FB) return resolve();
+
+        (window as any).fbAsyncInit = function () {
+          (window as any).FB.init({
+            appId: FACEBOOK_APP_ID,
+            cookie: true,
+            xfbml: false,
+            version: "v18.0",
+          });
+          resolve();
+        };
+
+        const id = "facebook-jssdk";
+        if (document.getElementById(id)) return resolve();
+
+        const js = document.createElement("script");
+        js.id = id;
+        js.src = "https://connect.facebook.net/en_US/sdk.js";
+        js.onload = () => {
+          // fbAsyncInit will resolve
+        };
+        js.onerror = () => reject(new Error("Failed to load Facebook SDK"));
+
+        document.body.appendChild(js);
+      });
+
+      const accessToken = await new Promise<string>((resolve, reject) => {
+        const FB = (window as any).FB;
+        if (!FB) {
+          reject(new Error("Facebook SDK not available"));
+          return;
+        }
+
+        FB.login(
+          (response: any) => {
+            if (
+              response.status === "connected" &&
+              response.authResponse?.accessToken
+            ) {
+              resolve(response.authResponse.accessToken);
+            } else {
+              reject(new Error("Facebook login failed or cancelled"));
+            }
+          },
+          { scope: "email" },
+        );
+      });
+
+      const res = await axios.post<LoginResponse>(LOGIN_FACEBOOK_URL, {
+        token: accessToken,
+      });
+
+      await handleAuthToken(res.data.access_token);
+    } catch (err: any) {
+      const msg =
+        err?.response?.data?.message ||
+        err?.message ||
+        t.networkError ||
+        "Facebook login failed";
+      setError(msg);
+      toast({ title: t.loginFailed, description: msg, variant: "destructive" });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return {
