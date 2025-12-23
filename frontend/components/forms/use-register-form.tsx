@@ -1,7 +1,6 @@
 "use client";
 
 import { registerHR } from "@/api/authApi";
-import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/providers/auth-provider";
 import { useLanguage } from "@/providers/global_provider";
 import { useRouter } from "next/navigation";
@@ -235,7 +234,6 @@ export function useRegisterForm(formType: "user" | "hr" = "user") {
   const [message, setMessage] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isSuccess, setIsSuccess] = useState<boolean>(false);
-  const { toast } = useToast();
   const router = useRouter();
   const { language } = useLanguage();
   const { register } = useAuth();
@@ -286,27 +284,23 @@ export function useRegisterForm(formType: "user" | "hr" = "user") {
     ];
 
     if (!emailRegex.test(email!)) {
-      setMessage(t.invalidEmail);
+      showErrorToast(t.invalidEmail);
       setIsLoading(false);
       return;
     }
 
-    if (formType === 'hr' && email && !email.endsWith('@yourcompany.com')) {
-      setMessage('Chỉ được dùng email công ty: @yourcompany.com');
-      setIsLoading(false);
-      return;
-    }
+    // HR flow: không chặn domain email (admin sẽ duyệt sau)
 
     const emailDomain = email.split('@')[1]?.toLowerCase();
     if (emailDomain && disposableDomains.some((d) => emailDomain.endsWith(d))) {
-      setMessage('Không sử dụng email tạm thời!');
+      showErrorToast('Không sử dụng email tạm thời!');
       setIsLoading(false);
       return;
     }
 
     try {
       if (await checkEmailExists(email)) {
-        setMessage('Email này đã được đăng ký!');
+        showErrorToast('Email này đã được đăng ký!');
         setIsLoading(false);
         return;
       }
@@ -316,27 +310,27 @@ export function useRegisterForm(formType: "user" | "hr" = "user") {
 
     // Validate Password Strength
     if (password.length < 8) {
-      setMessage(t.passwordTooShort);
+      showErrorToast(t.passwordTooShort);
       setIsLoading(false);
       return;
     }
-    
+
     if (password.length > 50) {
-      setMessage(t.passwordTooLong);
+      showErrorToast(t.passwordTooLong);
       setIsLoading(false);
       return;
     }
 
     const passwordComplexityRegex = /(?=.*[0-9])(?=.*[!@#$%^&*(),.?":{}|<>])/;
-    
+
     if (!passwordComplexityRegex.test(password)) {
-      setMessage(t['passwordComplexity'] || "Mật khẩu phải chứa ít nhất 1 số và 1 ký tự đặc biệt");
+      showErrorToast(t['passwordComplexity'] || "Mật khẩu phải chứa ít nhất 1 số và 1 ký tự đặc biệt");
       setIsLoading(false);
       return;
     }
-    
+
     if (password !== confirmPassword) {
-      setMessage(t.passwordMismatch);
+      showErrorToast(t.passwordMismatch);
       setIsLoading(false);
       return;
     }
@@ -349,17 +343,19 @@ export function useRegisterForm(formType: "user" | "hr" = "user") {
         !password ||
         !confirmPassword
       ) {
-        setMessage(t.requiredFields);
+        showErrorToast(t.requiredFields);
         setIsLoading(false);
         return;
       }
 
       try {
         await register(first_name, email, password, last_name);
+        showSuccessToast(t.registerSuccess, t.checkEmail);
         router.push(`/verify-email?email=${encodeURIComponent(email)}`);
       } catch (error) {
         console.error("Registration error:", error);
-        setMessage(error instanceof Error ? error.message : t.registerFailed);
+        const msg = error instanceof Error ? error.message : t.registerFailed;
+        showErrorToast(t.registerFailed, msg);
       } finally {
         setIsLoading(false);
       }
