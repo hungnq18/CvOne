@@ -14,6 +14,7 @@ const fallbackSectionPositionsMap: Record<string, SectionPositions> = {
     certification: { place: 0, order: 0 },
     achievement: { place: 0, order: 0 },
     hobby: { place: 0, order: 0 },
+    project: { place: 0, order: 0 }
   },
   "The Vanguard": {
     avatar: { place: 1, order: 0 },
@@ -26,6 +27,7 @@ const fallbackSectionPositionsMap: Record<string, SectionPositions> = {
     certification: { place: 0, order: 0 },
     achievement: { place: 0, order: 0 },
     hobby: { place: 0, order: 0 },
+    project: { place: 0, order: 0 }
   },
   "The Modern": {
     avatar: { place: 1, order: 0 },
@@ -38,6 +40,7 @@ const fallbackSectionPositionsMap: Record<string, SectionPositions> = {
     certification: { place: 0, order: 0 },
     achievement: { place: 0, order: 0 },
     hobby: { place: 0, order: 0 },
+    project: { place: 0, order: 0 }
   },
   "The Minimalist": {
     avatar: { place: 1, order: 0 },
@@ -50,6 +53,7 @@ const fallbackSectionPositionsMap: Record<string, SectionPositions> = {
     certification: { place: 0, order: 0 },
     achievement: { place: 0, order: 0 },
     hobby: { place: 0, order: 0 },
+    project: { place: 0, order: 0 }
   },
 };
 

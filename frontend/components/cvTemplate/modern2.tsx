@@ -315,41 +315,34 @@ const Modern2: React.FC<Modern2Props> = ({
     })
     .map(([key]) => key);
 
-  const handleDragEnd = (result: DropResult) => {
-    if (!result.destination) {
-      notify.error(dragWarningMessage);
-      return;
-    }
-    if (!onLayoutChange) return;
-
-    const { source, destination } = result;
-
-    // Nếu thả về chỗ cũ
-    if (source.index === destination.index) return;
-
-    // Logic Reorder cho 1 danh sách duy nhất
-    const newSections = Array.from(sections);
-    const [moved] = newSections.splice(source.index, 1);
-    newSections.splice(destination.index, 0, moved);
-
-    // Cập nhật lại Order trong object positions
-    // Lưu ý: Template này có vẻ dùng place để phân nhóm (1, 2, 3), nhưng render thì lại gộp chung.
-    // Để đơn giản và giữ đúng logic hiển thị, ta sẽ gán lại place=1 cho tất cả (hoặc giữ nguyên logic cũ nếu phức tạp hơn).
-    // Tuy nhiên, cách an toàn nhất là chỉ cập nhật order dựa trên vị trí mới trong mảng đã sort.
-    
-    const newPositions = { ...sectionPositions };
-    
-    // Cập nhật lại order sao cho thứ tự hiển thị khớp với mảng newSections
-    // Để tránh xung đột place, ta có thể set lại place tăng dần hoặc giữ nguyên place cũ nhưng đổi order.
-    // Cách đơn giản nhất cho Single Column Layout: Reset toàn bộ về cùng 1 Place và tăng Order.
-    
-    newSections.forEach((key, index) => {
-       newPositions[key] = { place: 1, order: index };
-    });
-
-    onLayoutChange(newPositions);
-  };
-
+    const handleDragEnd = (result: DropResult) => {
+      if (!result.destination) {
+        notify.error(dragWarningMessage);
+        return;
+      }
+      if (!onLayoutChange) return;
+  
+      const { source, destination } = result;
+  
+      // Nếu thả về chỗ cũ thì không làm gì
+      if (source.index === destination.index) return;
+      const currentPlaceSlots = sections.map(key => sectionPositions[key].place);
+  
+      // 2. Logic Reorder mảng Key (như cũ)
+      const newSections = Array.from(sections);
+      const [moved] = newSections.splice(source.index, 1);
+      newSections.splice(destination.index, 0, moved);
+      const newPositions = { ...sectionPositions };
+      
+      newSections.forEach((key, index) => {
+        newPositions[key] = { 
+            place: currentPlaceSlots[index], // Lấy place từ mảng slots đã lưu ở bước 1
+            order: index // Order tăng dần theo danh sách hiển thị là được
+        }; 
+      });
+  
+      onLayoutChange(newPositions);
+    };
 
   const styles = `
     .professional-card {

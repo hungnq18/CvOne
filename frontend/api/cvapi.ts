@@ -300,20 +300,20 @@ export async function uploadAndAnalyzeCV(file: File, jobDescription: string) {
  * @param additionalNotes - Optional notes
  * @returns Promise with result (includes pdfPath)
  */
-export async function uploadAnalyzeGeneratePDF(
-  file: File,
-  jobDescription: string,
-  additionalNotes?: string
-) {
-  const formData = new FormData();
-  formData.append("cvFile", file);
-  formData.append("jobDescription", jobDescription);
-  if (additionalNotes) formData.append("additionalNotes", additionalNotes);
-  return fetchWithAuth(API_ENDPOINTS.CV.UPLOAD_ANALYZE_GENERATE_PDF, {
-    method: "POST",
-    body: formData,
-  });
-}
+// export async function uploadAnalyzeGeneratePDF(
+//   file: File,
+//   jobDescription: string,
+//   additionalNotes?: string
+// ) {
+//   const formData = new FormData();
+//   formData.append("cvFile", file);
+//   formData.append("jobDescription", jobDescription);
+//   if (additionalNotes) formData.append("additionalNotes", additionalNotes);
+//   return fetchWithAuth(API_ENDPOINTS.CV.UPLOAD_ANALYZE_GENERATE_PDF, {
+//     method: "POST",
+//     body: formData,
+//   });
+// }
 
 /**
  * Check AI status

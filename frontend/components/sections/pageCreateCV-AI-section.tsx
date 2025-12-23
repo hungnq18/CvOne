@@ -210,12 +210,90 @@ const PageCreateCVAIContent = () => {
   const previewRef = useRef<HTMLDivElement>(null);
   const hasLoadedRef = useRef<string | null>(null); // Track đã load template nào
 
+  const calculatePlaceAndOrder = (
+    sectionId: string,
+    currentPositions: any,
+    templateTitle: string
+  ) => {
+    const defaultPositions = getDefaultSectionPositions(templateTitle);
+
+    const defaultSectionPos = defaultPositions[sectionId];
+    if (!defaultSectionPos || defaultSectionPos.place === 0) {
+      const isMinimalist1 =
+        templateTitle === "The Vanguard" || templateTitle?.includes("Vanguard");
+      const ismodern2 =
+        templateTitle === "The Modern" || templateTitle?.includes("Modern");
+
+      let targetPlace = 2;
+
+      if (isMinimalist1) {
+        if (sectionId === "hobby") {
+          targetPlace = 2;
+        } else if (
+          sectionId === "certification" ||
+          sectionId === "achievement" ||
+          sectionId === "Project"
+        ) {
+          targetPlace = 3;
+        }
+      } else if (ismodern2) {
+        targetPlace = 3;
+      } else {
+        if (sectionId === "hobby") {
+          targetPlace = 1;
+        } else if (
+          sectionId === "certification" ||
+          sectionId === "achievement" ||
+          sectionId === "Project"
+        ) {
+          targetPlace = 2;
+        }
+      }
+
+      const targetPlaceSections = Object.entries(currentPositions)
+        .filter(([_, pos]: [string, any]) => pos.place === targetPlace)
+        .sort(
+          ([, a]: [string, any], [, b]: [string, any]) => a.order - b.order
+        );
+
+      if (targetPlaceSections.length > 0) {
+        const lastOrder = (
+          targetPlaceSections[targetPlaceSections.length - 1][1] as any
+        ).order;
+        return { place: targetPlace, order: lastOrder + 1 };
+      }
+
+      return { place: targetPlace, order: 0 };
+    }
+
+    const targetPlace = defaultSectionPos.place;
+    const targetOrder = defaultSectionPos.order;
+
+    const sectionsToShift = Object.entries(currentPositions)
+      .filter(([key, pos]: [string, any]) => {
+        return (
+          key !== sectionId &&
+          pos.place === targetPlace &&
+          pos.order >= targetOrder
+        );
+      })
+      .sort(([, a]: [string, any], [, b]: [string, any]) => a.order - b.order);
+
+    sectionsToShift.forEach(([key]) => {
+      currentPositions[key] = {
+        ...currentPositions[key],
+        order: currentPositions[key].order + 1,
+      };
+    });
+
+    return { place: targetPlace, order: targetOrder };
+  };
+
   useOnClickOutside(templateDropdownRef, () => setShowTemplatePopup(false));
 
   useEffect(() => {
-    // Chỉ load nếu id thay đổi và chưa load template này
     if (id && id === hasLoadedRef.current) {
-      return; // Đã load rồi, không load lại
+      return; 
     }
     try {
       if (typeof window !== "undefined") {
@@ -228,44 +306,101 @@ const PageCreateCVAIContent = () => {
 
     if (idFromUrl) {
       setLoading(true);
-          getCVTemplateById(idFromUrl).then((templateData) => {
-            if (templateData) {
-              hasLoadedRef.current = idFromUrl; // Đánh dấu đã load
-              loadTemplate(templateData);
+      getCVTemplateById(idFromUrl).then((templateData) => {
+        if (templateData) {
+          hasLoadedRef.current = idFromUrl;
+          loadTemplate(templateData);
 
-              // Reset sectionPositions về default khi load template mới (không phải CV đã lưu)
-              const defaultPositions = getDefaultSectionPositions(
-                templateData.title
-              );
-              updateSectionPositions(templateData._id, defaultPositions);
+          // 1. Lấy vị trí mặc định ban đầu
+          let finalPositions = getDefaultSectionPositions(templateData.title);
 
+          // 2. Xác định dữ liệu người dùng sẽ dùng (ưu tiên userData có sẵn, nếu không thì lấy từ template)
+          const dataToCheck =
+            userData && Object.keys(userData).length > 0
+              ? userData
+              : templateData.data?.userData;
+
+          // 3. [MỚI] Tự động hiện các section ẩn nếu có dữ liệu (Sửa lỗi Case Sensitive)
+          if (dataToCheck) {
+            const hiddenSectionsToCheck = [
+              "certification",
+              "achievement",
+              "hobby",
+              "Project", // ID của Sidebar
+            ];
+
+            hiddenSectionsToCheck.forEach((sidebarId) => {
+              // --- BƯỚC A: TÌM DỮ LIỆU (Quét mọi biến thể tên gọi) ---
+              let hasData = false;
+              const possibleDataKeys = [
+                sidebarId, 
+                sidebarId.toLowerCase(),
+              ];
+              if (sidebarId === "hobby") possibleDataKeys.push("hobbies");
+              for (const key of possibleDataKeys) {
+                const d = dataToCheck[key];
+                if (d && Array.isArray(d) && d.length > 0) {
+                  hasData = true;
+                  break;
+                }
+              }
+              let positionKey = sidebarId;
+              if (!finalPositions[positionKey]) {
+                if (finalPositions[sidebarId.toLowerCase()]) {
+                   positionKey = sidebarId.toLowerCase();
+                }
+              }
               if (
-                (!userData || Object.keys(userData).length === 0) &&
-                templateData.data?.userData
+                hasData &&
+                finalPositions[positionKey] &&
+                finalPositions[positionKey].place === 0
               ) {
-                updateUserData({
-                  ...templateData.data.userData,
-                  sectionPositions: defaultPositions,
-                });
-              } else if (userData) {
-                // Nếu đã có userData, vẫn reset sectionPositions về default để tránh vỡ giao diện
-                updateUserData({
-                  ...userData,
-                  sectionPositions: defaultPositions,
-                });
+                const { place, order } = calculatePlaceAndOrder(
+                  positionKey,
+                  { ...finalPositions }, 
+                  templateData.title
+                );
+                finalPositions[sidebarId] = {
+                   place,
+                   order
+                };
+                if (sidebarId !== positionKey) {
+                  delete finalPositions[positionKey];
+                }
               }
+            });
+          }
 
-              if (templateData.data?.uiTexts) {
-                setCvUiTexts(templateData.data.uiTexts);
-              }
-              setCvTitle(t.cvTitleDefault(templateData.title));
-            }
-            setLoading(false);
-          });
+          // 4. Cập nhật positions đã được điều chỉnh vào store
+          updateSectionPositions(templateData._id, finalPositions);
+
+          // 5. Cập nhật User Data
+          if (
+            (!userData || Object.keys(userData).length === 0) &&
+            templateData.data?.userData
+          ) {
+            updateUserData({
+              ...templateData.data.userData,
+              sectionPositions: finalPositions, // Dùng positions đã chỉnh sửa
+            });
+          } else if (userData) {
+            updateUserData({
+              ...userData,
+              sectionPositions: finalPositions, // Dùng positions đã chỉnh sửa
+            });
+          }
+
+          if (templateData.data?.uiTexts) {
+            setCvUiTexts(templateData.data.uiTexts);
+          }
+          setCvTitle(t.cvTitleDefault(templateData.title));
+        }
+        setLoading(false);
+      });
     } else {
       setLoading(false);
     }
-  }, [id]); 
+  }, [id]);
 
   const handleTemplateSelect = async (selectedTemplate: CVTemplate) => {
     try {
@@ -428,84 +563,7 @@ const PageCreateCVAIContent = () => {
     }
   };
 
-  const calculatePlaceAndOrder = (
-    sectionId: string,
-    currentPositions: any,
-    templateTitle: string
-  ) => {
-    const defaultPositions = getDefaultSectionPositions(templateTitle);
-
-    const defaultSectionPos = defaultPositions[sectionId];
-    if (!defaultSectionPos || defaultSectionPos.place === 0) {
-      const isMinimalist1 =
-        templateTitle === "The Vanguard" || templateTitle?.includes("Vanguard");
-      const ismodern2 =
-        templateTitle === "The Modern" || templateTitle?.includes("Modern");
-
-      let targetPlace = 2;
-
-      if (isMinimalist1) {
-        if (sectionId === "hobby") {
-          targetPlace = 2;
-        } else if (
-          sectionId === "certification" ||
-          sectionId === "achievement" ||
-          sectionId === "Project"
-        ) {
-          targetPlace = 3;
-        }
-      } else if (ismodern2) {
-        targetPlace = 3;
-      } else {
-        if (sectionId === "hobby") {
-          targetPlace = 1;
-        } else if (
-          sectionId === "certification" ||
-          sectionId === "achievement" ||
-          sectionId === "Project"
-        ) {
-          targetPlace = 2;
-        }
-      }
-
-      const targetPlaceSections = Object.entries(currentPositions)
-        .filter(([_, pos]: [string, any]) => pos.place === targetPlace)
-        .sort(
-          ([, a]: [string, any], [, b]: [string, any]) => a.order - b.order
-        );
-
-      if (targetPlaceSections.length > 0) {
-        const lastOrder = (
-          targetPlaceSections[targetPlaceSections.length - 1][1] as any
-        ).order;
-        return { place: targetPlace, order: lastOrder + 1 };
-      }
-
-      return { place: targetPlace, order: 0 };
-    }
-
-    const targetPlace = defaultSectionPos.place;
-    const targetOrder = defaultSectionPos.order;
-
-    const sectionsToShift = Object.entries(currentPositions)
-      .filter(([key, pos]: [string, any]) => {
-        return (
-          key !== sectionId &&
-          pos.place === targetPlace &&
-          pos.order >= targetOrder
-        );
-      })
-      .sort(([, a]: [string, any], [, b]: [string, any]) => a.order - b.order);
-
-    sectionsToShift.forEach(([key]) => {
-      currentPositions[key] = {
-        ...currentPositions[key],
-        order: currentPositions[key].order + 1,
-      };
-    });
-
-    return { place: targetPlace, order: targetOrder };
-  };
+  
 
   const handleSectionClick = (sectionId: string, event?: React.MouseEvent) => {
     if (

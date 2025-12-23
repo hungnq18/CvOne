@@ -3,7 +3,7 @@
 
 import { useOnClickOutside } from "@/hooks/useOnClickOutside";
 import { useLanguage } from "@/providers/global_provider";
-import { Edit, Loader2, PlusCircle, Trash2, X } from "lucide-react";
+import { Edit, Loader2, PlusCircle, Trash2, X, RotateCcw } from "lucide-react";
 import { ChangeEvent, FC, ReactNode, useRef, useState } from "react";
 import { notify } from "@/lib/notify";
 import { useRouter } from "next/navigation";
@@ -11,17 +11,17 @@ import { toast } from "@/hooks/use-toast";
 
 const createMaxLengthHandler =
   (language: string) =>
-  (e: React.FormEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const target = e.target as HTMLInputElement | HTMLTextAreaElement;
-    const maxLength = target.maxLength;
-    if (maxLength > 0 && target.value.length >= maxLength) {
-      notify.error(
-        language === "vi"
-          ? `Đã đạt giới hạn tối đa ${maxLength} ký tự`
-          : `Maximum limit of ${maxLength} characters reached`
-      );
-    }
-  };
+    (e: React.FormEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      const target = e.target as HTMLInputElement | HTMLTextAreaElement;
+      const maxLength = target.maxLength;
+      if (maxLength > 0 && target.value.length >= maxLength) {
+        notify.error(
+          language === "vi"
+            ? `Đã đạt giới hạn tối đa ${maxLength} ký tự`
+            : `Maximum limit of ${maxLength} characters reached`
+        );
+      }
+    };
 
 const translations = {
   en: {
@@ -1454,6 +1454,20 @@ export const SkillsPopup: FC<{
               {skill.name}
             </span>
             <div className="ml-auto flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() =>
+                  setSkills((prev: any[]) =>
+                    prev.map((s, i) => (i === index ? { ...s, rating: 0 } : s))
+                  )
+                }
+                // Chỉ hiện nút khi rating > 0
+                className={`mr-1 p-1 rounded-full text-slate-400 hover:text-red-500 hover:bg-slate-100 transition-all ${(skill.rating || 0) === 0 ? "hidden" : "block"
+                  }`}
+                title={language === "vi" ? "Xóa đánh giá" : "Clear rating"}
+              >
+                <RotateCcw size={14} />
+              </button>
               {[1, 2, 3, 4, 5].map((n) => (
                 <button
                   key={n}
@@ -1465,9 +1479,8 @@ export const SkillsPopup: FC<{
                       )
                     )
                   }
-                  className={`${
-                    (skill.rating || 0) >= n ? "bg-blue-600" : "bg-blue-200"
-                  } w-6 h-2 rounded transition-colors`}
+                  className={`${(skill.rating || 0) >= n ? "bg-blue-600" : "bg-blue-200"
+                    } w-6 h-2 rounded transition-colors`}
                   aria-label={`${t.rating}: ${n}`}
                 />
               ))}

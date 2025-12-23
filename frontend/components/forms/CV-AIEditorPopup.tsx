@@ -16,23 +16,24 @@ import {
   Trash2,
   Wand2,
   X,
+  RotateCcw
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { ChangeEvent, FC, ReactNode, useRef, useState } from "react";
 
 const createMaxLengthHandler =
   (language: string) =>
-  (e: React.FormEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const target = e.target as HTMLInputElement | HTMLTextAreaElement;
-    const maxLength = target.maxLength;
-    if (maxLength > 0 && target.value.length >= maxLength) {
-      notify.error(
-        language === "vi"
-          ? `Đã đạt giới hạn tối đa ${maxLength} ký tự`
-          : `Maximum limit of ${maxLength} characters reached`
-      );
-    }
-  };
+    (e: React.FormEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      const target = e.target as HTMLInputElement | HTMLTextAreaElement;
+      const maxLength = target.maxLength;
+      if (maxLength > 0 && target.value.length >= maxLength) {
+        notify.error(
+          language === "vi"
+            ? `Đã đạt giới hạn tối đa ${maxLength} ký tự`
+            : `Maximum limit of ${maxLength} characters reached`
+        );
+      }
+    };
 
 const translations = {
   en: {
@@ -335,10 +336,9 @@ const AIButton: FC<{
         bg-gradient-to-r from-violet-600 via-indigo-600 to-blue-600
         shadow-lg shadow-indigo-500/25
         overflow-hidden transition-all duration-300
-        ${
-          disabled || isLoading
-            ? "opacity-60 cursor-not-allowed"
-            : "hover:shadow-xl hover:shadow-indigo-500/35 hover:scale-[1.02] active:scale-[0.98]"
+        ${disabled || isLoading
+          ? "opacity-60 cursor-not-allowed"
+          : "hover:shadow-xl hover:shadow-indigo-500/35 hover:scale-[1.02] active:scale-[0.98]"
         }
       `}
     >
@@ -925,20 +925,18 @@ export const TargetPopup: FC<{
                 return (
                   <div
                     key={idx}
-                    className={`flex items-start gap-3 p-4 rounded-xl transition-all cursor-pointer ${
-                      isSelected
+                    className={`flex items-start gap-3 p-4 rounded-xl transition-all cursor-pointer ${isSelected
                         ? "bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-lg"
                         : "bg-white border border-slate-200 hover:border-indigo-300 hover:shadow-md"
-                    }`}
+                      }`}
                     onClick={() => handleToggleSuggestion(item)}
                   >
                     <button
                       type="button"
-                      className={`flex items-center justify-center w-8 h-8 rounded-full text-lg font-bold flex-shrink-0 transition-all ${
-                        isSelected
+                      className={`flex items-center justify-center w-8 h-8 rounded-full text-lg font-bold flex-shrink-0 transition-all ${isSelected
                           ? "bg-white/20 text-white"
                           : "bg-gradient-to-r from-indigo-500 to-violet-500 text-white shadow-md"
-                      }`}
+                        }`}
                       title={isSelected ? t.tooltipRemove : t.tooltipAdd}
                     >
                       {isSelected ? (
@@ -949,9 +947,8 @@ export const TargetPopup: FC<{
                     </button>
                     {/* SỬA TẠI ĐÂY: Thêm 'break-words' và 'whitespace-pre-line' để chữ hiển thị đầy đủ, không bị cắt */}
                     <div
-                      className={`flex-1 text-sm leading-relaxed break-words whitespace-pre-line ${
-                        isSelected ? "text-white" : "text-slate-700"
-                      }`}
+                      className={`flex-1 text-sm leading-relaxed break-words whitespace-pre-line ${isSelected ? "text-white" : "text-slate-700"
+                        }`}
                     >
                       {item}
                     </div>
@@ -1095,9 +1092,9 @@ export const ExperiencePopup: FC<{
     ) {
       notify.error(
         t.dateInvalid ||
-          (language === "vi"
-            ? "Định dạng ngày không hợp lệ"
-            : "Invalid date format")
+        (language === "vi"
+          ? "Định dạng ngày không hợp lệ"
+          : "Invalid date format")
       );
       return;
     }
@@ -1108,9 +1105,9 @@ export const ExperiencePopup: FC<{
     ) {
       notify.error(
         t.dateInvalid ||
-          (language === "vi"
-            ? "Định dạng ngày không hợp lệ"
-            : "Invalid date format")
+        (language === "vi"
+          ? "Định dạng ngày không hợp lệ"
+          : "Invalid date format")
       );
       return;
     }
@@ -1126,9 +1123,9 @@ export const ExperiencePopup: FC<{
       if (end < start) {
         notify.error(
           t.endDateBeforeStart ||
-            (language === "vi"
-              ? "Ngày kết thúc phải sau ngày bắt đầu"
-              : "End date must be after start date")
+          (language === "vi"
+            ? "Ngày kết thúc phải sau ngày bắt đầu"
+            : "End date must be after start date")
         );
         return;
       }
@@ -1227,20 +1224,18 @@ export const ExperiencePopup: FC<{
                 className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
               ></textarea>
               <div
-                className={`absolute bottom-2 right-2 z-10 rounded-full p-0.5 bg-gradient-to-r from-[#e0f923] to-[#24C6DC] shadow-sm transition-opacity${
-                  loadingAI || !currentItem?.description ? "opacity-60" : ""
-                }`}
+                className={`absolute bottom-2 right-2 z-10 rounded-full p-0.5 bg-gradient-to-r from-[#e0f923] to-[#24C6DC] shadow-sm transition-opacity${loadingAI || !currentItem?.description ? "opacity-60" : ""
+                  }`}
               >
                 <button
                   type="button"
                   onClick={handleAIRewrite}
                   disabled={loadingAI || !currentItem?.description}
                   title={t.aiRewriteTooltip}
-                  className={`flex w-full items-center gap-2 rounded-full bg-white px-3 py-1 font-semibold text-sm text-[#0a2342] transition-all ${
-                    loadingAI || !currentItem?.description
+                  className={`flex w-full items-center gap-2 rounded-full bg-white px-3 py-1 font-semibold text-sm text-[#0a2342] transition-all ${loadingAI || !currentItem?.description
                       ? "cursor-not-allowed"
                       : "hover:bg-gradient-to-r hover:from-yellow-100 hover:to-teal-100"
-                  }`}
+                    }`}
                 >
                   {loadingAI ? (
                     <>
@@ -1362,9 +1357,9 @@ export const EducationPopup: FC<{
     if (!currentItem.institution || !currentItem.institution.trim()) {
       notify.error(
         t.institutionRequired ||
-          (language === "vi"
-            ? "Trường/Học viện là bắt buộc"
-            : "Institution is required")
+        (language === "vi"
+          ? "Trường/Học viện là bắt buộc"
+          : "Institution is required")
       );
       return;
     }
@@ -1379,7 +1374,7 @@ export const EducationPopup: FC<{
     if (!currentItem.major || !currentItem.major.trim()) {
       notify.error(
         t.majorRequired ||
-          (language === "vi" ? "Chuyên ngành là bắt buộc" : "Major is required")
+        (language === "vi" ? "Chuyên ngành là bắt buộc" : "Major is required")
       );
       return;
     }
@@ -1394,7 +1389,7 @@ export const EducationPopup: FC<{
     if (!currentItem.degree || !currentItem.degree.trim()) {
       notify.error(
         t.degreeRequired ||
-          (language === "vi" ? "Bằng cấp là bắt buộc" : "Degree is required")
+        (language === "vi" ? "Bằng cấp là bắt buộc" : "Degree is required")
       );
       return;
     }
@@ -1411,18 +1406,18 @@ export const EducationPopup: FC<{
     if (currentItem.startDate && !/^\d{4}-\d{2}$/.test(currentItem.startDate)) {
       notify.error(
         t.dateInvalid ||
-          (language === "vi"
-            ? "Định dạng ngày không hợp lệ"
-            : "Invalid date format")
+        (language === "vi"
+          ? "Định dạng ngày không hợp lệ"
+          : "Invalid date format")
       );
       return;
     }
     if (currentItem.endDate && !/^\d{4}-\d{2}$/.test(currentItem.endDate)) {
       notify.error(
         t.dateInvalid ||
-          (language === "vi"
-            ? "Định dạng ngày không hợp lệ"
-            : "Invalid date format")
+        (language === "vi"
+          ? "Định dạng ngày không hợp lệ"
+          : "Invalid date format")
       );
       return;
     }
@@ -1434,9 +1429,9 @@ export const EducationPopup: FC<{
       if (end < start) {
         notify.error(
           t.endDateBeforeStart ||
-            (language === "vi"
-              ? "Ngày kết thúc phải sau ngày bắt đầu"
-              : "End date must be after start date")
+          (language === "vi"
+            ? "Ngày kết thúc phải sau ngày bắt đầu"
+            : "End date must be after start date")
         );
         return;
       }
@@ -1801,6 +1796,19 @@ export const SkillsPopup: FC<{
                   {skill.name}
                 </span>
                 <div className="ml-auto flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setSkills((prev: any[]) =>
+                        prev.map((s, i) => (i === index ? { ...s, rating: 0 } : s))
+                      )
+                    }
+                    className={`mr-1 p-1 rounded-full text-slate-400 hover:text-red-500 hover:bg-white/50 transition-all ${(skill.rating || 0) === 0 ? "hidden" : "block"
+                      }`}
+                    title={language === "vi" ? "Xóa đánh giá" : "Clear rating"}
+                  >
+                    <RotateCcw size={14} />
+                  </button>
                   {[1, 2, 3, 4, 5].map((n) => (
                     <button
                       key={n}
@@ -1812,11 +1820,10 @@ export const SkillsPopup: FC<{
                           )
                         )
                       }
-                      className={`${
-                        (skill.rating || 0) >= n
+                      className={`${(skill.rating || 0) >= n
                           ? "bg-gradient-to-r from-blue-500 to-indigo-500"
                           : "bg-slate-200"
-                      } w-6 h-2 rounded-full transition-all hover:scale-110`}
+                        } w-6 h-2 rounded-full transition-all hover:scale-110`}
                       aria-label={`rating ${n}`}
                     />
                   ))}
@@ -1877,11 +1884,10 @@ export const SkillsPopup: FC<{
                   <button
                     key={skill}
                     type="button"
-                    className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium border transition-all w-full text-left ${
-                      isSelected
+                    className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium border transition-all w-full text-left ${isSelected
                         ? "bg-gradient-to-r from-blue-500 to-indigo-500 text-white border-transparent shadow-md"
                         : "bg-white hover:bg-slate-50 border-slate-200 hover:border-indigo-300 hover:shadow-sm"
-                    }`}
+                      }`}
                     onClick={() => handleToggleAISkill(skill)}
                   >
                     {isSelected ? (
