@@ -119,9 +119,7 @@ const CardMyCL: React.FC<CardMyCLProps> = ({ clListOverride }) => {
       const cls = await getCLs();
 
       setClList(cls);
-    } catch (err) {
-      console.error(t.errors.fetch, err);
-    }
+    } catch (err) {}
   };
 
   useEffect(() => {
@@ -152,7 +150,6 @@ const CardMyCL: React.FC<CardMyCLProps> = ({ clListOverride }) => {
 
       notify.success(t.deleteDialog.success);
     } catch (error) {
-      console.error(t.errors.delete, error);
       notify.error(t.deleteDialog.error);
     } finally {
       setDeletingCLId(null);

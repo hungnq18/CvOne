@@ -1,5 +1,5 @@
-import { fetchWithAuth } from './apiClient';
-import { API_ENDPOINTS } from './apiConfig';
+import { fetchWithAuth } from "./apiClient";
+import { API_ENDPOINTS } from "./apiConfig";
 
 export interface CreateInterviewRequest {
   jobDescription: string;
@@ -13,7 +13,7 @@ export interface InterviewQuestion {
   id: string;
   question: string;
   category: string;
-  difficulty: 'easy' | 'medium' | 'hard';
+  difficulty: "easy" | "medium" | "hard";
   tips?: string[];
 }
 
@@ -27,7 +27,7 @@ export interface InterviewSession {
   totalQuestions: number;
   completedQuestions: number;
   status: string;
-  difficulty: 'easy' | 'medium' | 'hard'; // Auto-determined từ JD
+  difficulty: "easy" | "medium" | "hard"; // Auto-determined từ JD
   language?: string; // Language detected from JD (vi-VN, en-US, ja-JP, etc.)
   createdAt: Date;
   averageScore?: number;
@@ -63,18 +63,23 @@ class AiInterviewApi {
   /**
    * Tạo buổi phỏng vấn mới
    */
-  async createInterviewSession(request: CreateInterviewRequest): Promise<ApiResponse<InterviewSession>> {
+  async createInterviewSession(
+    request: CreateInterviewRequest
+  ): Promise<ApiResponse<InterviewSession>> {
     try {
-      const response = await fetchWithAuth(API_ENDPOINTS.AI_INTERVIEW.CREATE_SESSION, {
-        method: 'POST',
-        body: JSON.stringify(request)
-      });
+      const response = await fetchWithAuth(
+        API_ENDPOINTS.AI_INTERVIEW.CREATE_SESSION,
+        {
+          method: "POST",
+          body: JSON.stringify(request),
+        }
+      );
       return response;
     } catch (error: any) {
-      console.error('Error creating interview session:', error);
       return {
         success: false,
-        error: error.response?.data?.error || 'Failed to create interview session'
+        error:
+          error.response?.data?.error || "Failed to create interview session",
       };
     }
   }
@@ -82,15 +87,18 @@ class AiInterviewApi {
   /**
    * Lấy câu hỏi hiện tại
    */
-  async getCurrentQuestion(sessionId: string): Promise<ApiResponse<InterviewQuestion & { tips: string[] }>> {
+  async getCurrentQuestion(
+    sessionId: string
+  ): Promise<ApiResponse<InterviewQuestion & { tips: string[] }>> {
     try {
-      const response = await fetchWithAuth(API_ENDPOINTS.AI_INTERVIEW.GET_CURRENT_QUESTION(sessionId));
+      const response = await fetchWithAuth(
+        API_ENDPOINTS.AI_INTERVIEW.GET_CURRENT_QUESTION(sessionId)
+      );
       return response;
     } catch (error: any) {
-      console.error('Error getting current question:', error);
       return {
         success: false,
-        error: error.response?.data?.error || 'Failed to get current question'
+        error: error.response?.data?.error || "Failed to get current question",
       };
     }
   }
@@ -100,13 +108,14 @@ class AiInterviewApi {
    */
   async getSession(sessionId: string): Promise<ApiResponse<InterviewSession>> {
     try {
-      const response = await fetchWithAuth(API_ENDPOINTS.AI_INTERVIEW.GET_SESSION(sessionId));
+      const response = await fetchWithAuth(
+        API_ENDPOINTS.AI_INTERVIEW.GET_SESSION(sessionId)
+      );
       return response;
     } catch (error: any) {
-      console.error('Error getting session:', error);
       return {
         success: false,
-        error: error.response?.data?.error || 'Failed to get session'
+        error: error.response?.data?.error || "Failed to get session",
       };
     }
   }
@@ -114,23 +123,30 @@ class AiInterviewApi {
   /**
    * Nộp câu trả lời
    */
-  async submitAnswer(sessionId: string, request: SubmitAnswerRequest): Promise<ApiResponse<{
-    feedback: InterviewFeedback;
-    nextQuestionAvailable: boolean;
-    totalQuestions: number;
-    answeredQuestions: number;
-  }>> {
+  async submitAnswer(
+    sessionId: string,
+    request: SubmitAnswerRequest
+  ): Promise<
+    ApiResponse<{
+      feedback: InterviewFeedback;
+      nextQuestionAvailable: boolean;
+      totalQuestions: number;
+      answeredQuestions: number;
+    }>
+  > {
     try {
-      const response = await fetchWithAuth(API_ENDPOINTS.AI_INTERVIEW.SUBMIT_ANSWER(sessionId), {
-        method: 'POST',
-        body: JSON.stringify(request)
-      });
+      const response = await fetchWithAuth(
+        API_ENDPOINTS.AI_INTERVIEW.SUBMIT_ANSWER(sessionId),
+        {
+          method: "POST",
+          body: JSON.stringify(request),
+        }
+      );
       return response;
     } catch (error: any) {
-      console.error('Error submitting answer:', error);
       return {
         success: false,
-        error: error.response?.data?.error || 'Failed to submit answer'
+        error: error.response?.data?.error || "Failed to submit answer",
       };
     }
   }
@@ -138,20 +154,30 @@ class AiInterviewApi {
   /**
    * Tạo câu hỏi follow-up
    */
-  async generateFollowUpQuestion(sessionId: string, questionId: string, userAnswer: string): Promise<ApiResponse<{
-    followUpQuestion: string;
-  }>> {
+  async generateFollowUpQuestion(
+    sessionId: string,
+    questionId: string,
+    userAnswer: string
+  ): Promise<
+    ApiResponse<{
+      followUpQuestion: string;
+    }>
+  > {
     try {
-      const response = await fetchWithAuth(API_ENDPOINTS.AI_INTERVIEW.FOLLOW_UP_QUESTION(sessionId), {
-        method: 'POST',
-        body: JSON.stringify({ questionId, userAnswer })
-      });
+      const response = await fetchWithAuth(
+        API_ENDPOINTS.AI_INTERVIEW.FOLLOW_UP_QUESTION(sessionId),
+        {
+          method: "POST",
+          body: JSON.stringify({ questionId, userAnswer }),
+        }
+      );
       return response;
     } catch (error: any) {
-      console.error('Error generating follow-up question:', error);
       return {
         success: false,
-        error: error.response?.data?.error || 'Failed to generate follow-up question'
+        error:
+          error.response?.data?.error ||
+          "Failed to generate follow-up question",
       };
     }
   }
@@ -159,17 +185,23 @@ class AiInterviewApi {
   /**
    * Lấy câu trả lời mẫu
    */
-  async getSampleAnswer(sessionId: string, questionId: string): Promise<ApiResponse<{
-    sampleAnswer: string;
-  }>> {
+  async getSampleAnswer(
+    sessionId: string,
+    questionId: string
+  ): Promise<
+    ApiResponse<{
+      sampleAnswer: string;
+    }>
+  > {
     try {
-      const response = await fetchWithAuth(API_ENDPOINTS.AI_INTERVIEW.SAMPLE_ANSWER(sessionId, questionId));
+      const response = await fetchWithAuth(
+        API_ENDPOINTS.AI_INTERVIEW.SAMPLE_ANSWER(sessionId, questionId)
+      );
       return response;
     } catch (error: any) {
-      console.error('Error getting sample answer:', error);
       return {
         success: false,
-        error: error.response?.data?.error || 'Failed to get sample answer'
+        error: error.response?.data?.error || "Failed to get sample answer",
       };
     }
   }
@@ -177,26 +209,30 @@ class AiInterviewApi {
   /**
    * Hoàn thành session
    */
-  async completeSession(sessionId: string): Promise<ApiResponse<{
-    sessionId: string;
-    overallFeedback: string;
-    averageScore: number;
-    totalQuestions: number;
-    answeredQuestions: number;
-    feedbacks: InterviewFeedback[];
-    completedAt: Date;
-    sessionCompleted: boolean;
-  }>> {
+  async completeSession(sessionId: string): Promise<
+    ApiResponse<{
+      sessionId: string;
+      overallFeedback: string;
+      averageScore: number;
+      totalQuestions: number;
+      answeredQuestions: number;
+      feedbacks: InterviewFeedback[];
+      completedAt: Date;
+      sessionCompleted: boolean;
+    }>
+  > {
     try {
-      const response = await fetchWithAuth(API_ENDPOINTS.AI_INTERVIEW.COMPLETE_SESSION(sessionId), {
-        method: 'POST'
-      });
+      const response = await fetchWithAuth(
+        API_ENDPOINTS.AI_INTERVIEW.COMPLETE_SESSION(sessionId),
+        {
+          method: "POST",
+        }
+      );
       return response;
     } catch (error: any) {
-      console.error('Error completing session:', error);
       return {
         success: false,
-        error: error.response?.data?.error || 'Failed to complete session'
+        error: error.response?.data?.error || "Failed to complete session",
       };
     }
   }
@@ -204,17 +240,22 @@ class AiInterviewApi {
   /**
    * Retake interview với cùng questions từ session cũ
    */
-  async retakeInterviewSession(sessionId: string): Promise<ApiResponse<InterviewSession>> {
+  async retakeInterviewSession(
+    sessionId: string
+  ): Promise<ApiResponse<InterviewSession>> {
     try {
-      const response = await fetchWithAuth(API_ENDPOINTS.AI_INTERVIEW.RETAKE_SESSION(sessionId), {
-        method: 'POST'
-      });
+      const response = await fetchWithAuth(
+        API_ENDPOINTS.AI_INTERVIEW.RETAKE_SESSION(sessionId),
+        {
+          method: "POST",
+        }
+      );
       return response;
     } catch (error: any) {
-      console.error('Error retaking interview session:', error);
       return {
         success: false,
-        error: error.response?.data?.error || 'Failed to retake interview session'
+        error:
+          error.response?.data?.error || "Failed to retake interview session",
       };
     }
   }
@@ -222,39 +263,42 @@ class AiInterviewApi {
   /**
    * Lấy lịch sử phỏng vấn
    */
-  async getInterviewHistory(status?: 'in-progress' | 'completed' | 'abandoned'): Promise<ApiResponse<{
-    sessions: Array<{
-      sessionId: string;
-      jobDescription: string;
-      jobTitle?: string;
-      companyName?: string;
-      difficulty: 'easy' | 'medium' | 'hard';
-      status: string;
-      totalQuestions: number;
-      answeredQuestions: number;
-      averageScore?: number;
-      createdAt: Date;
-      completedAt?: Date;
-    }>;
-    stats: {
-      totalSessions: number;
-      completedSessions: number;
-      inProgressSessions: number;
-      averageScore: number;
-      recentSessions: any[];
-    };
-  }>> {
+  async getInterviewHistory(
+    status?: "in-progress" | "completed" | "abandoned"
+  ): Promise<
+    ApiResponse<{
+      sessions: Array<{
+        sessionId: string;
+        jobDescription: string;
+        jobTitle?: string;
+        companyName?: string;
+        difficulty: "easy" | "medium" | "hard";
+        status: string;
+        totalQuestions: number;
+        answeredQuestions: number;
+        averageScore?: number;
+        createdAt: Date;
+        completedAt?: Date;
+      }>;
+      stats: {
+        totalSessions: number;
+        completedSessions: number;
+        inProgressSessions: number;
+        averageScore: number;
+        recentSessions: any[];
+      };
+    }>
+  > {
     try {
-      const url = status 
+      const url = status
         ? `${API_ENDPOINTS.AI_INTERVIEW.GET_HISTORY}?status=${status}`
         : API_ENDPOINTS.AI_INTERVIEW.GET_HISTORY;
       const response = await fetchWithAuth(url);
       return response;
     } catch (error: any) {
-      console.error('Error getting interview history:', error);
       return {
         success: false,
-        error: error.response?.data?.error || 'Failed to get interview history'
+        error: error.response?.data?.error || "Failed to get interview history",
       };
     }
   }

@@ -124,12 +124,7 @@ const CoverLetterBuilderContent = () => {
             if (templateData) {
               setTemplateName(templateData.title.toLowerCase() as TemplateType);
             }
-          } catch (error) {
-            console.error(
-              "Failed to fetch template based on localStorage:",
-              error
-            );
-          }
+          } catch (error) {}
         }
 
         const dto = {
@@ -189,7 +184,6 @@ const CoverLetterBuilderContent = () => {
           }
         } catch (error) {
           toast.error(t.clBuilder.messages.extractedFailed);
-          console.error("Extraction failed:", error);
         } finally {
           setIsExtracting(false);
         }
@@ -235,9 +229,7 @@ const CoverLetterBuilderContent = () => {
               );
             }
           }
-        } catch (error) {
-          console.error("Failed to fetch CL data:", error);
-        }
+        } catch (error) {}
       }
     };
 
@@ -254,9 +246,7 @@ const CoverLetterBuilderContent = () => {
             setSelectedTemplateData(data);
             setTemplateName(data.title.toLowerCase() as TemplateType);
           }
-        } catch (error) {
-          console.error("Failed to fetch CL template:", error);
-        }
+        } catch (error) {}
       }
     };
 
@@ -310,12 +300,7 @@ const CoverLetterBuilderContent = () => {
             }));
             // toast.success("Đã tải dữ liệu từ phân tích AI!");
           }
-        } catch (e) {
-          console.error(
-            "Error parsing cover letter data from local storage",
-            e
-          );
-        }
+        } catch (e) {}
       }
     };
     loadFromLocalStorage();
@@ -431,7 +416,6 @@ const CoverLetterBuilderContent = () => {
         toast.error(t.clBuilder.messages.templateNotSelected);
       }
     } catch (error) {
-      console.error("Failed to save cover letter:", error);
       toast.error(t.clBuilder.messages.clSaveFailed);
     } finally {
       setIsSaving(false);
@@ -947,7 +931,6 @@ const CoverLetterBuilderContent = () => {
         );
         pdf.save(clTitle ? `${clTitle}.pdf` : "cover-letter.pdf");
       } catch (error) {
-        console.error("Error generating PDF:", error);
         toast.error(t.clBuilder.messages.pdfError);
       }
     }

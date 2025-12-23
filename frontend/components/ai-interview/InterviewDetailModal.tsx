@@ -1,19 +1,23 @@
 "use client";
 
-import { aiInterviewApi, InterviewFeedback, InterviewQuestion } from "@/api/aiInterviewApi";
+import {
+  aiInterviewApi,
+  InterviewFeedback,
+  InterviewQuestion,
+} from "@/api/aiInterviewApi";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { useLanguage } from "@/providers/global_provider";
 import {
-    AlertCircle,
-    Calendar,
-    CheckCircle2,
-    Clock,
-    MessageSquare,
-    Star,
-    X
+  AlertCircle,
+  Calendar,
+  CheckCircle2,
+  Clock,
+  MessageSquare,
+  Star,
+  X,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -32,7 +36,7 @@ interface SessionDetail {
   averageScore: number;
   totalQuestions: number;
   completedQuestions: number;
-  difficulty: 'easy' | 'medium' | 'hard';
+  difficulty: "easy" | "medium" | "hard";
   status: string;
   overallFeedback?: string;
   createdAt: Date;
@@ -102,7 +106,9 @@ export default function InterviewDetailModal({
   const { language } = useLanguage();
   const t = detailTexts[language] ?? detailTexts.en;
 
-  const [sessionDetail, setSessionDetail] = useState<SessionDetail | null>(null);
+  const [sessionDetail, setSessionDetail] = useState<SessionDetail | null>(
+    null
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -123,7 +129,6 @@ export default function InterviewDetailModal({
         setError(response.error || t.error);
       }
     } catch (err: any) {
-      console.error("Error loading session detail:", err);
       setError(err.message || t.error);
     } finally {
       setIsLoading(false);
@@ -154,23 +159,22 @@ export default function InterviewDetailModal({
     try {
       const dateObj = new Date(date);
       if (isNaN(dateObj.getTime())) return "N/A";
-      return dateObj.toLocaleString(
-        language === "vi" ? "vi-VN" : "en-US",
-        {
-          year: "numeric",
-          month: "short",
-          day: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-        }
-      );
+      return dateObj.toLocaleString(language === "vi" ? "vi-VN" : "en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
     } catch (error) {
-      console.error("Error formatting date:", error);
       return "N/A";
     }
   };
 
-  const formatDuration = (startDate: Date | string | undefined, endDate: Date | string | undefined) => {
+  const formatDuration = (
+    startDate: Date | string | undefined,
+    endDate: Date | string | undefined
+  ) => {
     if (!startDate || !endDate) return "N/A";
     try {
       const start = new Date(startDate).getTime();
@@ -182,15 +186,16 @@ export default function InterviewDetailModal({
       const seconds = Math.floor((diff % 60000) / 1000);
       return `${minutes}m ${seconds}s`;
     } catch (error) {
-      console.error("Error formatting duration:", error);
       return "N/A";
     }
   };
 
   const getQuestionTimeSpent = (questionId: string, questionIndex: number) => {
     if (!sessionDetail) return "N/A";
-    
-    const feedback = sessionDetail.feedbacks?.find((fb) => fb.questionId === questionId);
+
+    const feedback = sessionDetail.feedbacks?.find(
+      (fb) => fb.questionId === questionId
+    );
     if (!feedback || !feedback.evaluatedAt) return "N/A";
 
     try {
@@ -205,7 +210,7 @@ export default function InterviewDetailModal({
           const prevFeedback = sessionDetail.feedbacks?.find(
             (fb) => fb.questionId === prevQuestion.id
           );
-          startTime = prevFeedback?.evaluatedAt 
+          startTime = prevFeedback?.evaluatedAt
             ? new Date(prevFeedback.evaluatedAt)
             : new Date(sessionDetail.createdAt);
         } else {
@@ -216,12 +221,11 @@ export default function InterviewDetailModal({
       const endTime = new Date(feedback.evaluatedAt);
       const diff = endTime.getTime() - startTime.getTime();
       if (isNaN(diff) || diff < 0) return "N/A";
-      
+
       const minutes = Math.floor(diff / 60000);
       const seconds = Math.floor((diff % 60000) / 1000);
       return `${minutes}m ${seconds}s`;
     } catch (error) {
-      console.error("Error calculating time spent:", error);
       return "N/A";
     }
   };
@@ -252,7 +256,12 @@ export default function InterviewDetailModal({
               </div>
             )}
           </div>
-          <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onClose}
+            className="rounded-full"
+          >
             <X className="h-5 w-5" />
           </Button>
         </div>
@@ -284,10 +293,14 @@ export default function InterviewDetailModal({
                   <CardContent className="p-4 text-center">
                     <div className="flex items-center justify-center gap-2 mb-2">
                       <Star className="h-5 w-5 text-yellow-600" />
-                      <span className="text-sm font-medium">{t.overallScore}</span>
+                      <span className="text-sm font-medium">
+                        {t.overallScore}
+                      </span>
                     </div>
                     <div className="text-3xl font-bold text-yellow-600">
-                      {sessionDetail.averageScore ? sessionDetail.averageScore.toFixed(1) : "N/A"}
+                      {sessionDetail.averageScore
+                        ? sessionDetail.averageScore.toFixed(1)
+                        : "N/A"}
                     </div>
                     <div className="text-xs text-gray-600 mt-1">/ 10</div>
                   </CardContent>
@@ -297,7 +310,9 @@ export default function InterviewDetailModal({
                   <CardContent className="p-4 text-center">
                     <div className="flex items-center justify-center gap-2 mb-2">
                       <CheckCircle2 className="h-5 w-5 text-blue-600" />
-                      <span className="text-sm font-medium">{t.questionsAnswered}</span>
+                      <span className="text-sm font-medium">
+                        {t.questionsAnswered}
+                      </span>
                     </div>
                     <div className="text-3xl font-bold text-blue-600">
                       {sessionDetail.completedQuestions}
@@ -306,7 +321,11 @@ export default function InterviewDetailModal({
                       / {sessionDetail.totalQuestions}
                     </div>
                     <Progress
-                      value={(sessionDetail.completedQuestions / sessionDetail.totalQuestions) * 100}
+                      value={
+                        (sessionDetail.completedQuestions /
+                          sessionDetail.totalQuestions) *
+                        100
+                      }
                       className="mt-2 h-2"
                     />
                   </CardContent>
@@ -352,135 +371,154 @@ export default function InterviewDetailModal({
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-6">
-                    {sessionDetail.questions && sessionDetail.questions.length > 0 ? (
+                    {sessionDetail.questions &&
+                    sessionDetail.questions.length > 0 ? (
                       sessionDetail.questions.map((question, index) => {
-                      const feedback = sessionDetail.feedbacks?.find(
-                        (fb) => fb.questionId === question.id
-                      );
-                      const timeSpent = getQuestionTimeSpent(question.id, index);
+                        const feedback = sessionDetail.feedbacks?.find(
+                          (fb) => fb.questionId === question.id
+                        );
+                        const timeSpent = getQuestionTimeSpent(
+                          question.id,
+                          index
+                        );
 
-                      return (
-                        <div
-                          key={question.id}
-                          className="border rounded-lg p-4 space-y-4"
-                        >
-                          {/* Question Header */}
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-2">
-                                <span className="font-semibold text-lg">
-                                  {t.question} {index + 1}:
-                                </span>
-                                <Badge variant="outline">{question.category}</Badge>
-                                <Badge className={getDifficultyColor(question.difficulty)}>
-                                  {question.difficulty}
-                                </Badge>
+                        return (
+                          <div
+                            key={question.id}
+                            className="border rounded-lg p-4 space-y-4"
+                          >
+                            {/* Question Header */}
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <span className="font-semibold text-lg">
+                                    {t.question} {index + 1}:
+                                  </span>
+                                  <Badge variant="outline">
+                                    {question.category}
+                                  </Badge>
+                                  <Badge
+                                    className={getDifficultyColor(
+                                      question.difficulty
+                                    )}
+                                  >
+                                    {question.difficulty}
+                                  </Badge>
+                                </div>
+                                <p className="text-gray-700 mb-2">
+                                  {question.question}
+                                </p>
                               </div>
-                              <p className="text-gray-700 mb-2">{question.question}</p>
+                              {feedback && (
+                                <div
+                                  className={`px-4 py-2 rounded-lg border-2 font-bold text-lg ${getScoreColor(
+                                    feedback.score
+                                  )}`}
+                                >
+                                  {feedback.score}/10
+                                </div>
+                              )}
                             </div>
+
+                            {/* Answer */}
                             {feedback && (
-                              <div
-                                className={`px-4 py-2 rounded-lg border-2 font-bold text-lg ${getScoreColor(
-                                  feedback.score
-                                )}`}
-                              >
-                                {feedback.score}/10
+                              <div>
+                                <h4 className="font-semibold text-sm text-gray-600 mb-1">
+                                  {t.answer}:
+                                </h4>
+                                <p className="text-gray-700 bg-gray-50 p-3 rounded border">
+                                  {feedback.userAnswer}
+                                </p>
+                              </div>
+                            )}
+
+                            {/* Feedback */}
+                            {feedback ? (
+                              <div className="space-y-3">
+                                <div>
+                                  <h4 className="font-semibold text-sm text-gray-600 mb-1">
+                                    {t.feedback}:
+                                  </h4>
+                                  <p className="text-gray-700 bg-blue-50 p-3 rounded border border-blue-200">
+                                    {feedback.feedback}
+                                  </p>
+                                </div>
+
+                                {/* Strengths */}
+                                {feedback.strengths &&
+                                  feedback.strengths.length > 0 && (
+                                    <div>
+                                      <h4 className="font-semibold text-sm text-green-700 mb-2 flex items-center gap-1">
+                                        <CheckCircle2 className="h-4 w-4" />
+                                        {t.strengths}:
+                                      </h4>
+                                      <ul className="space-y-1">
+                                        {feedback.strengths.map(
+                                          (strength, i) => (
+                                            <li
+                                              key={i}
+                                              className="flex items-start gap-2 text-sm text-green-700"
+                                            >
+                                              <CheckCircle2 className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                                              <span>{strength}</span>
+                                            </li>
+                                          )
+                                        )}
+                                      </ul>
+                                    </div>
+                                  )}
+
+                                {/* Improvements */}
+                                {feedback.improvements &&
+                                  feedback.improvements.length > 0 && (
+                                    <div>
+                                      <h4 className="font-semibold text-sm text-orange-700 mb-2 flex items-center gap-1">
+                                        <AlertCircle className="h-4 w-4" />
+                                        {t.improvements}:
+                                      </h4>
+                                      <ul className="space-y-1">
+                                        {feedback.improvements.map(
+                                          (improvement, i) => (
+                                            <li
+                                              key={i}
+                                              className="flex items-start gap-2 text-sm text-orange-700"
+                                            >
+                                              <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                                              <span>{improvement}</span>
+                                            </li>
+                                          )
+                                        )}
+                                      </ul>
+                                    </div>
+                                  )}
+
+                                {/* Time Info */}
+                                <div className="flex items-center gap-4 text-xs text-gray-500 pt-2 border-t">
+                                  <div className="flex items-center gap-1">
+                                    <Clock className="h-3 w-3" />
+                                    <span>
+                                      {t.timeSpent}: {timeSpent}
+                                    </span>
+                                  </div>
+                                  {feedback.evaluatedAt && (
+                                    <div className="flex items-center gap-1">
+                                      <Calendar className="h-3 w-3" />
+                                      <span>
+                                        {t.evaluatedAt}:{" "}
+                                        {formatDate(feedback.evaluatedAt)}
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="text-center py-4 text-gray-500 text-sm">
+                                {t.noFeedback}
                               </div>
                             )}
                           </div>
-
-                          {/* Answer */}
-                          {feedback && (
-                            <div>
-                              <h4 className="font-semibold text-sm text-gray-600 mb-1">
-                                {t.answer}:
-                              </h4>
-                              <p className="text-gray-700 bg-gray-50 p-3 rounded border">
-                                {feedback.userAnswer}
-                              </p>
-                            </div>
-                          )}
-
-                          {/* Feedback */}
-                          {feedback ? (
-                            <div className="space-y-3">
-                              <div>
-                                <h4 className="font-semibold text-sm text-gray-600 mb-1">
-                                  {t.feedback}:
-                                </h4>
-                                <p className="text-gray-700 bg-blue-50 p-3 rounded border border-blue-200">
-                                  {feedback.feedback}
-                                </p>
-                              </div>
-
-                              {/* Strengths */}
-                              {feedback.strengths && feedback.strengths.length > 0 && (
-                                <div>
-                                  <h4 className="font-semibold text-sm text-green-700 mb-2 flex items-center gap-1">
-                                    <CheckCircle2 className="h-4 w-4" />
-                                    {t.strengths}:
-                                  </h4>
-                                  <ul className="space-y-1">
-                                    {feedback.strengths.map((strength, i) => (
-                                      <li
-                                        key={i}
-                                        className="flex items-start gap-2 text-sm text-green-700"
-                                      >
-                                        <CheckCircle2 className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                                        <span>{strength}</span>
-                                      </li>
-                                    ))}
-                                  </ul>
-                                </div>
-                              )}
-
-                              {/* Improvements */}
-                              {feedback.improvements && feedback.improvements.length > 0 && (
-                                <div>
-                                  <h4 className="font-semibold text-sm text-orange-700 mb-2 flex items-center gap-1">
-                                    <AlertCircle className="h-4 w-4" />
-                                    {t.improvements}:
-                                  </h4>
-                                  <ul className="space-y-1">
-                                    {feedback.improvements.map((improvement, i) => (
-                                      <li
-                                        key={i}
-                                        className="flex items-start gap-2 text-sm text-orange-700"
-                                      >
-                                        <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                                        <span>{improvement}</span>
-                                      </li>
-                                    ))}
-                                  </ul>
-                                </div>
-                              )}
-
-                              {/* Time Info */}
-                              <div className="flex items-center gap-4 text-xs text-gray-500 pt-2 border-t">
-                                <div className="flex items-center gap-1">
-                                  <Clock className="h-3 w-3" />
-                                  <span>
-                                    {t.timeSpent}: {timeSpent}
-                                  </span>
-                                </div>
-                                {feedback.evaluatedAt && (
-                                  <div className="flex items-center gap-1">
-                                    <Calendar className="h-3 w-3" />
-                                    <span>
-                                      {t.evaluatedAt}: {formatDate(feedback.evaluatedAt)}
-                                    </span>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="text-center py-4 text-gray-500 text-sm">
-                              {t.noFeedback}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })
+                        );
+                      })
                     ) : (
                       <div className="text-center py-8 text-gray-500">
                         {t.noFeedback}
@@ -503,4 +541,3 @@ export default function InterviewDetailModal({
     </div>
   );
 }
-

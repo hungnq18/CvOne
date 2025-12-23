@@ -34,7 +34,6 @@ export function JobApprovalTable() {
       setTotal(res.total || 0);
       setPage(res.page || pageNumber);
     } catch (error) {
-      console.error("Failed to fetch pending jobs:", error);
       toast.error(t.admin.jobApproval.messages.loadError);
     } finally {
       setLoading(false);
@@ -64,7 +63,6 @@ export function JobApprovalTable() {
       toast.success(t.admin.jobApproval.messages.approveSuccess);
       fetchJobs(page);
     } catch (error) {
-      console.error("Failed to approve job:", error);
       toast.error(t.admin.jobApproval.messages.approveError);
     }
   };

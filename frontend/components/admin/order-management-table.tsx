@@ -1,16 +1,16 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
+import { useEffect, useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -18,94 +18,121 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
-import { getOrderHistoryAdmin, Order } from "@/api/apiOrder"
-import { format } from "date-fns"
-import { toast } from "react-hot-toast"
-import { useLanguage } from "@/providers/global_provider"
+} from "@/components/ui/table";
+import { getOrderHistoryAdmin, Order } from "@/api/apiOrder";
+import { format } from "date-fns";
+import { toast } from "react-hot-toast";
+import { useLanguage } from "@/providers/global_provider";
 
 function formatCurrencyVND(amount: number) {
   return new Intl.NumberFormat("vi-VN", {
     style: "currency",
     currency: "VND",
     maximumFractionDigits: 0,
-  }).format(amount)
+  }).format(amount);
 }
 
 export function OrderManagementTable() {
-  const { t } = useLanguage()
-  const [orders, setOrders] = useState<Order[]>([])
-  const [loading, setLoading] = useState(false)
-  const [currentPage, setCurrentPage] = useState(1)
-  const [statusFilter, setStatusFilter] = useState<"all" | NonNullable<Order["status"]>>("all")
-  const pageSize = 10
+  const { t } = useLanguage();
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [statusFilter, setStatusFilter] = useState<
+    "all" | NonNullable<Order["status"]>
+  >("all");
+  const pageSize = 10;
 
   const fetchOrders = async () => {
     try {
-      setLoading(true)
-      const res = await getOrderHistoryAdmin()
-      setOrders(res || [])
-      setCurrentPage(1)
+      setLoading(true);
+      const res = await getOrderHistoryAdmin();
+      setOrders(res || []);
+      setCurrentPage(1);
     } catch (error) {
-      console.error("Failed to fetch orders:", error)
-      toast.error(t.admin.orders.messages.loadError)
+      toast.error(t.admin.orders.messages.loadError);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
-    fetchOrders()
-  }, [])
+    fetchOrders();
+  }, []);
 
-  const getNormalizedStatus = (status?: Order["status"]): NonNullable<Order["status"]> =>
-    (status ?? "pending") as NonNullable<Order["status"]>
+  const getNormalizedStatus = (
+    status?: Order["status"]
+  ): NonNullable<Order["status"]> =>
+    (status ?? "pending") as NonNullable<Order["status"]>;
 
   const renderStatus = (status?: Order["status"]) => {
     switch (status) {
       case "completed":
-        return <Badge className="bg-green-100 text-green-800">{t.admin.orders.status.completed}</Badge>
+        return (
+          <Badge className="bg-green-100 text-green-800">
+            {t.admin.orders.status.completed}
+          </Badge>
+        );
       case "cancelled":
-        return <Badge className="bg-red-100 text-red-800">{t.admin.orders.status.cancelled}</Badge>
+        return (
+          <Badge className="bg-red-100 text-red-800">
+            {t.admin.orders.status.cancelled}
+          </Badge>
+        );
       default:
-        return <Badge className="bg-yellow-100 text-yellow-800">{t.admin.orders.status.pending}</Badge>
+        return (
+          <Badge className="bg-yellow-100 text-yellow-800">
+            {t.admin.orders.status.pending}
+          </Badge>
+        );
     }
-  }
+  };
 
   const filteredOrders = orders.filter((order) => {
-    if (statusFilter === "all") return true
-    return getNormalizedStatus(order.status) === statusFilter
-  })
+    if (statusFilter === "all") return true;
+    return getNormalizedStatus(order.status) === statusFilter;
+  });
 
-  const totalPages = Math.max(1, Math.ceil(filteredOrders.length / pageSize))
-  const safePage = Math.min(currentPage, totalPages)
-  const startIndex = (safePage - 1) * pageSize
-  const paginatedOrders = filteredOrders.slice(startIndex, startIndex + pageSize)
+  const totalPages = Math.max(1, Math.ceil(filteredOrders.length / pageSize));
+  const safePage = Math.min(currentPage, totalPages);
+  const startIndex = (safePage - 1) * pageSize;
+  const paginatedOrders = filteredOrders.slice(
+    startIndex,
+    startIndex + pageSize
+  );
 
   return (
     <div className="flex-1 space-y-6 p-6 pt-0 bg-gray-50">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">{t.admin.orders.title}</h1>
-          <p className="text-muted-foreground">
-            {t.admin.orders.desc}
-          </p>
+          <h1 className="text-3xl font-bold tracking-tight">
+            {t.admin.orders.title}
+          </h1>
+          <p className="text-muted-foreground">{t.admin.orders.desc}</p>
         </div>
-        <Button variant="outline" size="sm" onClick={fetchOrders} disabled={loading}>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={fetchOrders}
+          disabled={loading}
+        >
           {t.admin.orders.refresh}
         </Button>
       </div>
 
       <Card>
         <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <CardTitle>{t.admin.orders.orders} ({filteredOrders.length})</CardTitle>
+          <CardTitle>
+            {t.admin.orders.orders} ({filteredOrders.length})
+          </CardTitle>
           <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">{t.admin.orders.filter.label}</span>
+            <span className="text-sm text-muted-foreground">
+              {t.admin.orders.filter.label}
+            </span>
             <Select
               value={statusFilter}
               onValueChange={(value) => {
-                setStatusFilter(value as typeof statusFilter)
-                setCurrentPage(1)
+                setStatusFilter(value as typeof statusFilter);
+                setCurrentPage(1);
               }}
             >
               <SelectTrigger className="w-[200px]">
@@ -113,9 +140,15 @@ export function OrderManagementTable() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{t.admin.orders.filter.all}</SelectItem>
-                <SelectItem value="pending">{t.admin.orders.status.pending}</SelectItem>
-                <SelectItem value="completed">{t.admin.orders.status.completed}</SelectItem>
-                <SelectItem value="cancelled">{t.admin.orders.status.cancelled}</SelectItem>
+                <SelectItem value="pending">
+                  {t.admin.orders.status.pending}
+                </SelectItem>
+                <SelectItem value="completed">
+                  {t.admin.orders.status.completed}
+                </SelectItem>
+                <SelectItem value="cancelled">
+                  {t.admin.orders.status.cancelled}
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -136,7 +169,10 @@ export function OrderManagementTable() {
             <TableBody>
               {filteredOrders.length === 0 && !loading && (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground">
+                  <TableCell
+                    colSpan={7}
+                    className="text-center text-muted-foreground"
+                  >
                     {t.admin.orders.table.empty}
                   </TableCell>
                 </TableRow>
@@ -148,7 +184,9 @@ export function OrderManagementTable() {
                     {typeof order.userId === "string"
                       ? order.userId
                       : order.userId.account_id?.email ||
-                        `${order.userId.first_name ?? ""} ${order.userId.last_name ?? ""}`.trim() ||
+                        `${order.userId.first_name ?? ""} ${
+                          order.userId.last_name ?? ""
+                        }`.trim() ||
                         order.userId._id}
                   </TableCell>
                   <TableCell>{order.totalToken}</TableCell>
@@ -156,10 +194,12 @@ export function OrderManagementTable() {
                     {formatCurrencyVND(
                       typeof order.totalAmount === "number"
                         ? order.totalAmount
-                        : order.price || 0,
+                        : order.price || 0
                     )}
                   </TableCell>
-                  <TableCell className="capitalize">{order.paymentMethod}</TableCell>
+                  <TableCell className="capitalize">
+                    {order.paymentMethod}
+                  </TableCell>
                   <TableCell>{renderStatus(order.status)}</TableCell>
                   <TableCell>
                     {order.createdAt
@@ -181,7 +221,8 @@ export function OrderManagementTable() {
                     startIndex + pageSize,
                     filteredOrders.length
                   )}`}{" "}
-              {t.admin.manageUser.table.of} {filteredOrders.length} {t.admin.orders.orders.toLowerCase()}
+              {t.admin.manageUser.table.of} {filteredOrders.length}{" "}
+              {t.admin.orders.orders.toLowerCase()}
             </p>
             <div className="flex items-center gap-2">
               <Button
@@ -189,20 +230,23 @@ export function OrderManagementTable() {
                 variant="outline"
                 size="sm"
                 disabled={safePage === 1 || loading}
-                onClick={() =>
-                  setCurrentPage((p) => Math.max(1, p - 1))
-                }
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               >
                 {t.common.previous}
               </Button>
               <span className="text-sm text-muted-foreground">
-                {t.common.page} {safePage} {t.admin.manageUser.table.of} {totalPages}
+                {t.common.page} {safePage} {t.admin.manageUser.table.of}{" "}
+                {totalPages}
               </span>
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
-                disabled={safePage === totalPages || loading || filteredOrders.length === 0}
+                disabled={
+                  safePage === totalPages ||
+                  loading ||
+                  filteredOrders.length === 0
+                }
                 onClick={() =>
                   setCurrentPage((p) => Math.min(totalPages, p + 1))
                 }
@@ -214,5 +258,5 @@ export function OrderManagementTable() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

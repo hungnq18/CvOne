@@ -1,14 +1,14 @@
-"use client"
+"use client";
 
-import { Eye, ShoppingCart, Package, Users, TrendingUp } from "lucide-react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { UserStatsChart } from "@/components/admin/user-stats-chart"
-import { useEffect, useState } from "react"
-import { getAllUsers, User } from "@/api/userApi"
-import { getJobs } from "@/api/jobApi"
-import { getCVTemplates } from "@/api/cvapi"
-import { getCLTemplates } from "@/api/clApi"
-import { useLanguage } from "@/providers/global_provider"
+import { Eye, ShoppingCart, Package, Users, TrendingUp } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { UserStatsChart } from "@/components/admin/user-stats-chart";
+import { useEffect, useState } from "react";
+import { getAllUsers, User } from "@/api/userApi";
+import { getJobs } from "@/api/jobApi";
+import { getCVTemplates } from "@/api/cvapi";
+import { getCLTemplates } from "@/api/clApi";
+import { useLanguage } from "@/providers/global_provider";
 
 interface UserData {
   month: string;
@@ -16,7 +16,7 @@ interface UserData {
 }
 
 export function DashboardContent() {
-  const { t } = useLanguage()
+  const { t } = useLanguage();
   const [stats, setStats] = useState([
     {
       key: "totalCvTemplate",
@@ -46,7 +46,7 @@ export function DashboardContent() {
       changeType: "positive" as const,
       icon: Users,
     },
-  ])
+  ]);
   const [userChartData, setUserChartData] = useState<UserData[]>([]);
 
   useEffect(() => {
@@ -57,30 +57,41 @@ export function DashboardContent() {
           getJobs(),
           getCVTemplates(),
           getCLTemplates(),
-        ])
+        ]);
 
         setStats((prevStats) => [
           { ...prevStats[0], value: cvTemplates.length.toString() },
           { ...prevStats[1], value: clTemplates.length.toString() },
           { ...prevStats[2], value: jobs.length.toString() },
           { ...prevStats[3], value: users.length.toString() },
-        ])
+        ]);
 
         const monthlyUserData = processUserData(users);
         setUserChartData(monthlyUserData);
-      } catch (error) {
-        console.error("Failed to fetch dashboard stats:", error)
-      }
-    }
+      } catch (error) {}
+    };
 
-    fetchStats()
-  }, [])
+    fetchStats();
+  }, []);
 
   const processUserData = (users: User[]): UserData[] => {
-    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const monthNames = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ];
     const monthlyData: { [key: string]: number } = {};
 
-    users.forEach(user => {
+    users.forEach((user) => {
       if (user.createdAt) {
         const date = new Date(user.createdAt);
         const monthIndex = date.getMonth();
@@ -94,9 +105,9 @@ export function DashboardContent() {
       }
     });
 
-    return monthNames.map(monthName => ({
+    return monthNames.map((monthName) => ({
       month: monthName,
-      users: monthlyData[monthName] || 0
+      users: monthlyData[monthName] || 0,
     }));
   };
 
@@ -116,7 +127,9 @@ export function DashboardContent() {
                   <p className="text-2xl font-bold">{stat.value}</p>
                   <div className="flex items-center gap-1 mt-1">
                     <TrendingUp className="h-3 w-3 text-green-500" />
-                    <span className="text-xs text-green-500">{stat.change}</span>
+                    <span className="text-xs text-green-500">
+                      {stat.change}
+                    </span>
                   </div>
                 </div>
                 <div className="h-12 w-12 rounded-lg bg-blue-50 flex items-center justify-center">
@@ -132,7 +145,9 @@ export function DashboardContent() {
       <div className="">
         <Card className="bg-white">
           <CardHeader>
-            <CardTitle className="text-lg">{t.admin.dashboard.userStatistics}</CardTitle>
+            <CardTitle className="text-lg">
+              {t.admin.dashboard.userStatistics}
+            </CardTitle>
             <div className="flex gap-4 text-sm text-muted-foreground">
               <span>{t.admin.dashboard.last12Months}</span>
             </div>
@@ -143,5 +158,5 @@ export function DashboardContent() {
         </Card>
       </div>
     </div>
-  )
+  );
 }

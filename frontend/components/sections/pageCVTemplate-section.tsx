@@ -257,7 +257,7 @@ export const getServerSideProps: GetServerSideProps = async () => {
         try {
           return { ...template, content: JSON.parse(template.data) };
         } catch (e) {
-          console.error("Failed to parse CV content:", e);
+          // console.error("Failed to parse CV content:", e);
           return { ...template, content: {} };
         }
       }
@@ -266,7 +266,7 @@ export const getServerSideProps: GetServerSideProps = async () => {
 
     return { props: { initialTemplates: parsedData } };
   } catch (error) {
-    console.error("Error fetching CV templates:", error);
+    // console.error("Error fetching CV templates:", error);
     return { props: { initialTemplates: [] } };
   }
 };

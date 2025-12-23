@@ -603,7 +603,6 @@ export default function AiInterviewModal({
                 }
               })
               .catch((err) => {
-                console.error("Error speaking welcome:", err);
                 // Still show question even if welcome speech fails
                 const firstQuestion = sessionData?.questions?.[0];
                 if (firstQuestion) {
@@ -691,7 +690,6 @@ export default function AiInterviewModal({
                     }
                   })
                   .catch((err) => {
-                    console.error("Error speaking welcome:", err);
                     // Still show question even if welcome speech fails
                     const firstQuestion = response.data?.questions?.[0];
                     if (firstQuestion) {
@@ -710,7 +708,6 @@ export default function AiInterviewModal({
         }
       }
     } catch (error) {
-      console.error("Error initializing interview:", error);
       notify.error(t.notify.sessionError);
     } finally {
       setIsCreatingSession(false);
@@ -785,7 +782,6 @@ export default function AiInterviewModal({
         });
       }
     } catch (error) {
-      console.error("Error submitting answer:", error);
       notify.error(t.notify.submitError);
       // Remove typing indicator on error
       setConversation((prev) => prev.filter((msg) => msg.type !== "typing"));
@@ -1102,7 +1098,6 @@ export default function AiInterviewModal({
         : voices.filter((voice) => voice.lang.toLowerCase().includes(langCode));
 
     if (allLangVoices.length === 0) {
-      console.warn("No voices found for language:", lang);
       return null;
     }
 
@@ -1170,10 +1165,6 @@ export default function AiInterviewModal({
     }
 
     // Last resort: use first available voice for the language
-    console.warn(
-      "No female voice found, using first available voice for language:",
-      lang
-    );
     return allLangVoices[0];
   };
 
@@ -1195,7 +1186,6 @@ export default function AiInterviewModal({
 
     // Check if browser supports speech synthesis
     if (!("speechSynthesis" in window)) {
-      console.warn("Speech synthesis not supported");
       return;
     }
 
@@ -1227,7 +1217,6 @@ export default function AiInterviewModal({
         const langForVoice = effectiveLang;
 
         if (!cleanedText || cleanedText.trim().length === 0) {
-          console.warn("Text is empty after cleaning, skipping speech");
           return;
         }
 
@@ -1260,10 +1249,6 @@ export default function AiInterviewModal({
             utterance.lang = bestVoice.lang;
           }
         } else {
-          console.warn(
-            "No suitable voice found, using default with lang:",
-            langForVoice
-          );
           // Still set language even if no specific voice found
           utterance.lang = langForVoice;
         }
@@ -1275,15 +1260,12 @@ export default function AiInterviewModal({
         };
 
         utterance.onerror = (error) => {
-          console.error("Speech synthesis error:", error);
           speechSynthesisRef.current = null;
         };
 
         speechSynthesisRef.current = utterance;
         window.speechSynthesis.speak(utterance);
-      } catch (error) {
-        console.error("Error in speakWithVoice:", error);
-      }
+      } catch (error) {}
     };
 
     // Load voices if not already loaded
@@ -1401,7 +1383,6 @@ export default function AiInterviewModal({
 
       // Check if browser supports speech synthesis
       if (!("speechSynthesis" in window)) {
-        console.warn("Speech synthesis not supported");
         reject(new Error("Speech synthesis not supported"));
         return;
       }
@@ -1434,7 +1415,6 @@ export default function AiInterviewModal({
           const langForVoice = effectiveLang;
 
           if (!cleanedText || cleanedText.trim().length === 0) {
-            console.warn("Text is empty after cleaning, skipping speech");
             resolve();
             return;
           }
@@ -1468,10 +1448,6 @@ export default function AiInterviewModal({
               utterance.lang = bestVoice.lang;
             }
           } else {
-            console.warn(
-              "No suitable voice found, using default with lang:",
-              langForVoice
-            );
             // Still set language even if no specific voice found
             utterance.lang = langForVoice;
           }
@@ -1484,7 +1460,6 @@ export default function AiInterviewModal({
           };
 
           utterance.onerror = (error) => {
-            console.error("Speech synthesis error:", error);
             speechSynthesisRef.current = null;
             reject(error);
           };
@@ -1492,7 +1467,6 @@ export default function AiInterviewModal({
           speechSynthesisRef.current = utterance;
           window.speechSynthesis.speak(utterance);
         } catch (error) {
-          console.error("Error in speakWithVoice:", error);
           reject(error);
         }
       };
@@ -1574,16 +1548,14 @@ export default function AiInterviewModal({
       // Wait a bit to ensure welcome message has finished
       await new Promise((resolve) => setTimeout(resolve, 500));
       // Speak question with introduction, using detected language
-      speakQuestion(questionText, questionLanguage, true, true).catch((err) => {
-        console.error("Error speaking question:", err);
-      });
+      speakQuestion(questionText, questionLanguage, true, true).catch(
+        (err) => {}
+      );
     } else {
       // For subsequent questions, speak immediately with introduction
       setTimeout(() => {
         speakQuestion(questionText, questionLanguage, true, false).catch(
-          (err) => {
-            console.error("Error speaking question:", err);
-          }
+          (err) => {}
         );
       }, 100);
     }
@@ -1675,7 +1647,6 @@ export default function AiInterviewModal({
         setShowSampleAnswer(true);
       }
     } catch (error) {
-      console.error("Error getting sample answer:", error);
     } finally {
       setIsLoading(false);
     }
@@ -1696,7 +1667,6 @@ export default function AiInterviewModal({
         setFollowUpQuestion(response.data.followUpQuestion);
       }
     } catch (error) {
-      console.error("Error generating follow-up question:", error);
     } finally {
       setIsLoading(false);
     }
@@ -1722,7 +1692,6 @@ export default function AiInterviewModal({
         setShowSummaryPopup(true);
       }
     } catch (error) {
-      console.error("Error completing session:", error);
       notify.error(t.notify.completeError);
     } finally {
       setIsLoading(false);

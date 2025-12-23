@@ -191,9 +191,9 @@ export function useWebSpeechToText(
           if (confidence >= minConfidence) {
             finalTranscript += transcript + " ";
           } else {
-            console.warn(
-              `Low confidence result filtered: ${transcript} (confidence: ${confidence})`
-            );
+            // console.warn(
+            //   `Low confidence result filtered: ${transcript} (confidence: ${confidence})`
+            // );
             // Still add it but mark as low confidence - user can see and correct
             finalTranscript += transcript + " ";
           }

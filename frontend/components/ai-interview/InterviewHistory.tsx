@@ -36,7 +36,8 @@ const historyTexts = {
     },
     listTitle: "Interview History",
     emptyTitle: "No Interview Sessions Yet",
-    emptyDesc: "Start your first AI interview practice session to see your progress here.",
+    emptyDesc:
+      "Start your first AI interview practice session to see your progress here.",
     emptyCta: "Start First Interview",
     difficulty: {
       easy: "easy",
@@ -54,7 +55,8 @@ const historyTexts = {
     },
     listTitle: "Lịch sử phỏng vấn",
     emptyTitle: "Chưa có phiên phỏng vấn nào",
-    emptyDesc: "Hãy bắt đầu buổi phỏng vấn AI đầu tiên để xem tiến trình của bạn tại đây.",
+    emptyDesc:
+      "Hãy bắt đầu buổi phỏng vấn AI đầu tiên để xem tiến trình của bạn tại đây.",
     emptyCta: "Bắt đầu phỏng vấn đầu tiên",
     difficulty: {
       easy: "dễ",
@@ -66,7 +68,10 @@ const historyTexts = {
   },
 } as const;
 
-export default function InterviewHistory({ onViewDetails, onRetakeInterview }: InterviewHistoryProps) {
+export default function InterviewHistory({
+  onViewDetails,
+  onRetakeInterview,
+}: InterviewHistoryProps) {
   const { language } = useLanguage();
   const t = historyTexts[language] ?? historyTexts.en;
 
@@ -77,7 +82,9 @@ export default function InterviewHistory({ onViewDetails, onRetakeInterview }: I
     averageScore: 0,
     totalTime: 0,
   });
-  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(
+    null
+  );
   const [showDetailModal, setShowDetailModal] = useState(false);
 
   useEffect(() => {
@@ -89,19 +96,24 @@ export default function InterviewHistory({ onViewDetails, onRetakeInterview }: I
     try {
       const response = await aiInterviewApi.getInterviewHistory();
       if (response.success && response.data) {
-        const transformedSessions: InterviewSession[] = response.data.sessions.map((s) => ({
-          id: s.sessionId,
-          jobTitle: s.jobTitle || (language === "vi" ? "Chưa có tiêu đề" : "Untitled Position"),
-          company: s.companyName || (language === "vi" ? "Công ty chưa xác định" : "Unknown Company"),
-          completedAt: s.completedAt
-            ? new Date(s.completedAt).toISOString()
-            : new Date(s.createdAt).toISOString(),
-          totalQuestions: s.totalQuestions,
-          completedQuestions: s.answeredQuestions,
-          averageScore: s.averageScore || 0,
-          difficulty: s.difficulty,
-          duration: 0,
-        }));
+        const transformedSessions: InterviewSession[] =
+          response.data.sessions.map((s) => ({
+            id: s.sessionId,
+            jobTitle:
+              s.jobTitle ||
+              (language === "vi" ? "Chưa có tiêu đề" : "Untitled Position"),
+            company:
+              s.companyName ||
+              (language === "vi" ? "Công ty chưa xác định" : "Unknown Company"),
+            completedAt: s.completedAt
+              ? new Date(s.completedAt).toISOString()
+              : new Date(s.createdAt).toISOString(),
+            totalQuestions: s.totalQuestions,
+            completedQuestions: s.answeredQuestions,
+            averageScore: s.averageScore || 0,
+            difficulty: s.difficulty,
+            duration: 0,
+          }));
 
         setSessions(transformedSessions);
         setStats({
@@ -111,20 +123,22 @@ export default function InterviewHistory({ onViewDetails, onRetakeInterview }: I
         });
       }
     } catch (error) {
-      console.error("Error loading interview history:", error);
     } finally {
       setIsLoading(false);
     }
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString(language === "vi" ? "vi-VN" : "en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    return new Date(dateString).toLocaleDateString(
+      language === "vi" ? "vi-VN" : "en-US",
+      {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      }
+    );
   };
 
   const getScoreColor = (score: number) => {
@@ -188,7 +202,9 @@ export default function InterviewHistory({ onViewDetails, onRetakeInterview }: I
               <div>
                 <p className="text-sm text-gray-600">{t.stats.averageScore}</p>
                 <p className="text-2xl font-bold">
-                  {stats.averageScore > 0 ? `${stats.averageScore.toFixed(1)}/10` : "N/A"}
+                  {stats.averageScore > 0
+                    ? `${stats.averageScore.toFixed(1)}/10`
+                    : "N/A"}
                 </p>
               </div>
             </div>
@@ -216,51 +232,73 @@ export default function InterviewHistory({ onViewDetails, onRetakeInterview }: I
           <Card>
             <CardContent className="p-8 text-center">
               <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">{t.emptyTitle}</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                {t.emptyTitle}
+              </h3>
               <p className="text-gray-600 mb-4">{t.emptyDesc}</p>
-              <Button className="bg-blue-600 hover:bg-blue-700">{t.emptyCta}</Button>
+              <Button className="bg-blue-600 hover:bg-blue-700">
+                {t.emptyCta}
+              </Button>
             </CardContent>
           </Card>
         ) : (
           <div className="space-y-3">
             {sessions.map((session) => (
-              <Card key={session.id} className="hover:shadow-md transition-shadow">
+              <Card
+                key={session.id}
+                className="hover:shadow-md transition-shadow"
+              >
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
-                        <h4 className="font-semibold text-lg">{session.jobTitle}</h4>
-                        <Badge className={getDifficultyColor(session.difficulty)}>
+                        <h4 className="font-semibold text-lg">
+                          {session.jobTitle}
+                        </h4>
+                        <Badge
+                          className={getDifficultyColor(session.difficulty)}
+                        >
                           {renderDifficultyLabel(session.difficulty)}
                         </Badge>
                       </div>
 
-                      <p className="text-gray-600 text-sm mb-3">{session.company}</p>
+                      <p className="text-gray-600 text-sm mb-3">
+                        {session.company}
+                      </p>
 
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
                         <div className="flex items-center gap-1">
                           <Calendar className="h-4 w-4 text-gray-400" />
-                          <span className="text-xs">{formatDate(session.completedAt)}</span>
+                          <span className="text-xs">
+                            {formatDate(session.completedAt)}
+                          </span>
                         </div>
 
                         <div className="flex items-center gap-1">
                           <TrendingUp className="h-4 w-4 text-gray-400" />
                           <span className={getScoreColor(session.averageScore)}>
-                            {session.averageScore > 0 ? `${session.averageScore.toFixed(1)}/10` : "N/A"}
+                            {session.averageScore > 0
+                              ? `${session.averageScore.toFixed(1)}/10`
+                              : "N/A"}
                           </span>
                         </div>
 
                         <div className="flex items-center gap-1">
                           <span className="text-gray-400">Progress:</span>
                           <span>
-                            {session.completedQuestions}/{session.totalQuestions}
+                            {session.completedQuestions}/
+                            {session.totalQuestions}
                           </span>
                         </div>
                       </div>
 
                       <div className="mt-3">
                         <Progress
-                          value={(session.completedQuestions / session.totalQuestions) * 100}
+                          value={
+                            (session.completedQuestions /
+                              session.totalQuestions) *
+                            100
+                          }
                           className="h-2"
                         />
                       </div>

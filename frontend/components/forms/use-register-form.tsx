@@ -61,7 +61,8 @@ const translations: {
       passwordMismatch: "Passwords do not match!",
       passwordTooShort: "Password must be at least 8 characters",
       passwordTooLong: "Password must not exceed 50 characters",
-      passwordComplexity: "Password must contain at least one number and one special character",
+      passwordComplexity:
+        "Password must contain at least one number and one special character",
       registerSuccess: "Registration successful!",
       registerFailed: "Registration failed",
       checkEmail: "Please check your email for verification",
@@ -106,13 +107,16 @@ const translations: {
       passwordMismatch: "Passwords do not match!",
       passwordTooShort: "Password must be at least 8 characters",
       passwordTooLong: "Password must not exceed 50 characters",
-      passwordComplexity: "Password must contain at least one number and one special character",
+      passwordComplexity:
+        "Password must contain at least one number and one special character",
       registerSuccess: "Registration successful!",
       registerFailed: "Registration failed",
       checkEmail: "Please check your email for verification",
       agreeToTerms: "You must agree to the terms and conditions.",
-      wordLimitError: "Họ, Tên và Tên công ty chỉ được chứa tối đa 5 từ mỗi trường!",
-      invalidVatNumber: "Mã số thuế phải là số dương tối đa 14 chữ số, không được có số âm!",
+      wordLimitError:
+        "Họ, Tên và Tên công ty chỉ được chứa tối đa 5 từ mỗi trường!",
+      invalidVatNumber:
+        "Mã số thuế phải là số dương tối đa 14 chữ số, không được có số âm!",
       nameTooLong: "Họ và Tên không được quá 100 ký tự!",
     },
   },
@@ -143,7 +147,8 @@ const translations: {
       passwordMismatch: "Mật khẩu xác nhận không khớp!",
       passwordTooShort: "Mật khẩu phải có ít nhất 8 ký tự",
       passwordTooLong: "Mật khẩu không được quá 50 ký tự",
-      passwordComplexity: "Mật khẩu phải có ít nhất một số và một ký tự đặc biệt",
+      passwordComplexity:
+        "Mật khẩu phải có ít nhất một số và một ký tự đặc biệt",
       registerSuccess: "Đăng ký thành công!",
       registerFailed: "Đăng ký thất bại",
       checkEmail: "Vui lòng kiểm tra email của bạn để xác nhận",
@@ -192,8 +197,10 @@ const translations: {
       registerFailed: "Đăng ký thất bại",
       checkEmail: "Vui lòng kiểm tra email của bạn để xác nhận",
       agreeToTerms: "Bạn phải đồng ý với các điều khoản và điều kiện.",
-      wordLimitError: "Họ, Tên và Tên công ty chỉ được chứa tối đa 5 từ mỗi trường!",
-      invalidVatNumber: "Mã số thuế phải là số dương tối đa 14 chữ số, không được có số âm!",
+      wordLimitError:
+        "Họ, Tên và Tên công ty chỉ được chứa tối đa 5 từ mỗi trường!",
+      invalidVatNumber:
+        "Mã số thuế phải là số dương tối đa 14 chữ số, không được có số âm!",
       nameTooLong: "Họ và Tên không được quá 100 ký tự!",
     },
   },
@@ -280,7 +287,11 @@ export function useRegisterForm(formType: "user" | "hr" = "user") {
 
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
     const disposableDomains = [
-      '10minutemail.com', 'mailinator.com', 'tempmail.net', 'guerrillamail.com', 'dispostable.com',
+      "10minutemail.com",
+      "mailinator.com",
+      "tempmail.net",
+      "guerrillamail.com",
+      "dispostable.com",
     ];
 
     if (!emailRegex.test(email!)) {
@@ -291,22 +302,20 @@ export function useRegisterForm(formType: "user" | "hr" = "user") {
 
     // HR flow: không chặn domain email (admin sẽ duyệt sau)
 
-    const emailDomain = email.split('@')[1]?.toLowerCase();
+    const emailDomain = email.split("@")[1]?.toLowerCase();
     if (emailDomain && disposableDomains.some((d) => emailDomain.endsWith(d))) {
-      showErrorToast('Không sử dụng email tạm thời!');
+      showErrorToast("Không sử dụng email tạm thời!");
       setIsLoading(false);
       return;
     }
 
     try {
       if (await checkEmailExists(email)) {
-        showErrorToast('Email này đã được đăng ký!');
+        showErrorToast("Email này đã được đăng ký!");
         setIsLoading(false);
         return;
       }
-    } catch (err) {
-      console.warn('Không thể kiểm tra email tồn tại:', err);
-    }
+    } catch (err) {}
 
     // Validate Password Strength
     if (password.length < 8) {
@@ -324,7 +333,10 @@ export function useRegisterForm(formType: "user" | "hr" = "user") {
     const passwordComplexityRegex = /(?=.*[0-9])(?=.*[!@#$%^&*(),.?":{}|<>])/;
 
     if (!passwordComplexityRegex.test(password)) {
-      showErrorToast(t['passwordComplexity'] || "Mật khẩu phải chứa ít nhất 1 số và 1 ký tự đặc biệt");
+      showErrorToast(
+        t["passwordComplexity"] ||
+          "Mật khẩu phải chứa ít nhất 1 số và 1 ký tự đặc biệt"
+      );
       setIsLoading(false);
       return;
     }
@@ -353,7 +365,6 @@ export function useRegisterForm(formType: "user" | "hr" = "user") {
         showSuccessToast(t.registerSuccess, t.checkEmail);
         router.push(`/verify-email?email=${encodeURIComponent(email)}`);
       } catch (error) {
-        console.error("Registration error:", error);
         const msg = error instanceof Error ? error.message : t.registerFailed;
         showErrorToast(t.registerFailed, msg);
       } finally {
@@ -380,10 +391,21 @@ export function useRegisterForm(formType: "user" | "hr" = "user") {
 
       // Validate word count các trường bắt buộc (first_name, last_name, company_name):
       const wcErrMsg = t.wordLimitError;
-      const validateWordCount = (val: string, max: number = 5, min: number = 1) => {
-        return val.trim().split(/\s+/).length >= min && val.trim().split(/\s+/).length <= max;
+      const validateWordCount = (
+        val: string,
+        max: number = 5,
+        min: number = 1
+      ) => {
+        return (
+          val.trim().split(/\s+/).length >= min &&
+          val.trim().split(/\s+/).length <= max
+        );
       };
-      if (!validateWordCount(first_name) || !validateWordCount(last_name) || !validateWordCount(company_name)) {
+      if (
+        !validateWordCount(first_name) ||
+        !validateWordCount(last_name) ||
+        !validateWordCount(company_name)
+      ) {
         showErrorToast(wcErrMsg);
         setIsLoading(false);
         return;
@@ -394,7 +416,10 @@ export function useRegisterForm(formType: "user" | "hr" = "user") {
         setIsLoading(false);
         return;
       }
-      if (!/^\d{1,14}$/.test(vatRegistrationNumber.trim()) || vatRegistrationNumber.trim().startsWith("-")) {
+      if (
+        !/^\d{1,14}$/.test(vatRegistrationNumber.trim()) ||
+        vatRegistrationNumber.trim().startsWith("-")
+      ) {
         showErrorToast(t.invalidVatNumber);
         setIsLoading(false);
         return;

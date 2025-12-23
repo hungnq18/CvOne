@@ -196,10 +196,11 @@ const formatAnalysisResult = (
           result.experienceLevel as keyof typeof t_results.levelMap
         ] || result.experienceLevel
       : null;
-    
+
     // Use AI-generated suggestions from backend, fallback to default if empty
-    const hasBackendSuggestions = result.cvSuggestions && result.cvSuggestions.length > 0;
-    
+    const hasBackendSuggestions =
+      result.cvSuggestions && result.cvSuggestions.length > 0;
+
     const suggestions = hasBackendSuggestions
       ? result.cvSuggestions
       : [
@@ -259,7 +260,6 @@ const formatAnalysisResult = (
       </div>
     );
   } catch (error) {
-    console.error(t_results.errorFormatting, error);
     return (
       <div className="whitespace-pre-wrap">
         {JSON.stringify(result, null, 2)}
@@ -356,8 +356,6 @@ export default function JobDescriptionPage() {
 
       router.replace(`/createCV-AIManual?id=${templateId}`);
     } catch (error) {
-      console.error("Lỗi trong quá trình xử lý CV:", error);
-
       if (error instanceof Error) {
         if (error.message.includes("413")) {
           notify.error(t.alerts.pdfTooLarge413);
@@ -393,14 +391,16 @@ export default function JobDescriptionPage() {
     setAnalysisResult(null);
     try {
       const result = await analyzeJD(jobDescription);
-      
+
       // Backend returns { analyzedJob: {...}, total_tokens: ... }
       const analysisData = result?.analyzedJob || result;
-      
-      const formattedResult = formatAnalysisResult(analysisData, t.analysisResults);
+
+      const formattedResult = formatAnalysisResult(
+        analysisData,
+        t.analysisResults
+      );
       setAnalysisResult(formattedResult);
     } catch (error) {
-      console.error("Error analyzing job description:", error);
       setAnalysisError(t.alerts.jdAnalysisError);
     } finally {
       setIsAnalyzing(false);
@@ -423,7 +423,7 @@ export default function JobDescriptionPage() {
     setAnalysisResult(null);
     try {
       const result = await uploadJDPdfAndAnalyze(jdFile);
-      
+
       // Backend returns { analyzedJob: {...}, total_tokens: ... } from analyzeJobDescription
       // Also may include text field if extracted
       const analysisData = result?.analyzedJob || result?.analysis || result;
@@ -439,7 +439,6 @@ export default function JobDescriptionPage() {
       );
       setAnalysisResult(formattedResult);
     } catch (error) {
-      console.error("Error analyzing job description file:", error);
       setAnalysisError(t.alerts.jdAnalysisError);
     } finally {
       setIsAnalyzing(false);

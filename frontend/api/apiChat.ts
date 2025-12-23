@@ -30,7 +30,6 @@ export interface Conversation {
   currentUser?: User;
 }
 
-
 /**
  * Normalize ID từ object hoặc string - Xử lý đúng ObjectId từ MongoDB
  */
@@ -119,7 +118,6 @@ export const processMessagesData = async (
       })
       .filter(Boolean); // Filter out any null/undefined messages
   } catch (err) {
-    console.error("Error processing messages:", err);
     return messages;
   }
 };
@@ -148,7 +146,6 @@ export const processMessageData = async (msg: any): Promise<Message> => {
       sender,
     };
   } catch (err) {
-    console.error("Error processing message:", err);
     return msg;
   }
 };
@@ -218,7 +215,6 @@ export const processConversationsData = async (
       };
     });
   } catch (err) {
-    console.error("Error processing conversations:", err);
     return conversations;
   }
 };
@@ -261,7 +257,6 @@ export const processConversationData = async (
       currentUser,
     };
   } catch (err) {
-    console.error("Error processing conversation:", err);
     return conv;
   }
 };
@@ -358,7 +353,6 @@ export const sendMessage = async (data: {
       readBy: [],
     };
   } catch (err) {
-    console.error("Failed to send message:", err);
     throw err;
   }
 };

@@ -85,9 +85,7 @@ export default function NotificationCenterClient() {
         await markAllNotificationsAsRead();
         socket?.emit("notification:read:all", { userId: user?._id });
         setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
-      } catch (err) {
-        console.error("Error marking notifications as read:", err);
-      }
+      } catch (err) {}
     };
 
     markAllRead();
@@ -121,9 +119,7 @@ export default function NotificationCenterClient() {
                   },
                 };
               }
-            } catch (err) {
-              console.error("Error fetching HR info:", err);
-            }
+            } catch (err) {}
           }
           return notif;
         })
@@ -162,13 +158,10 @@ export default function NotificationCenterClient() {
             const hrUser = await getUserById(hrUserId);
             detail = { ...detail, hrPhone: hrUser?.phone || t.na };
           } catch (err) {
-            console.error("Error fetching HR user info:", err);
             detail = { ...detail, hrPhone: t.na };
           }
         }
-      } catch (err) {
-        console.error("Error fetching job detail:", err);
-      }
+      } catch (err) {}
     }
 
     setModalNotification({ ...notif, detailInfo: detail });

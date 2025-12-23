@@ -9,17 +9,19 @@ import { notify } from "@/lib/notify";
 import { useRouter } from "next/navigation";
 import { toast } from "@/hooks/use-toast";
 
-const createMaxLengthHandler = (language: string) => (e: React.FormEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-  const target = e.target as HTMLInputElement | HTMLTextAreaElement;
-  const maxLength = target.maxLength;
-  if (maxLength > 0 && target.value.length >= maxLength) {
-    notify.error(
-      language === "vi"
-        ? `Đã đạt giới hạn tối đa ${maxLength} ký tự`
-        : `Maximum limit of ${maxLength} characters reached`
-    );
-  }
-};
+const createMaxLengthHandler =
+  (language: string) =>
+  (e: React.FormEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const target = e.target as HTMLInputElement | HTMLTextAreaElement;
+    const maxLength = target.maxLength;
+    if (maxLength > 0 && target.value.length >= maxLength) {
+      notify.error(
+        language === "vi"
+          ? `Đã đạt giới hạn tối đa ${maxLength} ký tự`
+          : `Maximum limit of ${maxLength} characters reached`
+      );
+    }
+  };
 
 const translations = {
   en: {
@@ -291,24 +293,24 @@ export const Modal: FC<{
               onClick={onClose}
               className="text-slate-400 hover:text-white hover:bg-white/10 rounded-lg p-1.5 transition-colors"
             >
-            <X size={20} />
-          </button>
-        </div>
+              <X size={20} />
+            </button>
+          </div>
         </div>
 
         {/* Content - Scrollable */}
         <div className="p-6 overflow-y-auto flex-1">{children}</div>
 
         {/* Footer Buttons - Fixed at bottom */}
-          {onSave && (
+        {onSave && (
           <div className="flex justify-end gap-3 px-6 py-4 border-t border-slate-100 bg-slate-50/50 rounded-b-2xl flex-shrink-0">
             <button
               onClick={onClose}
               disabled={isSaving}
               className="px-5 py-2.5 rounded-xl text-sm font-semibold text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 transition-colors disabled:opacity-50"
             >
-                {t.cancel}
-              </button>
+              {t.cancel}
+            </button>
             <button
               onClick={() => {
                 onSave();
@@ -318,10 +320,10 @@ export const Modal: FC<{
               className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 shadow-lg shadow-blue-500/25 transition-all disabled:opacity-50 flex items-center gap-2"
             >
               {isSaving && <Loader2 className="animate-spin" size={16} />}
-                {t.saveChanges}
-              </button>
-            </div>
-          )}
+              {t.saveChanges}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -332,7 +334,7 @@ export const InfoPopup: FC<{
   initialData: any;
   onSave: (updatedData: any) => void;
 }> = ({ onClose, initialData, onSave }) => {
-  const { language } = useLanguage()
+  const { language } = useLanguage();
   const t = translations[language].infoPopup;
 
   const [formData, setFormData] = useState(initialData);
@@ -390,7 +392,6 @@ export const InfoPopup: FC<{
         avatar: responseData.secure_url,
       }));
     } catch (error) {
-      console.error(error);
       notify.error(
         error instanceof Error ? error.message : t.uploadErrorGeneral
       );
@@ -402,17 +403,29 @@ export const InfoPopup: FC<{
   const validateForm = () => {
     // Validate firstName
     if (formData.firstName && formData.firstName.length > 100) {
-      notify.error(language === "vi" ? "Họ không được vượt quá 100 ký tự" : "First name must not exceed 100 characters");
+      notify.error(
+        language === "vi"
+          ? "Họ không được vượt quá 100 ký tự"
+          : "First name must not exceed 100 characters"
+      );
       return false;
     }
     // Validate lastName
     if (formData.lastName && formData.lastName.length > 100) {
-      notify.error(language === "vi" ? "Tên không được vượt quá 100 ký tự" : "Last name must not exceed 100 characters");
+      notify.error(
+        language === "vi"
+          ? "Tên không được vượt quá 100 ký tự"
+          : "Last name must not exceed 100 characters"
+      );
       return false;
     }
     // Validate professional
     if (formData.professional && formData.professional.length > 100) {
-      notify.error(language === "vi" ? "Vị trí công việc không được vượt quá 100 ký tự" : "Job position must not exceed 100 characters");
+      notify.error(
+        language === "vi"
+          ? "Vị trí công việc không được vượt quá 100 ký tự"
+          : "Job position must not exceed 100 characters"
+      );
       return false;
     }
     return true;
@@ -536,7 +549,7 @@ export const ContactPopup: FC<{
 }> = ({ onClose, initialData, onSave }) => {
   const { language } = useLanguage();
   const t = translations[language].contactPopup;
-  
+
   const [formData, setFormData] = useState(initialData);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -570,27 +583,45 @@ export const ContactPopup: FC<{
     if (formData.email && formData.email.trim()) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(formData.email)) {
-        notify.error(language === "vi" ? "Email không hợp lệ" : "Invalid email address");
+        notify.error(
+          language === "vi" ? "Email không hợp lệ" : "Invalid email address"
+        );
         return false;
       }
       if (formData.email.length > 255) {
-        notify.error(language === "vi" ? "Email không được vượt quá 255 ký tự" : "Email must not exceed 255 characters");
+        notify.error(
+          language === "vi"
+            ? "Email không được vượt quá 255 ký tự"
+            : "Email must not exceed 255 characters"
+        );
         return false;
       }
     }
     // Validate phone
     if (formData.phone && formData.phone.length > 20) {
-      notify.error(language === "vi" ? "Số điện thoại không được vượt quá 20 ký tự" : "Phone number must not exceed 20 characters");
+      notify.error(
+        language === "vi"
+          ? "Số điện thoại không được vượt quá 20 ký tự"
+          : "Phone number must not exceed 20 characters"
+      );
       return false;
     }
     // Validate city
     if (formData.city && formData.city.length > 100) {
-      notify.error(language === "vi" ? "Thành phố không được vượt quá 100 ký tự" : "City must not exceed 100 characters");
+      notify.error(
+        language === "vi"
+          ? "Thành phố không được vượt quá 100 ký tự"
+          : "City must not exceed 100 characters"
+      );
       return false;
     }
     // Validate country
     if (formData.country && formData.country.length > 100) {
-      notify.error(language === "vi" ? "Quốc gia không được vượt quá 100 ký tự" : "Country must not exceed 100 characters");
+      notify.error(
+        language === "vi"
+          ? "Quốc gia không được vượt quá 100 ký tự"
+          : "Country must not exceed 100 characters"
+      );
       return false;
     }
     return true;
@@ -621,7 +652,7 @@ export const ContactPopup: FC<{
             maxLength={255}
             className="w-full py-2.5 px-4 border border-slate-200 rounded-xl text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
           />
-      </div>
+        </div>
         <div>
           <label
             htmlFor="phone"
@@ -638,9 +669,9 @@ export const ContactPopup: FC<{
             maxLength={20}
             className="w-full py-2.5 px-4 border border-slate-200 rounded-xl text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
           />
-      </div>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
+          <div>
             <label
               htmlFor="city"
               className="block text-slate-700 text-sm font-semibold mb-2"
@@ -656,8 +687,8 @@ export const ContactPopup: FC<{
               maxLength={100}
               className="w-full py-2.5 px-4 border border-slate-200 rounded-xl text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
             />
-        </div>
-        <div>
+          </div>
+          <div>
             <label
               htmlFor="country"
               className="block text-slate-700 text-sm font-semibold mb-2"
@@ -689,7 +720,7 @@ export const TargetPopup: FC<{
   const t = translations[language].targetPopup;
 
   const [summary, setSummary] = useState(initialData.summary || "");
-  
+
   const handleTextareaInput = (e: React.FormEvent<HTMLTextAreaElement>) => {
     const target = e.target as HTMLTextAreaElement;
     const maxLength = target.maxLength;
@@ -701,10 +732,14 @@ export const TargetPopup: FC<{
       );
     }
   };
-  
+
   const validateForm = () => {
     if (summary && summary.length > 2000) {
-      notify.error(language === "vi" ? "Mục tiêu sự nghiệp không được vượt quá 2000 ký tự" : "Career objective must not exceed 2000 characters");
+      notify.error(
+        language === "vi"
+          ? "Mục tiêu sự nghiệp không được vượt quá 2000 ký tự"
+          : "Career objective must not exceed 2000 characters"
+      );
       return false;
     }
     return true;
@@ -788,42 +823,83 @@ export const ExperiencePopup: FC<{
 
   const handleFormSubmit = () => {
     if (!currentItem.title || !currentItem.title.trim()) {
-      notify.error(language === "vi" ? "Chức vụ là bắt buộc" : "Position is required");
+      notify.error(
+        language === "vi" ? "Chức vụ là bắt buộc" : "Position is required"
+      );
       return;
     }
     if (currentItem.title.length > 100) {
-      notify.error(language === "vi" ? "Chức vụ không được vượt quá 100 ký tự" : "Position must not exceed 100 characters");
+      notify.error(
+        language === "vi"
+          ? "Chức vụ không được vượt quá 100 ký tự"
+          : "Position must not exceed 100 characters"
+      );
       return;
     }
     if (!currentItem.company || !currentItem.company.trim()) {
-      notify.error(language === "vi" ? "Tên công ty là bắt buộc" : "Company name is required");
+      notify.error(
+        language === "vi"
+          ? "Tên công ty là bắt buộc"
+          : "Company name is required"
+      );
       return;
     }
     if (currentItem.company.length > 100) {
-      notify.error(language === "vi" ? "Tên công ty không được vượt quá 100 ký tự" : "Company name must not exceed 100 characters");
+      notify.error(
+        language === "vi"
+          ? "Tên công ty không được vượt quá 100 ký tự"
+          : "Company name must not exceed 100 characters"
+      );
       return;
     }
     if (currentItem.description && currentItem.description.length > 2000) {
-      notify.error(language === "vi" ? "Mô tả công việc không được vượt quá 2000 ký tự" : "Job description must not exceed 2000 characters");
+      notify.error(
+        language === "vi"
+          ? "Mô tả công việc không được vượt quá 2000 ký tự"
+          : "Job description must not exceed 2000 characters"
+      );
       return;
     }
-    
+
     // Validate date format if provided
-    if (currentItem.startDate && !/^\d{4}-\d{2}(-\d{2})?$/.test(currentItem.startDate)) {
-      notify.error(language === "vi" ? "Định dạng ngày không hợp lệ" : "Invalid date format");
+    if (
+      currentItem.startDate &&
+      !/^\d{4}-\d{2}(-\d{2})?$/.test(currentItem.startDate)
+    ) {
+      notify.error(
+        language === "vi"
+          ? "Định dạng ngày không hợp lệ"
+          : "Invalid date format"
+      );
       return;
     }
-    if (currentItem.endDate && currentItem.endDate !== "Present" && !/^\d{4}-\d{2}(-\d{2})?$/.test(currentItem.endDate)) {
-      notify.error(language === "vi" ? "Định dạng ngày không hợp lệ" : "Invalid date format");
+    if (
+      currentItem.endDate &&
+      currentItem.endDate !== "Present" &&
+      !/^\d{4}-\d{2}(-\d{2})?$/.test(currentItem.endDate)
+    ) {
+      notify.error(
+        language === "vi"
+          ? "Định dạng ngày không hợp lệ"
+          : "Invalid date format"
+      );
       return;
     }
-    
+
     // Validate end date is after start date
-    if (currentItem.startDate && currentItem.endDate && currentItem.endDate !== "Present") {
+    if (
+      currentItem.startDate &&
+      currentItem.endDate &&
+      currentItem.endDate !== "Present"
+    ) {
       const start = new Date(currentItem.startDate);
       const end = new Date(currentItem.endDate);
       if (end < start) {
-        notify.error(language === "vi" ? "Ngày kết thúc phải sau ngày bắt đầu" : "End date must be after start date");
+        notify.error(
+          language === "vi"
+            ? "Ngày kết thúc phải sau ngày bắt đầu"
+            : "End date must be after start date"
+        );
         return;
       }
     }
@@ -836,13 +912,21 @@ export const ExperiencePopup: FC<{
     setExperiences(updatedExperiences);
     setIsEditing(false);
     setCurrentItem(null);
-    notify.success(language === "vi" ? "Đã lưu kinh nghiệm làm việc" : "Work experience saved");
+    notify.success(
+      language === "vi"
+        ? "Đã lưu kinh nghiệm làm việc"
+        : "Work experience saved"
+    );
   };
 
   const handleSaveChanges = () => {
     onSave({ workHistory: experiences });
     onClose();
-    notify.success(language === "vi" ? "Đã cập nhật kinh nghiệm làm việc" : "Work experience updated");
+    notify.success(
+      language === "vi"
+        ? "Đã cập nhật kinh nghiệm làm việc"
+        : "Work experience updated"
+    );
   };
 
   return (
@@ -894,8 +978,8 @@ export const ExperiencePopup: FC<{
                 placeholder={t.startDatePlaceholder}
                 className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm"
               />
-          </div>
-          <div>
+            </div>
+            <div>
               <label className="block text-sm font-medium text-gray-700">
                 {t.endDateLabel}
               </label>
@@ -1049,50 +1133,82 @@ export const EducationPopup: FC<{
 
   const handleFormSubmit = () => {
     if (!currentItem.institution || !currentItem.institution.trim()) {
-      notify.error(language === "vi" ? "Trường/Học viện là bắt buộc" : "Institution is required");
+      notify.error(
+        language === "vi"
+          ? "Trường/Học viện là bắt buộc"
+          : "Institution is required"
+      );
       return;
     }
     if (currentItem.institution.length > 200) {
-      notify.error(language === "vi" ? "Trường/Học viện không được vượt quá 200 ký tự" : "Institution must not exceed 200 characters");
+      notify.error(
+        language === "vi"
+          ? "Trường/Học viện không được vượt quá 200 ký tự"
+          : "Institution must not exceed 200 characters"
+      );
       return;
     }
     if (!currentItem.major || !currentItem.major.trim()) {
-      notify.error(language === "vi" ? "Chuyên ngành là bắt buộc" : "Major is required");
+      notify.error(
+        language === "vi" ? "Chuyên ngành là bắt buộc" : "Major is required"
+      );
       return;
     }
     if (currentItem.major.length > 100) {
-      notify.error(language === "vi" ? "Chuyên ngành không được vượt quá 100 ký tự" : "Major must not exceed 100 characters");
+      notify.error(
+        language === "vi"
+          ? "Chuyên ngành không được vượt quá 100 ký tự"
+          : "Major must not exceed 100 characters"
+      );
       return;
     }
     if (!currentItem.degree || !currentItem.degree.trim()) {
-      notify.error(language === "vi" ? "Bằng cấp là bắt buộc" : "Degree is required");
+      notify.error(
+        language === "vi" ? "Bằng cấp là bắt buộc" : "Degree is required"
+      );
       return;
     }
     if (currentItem.degree.length > 100) {
-      notify.error(language === "vi" ? "Bằng cấp không được vượt quá 100 ký tự" : "Degree must not exceed 100 characters");
+      notify.error(
+        language === "vi"
+          ? "Bằng cấp không được vượt quá 100 ký tự"
+          : "Degree must not exceed 100 characters"
+      );
       return;
     }
-    
+
     // Validate date format if provided
     if (currentItem.startDate && !/^\d{4}-\d{2}$/.test(currentItem.startDate)) {
-      notify.error(language === "vi" ? "Định dạng ngày không hợp lệ" : "Invalid date format");
+      notify.error(
+        language === "vi"
+          ? "Định dạng ngày không hợp lệ"
+          : "Invalid date format"
+      );
       return;
     }
     if (currentItem.endDate && !/^\d{4}-\d{2}$/.test(currentItem.endDate)) {
-      notify.error(language === "vi" ? "Định dạng ngày không hợp lệ" : "Invalid date format");
+      notify.error(
+        language === "vi"
+          ? "Định dạng ngày không hợp lệ"
+          : "Invalid date format"
+      );
       return;
     }
-    
+
     // Validate end date is after start date
     if (currentItem.startDate && currentItem.endDate) {
       const start = new Date(currentItem.startDate + "-01");
       const end = new Date(currentItem.endDate + "-01");
       if (end < start) {
-        notify.error(language === "vi" ? "Ngày kết thúc phải sau ngày bắt đầu" : "End date must be after start date");
+        notify.error(
+          language === "vi"
+            ? "Ngày kết thúc phải sau ngày bắt đầu"
+            : "End date must be after start date"
+        );
         return;
       }
     }
-    
+
     let updatedEducations = [...educations];
     if (editingIndex !== null) {
       updatedEducations[editingIndex] = currentItem;
@@ -1108,7 +1224,9 @@ export const EducationPopup: FC<{
   const handleSaveChanges = () => {
     onSave({ education: educations });
     onClose();
-    notify.success(language === "vi" ? "Đã cập nhật học vấn" : "Education updated");
+    notify.success(
+      language === "vi" ? "Đã cập nhật học vấn" : "Education updated"
+    );
   };
 
   return (
@@ -1263,19 +1381,35 @@ export const SkillsPopup: FC<{
 
   const addSkill = () => {
     if (!newSkill.trim()) {
-      notify.error(language === "vi" ? "Vui lòng nhập tên kỹ năng" : "Please enter a skill name");
+      notify.error(
+        language === "vi"
+          ? "Vui lòng nhập tên kỹ năng"
+          : "Please enter a skill name"
+      );
       return;
     }
     if (newSkill.trim().length > 50) {
-      notify.error(language === "vi" ? "Tên kỹ năng không được quá 50 ký tự" : "Skill name must not exceed 50 characters");
+      notify.error(
+        language === "vi"
+          ? "Tên kỹ năng không được quá 50 ký tự"
+          : "Skill name must not exceed 50 characters"
+      );
       return;
     }
-    if (skills.find((s: any) => s.name.toLowerCase() === newSkill.trim().toLowerCase())) {
-      notify.error(language === "vi" ? "Kỹ năng này đã tồn tại" : "This skill already exists");
+    if (
+      skills.find(
+        (s: any) => s.name.toLowerCase() === newSkill.trim().toLowerCase()
+      )
+    ) {
+      notify.error(
+        language === "vi"
+          ? "Kỹ năng này đã tồn tại"
+          : "This skill already exists"
+      );
       return;
     }
-      setSkills([...skills, { name: newSkill.trim(), rating: 0 }]);
-      setNewSkill("");
+    setSkills([...skills, { name: newSkill.trim(), rating: 0 }]);
+    setNewSkill("");
     notify.success(language === "vi" ? "Đã thêm kỹ năng" : "Skill added");
   };
 
@@ -1289,7 +1423,11 @@ export const SkillsPopup: FC<{
     // Validate all skills
     for (const skill of skills) {
       if (skill.name && skill.name.length > 50) {
-        notify.error(language === "vi" ? `Kỹ năng "${skill.name}" không được vượt quá 50 ký tự` : `Skill "${skill.name}" must not exceed 50 characters`);
+        notify.error(
+          language === "vi"
+            ? `Kỹ năng "${skill.name}" không được vượt quá 50 ký tự`
+            : `Skill "${skill.name}" must not exceed 50 characters`
+        );
         return false;
       }
     }
@@ -1299,7 +1437,9 @@ export const SkillsPopup: FC<{
   const handleSaveChanges = () => {
     if (!validateForm()) return;
     onSave({ skills });
-    notify.success(language === "vi" ? "Đã cập nhật kỹ năng" : "Skills updated");
+    notify.success(
+      language === "vi" ? "Đã cập nhật kỹ năng" : "Skills updated"
+    );
   };
 
   return (
@@ -1311,7 +1451,7 @@ export const SkillsPopup: FC<{
             className="flex items-center w-full bg-blue-50/60 border border-blue-100 px-3 py-2 rounded-lg hover:shadow-sm"
           >
             <span className="text-blue-900 font-medium truncate pr-3 max-w-[55%]">
-            {skill.name}
+              {skill.name}
             </span>
             <div className="ml-auto flex items-center gap-1">
               {[1, 2, 3, 4, 5].map((n) => (
@@ -1408,7 +1548,11 @@ export const CertificationPopup: FC<{
   const validateForm = () => {
     for (const cert of certifications) {
       if (cert.title && cert.title.length > 200) {
-        notify.error(language === "vi" ? `Tên chứng chỉ không được vượt quá 200 ký tự` : `Certification name must not exceed 200 characters`);
+        notify.error(
+          language === "vi"
+            ? `Tên chứng chỉ không được vượt quá 200 ký tự`
+            : `Certification name must not exceed 200 characters`
+        );
         return false;
       }
     }
@@ -1533,7 +1677,11 @@ export const AchievementPopup: FC<{
   const validateForm = () => {
     for (const achievement of achievements) {
       if (achievement && achievement.length > 500) {
-        notify.error(language === "vi" ? "Thành tựu không được vượt quá 500 ký tự" : "Achievement must not exceed 500 characters");
+        notify.error(
+          language === "vi"
+            ? "Thành tựu không được vượt quá 500 ký tự"
+            : "Achievement must not exceed 500 characters"
+        );
         return false;
       }
     }
@@ -1610,7 +1758,11 @@ export const HobbyPopup: FC<{
   const validateForm = () => {
     for (const hobby of hobbies) {
       if (hobby && hobby.length > 100) {
-        notify.error(language === "vi" ? "Sở thích không được vượt quá 100 ký tự" : "Hobby must not exceed 100 characters");
+        notify.error(
+          language === "vi"
+            ? "Sở thích không được vượt quá 100 ký tự"
+            : "Hobby must not exceed 100 characters"
+        );
         return false;
       }
     }
@@ -1671,10 +1823,7 @@ export const ProjectPopup: FC<{
 
   const [projects, setProjects] = useState<ProjectItem[]>(() => {
     const rawProjects =
-      initialData.Project ||
-      initialData.project ||
-      initialData.projects ||
-      [];
+      initialData.Project || initialData.project || initialData.projects || [];
 
     if (!rawProjects || rawProjects.length === 0) {
       return [
@@ -1748,11 +1897,19 @@ export const ProjectPopup: FC<{
   const validateForm = () => {
     for (const project of projects) {
       if (project.title && project.title.length > 200) {
-        notify.error(language === "vi" ? `Tên dự án không được vượt quá 200 ký tự` : `Project name must not exceed 200 characters`);
+        notify.error(
+          language === "vi"
+            ? `Tên dự án không được vượt quá 200 ký tự`
+            : `Project name must not exceed 200 characters`
+        );
         return false;
       }
       if (project.summary && project.summary.length > 2000) {
-        notify.error(language === "vi" ? `Mô tả dự án không được vượt quá 2000 ký tự` : `Project summary must not exceed 2000 characters`);
+        notify.error(
+          language === "vi"
+            ? `Mô tả dự án không được vượt quá 2000 ký tự`
+            : `Project summary must not exceed 2000 characters`
+        );
         return false;
       }
     }

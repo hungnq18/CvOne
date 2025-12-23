@@ -5,7 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useLanguage } from "@/providers/global_provider";
 import { Briefcase, FileText, Play, Settings, Sparkles, X } from "lucide-react";
@@ -98,14 +104,20 @@ const setupTexts = {
 
 const questionCountValues = [5, 10, 15, 20] as const;
 
-export default function InterviewSetupModal({ isOpen, onClose, onStartInterview }: InterviewSetupModalProps) {
+export default function InterviewSetupModal({
+  isOpen,
+  onClose,
+  onStartInterview,
+}: InterviewSetupModalProps) {
   const { language } = useLanguage();
   const t = setupTexts[language] ?? setupTexts.en;
 
   const [jobDescription, setJobDescription] = useState("");
   const [jobTitle, setJobTitle] = useState("");
   const [companyName, setCompanyName] = useState("");
-  const [numberOfQuestions, setNumberOfQuestions] = useState<5 | 10 | 15 | 20>(10);
+  const [numberOfQuestions, setNumberOfQuestions] = useState<5 | 10 | 15 | 20>(
+    10
+  );
   const [isLoading, setIsLoading] = useState(false);
 
   const handleStartInterview = async () => {
@@ -125,7 +137,6 @@ export default function InterviewSetupModal({ isOpen, onClose, onStartInterview 
       onStartInterview(config);
       onClose();
     } catch (error) {
-      console.error("Error starting interview:", error);
     } finally {
       setIsLoading(false);
     }
@@ -159,7 +170,8 @@ export default function InterviewSetupModal({ isOpen, onClose, onStartInterview 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="jobTitle">
-                    {t.jobTitleLabel} <span className="text-gray-400">{t.jobTitleOptional}</span>
+                    {t.jobTitleLabel}{" "}
+                    <span className="text-gray-400">{t.jobTitleOptional}</span>
                   </Label>
                   <Input
                     id="jobTitle"
@@ -170,7 +182,10 @@ export default function InterviewSetupModal({ isOpen, onClose, onStartInterview 
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="companyName">
-                    {t.companyNameLabel} <span className="text-gray-400">{t.companyNameOptional}</span>
+                    {t.companyNameLabel}{" "}
+                    <span className="text-gray-400">
+                      {t.companyNameOptional}
+                    </span>
                   </Label>
                   <Input
                     id="companyName"
@@ -228,7 +243,9 @@ export default function InterviewSetupModal({ isOpen, onClose, onStartInterview 
                 <Label htmlFor="questionCount">{t.questionCountLabel}</Label>
                 <Select
                   value={numberOfQuestions.toString()}
-                  onValueChange={(value) => setNumberOfQuestions(parseInt(value) as 5 | 10 | 15 | 20)}
+                  onValueChange={(value) =>
+                    setNumberOfQuestions(parseInt(value) as 5 | 10 | 15 | 20)
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -251,7 +268,10 @@ export default function InterviewSetupModal({ isOpen, onClose, onStartInterview 
               <strong>{t.featuresTitle}</strong>
               <ul className="mt-2 space-y-1 text-sm">
                 {t.features.map((item, idx) => (
-                  <li key={idx}>{idx === 0 ? "✨ " : "• "}{item}</li>
+                  <li key={idx}>
+                    {idx === 0 ? "✨ " : "• "}
+                    {item}
+                  </li>
                 ))}
               </ul>
             </AlertDescription>
