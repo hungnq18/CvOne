@@ -1,25 +1,41 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
+import { Connection } from 'mongoose';
+import { getConnectionToken } from '@nestjs/mongoose';
 import * as request from 'supertest';
 import { App } from 'supertest/types';
-import { AppModule } from './../src/app.module';
+import { createTestApp, closeTestApp } from './utils/test-app.util';
+import { dropAllCollections } from './utils/test-database.util';
 
 describe('AppController (e2e)', () => {
   let app: INestApplication<App>;
+  let connection: Connection;
 
-  beforeEach(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
-
-    app = moduleFixture.createNestApplication();
-    await app.init();
+  beforeAll(async () => {
+    app = await createTestApp();
+    connection = app.get<Connection>(getConnectionToken());
   });
 
-  it('/ (GET)', () => {
+  afterEach(async () => {
+    // Clean up database after each test
+    if (connection) {
+      await dropAllCollections(connection);
+    }
+  });
+
+  afterAll(async () => {
+    // Close app and database connections
+    if (connection) {
+      await connection.close();
+    }
+    await closeTestApp(app);
+  });
+
+  it('/api (GET) - should return hello message', () => {
     return request(app.getHttpServer())
-      .get('/')
+      .get('/api')
       .expect(200)
-      .expect('Hello World!');
+      .expect((res) => {
+        expect(res.text).toContain('Hello World!');
+      });
   });
 });

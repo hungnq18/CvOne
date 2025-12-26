@@ -19,7 +19,7 @@ import { CreditsService } from "../credits/credits.service";
 export class VouchersService {
   constructor(
     @InjectModel(Voucher.name) private voucherModel: Model<VoucherDocument>
-  ) {}
+  ) { }
 
   async createVoucherDirect(voucher: CreateVoucherDirectDto) {
     const newVoucher = {
@@ -45,10 +45,19 @@ export class VouchersService {
     return vouchers;
   }
   async getVoucherById(id: string) {
+    if (!Types.ObjectId.isValid(id)) {
+      throw new BadRequestException("Invalid voucher id");
+    }
+
     const voucher = await this.voucherModel.findById(id);
     return voucher;
   }
+
   async deleteVoucherById(id: string) {
+    if (!Types.ObjectId.isValid(id)) {
+      throw new BadRequestException("Invalid voucher id");
+    }
+
     const deletedVoucher = await this.voucherModel.findByIdAndDelete(id);
     return deletedVoucher;
   }
@@ -68,6 +77,10 @@ export class VouchersService {
   }
 
   async updateVoucher(id: string, updateVoucherDto: any) {
+    if (!Types.ObjectId.isValid(id)) {
+      throw new BadRequestException("Invalid voucher id");
+    }
+
     const voucher = await this.voucherModel.findById(id);
     if (!voucher) {
       throw new NotFoundException(`Voucher not found`);
@@ -90,6 +103,10 @@ export class VouchersService {
     id: string,
     updateVoucherDto: UpdateVoucherDirectDto
   ) {
+    if (!Types.ObjectId.isValid(id)) {
+      throw new BadRequestException("Invalid voucher id");
+    }
+
     const voucher = await this.voucherModel.findById(id);
     if (!voucher) {
       throw new NotFoundException(`Voucher not found`);
@@ -117,6 +134,10 @@ export class VouchersService {
     id: string,
     updateVoucherDto: UpdateVoucherSaveableDto
   ) {
+    if (!Types.ObjectId.isValid(id)) {
+      throw new BadRequestException("Invalid voucher id");
+    }
+
     const voucher = await this.voucherModel.findById(id);
     if (!voucher) {
       throw new NotFoundException(`Voucher  not found`);
@@ -133,6 +154,10 @@ export class VouchersService {
   }
 
   async updateVoucherUsedCount(id: string) {
+    if (!Types.ObjectId.isValid(id)) {
+      throw new BadRequestException("Invalid voucher id");
+    }
+
     const voucher = await this.voucherModel.findById(id);
     if (!voucher) {
       throw new NotFoundException(`Voucher  not found`);

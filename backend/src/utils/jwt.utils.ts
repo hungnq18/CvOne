@@ -15,8 +15,15 @@ export const generateJwtToken = (
     isActive: account.isActive,
   };
 
+  const access_token = jwtService.sign(payload);
+  const refresh_token = jwtService.sign(
+    { sub: account._id, email: account.email, type: "refresh" },
+    { expiresIn: "7d" }
+  );
+
   return {
-    access_token: jwtService.sign(payload),
+    access_token,
+    refresh_token,
     email: account.email,
     role: account.role,
     isActive: account.isActive,

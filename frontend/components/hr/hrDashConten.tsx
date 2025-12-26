@@ -6,36 +6,7 @@ import { useLanguage } from '@/providers/global_provider';
 import { Eye, Package, ShoppingCart, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 
-const stats = [
-    {
-        title: "Total Revenue",
-        value: "$3.456K",
-        change: "+0.43%",
-        changeType: "positive" as const,
-        icon: Eye,
-    },
-    {
-        title: "Total Profit",
-        value: "$45.2K",
-        change: "+4.35%",
-        changeType: "positive" as const,
-        icon: ShoppingCart,
-    },
-    {
-        title: "Total Product",
-        value: "2.450",
-        change: "+2.59%",
-        changeType: "positive" as const,
-        icon: Package,
-    },
-    {
-        title: "Total Users",
-        value: "3.456",
-        change: "+0.95%",
-        changeType: "positive" as const,
-        icon: Users,
-    },
-]
+
 
 export function DashboardContent() {
     const [appliedJobs, setAppliedJobs] = useState<ApplyJob[]>([]);

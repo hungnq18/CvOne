@@ -46,11 +46,11 @@ export default function ManageApplyJobClient() {
         const app = applications.find((a) => a._id === applyJobId);
         const candidateName =
           app?.cvId?.content?.userData?.firstName &&
-          app?.cvId?.content?.userData?.lastName
+            app?.cvId?.content?.userData?.lastName
             ? `${app.cvId.content.userData.firstName} ${app.cvId.content.userData.lastName}`
             : app?.userId?.first_name && app?.userId?.last_name
-            ? `${app.userId.first_name} ${app.userId.last_name}`
-            : "Ứng viên";
+              ? `${app.userId.first_name} ${app.userId.last_name}`
+              : "Ứng viên";
         const jobTitle =
           app?.jobId?.title || app?.jobId?.["Job Title"] || "N/A";
         const jobrole = app?.jobId?.role || app?.jobId?.Role || "";
@@ -89,11 +89,11 @@ export default function ManageApplyJobClient() {
         const app = applications.find((a) => a._id === applyJobId);
         const candidateName =
           app?.cvId?.content?.userData?.firstName &&
-          app?.cvId?.content?.userData?.lastName
+            app?.cvId?.content?.userData?.lastName
             ? `${app.cvId.content.userData.firstName} ${app.cvId.content.userData.lastName}`
             : app?.userId?.first_name && app?.userId?.last_name
-            ? `${app.userId.first_name} ${app.userId.last_name}`
-            : "Ứng viên";
+              ? `${app.userId.first_name} ${app.userId.last_name}`
+              : "Ứng viên";
         const jobTitle =
           app?.jobId?.title || app?.jobId?.["Job Title"] || "N/A";
         const jobrole = app?.jobId?.role || app?.jobId?.Role || "";
@@ -110,7 +110,7 @@ export default function ManageApplyJobClient() {
             // Không lấy email nữa
           }
         } catch (e) {
-          /* fallback giữ trống */
+          /* fallback */
         }
         // --- End lấy thông tin HR ---
         const message = `Cảm ơn bạn, ${candidateName}, đã quan tâm và ứng tuyển vào vị trí ${jobrole} cho công việc ${jobTitle}. Sau khi xem xét kỹ lưỡng, chúng tôi rất tiếc phải thông báo rằng hồ sơ của bạn chưa phù hợp với yêu cầu của vị trí ở thời điểm hiện tại. Chúng tôi trân trọng sự quan tâm của bạn và hy vọng sẽ có cơ hội hợp tác với bạn trong tương lai.`;
@@ -132,8 +132,8 @@ export default function ManageApplyJobClient() {
         let arr = Array.isArray(data)
           ? data
           : data && data.data
-          ? data.data
-          : [];
+            ? data.data
+            : [];
         setApplications(arr);
       });
     } catch (error) {
@@ -148,8 +148,8 @@ export default function ManageApplyJobClient() {
         let arr = Array.isArray(data)
           ? data
           : data && data.data
-          ? data.data
-          : [];
+            ? data.data
+            : [];
         setApplications(arr);
       });
     } catch (error) {

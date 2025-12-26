@@ -17,7 +17,10 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:e2e": "cross-env NODE_ENV=test jest --config ./test/jest-e2e.json",
+    "test:e2e:watch": "cross-env NODE_ENV=test jest --config ./test/jest-e2e.json --watch",
+    "test:e2e:cov": "cross-env NODE_ENV=test jest --config ./test/jest-e2e.json --coverage",
+    "test:all": "npm run test && npm run test:e2e"
   },
   "dependencies": {
     "@google-cloud/text-to-speech": "^6.4.0",
@@ -81,6 +84,7 @@
     "@types/pdfkit": "^0.17.0",
     "@types/supertest": "^6.0.2",
     "copyfiles": "^2.4.1",
+    "cross-env": "^7.0.3",
     "eslint": "^9.18.0",
     "eslint-config-prettier": "^10.0.1",
     "eslint-plugin-prettier": "^5.2.2",

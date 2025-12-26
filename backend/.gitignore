@@ -19,6 +19,7 @@ lerna-debug.log*
 # Tests
 /coverage
 /.nyc_output
+/test/logs
 
 # IDEs and editors
 /.idea
@@ -38,6 +39,7 @@ lerna-debug.log*
 
 # dotenv environment variable files
 .env
+.env.test
 .env.development.local
 .env.test.local
 .env.production.local
@@ -56,6 +58,7 @@ pids
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
-*.e2e-spec.ts
-*.spec.ts
+# Test files should be committed, only ignore coverage
+# *.e2e-spec.ts
+# *.spec.ts
 
